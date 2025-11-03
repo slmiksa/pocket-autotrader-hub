@@ -19,23 +19,24 @@ export const useSignals = () => {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Expose a refetch to allow manual refresh when polling detects new data
+  const fetchSignals = async () => {
+    const { data, error } = await supabase
+      .from('signals')
+      .select('*')
+      .order('received_at', { ascending: false })
+      .limit(20);
+
+    if (error) {
+      console.error('Error fetching signals:', error);
+    } else {
+      setSignals(data || []);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    // Fetch initial signals
-    const fetchSignals = async () => {
-      const { data, error } = await supabase
-        .from('signals')
-        .select('*')
-        .order('received_at', { ascending: false })
-        .limit(20);
-
-      if (error) {
-        console.error('Error fetching signals:', error);
-      } else {
-        setSignals(data || []);
-      }
-      setLoading(false);
-    };
-
+    // Initial load
     fetchSignals();
 
     // Subscribe to realtime changes
@@ -56,12 +57,12 @@ export const useSignals = () => {
           } else if (payload.eventType === 'UPDATE') {
             setSignals(prev => 
               prev.map(signal => 
-                signal.id === payload.new.id ? payload.new as Signal : signal
+                signal.id === (payload.new as any).id ? payload.new as Signal : signal
               )
             );
           } else if (payload.eventType === 'DELETE') {
             setSignals(prev => 
-              prev.filter(signal => signal.id !== payload.old.id)
+              prev.filter(signal => signal.id !== (payload.old as any).id)
             );
           }
         }
@@ -73,5 +74,5 @@ export const useSignals = () => {
     };
   }, []);
 
-  return { signals, loading };
+  return { signals, loading, refetch: fetchSignals };
 };

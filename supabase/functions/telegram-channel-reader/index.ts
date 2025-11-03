@@ -19,7 +19,7 @@ function parseSignalFromMessage(text: string): any | null {
   // 🔼 call (or 🔽 put)
   
   // Extract asset (after 💷)
-  const assetMatch = text.match(/💷\s*([A-Z]{6,}-OTC|[A-Z]{3}\/[A-Z]{3}|[A-Z]{6})/i);
+  const assetMatch = text.match(/💷\s*([A-Z]{3}\/[A-Z]{3}|[A-Z]{6,}-OTC|[A-Z]{6})/i);
   
   // Extract timeframe (after 💎)
   const timeframeMatch = text.match(/💎\s*(M\d+|H\d+)/i);
@@ -56,6 +56,7 @@ function parseSignalFromMessage(text: string): any | null {
       entry_time: entryTime,
       original_asset: originalAsset,
       raw_message: text,
+      kind: 'signal'
     };
   }
   
@@ -82,6 +83,7 @@ function parseSignalFromMessage(text: string): any | null {
         timeframe,
         direction,
         raw_message: text,
+        kind: 'signal'
       };
     }
   }
@@ -89,6 +91,27 @@ function parseSignalFromMessage(text: string): any | null {
   return null;
 }
 
+// Parse a result (win/loss) message
+function parseResultFromMessage(text: string): { asset?: string; timeframe?: string; result: 'win' | 'loss' } | null {
+  // Heuristics: look for win/loss keywords or icons
+  const isWin = /(✅|✔️|win|won|ربح)/i.test(text);
+  const isLoss = /(❌|⛔️|loss|lose|lost|خسارة|خسر)/i.test(text);
+  if (!isWin && !isLoss) return null;
+
+  // Try to extract asset and timeframe if present
+  const assetMatch = text.match(/💷\s*([A-Z]{3}\/[A-Z]{3}|[A-Z]{6,}-OTC|[A-Z]{6})/i);
+  const timeframeMatch = text.match(/💎\s*(M\d+|H\d+)/i);
+
+  let asset = assetMatch ? assetMatch[1] : undefined;
+  if (asset) {
+    asset = asset.replace('-OTC', '');
+    if (asset.length === 6 && !asset.includes('/')) {
+      asset = asset.substring(0, 3) + '/' + asset.substring(3);
+    }
+  }
+
+  return { asset, timeframe: timeframeMatch ? timeframeMatch[1] : undefined, result: isWin ? 'win' : 'loss' };
+}
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -134,6 +157,7 @@ serve(async (req) => {
       const itemMatches = rssText.matchAll(/<item>([\s\S]*?)<\/item>/g);
       const signals = [];
       let messagesChecked = 0;
+      let resultsUpdated = 0;
 
       for (const itemMatch of itemMatches) {
         messagesChecked++;
@@ -152,6 +176,46 @@ serve(async (req) => {
         const pubDate = pubDateMatch ? new Date(pubDateMatch[1]).getTime() : Date.now();
 
         console.log('Checking message:', messageText.substring(0, 100));
+
+        // First, try to parse a result (win/loss)
+        const parsedResult = parseResultFromMessage(messageText);
+        if (parsedResult) {
+          try {
+            let query = supabase
+              .from('signals')
+              .select('id, asset, timeframe, received_at')
+              .in('status', ['pending', 'processing', 'executed'])
+              .order('received_at', { ascending: false })
+              .limit(1);
+
+            if (parsedResult.asset) {
+              const condensed = parsedResult.asset.replace('/', '');
+              query = query.ilike('asset', `%${condensed}%`);
+            }
+            if (parsedResult.timeframe) {
+              query = query.eq('timeframe', parsedResult.timeframe);
+            }
+            // Only consider recent signals (last 3 hours)
+            query = query.gte('received_at', new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString());
+
+            const { data: candidates, error: candidatesError } = await query;
+            if (!candidatesError && candidates && candidates.length > 0) {
+              const target = candidates[0];
+              const { error: updateError } = await supabase
+                .from('signals')
+                .update({ status: 'completed', result: parsedResult.result })
+                .eq('id', target.id);
+              if (!updateError) {
+                resultsUpdated += 1;
+                console.log('Updated result for signal', target.id, parsedResult.result);
+              }
+            }
+          } catch (e) {
+            console.warn('Error updating result:', e);
+          }
+          // Continue to next item
+          continue;
+        }
 
         const signal = parseSignalFromMessage(messageText);
         
@@ -194,6 +258,7 @@ serve(async (req) => {
           messagesChecked,
           signalsFound: signals.length,
           signals,
+          resultsUpdated,
           source: 'channel'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -220,6 +285,7 @@ serve(async (req) => {
       const messageMatches = html.matchAll(/<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/g);
       const signals = [];
       let messagesChecked = 0;
+      let resultsUpdated = 0;
 
       for (const msgMatch of messageMatches) {
         messagesChecked++;
@@ -236,6 +302,44 @@ serve(async (req) => {
           .trim();
 
         console.log('Checking message:', messageText.substring(0, 100));
+
+        // Try to parse result
+        const parsedResult = parseResultFromMessage(messageText);
+        if (parsedResult) {
+          try {
+            let query = supabase
+              .from('signals')
+              .select('id, asset, timeframe, received_at')
+              .in('status', ['pending', 'processing', 'executed'])
+              .order('received_at', { ascending: false })
+              .limit(1);
+
+            if (parsedResult.asset) {
+              const condensed = parsedResult.asset.replace('/', '');
+              query = query.ilike('asset', `%${condensed}%`);
+            }
+            if (parsedResult.timeframe) {
+              query = query.eq('timeframe', parsedResult.timeframe);
+            }
+            query = query.gte('received_at', new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString());
+
+            const { data: candidates, error: candidatesError } = await query;
+            if (!candidatesError && candidates && candidates.length > 0) {
+              const target = candidates[0];
+              const { error: updateError } = await supabase
+                .from('signals')
+                .update({ status: 'completed', result: parsedResult.result })
+                .eq('id', target.id);
+              if (!updateError) {
+                resultsUpdated += 1;
+                console.log('Updated result for signal', target.id, parsedResult.result);
+              }
+            }
+          } catch (e) {
+            console.warn('Error updating result (web):', e);
+          }
+          continue;
+        }
 
         const signal = parseSignalFromMessage(messageText);
         
@@ -288,6 +392,7 @@ serve(async (req) => {
           messagesChecked,
           signalsFound: signals.length,
           signals,
+          resultsUpdated,
           source: 'web_scraping'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
