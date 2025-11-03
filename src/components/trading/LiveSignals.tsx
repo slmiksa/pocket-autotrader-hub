@@ -2,10 +2,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSignals } from "@/hooks/useSignals";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface LiveSignalsProps {
   autoTradeEnabled: boolean;
@@ -13,6 +16,23 @@ interface LiveSignalsProps {
 
 export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
   const { signals, loading } = useSignals();
+  const [fetching, setFetching] = useState(false);
+
+  const fetchTelegramMessages = async () => {
+    setFetching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('telegram-listener');
+      
+      if (error) throw error;
+      
+      toast.success(`تم فحص ${data.messagesChecked} رسالة، وجدنا ${data.signalsFound} توصية جديدة`);
+    } catch (error) {
+      console.error('Error fetching Telegram messages:', error);
+      toast.error('فشل جلب الرسائل من Telegram');
+    } finally {
+      setFetching(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -37,13 +57,27 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <div className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
-          التوصيات المباشرة
-        </CardTitle>
-        <CardDescription>
-          آخر التوصيات من قناة تيليجرام
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <div className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
+              التوصيات المباشرة
+            </CardTitle>
+            <CardDescription>
+              آخر التوصيات من قناة تيليجرام
+            </CardDescription>
+          </div>
+          <Button 
+            onClick={fetchTelegramMessages} 
+            disabled={fetching}
+            size="sm"
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={cn("h-4 w-4", fetching && "animate-spin")} />
+            جلب الرسائل
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[400px] pr-4">
