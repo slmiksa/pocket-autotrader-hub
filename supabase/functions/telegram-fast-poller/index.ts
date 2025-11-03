@@ -222,12 +222,45 @@ serve(async (req) => {
     const data = await response.json();
 
     if (!data.ok) {
-      throw new Error('Failed to fetch Telegram updates: ' + data.description);
+      const description: string = data.description || 'Unknown error';
+      // Gracefully handle 409 Conflict from other getUpdates requests
+      if (description.toLowerCase().includes('conflict')) {
+        await releaseLock();
+        console.warn('⚠️ Telegram conflict detected, skipping this cycle.');
+        return new Response(
+          JSON.stringify({ success: false, conflict: true, reason: description }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      throw new Error('Failed to fetch Telegram updates: ' + description);
     }
 
     const updates: any[] = data.result || [];
     const signals: any[] = [];
     let resultsUpdated = 0;
+
+    // Empty-poll recovery counter
+    const { data: emptyMeta } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'fast_telegram_empty')
+      .limit(1);
+    const emptyCount = Number(emptyMeta?.[0]?.value?.count || 0);
+    const lastAt = emptyMeta?.[0]?.value?.at ? new Date(emptyMeta[0].value.at) : null;
+
+    if (updates.length === 0) {
+      const newCount = emptyCount + 1;
+      await supabase.from('settings').upsert({ key: 'fast_telegram_empty', value: { count: newCount, at: new Date().toISOString() } });
+      // If 3 consecutive empties within ~1 min, reset offset to resync
+      if (newCount >= 3 && (!lastAt || Date.now() - lastAt.getTime() < 60_000)) {
+        await supabase.from('settings').upsert({ key: 'fast_telegram_offset', value: { offset: 0 } });
+        await supabase.from('settings').upsert({ key: 'fast_telegram_empty', value: { count: 0, at: new Date().toISOString() } });
+        console.warn('🔁 No updates 3x, resetting Telegram offset to 0');
+      }
+    } else {
+      // Reset empty counter on activity
+      await supabase.from('settings').upsert({ key: 'fast_telegram_empty', value: { count: 0, at: new Date().toISOString() } });
+    }
 
     let maxUpdateId = lastOffset - 1;
 
