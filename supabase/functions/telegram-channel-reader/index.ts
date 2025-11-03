@@ -159,43 +159,67 @@ function parseResultFromMessage(text: string): { asset?: string; timeframe?: str
 function toCondensedAsset(a: string) {
   return a.replace('-OTC', '').replace('/', '').toUpperCase();
 }
-function minutesSinceEntry(entryTime?: string | null) {
+function minutesSinceEntry(entryTime?: string | null, receivedAt?: string) {
   if (!entryTime) return Number.POSITIVE_INFINITY;
   const parts = entryTime.split(':').map((n) => parseInt(n));
   if (parts.length < 2 || parts.some((n) => Number.isNaN(n))) return Number.POSITIVE_INFINITY;
+  
   const now = new Date();
-  const dt = new Date(now);
+  // Anchor entry time to the signal's received_at date
+  const baseDate = receivedAt ? new Date(receivedAt) : new Date();
+  let dt = new Date(baseDate);
   dt.setHours(parts[0], parts[1], parts[2] || 0, 0);
+  
+  // If entry time appears to be for the next day (>6h after message), shift back one day
+  if (dt.getTime() - baseDate.getTime() > 6 * 60 * 60 * 1000) {
+    dt.setDate(dt.getDate() - 1);
+  }
+  
   let diff = (now.getTime() - dt.getTime()) / 60000; // minutes
-  // If entry time is in the future (e.g., past midnight edge-case), push into past by 24h for comparison
-  if (diff < -1) diff += 24 * 60;
   return diff;
 }
 async function findBestSignalForResult(supabase: any, parsed: { asset?: string; timeframe?: string }) {
-  // Fetch recent signals without result
+  // Fetch recent signals without result (last 2 hours)
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
   const { data: recent } = await supabase
     .from('signals')
     .select('id, asset, timeframe, entry_time, status, received_at, result')
-    .is('result', null) // Only signals without results
-    .order('received_at', { ascending: false })
-    .limit(30);
-  if (!recent || recent.length === 0) return null;
+    .is('result', null)
+    .gte('received_at', twoHoursAgo)
+    .order('received_at', { ascending: false });
+  
+  if (!recent || recent.length === 0) {
+    console.log('⚠️ No recent signals without results found');
+    return null;
+  }
 
-  // Filter signals that have passed their entry_time (executing or should be finished)
+  console.log(`🔍 Searching ${recent.length} signals for match...`);
+
+  // Filter signals that have passed their entry_time
   let candidates = recent.filter((s: any) => {
-    // Must have entry_time
     if (!s.entry_time) return false;
-    const mins = minutesSinceEntry(s.entry_time);
-    // Accept signals that started executing (0-20 minutes window for results)
-    return mins >= 0 && mins <= 20;
+    const mins = minutesSinceEntry(s.entry_time, s.received_at);
+    // Accept signals between 0-30 minutes after entry (wider window)
+    const isInWindow = mins >= 0 && mins <= 30;
+    if (isInWindow) {
+      console.log(`✓ Candidate: ${s.asset} @ ${s.entry_time} (${Math.round(mins)}min ago)`);
+    }
+    return isInWindow;
   });
   
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0) {
+    console.log('⚠️ No candidates in time window');
+    return null;
+  }
 
-  // If asset/timeframe present, filter by them for better accuracy
+  // If asset present, filter by it
   if (parsed.asset) {
     const cond = toCondensedAsset(parsed.asset);
-    const assetMatches = candidates.filter((s: any) => toCondensedAsset(s.asset || '').includes(cond));
+    const assetMatches = candidates.filter((s: any) => {
+      const match = toCondensedAsset(s.asset || '').includes(cond) || cond.includes(toCondensedAsset(s.asset || ''));
+      if (match) console.log(`✓ Asset match: ${s.asset} ~ ${parsed.asset}`);
+      return match;
+    });
     if (assetMatches.length > 0) candidates = assetMatches;
   }
   if (parsed.timeframe) {
@@ -203,8 +227,11 @@ async function findBestSignalForResult(supabase: any, parsed: { asset?: string; 
     if (tfMatches.length > 0) candidates = tfMatches;
   }
 
-  // Return the most recent candidate
-  return candidates[0] || null;
+  const best = candidates[0] || null;
+  if (best) {
+    console.log(`✅ Best match found: ${best.asset} ${best.timeframe} @ ${best.entry_time}`);
+  }
+  return best;
 }
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
