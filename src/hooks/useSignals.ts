@@ -92,8 +92,14 @@ export const useSignals = () => {
         console.log('📡 Realtime subscription status:', status);
       });
 
+    // Fallback polling in case realtime disconnects
+    const poll = setInterval(() => {
+      fetchSignals();
+    }, 20000);
+ 
     return () => {
       console.log('📡 Unsubscribing from realtime');
+      clearInterval(poll);
       supabase.removeChannel(channel);
     };
   }, []);

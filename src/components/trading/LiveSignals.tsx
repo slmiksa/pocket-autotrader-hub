@@ -59,6 +59,8 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
         // Refresh signals to show updated results
         refetch();
       }
+      // Always refresh to stay in sync even when no new signals/results are detected
+      refetch();
     } catch (error) {
       console.error('Error fetching Telegram messages:', error);
       // Only show error for critical failures
