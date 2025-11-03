@@ -35,6 +35,13 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
       
       if (error) throw error;
       
+      // Handle graceful error response
+      if (data && !data.success && data.error) {
+        console.warn('Service temporarily unavailable:', data.error);
+        // Don't show error to user, just log it
+        return;
+      }
+      
       if (data.signalsFound > 0) {
         toast.success(`تم العثور على ${data.signalsFound} توصية جديدة من القناة 📢`);
         // Refresh signals immediately after finding new ones
@@ -54,6 +61,10 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
       }
     } catch (error) {
       console.error('Error fetching Telegram messages:', error);
+      // Only show error for critical failures
+      if (error?.message && !error.message.includes('429')) {
+        // Don't show error toast for rate limiting
+      }
     } finally {
       setFetching(false);
       setIsPolling(false);
@@ -64,10 +75,10 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
     // Fetch immediately on mount
     fetchTelegramMessages();
 
-    // Set up interval to fetch every 3 seconds for better real-time updates
+    // Set up interval to fetch every 15 seconds to avoid rate limiting
     const interval = setInterval(() => {
       fetchTelegramMessages();
-    }, 3000);
+    }, 15000);
 
     // Cleanup interval on unmount
     return () => clearInterval(interval);

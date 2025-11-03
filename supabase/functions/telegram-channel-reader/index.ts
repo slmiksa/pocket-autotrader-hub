@@ -6,6 +6,36 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function for fetch with timeout and retry
+async function fetchWithRetry(url: string, options: RequestInit = {}, maxRetries = 2, timeoutMs = 8000): Promise<Response> {
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      const isLastRetry = i === maxRetries;
+      if (isLastRetry) {
+        throw error;
+      }
+      
+      // Exponential backoff: wait 1s, 2s, 4s...
+      const waitTime = Math.pow(2, i) * 1000;
+      console.log(`Retry ${i + 1}/${maxRetries} after ${waitTime}ms...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+  }
+  
+  throw new Error('Max retries exceeded');
+}
+
 // Parse signal from message text
 function parseSignalFromMessage(text: string): any | null {
   console.log('Parsing message:', text);
@@ -205,11 +235,11 @@ serve(async (req) => {
     const rssUrl = `https://rsshub.app/telegram/channel/${channelUsername}`;
     
     try {
-      const rssResponse = await fetch(rssUrl, {
+      const rssResponse = await fetchWithRetry(rssUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
-      });
+      }, 1, 6000); // Only 1 retry for RSS, 6s timeout
 
       if (!rssResponse.ok) {
         throw new Error(`RSS fetch failed: ${rssResponse.status}`);
@@ -316,17 +346,19 @@ serve(async (req) => {
     } catch (rssError) {
       console.warn('RSS method failed, trying alternative approach:', rssError);
       
-      // Alternative: Use web scraping approach
+      // Alternative: Use web scraping approach with retry
       const webUrl = `https://t.me/s/${channelUsername}`;
-      const webResponse = await fetch(webUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
+      
+      try {
+        const webResponse = await fetchWithRetry(webUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        }, 2, 10000); // 2 retries, 10s timeout
 
-      if (!webResponse.ok) {
-        throw new Error('Failed to fetch channel messages via web');
-      }
+        if (!webResponse.ok) {
+          throw new Error(`Web scraping failed: ${webResponse.status}`);
+        }
 
       const html = await webResponse.text();
       
@@ -421,17 +453,36 @@ serve(async (req) => {
         }
       }
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          messagesChecked,
-          signalsFound: signals.length,
-          signals,
-          resultsUpdated,
-          source: 'web_scraping'
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        return new Response(
+          JSON.stringify({
+            success: true,
+            messagesChecked,
+            signalsFound: signals.length,
+            signals,
+            resultsUpdated,
+            source: 'web_scraping'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (webError) {
+        console.error('Web scraping also failed:', webError);
+        // Return a graceful error response instead of throwing
+        return new Response(
+          JSON.stringify({
+            success: false,
+            messagesChecked: 0,
+            signalsFound: 0,
+            signals: [],
+            resultsUpdated: 0,
+            error: 'Both RSS and web scraping methods failed. Please try again later.',
+            source: 'error'
+          }),
+          { 
+            status: 200, // Return 200 to avoid error in client
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
     }
 
   } catch (error) {
