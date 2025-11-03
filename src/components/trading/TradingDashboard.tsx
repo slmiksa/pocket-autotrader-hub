@@ -11,16 +11,15 @@ import { TradingAdvice } from "./TradingAdvice";
 import { useSignals } from "@/hooks/useSignals";
 import { useAutoTrade } from "@/hooks/useAutoTrade";
 import { AutoTradeButton } from "./AutoTradeButton";
-
 export const TradingDashboard = () => {
   const [autoTradeEnabled, setAutoTradeEnabled] = useState(false);
-  const { signals } = useSignals();
-  
+  const {
+    signals
+  } = useSignals();
+
   // Enable auto-trading when switch is on
   useAutoTrade(autoTradeEnabled, signals);
-  
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Trading Advice */}
       <TradingAdvice />
 
@@ -34,8 +33,7 @@ export const TradingDashboard = () => {
         </CardContent>
       </Card>
 
-      {autoTradeEnabled && (
-        <Card className="border-success/30 bg-success/10">
+      {autoTradeEnabled && <Card className="border-success/30 bg-success/10">
           <CardContent className="flex items-start sm:items-center gap-2 sm:gap-3 py-3 sm:py-4 px-3 sm:px-6">
             <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-success shrink-0 animate-pulse mt-0.5 sm:mt-0" />
             <div>
@@ -45,71 +43,20 @@ export const TradingDashboard = () => {
               </p>
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* Auto Trade Control */}
       <Card>
-        <CardHeader className="px-3 sm:px-6 py-3 sm:py-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-            <div>
-              <CardTitle className="text-base sm:text-lg">التداول الآلي</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">تفعيل/إيقاف نسخ الصفقات تلقائياً</CardDescription>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-start">
-              <AutoTradeButton />
-              <div className="flex items-center gap-2 sm:gap-3">
-                <Badge variant={autoTradeEnabled ? "default" : "secondary"} className="text-xs sm:text-sm">
-                  {autoTradeEnabled ? "مُفعّل" : "مُعطّل"}
-                </Badge>
-                <Switch 
-                  checked={autoTradeEnabled} 
-                  onCheckedChange={setAutoTradeEnabled}
-                  className="data-[state=checked]:bg-success"
-                />
-              </div>
-            </div>
-          </div>
-        </CardHeader>
+        
       </Card>
 
       {/* Stats Grid */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="إجمالي الأرباح"
-          value="$1,234.56"
-          change="+12.5%"
-          icon={DollarSign}
-          trend="up"
-        />
-        <StatsCard
-          title="معدل النجاح"
-          value="68%"
-          change="+5.2%"
-          icon={Activity}
-          trend="up"
-        />
-        <StatsCard
-          title="صفقات رابحة"
-          value="34"
-          change="+8"
-          icon={TrendingUp}
-          trend="up"
-        />
-        <StatsCard
-          title="صفقات خاسرة"
-          value="16"
-          change="-3"
-          icon={TrendingDown}
-          trend="down"
-        />
-      </div>
+      
 
       {/* Live Signals and Trade History */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <LiveSignals autoTradeEnabled={autoTradeEnabled} />
         <TradeHistory />
       </div>
-    </div>
-  );
+    </div>;
 };
