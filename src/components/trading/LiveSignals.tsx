@@ -2,48 +2,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSignals } from "@/hooks/useSignals";
+import { format } from "date-fns";
 
 interface LiveSignalsProps {
   autoTradeEnabled: boolean;
 }
 
-// Mock data - سيتم استبداله ببيانات حقيقية من Telegram
-const mockSignals = [
-  {
-    id: 1,
-    asset: "GBPUSD-OTC",
-    timeframe: "M1",
-    direction: "PUT",
-    amount: 5,
-    timestamp: "2025-11-03 14:23:45",
-    status: "executed",
-    result: "win"
-  },
-  {
-    id: 2,
-    asset: "EURUSD-OTC",
-    timeframe: "M1",
-    direction: "CALL",
-    amount: 5,
-    timestamp: "2025-11-03 14:20:12",
-    status: "executed",
-    result: "loss"
-  },
-  {
-    id: 3,
-    asset: "AUDCAD-OTC",
-    timeframe: "M1",
-    direction: "PUT",
-    amount: 5,
-    timestamp: "2025-11-03 14:18:33",
-    status: "pending",
-    result: null
-  }
-];
-
 export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
+  const { signals, loading } = useSignals();
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <div className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
+            التوصيات المباشرة
+          </CardTitle>
+          <CardDescription>
+            آخر التوصيات من قناة تيليجرام
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-[400px]">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   return (
     <Card>
       <CardHeader>
@@ -57,8 +47,17 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[400px] pr-4">
-          <div className="space-y-3">
-            {mockSignals.map((signal) => (
+          {signals.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <Clock className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">لا توجد توصيات بعد</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                سيتم عرض التوصيات الجديدة تلقائياً عند وصولها
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {signals.map((signal) => (
               <div
                 key={signal.id}
                 className="flex items-center justify-between rounded-lg border border-border bg-card p-4 hover:bg-accent/50 transition-colors"
@@ -94,7 +93,7 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {signal.timestamp}
+                        {format(new Date(signal.received_at), 'yyyy-MM-dd HH:mm:ss')}
                       </span>
                       <span>المبلغ: ${signal.amount}</span>
                     </div>
@@ -102,31 +101,19 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {signal.status === "executed" && signal.result && (
+                  {signal.status === "executed" && (
                     <Badge 
-                      variant={signal.result === "win" ? "default" : "destructive"}
-                      className={cn(
-                        "gap-1",
-                        signal.result === "win" ? "bg-success hover:bg-success/90" : "bg-danger hover:bg-danger/90"
-                      )}
+                      variant="default"
+                      className="gap-1 bg-success hover:bg-success/90"
                     >
-                      {signal.result === "win" ? (
-                        <>
-                          <CheckCircle2 className="h-3 w-3" />
-                          ربح
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="h-3 w-3" />
-                          خسارة
-                        </>
-                      )}
+                      <CheckCircle2 className="h-3 w-3" />
+                      تم التنفيذ
                     </Badge>
                   )}
                   {signal.status === "pending" && (
                     <Badge variant="outline" className="gap-1">
                       <Clock className="h-3 w-3" />
-                      قيد التنفيذ
+                      قيد الانتظار
                     </Badge>
                   )}
                   {!autoTradeEnabled && signal.status === "pending" && (
@@ -137,7 +124,8 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          )}
         </ScrollArea>
       </CardContent>
     </Card>
