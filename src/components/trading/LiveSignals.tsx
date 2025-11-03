@@ -120,17 +120,28 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[400px] pr-4">
-          {signals.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <Clock className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">لا توجد توصيات بعد</p>
-              <p className="text-xs text-muted-foreground mt-2">
-                سيتم عرض التوصيات الجديدة تلقائياً عند وصولها
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {signals.map((signal) => (
+          {(() => {
+            // Filter to show only recent signals (last 12 hours)
+            const twelveHoursAgo = Date.now() - 12 * 60 * 60 * 1000;
+            const recentSignals = signals.filter(signal => 
+              new Date(signal.received_at).getTime() >= twelveHoursAgo
+            );
+
+            if (recentSignals.length === 0) {
+              return (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <Clock className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">لا توجد توصيات حديثة</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    سيتم عرض التوصيات الجديدة تلقائياً عند وصولها
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-3">
+                {recentSignals.map((signal) => (
               <div
                 key={signal.id}
                 className="flex items-center justify-between rounded-lg border border-border bg-card p-4 hover:bg-accent/50 transition-colors"
@@ -299,10 +310,11 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                     </Badge>
                   )}
                 </div>
+                </div>
+              ))}
               </div>
-            ))}
-            </div>
-          )}
+            );
+          })()}
         </ScrollArea>
       </CardContent>
     </Card>
