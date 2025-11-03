@@ -8,13 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, Settings, History, TrendingUp, Loader2, Shield } from "lucide-react";
 import { toast } from "sonner";
-
 const Index = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
-
   const generateDeviceId = () => {
     let deviceId = localStorage.getItem("device_id");
     if (!deviceId) {
@@ -23,25 +21,20 @@ const Index = () => {
     }
     return deviceId;
   };
-
   const checkSubscription = async () => {
     const deviceId = generateDeviceId();
-
     try {
-      const { data, error } = await supabase
-        .from("subscriptions")
-        .select("*")
-        .eq("device_id", deviceId)
-        .order("expires_at", { ascending: false })
-        .limit(1);
-
+      const {
+        data,
+        error
+      } = await supabase.from("subscriptions").select("*").eq("device_id", deviceId).order("expires_at", {
+        ascending: false
+      }).limit(1);
       if (error) throw error;
-
       if (data && data.length > 0) {
         const subscription = data[0];
         const expiresAt = new Date(subscription.expires_at);
         const now = new Date();
-
         if (expiresAt > now) {
           setHasSubscription(true);
           setLoading(false);
@@ -59,25 +52,18 @@ const Index = () => {
       navigate("/subscription");
     }
   };
-
   useEffect(() => {
     checkSubscription();
   }, []);
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background dark">
+    return <div className="min-h-screen flex items-center justify-center bg-background dark">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
   if (!hasSubscription) {
     return null;
   }
-
-  return (
-    <div className="min-h-screen bg-background dark">
+  return <div className="min-h-screen bg-background dark">
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
@@ -96,10 +82,7 @@ const Index = () => {
             <div className="flex items-center gap-2 shrink-0">
               <div className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
               <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">متصل</span>
-              <Button onClick={() => navigate("/admin")} variant="outline" size="sm" className="ml-2">
-                <Shield className="h-4 w-4" />
-                <span className="hidden sm:inline ml-2">المسؤول</span>
-              </Button>
+              
             </div>
           </div>
         </div>
@@ -145,8 +128,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
