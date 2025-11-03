@@ -172,13 +172,8 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                   {signal.status === "pending" && (
                     <Badge variant="outline" className="gap-1">
                       <Clock className="h-3 w-3" />
-                      قيد الانتظار
+                      {(signal as any).entry_time ? `الدخول: ${(signal as any).entry_time} UTC-3` : 'قيد الانتظار'}
                     </Badge>
-                  )}
-                  {!autoTradeEnabled && signal.status === "pending" && (
-                    <Button size="sm" variant="outline">
-                      تنفيذ يدوي
-                    </Button>
                   )}
                 </div>
               </div>

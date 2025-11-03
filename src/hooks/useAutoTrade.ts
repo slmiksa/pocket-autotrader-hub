@@ -5,7 +5,12 @@ import type { Signal } from './useSignals';
 
 export const useAutoTrade = (enabled: boolean, signals: Signal[]) => {
   useEffect(() => {
+    // Auto-trade disabled: Pocket Option doesn't provide official API
+    // Signals are displayed for manual execution
     if (!enabled) return;
+    
+    // Temporarily disabled auto-trade functionality
+    return;
 
     const executePendingSignals = async () => {
       // Find all pending signals

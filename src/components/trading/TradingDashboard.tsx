@@ -28,6 +28,20 @@ export const TradingDashboard = () => {
         </CardContent>
       </Card>
 
+      {autoTradeEnabled && (
+        <Card className="border-yellow-500/30 bg-yellow-500/10">
+          <CardContent className="flex items-center gap-3 py-4">
+            <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-yellow-500">التداول التلقائي غير متاح حاليًا</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Pocket Option لا توفر API رسمية. التوصيات تُعرض هنا ويمكنك تنفيذها يدويًا في منصة التداول (المنطقة الزمنية: UTC -3:00)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Auto Trade Control */}
       <Card>
         <CardHeader>
