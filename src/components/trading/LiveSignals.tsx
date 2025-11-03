@@ -15,7 +15,7 @@ interface LiveSignalsProps {
 }
 
 export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
-  const { signals, loading } = useSignals();
+  const { signals, loading, refetch } = useSignals();
   const [fetching, setFetching] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
 
@@ -37,6 +37,13 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
       
       if (data.signalsFound > 0) {
         toast.success(`تم العثور على ${data.signalsFound} توصية جديدة من القناة 📢`);
+        // Refresh signals immediately after finding new ones
+        refetch();
+      }
+      if (data.resultsUpdated > 0) {
+        toast.success(`تم تحديث ${data.resultsUpdated} نتيجة صفقة 📊`);
+        // Refresh signals to show updated results
+        refetch();
       }
     } catch (error) {
       console.error('Error fetching Telegram messages:', error);
@@ -152,45 +159,64 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {format(new Date(signal.received_at), 'yyyy-MM-dd HH:mm:ss')}
+                        {format(new Date(signal.received_at), 'HH:mm:ss')}
                       </span>
+                      {signal.entry_time && (
+                        <span className="text-primary font-medium">
+                          ⏰ الدخول: {signal.entry_time}
+                        </span>
+                      )}
                       <span>المبلغ: ${signal.amount}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-end gap-1">
+                  {/* Show result (win/loss) first if completed */}
                   {signal.status === "completed" && signal.result === "win" && (
                     <Badge 
                       variant="default"
-                      className="gap-1 bg-success hover:bg-success/90"
+                      className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1"
                     >
-                      <CheckCircle2 className="h-3 w-3" />
+                      <CheckCircle2 className="h-4 w-4" />
                       ✅ ربح
                     </Badge>
                   )}
                   {signal.status === "completed" && signal.result === "loss" && (
                     <Badge 
                       variant="destructive"
-                      className="gap-1"
+                      className="gap-1 text-base px-3 py-1"
                     >
-                      <XCircle className="h-3 w-3" />
+                      <XCircle className="h-4 w-4" />
                       ❌ خسارة
                     </Badge>
                   )}
-                  {signal.status === "executed" && (
-                    <Badge 
-                      variant="secondary"
-                      className="gap-1"
-                    >
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      جاري التنفيذ...
-                    </Badge>
-                  )}
+                  
+                  {/* Show "executing" only for the most recent signal or signals with very recent received_at */}
+                  {signal.status === "executed" && (() => {
+                    const signalTime = new Date(signal.received_at).getTime();
+                    const now = Date.now();
+                    const diffMinutes = (now - signalTime) / (1000 * 60);
+                    
+                    // Only show "جاري التنفيذ" if signal is less than 10 minutes old
+                    if (diffMinutes < 10) {
+                      return (
+                        <Badge 
+                          variant="secondary"
+                          className="gap-1"
+                        >
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          جاري التنفيذ...
+                        </Badge>
+                      );
+                    }
+                    return null;
+                  })()}
+                  
                   {signal.status === "pending" && (
                     <Badge variant="outline" className="gap-1">
                       <Clock className="h-3 w-3" />
-                      {signal.entry_time ? `الدخول: ${signal.entry_time}` : 'قيد الانتظار'}
+                      قيد الانتظار
                     </Badge>
                   )}
                   {signal.status === "failed" && (
