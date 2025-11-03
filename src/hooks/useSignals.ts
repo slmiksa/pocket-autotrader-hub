@@ -95,7 +95,7 @@ export const useSignals = () => {
     // Fallback polling in case realtime disconnects
     const poll = setInterval(() => {
       fetchSignals();
-    }, 20000);
+    }, 10000);
  
     return () => {
       console.log('📡 Unsubscribing from realtime');
