@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pocket Option Auto Trader</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 320px;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .header p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .status {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 8px;
+      animation: pulse 2s infinite;
+    }
+
+    .status-indicator.active {
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
+    }
+
+    .status-indicator.inactive {
+      background: #6b7280;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .toggle-container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .toggle-switch label {
+      font-weight: 600;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .switch {
+      position: relative;
+      width: 50px;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 14px;
+      transition: background 0.3s;
+    }
+
+    .switch.active {
+      background: #10b981;
+    }
+
+    .switch::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      top: 3px;
+      right: 3px;
+      transition: transform 0.3s;
+    }
+
+    .switch.active::after {
+      transform: translateX(-22px);
+    }
+
+    .info {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .info strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #fbbf24;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 11px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🤖 التداول التلقائي</h1>
+    <p>Pocket Option Auto Trader</p>
+  </div>
+
+  <div class="status">
+    <span id="statusText">جاري التحميل...</span>
+    <span class="status-indicator" id="statusIndicator"></span>
+  </div>
+
+  <div class="toggle-container">
+    <div class="toggle-switch" id="toggleSwitch">
+      <label>تفعيل التداول التلقائي</label>
+      <div class="switch" id="switch"></div>
+    </div>
+  </div>
+
+  <div class="info">
+    <strong>📋 طريقة الاستخدام:</strong>
+    1. افتح صفحة Pocket Option في تبويب جديد<br>
+    2. سجل الدخول إلى حسابك<br>
+    3. فعّل التداول التلقائي أعلاه<br>
+    4. سيتم تنفيذ الإشارات تلقائياً!
+  </div>
+
+  <div class="footer">
+    v1.0.0 | Auto Trade System
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
