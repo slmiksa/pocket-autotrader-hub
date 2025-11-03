@@ -14,7 +14,125 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      signals: {
+        Row: {
+          amount: number
+          asset: string
+          created_at: string
+          direction: string
+          id: string
+          raw_message: string | null
+          received_at: string
+          status: string
+          telegram_message_id: number | null
+          timeframe: string
+        }
+        Insert: {
+          amount?: number
+          asset: string
+          created_at?: string
+          direction: string
+          id?: string
+          raw_message?: string | null
+          received_at?: string
+          status?: string
+          telegram_message_id?: number | null
+          timeframe: string
+        }
+        Update: {
+          amount?: number
+          asset?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          raw_message?: string | null
+          received_at?: string
+          status?: string
+          telegram_message_id?: number | null
+          timeframe?: string
+        }
+        Relationships: []
+      }
+      trades: {
+        Row: {
+          amount: number
+          asset: string
+          created_at: string
+          direction: string
+          entry_time: string
+          error_message: string | null
+          execution_method: string | null
+          expiry_time: string | null
+          id: string
+          pocket_trade_id: string | null
+          profit: number | null
+          result: string | null
+          signal_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          asset: string
+          created_at?: string
+          direction: string
+          entry_time?: string
+          error_message?: string | null
+          execution_method?: string | null
+          expiry_time?: string | null
+          id?: string
+          pocket_trade_id?: string | null
+          profit?: number | null
+          result?: string | null
+          signal_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          asset?: string
+          created_at?: string
+          direction?: string
+          entry_time?: string
+          error_message?: string | null
+          execution_method?: string | null
+          expiry_time?: string | null
+          id?: string
+          pocket_trade_id?: string | null
+          profit?: number | null
+          result?: string | null
+          signal_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trades_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
