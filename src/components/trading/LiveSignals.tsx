@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useSignals } from "@/hooks/useSignals";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 interface LiveSignalsProps {
@@ -25,14 +25,28 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
       
       if (error) throw error;
       
-      toast.success(`تم فحص ${data.messagesChecked} رسالة، وجدنا ${data.signalsFound} توصية جديدة`);
+      if (data.signalsFound > 0) {
+        toast.success(`تم العثور على ${data.signalsFound} توصية جديدة`);
+      }
     } catch (error) {
       console.error('Error fetching Telegram messages:', error);
-      toast.error('فشل جلب الرسائل من Telegram');
     } finally {
       setFetching(false);
     }
   };
+
+  useEffect(() => {
+    // Fetch immediately on mount
+    fetchTelegramMessages();
+
+    // Set up interval to fetch every 3 seconds
+    const interval = setInterval(() => {
+      fetchTelegramMessages();
+    }, 3000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (
