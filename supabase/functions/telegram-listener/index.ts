@@ -162,10 +162,10 @@ serve(async (req) => {
 
       const params = new URLSearchParams();
       if (typeof lastOffset === 'number') params.set('offset', String(lastOffset));
-      params.set('limit', '50');
-      params.set('timeout', '0'); // no long-polling to reduce overlap
-      // Also receive channel posts if the bot is added to a channel
-      params.set('allowed_updates', JSON.stringify(['message', 'channel_post']));
+      params.set('limit', '100');
+      params.set('timeout', '0');
+      // CRITICAL: Include channel_post to receive messages from channels
+      params.set('allowed_updates', JSON.stringify(['message', 'channel_post', 'edited_channel_post']));
 
       const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?${params.toString()}`;
       const response = await fetch(url);
@@ -197,11 +197,27 @@ serve(async (req) => {
           maxUpdateId = Math.max(maxUpdateId, update.update_id);
         }
 
-        const msg = update.message || update.channel_post;
+        // Try to get message from different sources
+        const msg = update.message || update.channel_post || update.edited_channel_post;
+        
         if (msg?.text) {
+          // Log channel info for debugging
+          if (msg.chat?.type === 'channel') {
+            console.log('Channel message received:', {
+              chatId: msg.chat.id,
+              chatTitle: msg.chat.title,
+              messageId: msg.message_id,
+              text: msg.text.substring(0, 100)
+            });
+          }
+
           const signal = parseSignalFromMessage(msg.text as string);
           if (signal) {
             const messageId = msg.message_id as number;
+            
+            // Create unique identifier combining chat_id and message_id for channels
+            const uniqueId = msg.chat?.id ? `${msg.chat.id}_${messageId}` : String(messageId);
+            
             // Check if already exists
             const { data: existing } = await supabase
               .from('signals')
@@ -227,9 +243,13 @@ serve(async (req) => {
                 console.error('Error inserting signal:', error);
               } else if (newSignal && newSignal[0]) {
                 signals.push(newSignal[0]);
-                console.log('New signal inserted:', newSignal[0]);
+                console.log('New signal inserted from channel:', newSignal[0]);
               }
+            } else {
+              console.log('Signal already exists, skipping:', messageId);
             }
+          } else {
+            console.log('No signal pattern found in message:', msg.text.substring(0, 100));
           }
         }
       }
