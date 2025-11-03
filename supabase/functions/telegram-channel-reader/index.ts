@@ -151,13 +151,21 @@ async function findBestSignalForResult(supabase: any, parsed: { asset?: string; 
     .limit(30);
   if (!recent || recent.length === 0) return null;
 
-  // Filter signals from last 10 minutes only for better accuracy
+  // Filter signals from last 10 minutes only AND past their entry_time
   const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-  let candidates = recent.filter((s: any) => new Date(s.received_at).getTime() >= tenMinutesAgo);
+  let candidates = recent.filter((s: any) => {
+    const receivedTime = new Date(s.received_at).getTime();
+    if (receivedTime < tenMinutesAgo) return false;
+    
+    // Must have entry_time and be past it
+    if (!s.entry_time) return false;
+    const mins = minutesSinceEntry(s.entry_time);
+    return mins >= 0 && mins <= 5; // Between entry and 5 min after
+  });
   
-  if (candidates.length === 0) candidates = recent; // Fallback to all recent
+  if (candidates.length === 0) return null;
 
-  // If asset/timeframe present, prioritize exact matches
+  // If asset/timeframe present, filter by them
   if (parsed.asset) {
     const cond = toCondensedAsset(parsed.asset);
     const assetMatches = candidates.filter((s: any) => toCondensedAsset(s.asset || '').includes(cond));
@@ -168,21 +176,7 @@ async function findBestSignalForResult(supabase: any, parsed: { asset?: string; 
     if (tfMatches.length > 0) candidates = tfMatches;
   }
 
-  // Priority 1: Executed signals first (most likely to have just finished)
-  const executedSignals = candidates.filter((s: any) => s.status === 'executed');
-  if (executedSignals.length > 0) return executedSignals[0];
-
-  // Priority 2: Pending signals that have passed entry_time (currently executing)
-  const executingSignals = candidates
-    .filter((s: any) => s.status === 'pending' && s.entry_time)
-    .sort((a: any, b: any) => minutesSinceEntry(a.entry_time) - minutesSinceEntry(b.entry_time))
-    .filter((s: any) => {
-      const mins = minutesSinceEntry(s.entry_time);
-      return mins >= 0 && mins <= 5; // Within 5 minutes after entry
-    });
-  if (executingSignals.length > 0) return executingSignals[0];
-
-  // Priority 3: Most recent signal overall
+  // Return the most recent candidate
   return candidates[0] || null;
 }
 serve(async (req) => {
