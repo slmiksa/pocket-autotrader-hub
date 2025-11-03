@@ -56,109 +56,201 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, serviceKey);
 
-    const apiId = Deno.env.get('TELEGRAM_API_ID');
-    const apiHash = Deno.env.get('TELEGRAM_API_HASH');
-    const phone = Deno.env.get('TELEGRAM_PHONE');
-    const botUsername = Deno.env.get('TELEGRAM_BOT_USERNAME');
+    // Helper: read setting by key
+    const getSetting = async (key: string) => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('id, value')
+        .eq('key', key)
+        .limit(1);
+      if (error) {
+        console.error('getSetting error', key, error);
+        return null;
+      }
+      return (data && data[0]) || null;
+    };
 
-    console.log('Telegram credentials configured:', { 
-      hasApiId: !!apiId, 
-      hasApiHash: !!apiHash,
-      hasPhone: !!phone,
-      botUsername 
-    });
+    // Helper: upsert setting by key
+    const upsertSetting = async (key: string, value: Record<string, unknown>) => {
+      // Try update first
+      const existing = await getSetting(key);
+      if (existing?.id) {
+        const { error } = await supabase
+          .from('settings')
+          .update({ value })
+          .eq('id', existing.id);
+        if (error) console.error('update setting error', key, error);
+        return;
+      }
+      const { error } = await supabase
+        .from('settings')
+        .insert({ key, value });
+      if (error) console.error('insert setting error', key, error);
+    };
 
-    // For now, we'll use polling approach with Telegram Bot API
-    // User can create a bot and forward messages from the trading bot to it
-    const BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN');
-    
-    if (!BOT_TOKEN) {
+    // Simple DB-based lock to avoid concurrent getUpdates calls
+    const now = new Date();
+    const lockKey = 'telegram_listener_lock';
+    const lockTTLms = 10_000; // 10s safety window
+
+    const lockRow = await getSetting(lockKey);
+    const lockedUntil = lockRow?.value?.['until'] ? new Date(lockRow.value['until'] as string) : null;
+
+    if (lockedUntil && lockedUntil > now) {
+      console.log('Another instance is running, skipping. Locked until:', lockedUntil.toISOString());
       return new Response(
-        JSON.stringify({ 
-          error: 'TELEGRAM_BOT_TOKEN not configured',
-          message: 'Please create a bot via @BotFather and add the token'
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        JSON.stringify({ success: true, skipped: true, reason: 'locked' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get updates from Telegram
-    const response = await fetch(
-      `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=-1&limit=10`
-    );
-    
-    const data = await response.json();
-    console.log('Telegram response:', JSON.stringify(data, null, 2));
+    // Acquire lock
+    const newUntil = new Date(now.getTime() + lockTTLms).toISOString();
+    await upsertSetting(lockKey, { until: newUntil });
 
-    if (!data.ok) {
-      throw new Error('Failed to fetch Telegram updates: ' + data.description);
-    }
+    // Ensure we always release the lock
+    const releaseLock = async () => {
+      await upsertSetting(lockKey, { until: new Date(0).toISOString() });
+    };
 
-    const messages = data.result || [];
-    const signals = [];
+    try {
+      const apiId = Deno.env.get('TELEGRAM_API_ID');
+      const apiHash = Deno.env.get('TELEGRAM_API_HASH');
+      const phone = Deno.env.get('TELEGRAM_PHONE');
+      const botUsername = Deno.env.get('TELEGRAM_BOT_USERNAME');
 
-    for (const update of messages) {
-      if (update.message && update.message.text) {
-        const signal = parseSignalFromMessage(update.message.text);
-        
-        if (signal) {
-          // Check if signal already exists
-          const { data: existing } = await supabase
-            .from('signals')
-            .select('id')
-            .eq('telegram_message_id', update.message.message_id)
-            .single();
+      console.log('Telegram credentials configured:', {
+        hasApiId: !!apiId,
+        hasApiHash: !!apiHash,
+        hasPhone: !!phone,
+        botUsername
+      });
 
-          if (!existing) {
-            // Insert new signal
-            const { data: newSignal, error } = await supabase
+      const BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN');
+      if (!BOT_TOKEN) {
+        await releaseLock();
+        return new Response(
+          JSON.stringify({
+            error: 'TELEGRAM_BOT_TOKEN not configured',
+            message: 'Please create a bot via @BotFather and add the token'
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+
+      // Read last processed update offset
+      const offsetKey = 'telegram_update_offset';
+      const offsetRow = await getSetting(offsetKey);
+      const lastOffset = typeof offsetRow?.value?.['offset'] === 'number' ? (offsetRow.value['offset'] as number) : undefined;
+
+      const params = new URLSearchParams();
+      if (typeof lastOffset === 'number') params.set('offset', String(lastOffset));
+      params.set('limit', '50');
+      params.set('timeout', '0'); // no long-polling to reduce overlap
+      // Also receive channel posts if the bot is added to a channel
+      params.set('allowed_updates', JSON.stringify(['message', 'channel_post']));
+
+      const url = `https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?${params.toString()}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      console.log('Telegram response:', JSON.stringify(data, null, 2));
+
+      if (!data.ok) {
+        const description: string = data.description || 'Unknown error';
+        // Handle 409 gracefully to avoid client 500s
+        if (String(data.error_code) === '409' || description.toLowerCase().includes('conflict')) {
+          console.warn('Telegram getUpdates conflict detected, another process may be running.');
+          await releaseLock();
+          return new Response(
+            JSON.stringify({ success: false, conflict: true, reason: description }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        throw new Error('Failed to fetch Telegram updates: ' + description);
+      }
+
+      const updates: any[] = data.result || [];
+      const signals: any[] = [];
+
+      let maxUpdateId = typeof lastOffset === 'number' ? lastOffset - 1 : -1;
+
+      for (const update of updates) {
+        // Track max update_id for next offset
+        if (typeof update.update_id === 'number') {
+          maxUpdateId = Math.max(maxUpdateId, update.update_id);
+        }
+
+        const msg = update.message || update.channel_post;
+        if (msg?.text) {
+          const signal = parseSignalFromMessage(msg.text as string);
+          if (signal) {
+            const messageId = msg.message_id as number;
+            // Check if already exists
+            const { data: existing } = await supabase
               .from('signals')
-              .insert({
-                asset: signal.asset,
-                timeframe: signal.timeframe,
-                direction: signal.direction,
-                raw_message: signal.raw_message,
-                telegram_message_id: update.message.message_id,
-                status: 'pending',
-              })
-              .select()
-              .single();
+              .select('id')
+              .eq('telegram_message_id', messageId)
+              .limit(1);
 
-            if (error) {
-              console.error('Error inserting signal:', error);
-            } else {
-              signals.push(newSignal);
-              console.log('New signal inserted:', newSignal);
+            if (!existing || existing.length === 0) {
+              const { data: newSignal, error } = await supabase
+                .from('signals')
+                .insert({
+                  asset: signal.asset,
+                  timeframe: signal.timeframe,
+                  direction: signal.direction,
+                  raw_message: signal.raw_message,
+                  telegram_message_id: messageId,
+                  status: 'pending'
+                })
+                .select()
+                .limit(1);
+
+              if (error) {
+                console.error('Error inserting signal:', error);
+              } else if (newSignal && newSignal[0]) {
+                signals.push(newSignal[0]);
+                console.log('New signal inserted:', newSignal[0]);
+              }
             }
           }
         }
       }
+
+      // Save next offset if we processed any updates
+      if (maxUpdateId >= 0) {
+        await upsertSetting(offsetKey, { offset: maxUpdateId + 1 });
+      }
+
+      await releaseLock();
+      return new Response(
+        JSON.stringify({
+          success: true,
+          messagesChecked: updates.length,
+          signalsFound: signals.length,
+          signals
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (err) {
+      // Always release the lock on error
+      await releaseLock();
+      throw err;
     }
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        messagesChecked: messages.length,
-        signalsFound: signals.length,
-        signals 
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
   } catch (error) {
     console.error('Error in telegram-listener:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }

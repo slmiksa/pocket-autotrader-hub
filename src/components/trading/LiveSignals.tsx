@@ -49,10 +49,10 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
     // Fetch immediately on mount
     fetchTelegramMessages();
 
-    // Set up interval to fetch every 5 seconds (increased to avoid conflicts)
+    // Set up interval to fetch every 3 seconds
     const interval = setInterval(() => {
       fetchTelegramMessages();
-    }, 5000);
+    }, 3000);
 
     // Cleanup interval on unmount
     return () => clearInterval(interval);
