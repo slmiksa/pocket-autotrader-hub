@@ -98,7 +98,7 @@ function parseResultFromMessage(text: string): { asset?: string; timeframe?: str
   const isLoss = /(❌|⛔️|loss|lose|lost|خسارة|خسر)/i.test(text);
   if (!isWin && !isLoss) return null;
 
-  // Try to extract asset and timeframe if present
+  // Try to extract asset and timeframe if present (often result messages omit them)
   const assetMatch = text.match(/💷\s*([A-Z]{3}\/[A-Z]{3}|[A-Z]{6,}-OTC|[A-Z]{6})/i);
   const timeframeMatch = text.match(/💎\s*(M\d+|H\d+)/i);
 
@@ -111,6 +111,62 @@ function parseResultFromMessage(text: string): { asset?: string; timeframe?: str
   }
 
   return { asset, timeframe: timeframeMatch ? timeframeMatch[1] : undefined, result: isWin ? 'win' : 'loss' };
+}
+
+// Helpers to match result to most likely signal when result message lacks details
+function toCondensedAsset(a: string) {
+  return a.replace('-OTC', '').replace('/', '').toUpperCase();
+}
+function minutesSinceEntry(entryTime?: string | null) {
+  if (!entryTime) return Number.POSITIVE_INFINITY;
+  const parts = entryTime.split(':').map((n) => parseInt(n));
+  if (parts.length < 2 || parts.some((n) => Number.isNaN(n))) return Number.POSITIVE_INFINITY;
+  const now = new Date();
+  const dt = new Date(now);
+  dt.setHours(parts[0], parts[1], parts[2] || 0, 0);
+  let diff = (now.getTime() - dt.getTime()) / 60000; // minutes
+  // If entry time is in the future (e.g., past midnight edge-case), push into past by 24h for comparison
+  if (diff < -1) diff += 24 * 60;
+  return diff;
+}
+async function findBestSignalForResult(supabase: any, parsed: { asset?: string; timeframe?: string }) {
+  // Fetch recent signals and decide in memory for robust matching
+  const { data: recent } = await supabase
+    .from('signals')
+    .select('id, asset, timeframe, entry_time, status, received_at')
+    .order('received_at', { ascending: false })
+    .limit(30);
+  if (!recent || recent.length === 0) return null;
+
+  let candidates = recent.filter((s: any) => ['pending', 'processing', 'executed'].includes(s.status));
+  // Limit to last 3 hours
+  const threeHoursAgo = Date.now() - 3 * 60 * 60 * 1000;
+  candidates = candidates.filter((s: any) => new Date(s.received_at).getTime() >= threeHoursAgo);
+
+  // If asset/timeframe present, prioritize matches
+  if (parsed.asset) {
+    const cond = toCondensedAsset(parsed.asset);
+    candidates = candidates.filter((s: any) => toCondensedAsset(s.asset || '').includes(cond));
+  }
+  if (parsed.timeframe) {
+    candidates = candidates.filter((s: any) => (s.timeframe || '').toUpperCase() === parsed.timeframe?.toUpperCase());
+  }
+
+  // Prefer executed first, then pending whose entry_time within last 15 min
+  const executedFirst = candidates.filter((s: any) => s.status === 'executed');
+  if (executedFirst.length > 0) return executedFirst[0];
+
+  const recentPending = candidates
+    .filter((s: any) => s.status === 'pending')
+    .sort((a: any, b: any) => minutesSinceEntry(a.entry_time) - minutesSinceEntry(b.entry_time))
+    .filter((s: any) => {
+      const mins = minutesSinceEntry(s.entry_time);
+      return mins >= -2 && mins <= 15; // window around entry up to 15 min after
+    });
+  if (recentPending.length > 0) return recentPending[0];
+
+  // Fallback: the most recent candidate
+  return candidates[0] || null;
 }
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -181,26 +237,8 @@ serve(async (req) => {
         const parsedResult = parseResultFromMessage(messageText);
         if (parsedResult) {
           try {
-            let query = supabase
-              .from('signals')
-              .select('id, asset, timeframe, received_at')
-              .in('status', ['pending', 'processing', 'executed'])
-              .order('received_at', { ascending: false })
-              .limit(1);
-
-            if (parsedResult.asset) {
-              const condensed = parsedResult.asset.replace('/', '');
-              query = query.ilike('asset', `%${condensed}%`);
-            }
-            if (parsedResult.timeframe) {
-              query = query.eq('timeframe', parsedResult.timeframe);
-            }
-            // Only consider recent signals (last 3 hours)
-            query = query.gte('received_at', new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString());
-
-            const { data: candidates, error: candidatesError } = await query;
-            if (!candidatesError && candidates && candidates.length > 0) {
-              const target = candidates[0];
+            const target = await findBestSignalForResult(supabase, parsedResult);
+            if (target) {
               const { error: updateError } = await supabase
                 .from('signals')
                 .update({ status: 'completed', result: parsedResult.result })
@@ -209,6 +247,8 @@ serve(async (req) => {
                 resultsUpdated += 1;
                 console.log('Updated result for signal', target.id, parsedResult.result);
               }
+            } else {
+              console.log('No matching signal found for result:', parsedResult.result);
             }
           } catch (e) {
             console.warn('Error updating result:', e);
@@ -307,25 +347,8 @@ serve(async (req) => {
         const parsedResult = parseResultFromMessage(messageText);
         if (parsedResult) {
           try {
-            let query = supabase
-              .from('signals')
-              .select('id, asset, timeframe, received_at')
-              .in('status', ['pending', 'processing', 'executed'])
-              .order('received_at', { ascending: false })
-              .limit(1);
-
-            if (parsedResult.asset) {
-              const condensed = parsedResult.asset.replace('/', '');
-              query = query.ilike('asset', `%${condensed}%`);
-            }
-            if (parsedResult.timeframe) {
-              query = query.eq('timeframe', parsedResult.timeframe);
-            }
-            query = query.gte('received_at', new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString());
-
-            const { data: candidates, error: candidatesError } = await query;
-            if (!candidatesError && candidates && candidates.length > 0) {
-              const target = candidates[0];
+            const target = await findBestSignalForResult(supabase, parsedResult);
+            if (target) {
               const { error: updateError } = await supabase
                 .from('signals')
                 .update({ status: 'completed', result: parsedResult.result })
@@ -334,6 +357,8 @@ serve(async (req) => {
                 resultsUpdated += 1;
                 console.log('Updated result for signal', target.id, parsedResult.result);
               }
+            } else {
+              console.log('No matching signal found for result (web):', parsedResult.result);
             }
           } catch (e) {
             console.warn('Error updating result (web):', e);
