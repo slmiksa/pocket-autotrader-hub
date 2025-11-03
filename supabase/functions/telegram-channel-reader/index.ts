@@ -142,42 +142,47 @@ function minutesSinceEntry(entryTime?: string | null) {
   return diff;
 }
 async function findBestSignalForResult(supabase: any, parsed: { asset?: string; timeframe?: string }) {
-  // Fetch recent signals and decide in memory for robust matching
+  // Fetch recent signals without result
   const { data: recent } = await supabase
     .from('signals')
-    .select('id, asset, timeframe, entry_time, status, received_at')
+    .select('id, asset, timeframe, entry_time, status, received_at, result')
+    .is('result', null) // Only signals without results
     .order('received_at', { ascending: false })
     .limit(30);
   if (!recent || recent.length === 0) return null;
 
-  let candidates = recent.filter((s: any) => ['pending', 'processing', 'executed'].includes(s.status));
-  // Limit to last 3 hours
-  const threeHoursAgo = Date.now() - 3 * 60 * 60 * 1000;
-  candidates = candidates.filter((s: any) => new Date(s.received_at).getTime() >= threeHoursAgo);
+  // Filter signals from last 10 minutes only for better accuracy
+  const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+  let candidates = recent.filter((s: any) => new Date(s.received_at).getTime() >= tenMinutesAgo);
+  
+  if (candidates.length === 0) candidates = recent; // Fallback to all recent
 
-  // If asset/timeframe present, prioritize matches
+  // If asset/timeframe present, prioritize exact matches
   if (parsed.asset) {
     const cond = toCondensedAsset(parsed.asset);
-    candidates = candidates.filter((s: any) => toCondensedAsset(s.asset || '').includes(cond));
+    const assetMatches = candidates.filter((s: any) => toCondensedAsset(s.asset || '').includes(cond));
+    if (assetMatches.length > 0) candidates = assetMatches;
   }
   if (parsed.timeframe) {
-    candidates = candidates.filter((s: any) => (s.timeframe || '').toUpperCase() === parsed.timeframe?.toUpperCase());
+    const tfMatches = candidates.filter((s: any) => (s.timeframe || '').toUpperCase() === parsed.timeframe?.toUpperCase());
+    if (tfMatches.length > 0) candidates = tfMatches;
   }
 
-  // Prefer executed first, then pending whose entry_time within last 15 min
-  const executedFirst = candidates.filter((s: any) => s.status === 'executed');
-  if (executedFirst.length > 0) return executedFirst[0];
+  // Priority 1: Executed signals first (most likely to have just finished)
+  const executedSignals = candidates.filter((s: any) => s.status === 'executed');
+  if (executedSignals.length > 0) return executedSignals[0];
 
-  const recentPending = candidates
-    .filter((s: any) => s.status === 'pending')
+  // Priority 2: Pending signals that have passed entry_time (currently executing)
+  const executingSignals = candidates
+    .filter((s: any) => s.status === 'pending' && s.entry_time)
     .sort((a: any, b: any) => minutesSinceEntry(a.entry_time) - minutesSinceEntry(b.entry_time))
     .filter((s: any) => {
       const mins = minutesSinceEntry(s.entry_time);
-      return mins >= -2 && mins <= 15; // window around entry up to 15 min after
+      return mins >= 0 && mins <= 5; // Within 5 minutes after entry
     });
-  if (recentPending.length > 0) return recentPending[0];
+  if (executingSignals.length > 0) return executingSignals[0];
 
-  // Fallback: the most recent candidate
+  // Priority 3: Most recent signal overall
   return candidates[0] || null;
 }
 serve(async (req) => {
@@ -251,19 +256,20 @@ serve(async (req) => {
           try {
             const target = await findBestSignalForResult(supabase, parsedResult);
             if (target) {
+              // Only update result, keep status as is
               const { error: updateError } = await supabase
                 .from('signals')
-                .update({ status: 'completed', result: parsedResult.result })
+                .update({ result: parsedResult.result })
                 .eq('id', target.id);
               if (!updateError) {
                 resultsUpdated += 1;
-                console.log('Updated result for signal', target.id, parsedResult.result);
+                console.log('✅ Updated result for signal', target.id, '→', parsedResult.result);
               }
             } else {
-              console.log('No matching signal found for result:', parsedResult.result);
+              console.log('⚠️ No matching signal found for result:', parsedResult.result);
             }
           } catch (e) {
-            console.warn('Error updating result:', e);
+            console.warn('❌ Error updating result:', e);
           }
           // Continue to next item
           continue;
@@ -361,19 +367,20 @@ serve(async (req) => {
           try {
             const target = await findBestSignalForResult(supabase, parsedResult);
             if (target) {
+              // Only update result, keep status as is
               const { error: updateError } = await supabase
                 .from('signals')
-                .update({ status: 'completed', result: parsedResult.result })
+                .update({ result: parsedResult.result })
                 .eq('id', target.id);
               if (!updateError) {
                 resultsUpdated += 1;
-                console.log('Updated result for signal', target.id, parsedResult.result);
+                console.log('✅ Updated result for signal (web)', target.id, '→', parsedResult.result);
               }
             } else {
-              console.log('No matching signal found for result (web):', parsedResult.result);
+              console.log('⚠️ No matching signal found for result (web):', parsedResult.result);
             }
           } catch (e) {
-            console.warn('Error updating result (web):', e);
+            console.warn('❌ Error updating result (web):', e);
           }
           continue;
         }

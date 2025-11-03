@@ -26,10 +26,38 @@ export const TradeHistory = () => {
     );
   }
 
-  const completedTrades = signals.filter(signal => signal.status === 'completed' || signal.result);
+  // Show all signals with results OR finished signals (past entry_time + timeframe)
+  const completedTrades = signals.filter(signal => {
+    // Has result
+    if (signal.result) return true;
+    
+    // No result but has entry_time - check if finished
+    if (signal.entry_time) {
+      const parts = signal.entry_time.split(":").map(Number);
+      if (parts.length >= 2) {
+        const now = new Date();
+        const entryDateTime = new Date(now);
+        entryDateTime.setHours(parts[0], parts[1], parts[2] || 0, 0);
+        
+        let tfMinutes = 1;
+        if (signal.timeframe) {
+          const tf = signal.timeframe.toUpperCase();
+          if (tf.startsWith('M')) tfMinutes = parseInt(tf.slice(1)) || 1;
+          else if (tf.startsWith('H')) tfMinutes = (parseInt(tf.slice(1)) || 1) * 60;
+        }
+        
+        const endTime = new Date(entryDateTime.getTime() + tfMinutes * 60000);
+        return now > endTime; // Finished
+      }
+    }
+    
+    return false;
+  });
+  
   const wins = completedTrades.filter(signal => signal.result?.startsWith('win')).length;
   const losses = completedTrades.filter(signal => signal.result === 'loss').length;
-  const winRate = completedTrades.length > 0 ? Math.round((wins / completedTrades.length) * 100) : 0;
+  const finished = completedTrades.filter(signal => !signal.result).length;
+  const winRate = (wins + losses) > 0 ? Math.round((wins / (wins + losses)) * 100) : 0;
 
   return (
     <Card>
@@ -39,6 +67,7 @@ export const TradeHistory = () => {
           <div className="flex gap-2 text-sm">
             <span className="text-success">✅ {wins}</span>
             <span className="text-danger">❌ {losses}</span>
+            {finished > 0 && <span className="text-muted-foreground">⏹️ {finished}</span>}
             <span className="text-muted-foreground">({winRate}%)</span>
           </div>
         </CardTitle>
@@ -49,9 +78,9 @@ export const TradeHistory = () => {
           {completedTrades.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <Clock className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">لا توجد صفقات مكتملة بعد</p>
+              <p className="text-muted-foreground">لا توجد صفقات منتهية بعد</p>
               <p className="text-xs text-muted-foreground mt-2">
-                ستظهر النتائج هنا بعد اكتمال الصفقات
+                ستظهر هنا الصفقات المكتملة أو المنتهية
               </p>
             </div>
           ) : (
@@ -123,6 +152,14 @@ export const TradeHistory = () => {
                         >
                           <XCircle className="h-3 w-3" />
                           خسارة
+                        </Badge>
+                      )}
+                      {!signal.result && (
+                        <Badge 
+                          variant="outline"
+                          className="gap-1 text-muted-foreground"
+                        >
+                          منتهية
                         </Badge>
                       )}
                     </TableCell>

@@ -179,96 +179,56 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                 </div>
 
                 <div className="flex flex-col items-end gap-1">
-                  {/* Show result based on exact result value */}
-                  {signal.status === "completed" && signal.result === "win" && (
-                    <Badge 
-                      variant="default"
-                      className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      ✅ ربح
-                    </Badge>
-                  )}
-                  {signal.status === "completed" && signal.result === "win1" && (
-                    <Badge 
-                      variant="default"
-                      className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      ✅ ربح ¹
-                    </Badge>
-                  )}
-                  {signal.status === "completed" && signal.result === "win2" && (
-                    <Badge 
-                      variant="default"
-                      className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      ✅ ربح ²
-                    </Badge>
-                  )}
-                  {signal.status === "completed" && signal.result === "loss" && (
-                    <Badge 
-                      variant="destructive"
-                      className="gap-1 text-base px-3 py-1"
-                    >
-                      <XCircle className="h-4 w-4" />
-                      ❌ خسارة
-                    </Badge>
-                  )}
-                  
-                  {/* Show executing status based on entry time and status */}
-                  {!signal.result && (() => {
-                    // Check if we're in execution window based on entry_time
-                    const isInExecutionWindow = (() => {
-                      if (!signal.entry_time) return false;
-                      const parts = signal.entry_time.split(":").map(Number);
-                      if (parts.length < 2) return false;
-                      
-                      const now = new Date();
-                      const entryDateTime = new Date(now);
-                      entryDateTime.setHours(parts[0], parts[1], parts[2] || 0, 0);
-                      
-                      const diffMin = (now.getTime() - entryDateTime.getTime()) / 60000;
-                      return diffMin >= -1 && diffMin <= 5; // 1 min before to 5 min after
-                    })();
-                    
-                    const shouldShowExecuting = signal.status === "executed" || 
-                      (signal.status === "pending" && isInExecutionWindow);
-                    
-                    if (shouldShowExecuting) {
+                  {/* Dynamic status calculation based on result and entry_time */}
+                  {(() => {
+                    // Priority 1: Show result if it exists
+                    if (signal.result === "win") {
                       return (
                         <Badge 
-                          variant="secondary"
-                          className="gap-1 bg-blue-500/20 text-blue-400 border-blue-500/30"
+                          variant="default"
+                          className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1"
                         >
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          جاري التنفيذ...
+                          <CheckCircle2 className="h-4 w-4" />
+                          ✅ ربح
                         </Badge>
                       );
                     }
-                    return null;
-                  })()}
-                  
-                  {/* Show pending only when not in execution window and no result */}
-                  {signal.status === "pending" && !signal.result && (() => {
-                    if (!signal.entry_time) return (
-                      <Badge variant="outline" className="gap-1">
-                        <Clock className="h-3 w-3" />
-                        قيد الانتظار
-                      </Badge>
-                    );
-                    
-                    const parts = signal.entry_time.split(":").map(Number);
-                    if (parts.length < 2) return null;
-                    
-                    const now = new Date();
-                    const entryDateTime = new Date(now);
-                    entryDateTime.setHours(parts[0], parts[1], parts[2] || 0, 0);
-                    const diffMin = (now.getTime() - entryDateTime.getTime()) / 60000;
-                    
-                    // Show pending only if not yet in execution window
-                    if (diffMin < -1) {
+                    if (signal.result === "win1") {
+                      return (
+                        <Badge 
+                          variant="default"
+                          className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          ✅ ربح ¹
+                        </Badge>
+                      );
+                    }
+                    if (signal.result === "win2") {
+                      return (
+                        <Badge 
+                          variant="default"
+                          className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          ✅ ربح ²
+                        </Badge>
+                      );
+                    }
+                    if (signal.result === "loss") {
+                      return (
+                        <Badge 
+                          variant="destructive"
+                          className="gap-1 text-base px-3 py-1"
+                        >
+                          <XCircle className="h-4 w-4" />
+                          ❌ خسارة
+                        </Badge>
+                      );
+                    }
+
+                    // Priority 2: No result - calculate status based on entry_time
+                    if (!signal.entry_time) {
                       return (
                         <Badge variant="outline" className="gap-1">
                           <Clock className="h-3 w-3" />
@@ -276,32 +236,60 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                         </Badge>
                       );
                     }
-                    return null;
-                  })()}
-                  
-                  {/* Finished (no result yet) after timeframe passes */}
-                  {!signal.result && signal.entry_time && (() => {
+
                     const parts = signal.entry_time.split(":").map(Number);
-                    if (parts.length < 2) return null;
-                    const now = new Date();
-                    const entryDateTime = new Date(now);
-                    entryDateTime.setHours(parts[0], parts[1], parts[2] || 0, 0);
-                    // Parse timeframe minutes
-                    let tfMin = 1;
-                    if (signal.timeframe) {
-                      const tf = signal.timeframe.toUpperCase();
-                      if (tf.startsWith('M')) tfMin = parseInt(tf.slice(1)) || 1;
-                      else if (tf.startsWith('H')) tfMin = (parseInt(tf.slice(1)) || 1) * 60;
-                    }
-                    const endTime = new Date(entryDateTime.getTime() + (tfMin + 1) * 60000); // +1m buffer
-                    if (now > endTime) {
+                    if (parts.length < 2) {
                       return (
                         <Badge variant="outline" className="gap-1">
-                          منتهية
+                          <Clock className="h-3 w-3" />
+                          قيد الانتظار
                         </Badge>
                       );
                     }
-                    return null;
+
+                    const now = new Date();
+                    const entryDateTime = new Date(now);
+                    entryDateTime.setHours(parts[0], parts[1], parts[2] || 0, 0);
+                    
+                    // Parse timeframe to minutes
+                    let tfMinutes = 1;
+                    if (signal.timeframe) {
+                      const tf = signal.timeframe.toUpperCase();
+                      if (tf.startsWith('M')) tfMinutes = parseInt(tf.slice(1)) || 1;
+                      else if (tf.startsWith('H')) tfMinutes = (parseInt(tf.slice(1)) || 1) * 60;
+                    }
+                    
+                    const executionEndTime = new Date(entryDateTime.getTime() + tfMinutes * 60000);
+                    
+                    // Before entry time → قيد الانتظار
+                    if (now < entryDateTime) {
+                      return (
+                        <Badge variant="outline" className="gap-1">
+                          <Clock className="h-3 w-3" />
+                          قيد الانتظار
+                        </Badge>
+                      );
+                    }
+                    
+                    // During execution window (entry_time to entry_time + timeframe) → جاري التنفيذ
+                    if (now >= entryDateTime && now <= executionEndTime) {
+                      return (
+                        <Badge 
+                          variant="default"
+                          className="gap-1 bg-blue-500 hover:bg-blue-600 text-white"
+                        >
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          جاري التنفيذ...
+                        </Badge>
+                      );
+                    }
+                    
+                    // After execution window without result → منتهية
+                    return (
+                      <Badge variant="outline" className="gap-1 text-muted-foreground">
+                        منتهية
+                      </Badge>
+                    );
                   })()}
 
                   {signal.status === "failed" && (
