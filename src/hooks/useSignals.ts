@@ -10,7 +10,9 @@ export interface Signal {
   status: string;
   received_at: string;
   raw_message?: string;
-  telegram_message_id?: string; // Changed from number to string
+  telegram_message_id?: string;
+  result?: string | null; // 'win', 'loss', or null
+  entry_time?: string | null;
 }
 
 export const useSignals = () => {

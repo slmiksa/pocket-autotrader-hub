@@ -160,19 +160,43 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {signal.status === "executed" && (
+                  {signal.status === "completed" && signal.result === "win" && (
                     <Badge 
                       variant="default"
                       className="gap-1 bg-success hover:bg-success/90"
                     >
                       <CheckCircle2 className="h-3 w-3" />
-                      تم التنفيذ
+                      ✅ ربح
+                    </Badge>
+                  )}
+                  {signal.status === "completed" && signal.result === "loss" && (
+                    <Badge 
+                      variant="destructive"
+                      className="gap-1"
+                    >
+                      <XCircle className="h-3 w-3" />
+                      ❌ خسارة
+                    </Badge>
+                  )}
+                  {signal.status === "executed" && (
+                    <Badge 
+                      variant="secondary"
+                      className="gap-1"
+                    >
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      جاري التنفيذ...
                     </Badge>
                   )}
                   {signal.status === "pending" && (
                     <Badge variant="outline" className="gap-1">
                       <Clock className="h-3 w-3" />
-                      {(signal as any).entry_time ? `الدخول: ${(signal as any).entry_time} UTC-3` : 'قيد الانتظار'}
+                      {signal.entry_time ? `الدخول: ${signal.entry_time}` : 'قيد الانتظار'}
+                    </Badge>
+                  )}
+                  {signal.status === "failed" && (
+                    <Badge variant="destructive" className="gap-1">
+                      <XCircle className="h-3 w-3" />
+                      فشل التنفيذ
                     </Badge>
                   )}
                 </div>

@@ -45,6 +45,7 @@ export type Database = {
           id: string
           raw_message: string | null
           received_at: string
+          result: string | null
           status: string
           telegram_message_id: string | null
           timeframe: string
@@ -58,6 +59,7 @@ export type Database = {
           id?: string
           raw_message?: string | null
           received_at?: string
+          result?: string | null
           status?: string
           telegram_message_id?: string | null
           timeframe: string
@@ -71,6 +73,7 @@ export type Database = {
           id?: string
           raw_message?: string | null
           received_at?: string
+          result?: string | null
           status?: string
           telegram_message_id?: string | null
           timeframe?: string
