@@ -278,6 +278,32 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                     }
                     return null;
                   })()}
+                  
+                  {/* Finished (no result yet) after timeframe passes */}
+                  {!signal.result && signal.entry_time && (() => {
+                    const parts = signal.entry_time.split(":").map(Number);
+                    if (parts.length < 2) return null;
+                    const now = new Date();
+                    const entryDateTime = new Date(now);
+                    entryDateTime.setHours(parts[0], parts[1], parts[2] || 0, 0);
+                    // Parse timeframe minutes
+                    let tfMin = 1;
+                    if (signal.timeframe) {
+                      const tf = signal.timeframe.toUpperCase();
+                      if (tf.startsWith('M')) tfMin = parseInt(tf.slice(1)) || 1;
+                      else if (tf.startsWith('H')) tfMin = (parseInt(tf.slice(1)) || 1) * 60;
+                    }
+                    const endTime = new Date(entryDateTime.getTime() + (tfMin + 1) * 60000); // +1m buffer
+                    if (now > endTime) {
+                      return (
+                        <Badge variant="outline" className="gap-1">
+                          منتهية
+                        </Badge>
+                      );
+                    }
+                    return null;
+                  })()}
+
                   {signal.status === "failed" && (
                     <Badge variant="destructive" className="gap-1">
                       <XCircle className="h-3 w-3" />
