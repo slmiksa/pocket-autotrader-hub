@@ -153,6 +153,16 @@ serve(async (req) => {
 
     console.log('🚀 Fast Telegram poller starting...');
 
+    // Ensure no webhook conflicts with getUpdates
+    try {
+      const deleteWebhookUrl = `https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook?drop_pending_updates=true`;
+      const webhookResponse = await fetch(deleteWebhookUrl);
+      const webhookData = await webhookResponse.json();
+      console.log('Webhook deletion (fast-poller):', webhookData);
+    } catch (webhookError) {
+      console.warn('Failed to delete webhook in fast-poller (non-critical):', webhookError);
+    }
+
     // Get last processed update offset
     const { data: offsetData } = await supabase
       .from('settings')

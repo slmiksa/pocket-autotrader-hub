@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useSignals } from "@/hooks/useSignals";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 interface LiveSignalsProps {
@@ -18,6 +18,7 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
   const { signals, loading, refetch } = useSignals();
   const [fetching, setFetching] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
+  const lastSignalCount = useRef(0);
 
   const fetchTelegramMessages = async () => {
     // Prevent concurrent requests
@@ -44,23 +45,32 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
       
       if (data.signalsFound > 0) {
         toast.success(`تم العثور على ${data.signalsFound} توصية جديدة من القناة 📢`);
-        // Refresh signals immediately after finding new ones
         refetch();
       }
       if (data.resultsUpdated > 0) {
-        // Create detailed result notification
         const resultMessage = data.resultsUpdated === 1 ? 
           'تم تحديث نتيجة صفقة واحدة 📊' : 
           `تم تحديث ${data.resultsUpdated} نتائج صفقات 📊`;
-        toast.success(resultMessage, {
-          duration: 4000,
-          description: 'تحققوا من النتائج في القائمة أدناه'
-        });
-        // Refresh signals to show updated results
+        toast.success(resultMessage, { duration: 4000, description: 'تحققوا من النتائج في القائمة أدناه' });
         refetch();
       }
-      // Always refresh to stay in sync even when no new signals/results are detected
-      refetch();
+
+      // Fallback: if bot polling returns nothing, try channel reader (RSS/scrape) occasionally
+      const nowTs = Date.now();
+      (lastSignalCount.current as number) ?? (lastSignalCount.current = 0);
+      const shouldFallback = (!data || (data.signalsFound === 0 && data.resultsUpdated === 0));
+      if (shouldFallback && (!lastSignalCount.current || nowTs - (lastSignalCount.current as number) > 15000)) {
+        try {
+          const { data: readerData, error: readerError } = await supabase.functions.invoke('telegram-channel-reader');
+          if (!readerError && readerData && (readerData.signalsFound > 0 || readerData.resultsUpdated > 0)) {
+            refetch();
+          }
+        } catch (e) {
+          // silent
+        } finally {
+          lastSignalCount.current = nowTs;
+        }
+      }
     } catch (error) {
       console.error('Error fetching Telegram messages:', error);
       // Only show error for critical failures
