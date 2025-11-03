@@ -12,6 +12,7 @@ interface TradeRequest {
   direction: 'CALL' | 'PUT';
   amount: number;
   timeframe: string;
+  entryTime?: string;
 }
 
 serve(async (req) => {
@@ -24,9 +25,45 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { signalId, asset, direction, amount, timeframe }: TradeRequest = await req.json();
+    const { signalId, asset, direction, amount, timeframe, entryTime }: TradeRequest = await req.json();
 
-    console.log('Executing trade:', { signalId, asset, direction, amount, timeframe });
+    console.log('Executing trade:', { signalId, asset, direction, amount, timeframe, entryTime });
+
+    // If entryTime is provided, check if we should execute now
+    if (entryTime) {
+      const now = new Date();
+      // Convert current time to UTC-3
+      const utcMinus3 = new Date(now.getTime() - (3 * 60 * 60 * 1000));
+      const currentTime = utcMinus3.toTimeString().substring(0, 8);
+      
+      console.log('Entry time check:', { entryTime, currentTime, utcMinus3: utcMinus3.toISOString() });
+      
+      // Only execute if current time matches entry time (within 1 minute window)
+      const [entryHour, entryMin] = entryTime.split(':').map(Number);
+      const [currentHour, currentMin] = currentTime.split(':').map(Number);
+      
+      const entryMinutes = entryHour * 60 + entryMin;
+      const currentMinutes = currentHour * 60 + currentMin;
+      
+      // Allow execution within 1 minute before or after entry time
+      if (Math.abs(currentMinutes - entryMinutes) > 1) {
+        console.log('Not yet time to execute. Waiting for:', entryTime);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Not yet time to execute',
+            entryTime,
+            currentTime,
+            message: 'Trade will be executed at the specified entry time'
+          }),
+          { 
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+      
+      console.log('Entry time matched. Executing trade now.');
+    }
 
     // Get Pocket Option credentials
     const email = Deno.env.get('POCKET_OPTION_EMAIL');
@@ -60,8 +97,11 @@ serve(async (req) => {
       : parseInt(timeframe.substring(1)) * 60;
 
     // Step 3: Execute trade
+    // Keep original asset format if it contains -OTC
+    const assetForTrade = asset.includes('-OTC') ? asset : asset.replace('/', '');
+    
     const tradePayload = {
-      asset: asset.replace('/', ''), // EUR/USD -> EURUSD
+      asset: assetForTrade, // Keep -OTC format if present, otherwise EUR/USD -> EURUSD
       amount: amount,
       action: direction.toLowerCase(), // call or put
       time: timeframeMinutes * 60, // convert to seconds

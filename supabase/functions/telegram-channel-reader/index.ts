@@ -24,6 +24,9 @@ function parseSignalFromMessage(text: string): any | null {
   // Extract timeframe (after 💎)
   const timeframeMatch = text.match(/💎\s*(M\d+|H\d+)/i);
   
+  // Extract entry time (after ⌚️)
+  const timeMatch = text.match(/⌚️\s*(\d{2}:\d{2}:\d{2})/);
+  
   // Extract direction (after 🔼 or 🔽)
   const callMatch = text.match(/🔼\s*(call|buy)/i);
   const putMatch = text.match(/🔽\s*(put|sell)/i);
@@ -31,7 +34,8 @@ function parseSignalFromMessage(text: string): any | null {
   if (assetMatch && timeframeMatch && (callMatch || putMatch)) {
     let asset = assetMatch[1];
     
-    // Clean asset name: remove -OTC suffix
+    // Clean asset name: remove -OTC suffix but keep original for display
+    const originalAsset = asset;
     asset = asset.replace('-OTC', '');
     
     // Convert AUDCHF to AUD/CHF if needed
@@ -41,13 +45,16 @@ function parseSignalFromMessage(text: string): any | null {
     
     const timeframe = timeframeMatch[1];
     const direction = callMatch ? 'CALL' : 'PUT';
+    const entryTime = timeMatch ? timeMatch[1] : null;
     
-    console.log('Signal extracted:', { asset, timeframe, direction });
+    console.log('Signal extracted:', { asset, timeframe, direction, entryTime, originalAsset });
     
     return {
       asset,
       timeframe,
       direction,
+      entry_time: entryTime,
+      original_asset: originalAsset,
       raw_message: text,
     };
   }
@@ -160,9 +167,10 @@ serve(async (req) => {
             const { data: newSignal, error } = await supabase
               .from('signals')
               .insert({
-                asset: signal.asset,
+                asset: signal.original_asset || signal.asset,
                 timeframe: signal.timeframe,
                 direction: signal.direction,
+                entry_time: signal.entry_time,
                 raw_message: signal.raw_message,
                 telegram_message_id: pubDate,
                 status: 'pending'
@@ -253,9 +261,10 @@ serve(async (req) => {
             const { data: newSignal, error } = await supabase
               .from('signals')
               .insert({
-                asset: signal.asset,
+                asset: signal.original_asset || signal.asset,
                 timeframe: signal.timeframe,
                 direction: signal.direction,
+                entry_time: signal.entry_time,
                 raw_message: signal.raw_message,
                 telegram_message_id: parseInt(messageId, 16),
                 status: 'pending'
