@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { TradingDashboard } from "@/components/trading/TradingDashboard";
-import { SignalHistory } from "@/components/trading/SignalHistory";
+import { TradeHistory } from "@/components/trading/TradeHistory";
 import { SettingsPanel } from "@/components/trading/SettingsPanel";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -112,7 +112,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4 sm:space-y-6">
-            <SignalHistory />
+            <TradeHistory />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-4 sm:space-y-6">
