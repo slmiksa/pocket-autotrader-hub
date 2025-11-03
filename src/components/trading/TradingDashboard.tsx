@@ -8,6 +8,7 @@ import { LiveSignals } from "./LiveSignals";
 import { StatsCard } from "./StatsCard";
 import { useSignals } from "@/hooks/useSignals";
 import { useAutoTrade } from "@/hooks/useAutoTrade";
+import { AutoTradeButton } from "./AutoTradeButton";
 
 export const TradingDashboard = () => {
   const [autoTradeEnabled, setAutoTradeEnabled] = useState(false);
@@ -45,12 +46,13 @@ export const TradingDashboard = () => {
       {/* Auto Trade Control */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <CardTitle>التداول الآلي</CardTitle>
               <CardDescription>تفعيل/إيقاف نسخ الصفقات تلقائياً</CardDescription>
             </div>
             <div className="flex items-center gap-3">
+              <AutoTradeButton />
               <Badge variant={autoTradeEnabled ? "default" : "secondary"} className="text-sm">
                 {autoTradeEnabled ? "مُفعّل" : "مُعطّل"}
               </Badge>
