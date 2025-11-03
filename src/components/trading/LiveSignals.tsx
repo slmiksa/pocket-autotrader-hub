@@ -31,45 +31,25 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
     setFetching(true);
     
     try {
-      // Use fast poller for immediate updates
-      const { data, error } = await supabase.functions.invoke('telegram-fast-poller');
+      // Ensure webhook is configured (idempotent)
+      const { data, error } = await supabase.functions.invoke('telegram-webhook-setup');
       
-      if (error) throw error;
-      
-      // Handle graceful error response
-      if (data && !data.success && data.error) {
-        console.warn('Service temporarily unavailable:', data.error);
-        // Don't show error to user, just log it
+      if (error) {
+        console.warn('Failed to setup webhook:', error);
         return;
       }
       
-      if (data.signalsFound > 0) {
-        toast.success(`تم العثور على ${data.signalsFound} توصية جديدة من القناة 📢`);
-        refetch();
-      }
-      if (data.resultsUpdated > 0) {
-        const resultMessage = data.resultsUpdated === 1 ? 
-          'تم تحديث نتيجة صفقة واحدة 📊' : 
-          `تم تحديث ${data.resultsUpdated} نتائج صفقات 📊`;
-        toast.success(resultMessage, { duration: 4000, description: 'تحققوا من النتائج في القائمة أدناه' });
-        refetch();
-      }
-
-      // Fallback: if bot polling returns nothing, try channel reader (RSS/scrape) occasionally
+      // Webhook-setup completed; rely on realtime to update UI.
+      // As a fallback, occasionally trigger channel reader to backfill if needed.
       const nowTs = Date.now();
-      (lastSignalCount.current as number) ?? (lastSignalCount.current = 0);
-      const shouldFallback = (!data || (data.signalsFound === 0 && data.resultsUpdated === 0));
-      if (shouldFallback && (!lastSignalCount.current || nowTs - (lastSignalCount.current as number) > 15000)) {
+      if (!lastSignalCount.current || nowTs - (lastSignalCount.current as number) > 20000) {
         try {
-          const { data: readerData, error: readerError } = await supabase.functions.invoke('telegram-channel-reader');
-          if (!readerError && readerData && (readerData.signalsFound > 0 || readerData.resultsUpdated > 0)) {
+          const { data: readerData } = await supabase.functions.invoke('telegram-channel-reader');
+          if (readerData && (readerData.signalsFound > 0 || readerData.resultsUpdated > 0)) {
             refetch();
           }
-        } catch (e) {
-          // silent
-        } finally {
-          lastSignalCount.current = nowTs;
-        }
+        } catch (_) {}
+        lastSignalCount.current = nowTs;
       }
     } catch (error) {
       console.error('Error fetching Telegram messages:', error);
@@ -87,14 +67,10 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
     // Fetch immediately on mount
     fetchTelegramMessages();
 
-    // Moderate polling (every 7 seconds) - aligned with server lock
-    const interval = setInterval(() => {
-      fetchTelegramMessages();
-    }, 7000);
+    // No polling needed with webhooks; just ensure setup once.
+    // Any new signals will arrive via realtime subscription.
 
-    return () => {
-      clearInterval(interval);
-    };
+    return () => {};
   }, []);
 
   if (loading) {

@@ -92,10 +92,10 @@ export const useSignals = () => {
         console.log('📡 Realtime subscription status:', status);
       });
 
-    // Aggressive fallback polling for immediate updates
+    // Minimal fallback polling (every 20s) with webhook-first approach
     const poll = setInterval(() => {
       fetchSignals();
-    }, 5000);
+    }, 20000);
  
     return () => {
       console.log('📡 Unsubscribing from realtime');

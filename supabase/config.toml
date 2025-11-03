@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.telegram-fast-poller]
 verify_jwt = false
+
+[functions.telegram-webhook]
+verify_jwt = false
+
+[functions.telegram-webhook-setup]
+verify_jwt = false
