@@ -152,9 +152,9 @@ serve(async (req) => {
     }
 
     // CRITICAL: Check lock to prevent concurrent getUpdates calls
-    const lockKey = 'fast_telegram_poller_lock';
+    const lockKey = 'tg_updates_lock';
     const now = new Date();
-    const lockTTL = 8000; // 8 seconds lock
+    const lockTTL = 7000; // 7 seconds lock aligned with client polling
 
     const { data: lockData } = await supabase
       .from('settings')

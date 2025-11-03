@@ -91,10 +91,10 @@ serve(async (req) => {
       if (error) console.error('insert setting error', key, error);
     };
 
-    // Simple DB-based lock to avoid concurrent getUpdates calls
+    // Simple DB-based lock to avoid concurrent getUpdates calls (shared key with fast-poller)
     const now = new Date();
-    const lockKey = 'telegram_listener_lock';
-    const lockTTLms = 10_000; // 10s safety window
+    const lockKey = 'tg_updates_lock';
+    const lockTTLms = 7000; // 7s
 
     const lockRow = await getSetting(lockKey);
     const lockedUntil = lockRow?.value?.['until'] ? new Date(lockRow.value['until'] as string) : null;

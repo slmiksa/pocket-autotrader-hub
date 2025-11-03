@@ -87,10 +87,10 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
     // Fetch immediately on mount
     fetchTelegramMessages();
 
-    // Moderate polling (every 5 seconds) - avoid conflicts
+    // Moderate polling (every 7 seconds) - aligned with server lock
     const interval = setInterval(() => {
       fetchTelegramMessages();
-    }, 5000);
+    }, 7000);
 
     return () => {
       clearInterval(interval);
