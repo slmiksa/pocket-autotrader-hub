@@ -50,19 +50,25 @@ serve(async (req) => {
         console.log('Not yet time to execute. Waiting for:', entryTime);
         return new Response(
           JSON.stringify({ 
-            error: 'Not yet time to execute',
+            success: false,
+            code: 'not_yet_time',
             entryTime,
             currentTime,
             message: 'Trade will be executed at the specified entry time'
           }),
           { 
-            status: 400,
+            status: 202,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           }
         );
       }
       
       console.log('Entry time matched. Executing trade now.');
+      // Mark as executed so UI shows "جاري التنفيذ"
+      await supabase
+        .from('signals')
+        .update({ status: 'executed' })
+        .eq('id', signalId);
     }
 
     // Get Pocket Option credentials
@@ -73,61 +79,86 @@ serve(async (req) => {
       throw new Error('Pocket Option credentials not configured');
     }
 
-    // Step 1: Login to Pocket Option
-    const loginResponse = await fetch('https://api.po.trade/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
+    let timeframeMinutes = 0;
+    let tradeData: any = null;
+    try {
+      // Step 1: Login to Pocket Option
+      const loginResponse = await fetch('https://api.po.trade/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
 
-    if (!loginResponse.ok) {
-      const errorText = await loginResponse.text();
-      console.error('Pocket Option login failed:', errorText);
-      throw new Error('Failed to login to Pocket Option');
+      if (!loginResponse.ok) {
+        const errorText = await loginResponse.text();
+        console.error('Pocket Option login failed:', errorText);
+        throw new Error('Failed to login to Pocket Option');
+      }
+
+      const loginData = await loginResponse.json();
+      const { token, ssid } = loginData;
+
+      console.log('Successfully logged in to Pocket Option');
+
+      // Step 2: Parse timeframe (M5 = 5 minutes, H1 = 60 minutes)
+      timeframeMinutes = timeframe.startsWith('M') 
+        ? parseInt(timeframe.substring(1)) 
+        : parseInt(timeframe.substring(1)) * 60;
+
+      // Step 3: Execute trade
+      // Keep original asset format if it contains -OTC
+      const assetForTrade = asset.includes('-OTC') ? asset : asset.replace('/', '');
+      
+      const tradePayload = {
+        asset: assetForTrade, // Keep -OTC format if present, otherwise EUR/USD -> EURUSD
+        amount: amount,
+        action: direction.toLowerCase(), // call or put
+        time: timeframeMinutes * 60, // convert to seconds
+        isDemo: false // Set to true for demo account
+      };
+
+      console.log('Trade payload:', tradePayload);
+
+      const tradeResponse = await fetch('https://api.po.trade/api/v1/trades', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Cookie': `ssid=${ssid}`
+        },
+        body: JSON.stringify(tradePayload)
+      });
+
+      if (!tradeResponse.ok) {
+        const errorText = await tradeResponse.text();
+        console.error('Trade execution failed:', errorText);
+        throw new Error('Failed to execute trade on Pocket Option');
+      }
+
+      tradeData = await tradeResponse.json();
+      console.log('Trade executed successfully:', tradeData);
+    } catch (e) {
+      console.error('Trade execution error (pre-db):', e);
+      try {
+        await supabase
+          .from('signals')
+          .update({ status: 'failed' })
+          .eq('id', signalId);
+        await supabase
+          .from('trades')
+          .insert({
+            signal_id: signalId,
+            asset,
+            direction,
+            amount,
+            execution_method: 'auto',
+            error_message: e instanceof Error ? e.message : 'Unknown error'
+          });
+      } catch (dbErr) {
+        console.warn('Failed to record failed trade/error:', dbErr);
+      }
+      throw e;
     }
-
-    const loginData = await loginResponse.json();
-    const { token, ssid } = loginData;
-
-    console.log('Successfully logged in to Pocket Option');
-
-    // Step 2: Parse timeframe (M5 = 5 minutes, H1 = 60 minutes)
-    const timeframeMinutes = timeframe.startsWith('M') 
-      ? parseInt(timeframe.substring(1)) 
-      : parseInt(timeframe.substring(1)) * 60;
-
-    // Step 3: Execute trade
-    // Keep original asset format if it contains -OTC
-    const assetForTrade = asset.includes('-OTC') ? asset : asset.replace('/', '');
-    
-    const tradePayload = {
-      asset: assetForTrade, // Keep -OTC format if present, otherwise EUR/USD -> EURUSD
-      amount: amount,
-      action: direction.toLowerCase(), // call or put
-      time: timeframeMinutes * 60, // convert to seconds
-      isDemo: false // Set to true for demo account
-    };
-
-    console.log('Trade payload:', tradePayload);
-
-    const tradeResponse = await fetch('https://api.po.trade/api/v1/trades', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'Cookie': `ssid=${ssid}`
-      },
-      body: JSON.stringify(tradePayload)
-    });
-
-    if (!tradeResponse.ok) {
-      const errorText = await tradeResponse.text();
-      console.error('Trade execution failed:', errorText);
-      throw new Error('Failed to execute trade on Pocket Option');
-    }
-
-    const tradeData = await tradeResponse.json();
-    console.log('Trade executed successfully:', tradeData);
 
     // Step 4: Record trade in database
     const { data: trade, error: tradeError } = await supabase
