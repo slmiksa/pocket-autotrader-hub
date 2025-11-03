@@ -1,22 +1,24 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import type { User, Session } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Plus, Trash2, Copy, Check, ArrowRight } from "lucide-react";
+import { Shield, Plus, Trash2, Copy, Check, ArrowRight, LogOut, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState("");
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [codes, setCodes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Form state
@@ -26,30 +28,74 @@ const AdminDashboard = () => {
   const [codeExpiresAt, setCodeExpiresAt] = useState("");
 
   useEffect(() => {
-    // Check if already authenticated
-    const adminAuth = localStorage.getItem("admin_auth");
-    if (adminAuth === "true") {
-      setIsAuthenticated(true);
-      loadCodes();
-    }
-  }, []);
+    const checkAdmin = async (userId: string) => {
+      try {
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("role", "admin")
+          .single();
 
-  const handleLogin = () => {
-    // Simple password check - في التطبيق الحقيقي يجب استخدام backend authentication
-    if (password === "admin123") {
-      localStorage.setItem("admin_auth", "true");
-      setIsAuthenticated(true);
-      loadCodes();
-      toast.success("تم تسجيل الدخول بنجاح");
-    } else {
-      toast.error("كلمة المرور غير صحيحة");
-    }
-  };
+        if (data) {
+          setIsAdmin(true);
+          loadCodes();
+        } else {
+          setIsAdmin(false);
+          setLoading(false);
+          toast.error("ليس لديك صلاحيات المسؤول");
+          navigate("/admin-login");
+        }
+      } catch (error) {
+        console.error("Error checking admin:", error);
+        setIsAdmin(false);
+        setLoading(false);
+        navigate("/admin-login");
+      }
+    };
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_auth");
-    setIsAuthenticated(false);
-    navigate("/");
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          setTimeout(() => {
+            checkAdmin(session.user.id);
+          }, 0);
+        } else {
+          setLoading(false);
+          navigate("/admin-login");
+        }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        checkAdmin(session.user.id);
+      } else {
+        setLoading(false);
+        navigate("/admin-login");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("تم تسجيل الخروج بنجاح");
+      navigate("/admin-login");
+    } catch (error: any) {
+      console.error("Error logging out:", error);
+      toast.error("فشل تسجيل الخروج");
+    }
   };
 
   const loadCodes = async () => {
@@ -141,37 +187,10 @@ const AdminDashboard = () => {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  if (!isAuthenticated) {
+  if (loading || !isAdmin || !user || !session) {
     return (
-      <div className="min-h-screen bg-background dark flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <Shield className="h-6 w-6 text-primary" />
-            </div>
-            <CardTitle>لوحة تحكم المسؤول</CardTitle>
-            <CardDescription>يرجى إدخال كلمة المرور للوصول</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">كلمة المرور</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleLogin()}
-                placeholder="أدخل كلمة المرور"
-              />
-            </div>
-            <Button onClick={handleLogin} className="w-full">
-              تسجيل الدخول
-            </Button>
-            <Button onClick={() => navigate("/")} variant="outline" className="w-full">
-              العودة للصفحة الرئيسية
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center bg-background dark">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -197,6 +216,7 @@ const AdminDashboard = () => {
                 الصفحة الرئيسية
               </Button>
               <Button onClick={handleLogout} variant="outline" size="sm">
+                <LogOut className="h-4 w-4 ml-2" />
                 تسجيل الخروج
               </Button>
             </div>

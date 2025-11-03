@@ -192,15 +192,24 @@ const SubscriptionCheck = () => {
             التحقق من الاشتراك
           </Button>
 
-          <Button
-            onClick={() => navigate("/admin")}
-            variant="ghost"
-            size="sm"
-            className="w-full text-muted-foreground"
-          >
-            <Shield className="h-4 w-4 ml-2" />
-            دخول المسؤول
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => navigate("/auth")}
+              variant="outline"
+              className="flex-1"
+            >
+              تسجيل الدخول
+            </Button>
+            <Button
+              onClick={() => navigate("/admin-login")}
+              variant="ghost"
+              size="sm"
+              className="flex-1 text-muted-foreground"
+            >
+              <Shield className="h-4 w-4 ml-2" />
+              مسؤول
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

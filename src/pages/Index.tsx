@@ -1,66 +1,105 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import type { User, Session } from "@supabase/supabase-js";
 import { TradingDashboard } from "@/components/trading/TradingDashboard";
 import { TradeHistory } from "@/components/trading/TradeHistory";
 import { SettingsPanel } from "@/components/trading/SettingsPanel";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Settings, History, TrendingUp, Loader2, Shield } from "lucide-react";
+import { BarChart3, Settings, History, TrendingUp, Loader2, LogOut, Calendar } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 const Index = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [hasSubscription, setHasSubscription] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("dashboard");
-  const generateDeviceId = () => {
-    let deviceId = localStorage.getItem("device_id");
-    if (!deviceId) {
-      deviceId = `device_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-      localStorage.setItem("device_id", deviceId);
-    }
-    return deviceId;
-  };
-  const checkSubscription = async () => {
-    const deviceId = generateDeviceId();
+  const checkSubscription = async (userId: string) => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from("subscriptions").select("*").eq("device_id", deviceId).order("expires_at", {
-        ascending: false
-      }).limit(1);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("subscription_expires_at")
+        .eq("user_id", userId)
+        .single();
+
       if (error) throw error;
-      if (data && data.length > 0) {
-        const subscription = data[0];
-        const expiresAt = new Date(subscription.expires_at);
+
+      if (data && data.subscription_expires_at) {
+        const expiresAt = new Date(data.subscription_expires_at);
         const now = new Date();
+        
         if (expiresAt > now) {
-          setHasSubscription(true);
+          setSubscriptionExpiresAt(data.subscription_expires_at);
           setLoading(false);
-          return;
+          return true;
         }
       }
 
-      // No valid subscription found
-      setHasSubscription(false);
+      // No valid subscription
       setLoading(false);
       navigate("/subscription");
+      return false;
     } catch (error) {
       console.error("Error checking subscription:", error);
       setLoading(false);
       navigate("/subscription");
+      return false;
     }
   };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("تم تسجيل الخروج بنجاح");
+      navigate("/auth");
+    } catch (error: any) {
+      console.error("Error logging out:", error);
+      toast.error("فشل تسجيل الخروج");
+    }
+  };
+
   useEffect(() => {
-    checkSubscription();
-  }, []);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          setTimeout(() => {
+            checkSubscription(session.user.id);
+          }, 0);
+        } else {
+          setLoading(false);
+          navigate("/auth");
+        }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        checkSubscription(session.user.id);
+      } else {
+        setLoading(false);
+        navigate("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-background dark">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>;
   }
-  if (!hasSubscription) {
+  if (!user || !session) {
     return null;
   }
   return <div className="min-h-screen bg-background dark">
@@ -80,9 +119,18 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <div className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
-              <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">متصل</span>
-              
+              {subscriptionExpiresAt && (
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    ينتهي: {format(new Date(subscriptionExpiresAt), "yyyy-MM-dd")}
+                  </span>
+                </div>
+              )}
+              <Button onClick={handleLogout} variant="ghost" size="sm">
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline ml-2">تسجيل خروج</span>
+              </Button>
             </div>
           </div>
         </div>
