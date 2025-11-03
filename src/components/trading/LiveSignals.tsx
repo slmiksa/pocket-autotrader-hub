@@ -17,9 +17,18 @@ interface LiveSignalsProps {
 export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
   const { signals, loading } = useSignals();
   const [fetching, setFetching] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
 
   const fetchTelegramMessages = async () => {
+    // Prevent concurrent requests
+    if (isPolling) {
+      console.log('Skipping fetch - previous request still in progress');
+      return;
+    }
+
+    setIsPolling(true);
     setFetching(true);
+    
     try {
       const { data, error } = await supabase.functions.invoke('telegram-listener');
       
@@ -32,6 +41,7 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
       console.error('Error fetching Telegram messages:', error);
     } finally {
       setFetching(false);
+      setIsPolling(false);
     }
   };
 
@@ -39,10 +49,10 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
     // Fetch immediately on mount
     fetchTelegramMessages();
 
-    // Set up interval to fetch every 3 seconds
+    // Set up interval to fetch every 5 seconds (increased to avoid conflicts)
     const interval = setInterval(() => {
       fetchTelegramMessages();
-    }, 3000);
+    }, 5000);
 
     // Cleanup interval on unmount
     return () => clearInterval(interval);
