@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.pocket-option-trade]
 verify_jwt = false
+
+[functions.telegram-fast-poller]
+verify_jwt = false

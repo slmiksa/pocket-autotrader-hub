@@ -30,8 +30,8 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
     setFetching(true);
     
     try {
-      // Use the new channel reader function instead
-      const { data, error } = await supabase.functions.invoke('telegram-channel-reader');
+      // Use fast poller for immediate updates
+      const { data, error } = await supabase.functions.invoke('telegram-fast-poller');
       
       if (error) throw error;
       
@@ -77,14 +77,16 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
     // Fetch immediately on mount
     fetchTelegramMessages();
 
-    // Set up interval to fetch every 20 seconds (avoid rate limiting)
-    const interval = setInterval(() => {
+    // Aggressive polling for immediate updates (every 3 seconds)
+    const aggressiveInterval = setInterval(() => {
       fetchTelegramMessages();
-    }, 20000);
+    }, 3000);
 
-    // Cleanup interval on unmount
-    return () => clearInterval(interval);
-  }, []);
+    // Cleanup intervals on unmount
+    return () => {
+      clearInterval(aggressiveInterval);
+    };
+  }, [isPolling]);
 
   if (loading) {
     return (
