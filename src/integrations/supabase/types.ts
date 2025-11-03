@@ -41,6 +41,7 @@ export type Database = {
           asset: string
           created_at: string
           direction: string
+          entry_time: string | null
           id: string
           raw_message: string | null
           received_at: string
@@ -53,6 +54,7 @@ export type Database = {
           asset: string
           created_at?: string
           direction: string
+          entry_time?: string | null
           id?: string
           raw_message?: string | null
           received_at?: string
@@ -65,6 +67,7 @@ export type Database = {
           asset?: string
           created_at?: string
           direction?: string
+          entry_time?: string | null
           id?: string
           raw_message?: string | null
           received_at?: string

@@ -21,18 +21,26 @@ export const useAutoTrade = (enabled: boolean, signals: Signal[]) => {
               asset: signal.asset,
               direction: signal.direction,
               amount: signal.amount,
-              timeframe: signal.timeframe
+              timeframe: signal.timeframe,
+              entryTime: (signal as any).entry_time
             }
           });
 
           if (error) {
-            console.error('Trade execution error:', error);
-            toast.error(`فشل تنفيذ صفقة ${signal.asset}: ${error.message}`);
+            // Check if error is due to timing
+            if (error.message && error.message.includes('Not yet time')) {
+              console.log('Waiting for entry time:', (signal as any).entry_time);
+              // Don't show error, just wait
+            } else {
+              console.error('Trade execution error:', error);
+              toast.error(`فشل تنفيذ صفقة ${signal.asset}: ${error.message}`);
+            }
             continue;
           }
 
           if (data.success) {
-            toast.success(`تم تنفيذ صفقة ${signal.asset} ${signal.direction} بنجاح 🎯`);
+            const entryTimeMsg = (signal as any).entry_time ? ` في ${(signal as any).entry_time}` : '';
+            toast.success(`تم تنفيذ صفقة ${signal.asset} ${signal.direction}${entryTimeMsg} بنجاح 🎯`);
           }
         } catch (error) {
           console.error('Auto-trade error:', error);
@@ -42,6 +50,11 @@ export const useAutoTrade = (enabled: boolean, signals: Signal[]) => {
 
     // Execute immediately when enabled
     executePendingSignals();
+
+    // Set up interval to check and execute trades at their entry time every 30 seconds
+    const interval = setInterval(() => {
+      executePendingSignals();
+    }, 30000);
 
     // Subscribe to new signals for auto-execution
     const channel = supabase
@@ -64,13 +77,15 @@ export const useAutoTrade = (enabled: boolean, signals: Signal[]) => {
                 asset: newSignal.asset,
                 direction: newSignal.direction,
                 amount: newSignal.amount,
-                timeframe: newSignal.timeframe
+                timeframe: newSignal.timeframe,
+                entryTime: (newSignal as any).entry_time
               }
             }).then(({ data, error }) => {
-              if (error) {
+              if (error && !error.message?.includes('Not yet time')) {
                 toast.error(`فشل تنفيذ صفقة ${newSignal.asset}`);
               } else if (data?.success) {
-                toast.success(`تم تنفيذ صفقة ${newSignal.asset} ${newSignal.direction} تلقائياً 🎯`);
+                const entryTimeMsg = (newSignal as any).entry_time ? ` في ${(newSignal as any).entry_time}` : '';
+                toast.success(`تم تنفيذ صفقة ${newSignal.asset} ${newSignal.direction}${entryTimeMsg} تلقائياً 🎯`);
               }
             });
           }
@@ -79,6 +94,7 @@ export const useAutoTrade = (enabled: boolean, signals: Signal[]) => {
       .subscribe();
 
     return () => {
+      clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, [enabled, signals]);
