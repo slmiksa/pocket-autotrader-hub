@@ -39,9 +39,13 @@ export const useSignals = () => {
     // Initial load
     fetchSignals();
 
-    // Subscribe to realtime changes
+    // Subscribe to realtime changes with better handling
     const channel = supabase
-      .channel('signals-channel')
+      .channel('signals-realtime-channel', {
+        config: {
+          broadcast: { self: false }
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -50,10 +54,17 @@ export const useSignals = () => {
           table: 'signals'
         },
         (payload) => {
-          console.log('Signal update:', payload);
+          console.log('📡 Realtime signal update:', payload.eventType, payload);
           
           if (payload.eventType === 'INSERT') {
-            setSignals(prev => [payload.new as Signal, ...prev]);
+            const newSignal = payload.new as Signal;
+            setSignals(prev => {
+              // Avoid duplicates
+              if (prev.some(s => s.id === newSignal.id)) {
+                return prev;
+              }
+              return [newSignal, ...prev.slice(0, 19)]; // Keep max 20
+            });
           } else if (payload.eventType === 'UPDATE') {
             setSignals(prev => 
               prev.map(signal => 
@@ -67,9 +78,12 @@ export const useSignals = () => {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Realtime subscription status:', status);
+      });
 
     return () => {
+      console.log('📡 Unsubscribing from realtime');
       supabase.removeChannel(channel);
     };
   }, []);
