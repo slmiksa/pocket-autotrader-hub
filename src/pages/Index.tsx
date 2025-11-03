@@ -6,47 +6,63 @@ import { TradeHistory } from "@/components/trading/TradeHistory";
 import { SettingsPanel } from "@/components/trading/SettingsPanel";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Settings, History, TrendingUp, LogOut, Loader2 } from "lucide-react";
+import { BarChart3, Settings, History, TrendingUp, Loader2, Shield } from "lucide-react";
 import { toast } from "sonner";
-import type { User } from "@supabase/supabase-js";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasSubscription, setHasSubscription] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
 
-  useEffect(() => {
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-      
-      if (!session) {
-        navigate("/auth");
-      }
-    });
+  const generateDeviceId = () => {
+    let deviceId = localStorage.getItem("device_id");
+    if (!deviceId) {
+      deviceId = `device_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      localStorage.setItem("device_id", deviceId);
+    }
+    return deviceId;
+  };
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      
-      if (event === 'SIGNED_OUT' || !session) {
-        navigate("/auth");
-      }
-    });
+  const checkSubscription = async () => {
+    const deviceId = generateDeviceId();
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
-      toast.success("تم تسجيل الخروج بنجاح");
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("device_id", deviceId)
+        .order("expires_at", { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const subscription = data[0];
+        const expiresAt = new Date(subscription.expires_at);
+        const now = new Date();
+
+        if (expiresAt > now) {
+          setHasSubscription(true);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // No valid subscription found
+      setHasSubscription(false);
+      setLoading(false);
+      navigate("/subscription");
     } catch (error) {
-      toast.error("حدث خطأ في تسجيل الخروج");
+      console.error("Error checking subscription:", error);
+      setLoading(false);
+      navigate("/subscription");
     }
   };
+
+  useEffect(() => {
+    checkSubscription();
+  }, []);
 
   if (loading) {
     return (
@@ -56,7 +72,7 @@ const Index = () => {
     );
   }
 
-  if (!user) {
+  if (!hasSubscription) {
     return null;
   }
 
@@ -73,16 +89,16 @@ const Index = () => {
               <div className="min-w-0">
                 <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">PocketOption Auto Trader</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  {user.user_metadata?.name || user.email}
+                  توصيات تداول مباشرة
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <div className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
               <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">متصل</span>
-              <Button onClick={handleLogout} variant="outline" size="sm" className="ml-2">
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline ml-2">خروج</span>
+              <Button onClick={() => navigate("/admin")} variant="outline" size="sm" className="ml-2">
+                <Shield className="h-4 w-4" />
+                <span className="hidden sm:inline ml-2">المسؤول</span>
               </Button>
             </div>
           </div>
