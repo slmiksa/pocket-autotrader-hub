@@ -3,5 +3,8 @@ project_id = "ujguqvyshjnrxnmsvsdf"
 [functions.telegram-listener]
 verify_jwt = false
 
+[functions.telegram-channel-reader]
+verify_jwt = false
+
 [functions.pocket-option-trade]
 verify_jwt = false

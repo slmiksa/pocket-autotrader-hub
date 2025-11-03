@@ -30,12 +30,13 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
     setFetching(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('telegram-listener');
+      // Use the new channel reader function instead
+      const { data, error } = await supabase.functions.invoke('telegram-channel-reader');
       
       if (error) throw error;
       
       if (data.signalsFound > 0) {
-        toast.success(`تم العثور على ${data.signalsFound} توصية جديدة`);
+        toast.success(`تم العثور على ${data.signalsFound} توصية جديدة من القناة 📢`);
       }
     } catch (error) {
       console.error('Error fetching Telegram messages:', error);
