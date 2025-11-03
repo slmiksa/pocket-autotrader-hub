@@ -270,9 +270,17 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                     }
 
                     const now = new Date();
-                    const entryDateTime = new Date(now);
+                    // Anchor entry time to the signal's received_at date to avoid day rollover issues
+                    const baseDate = new Date(signal.received_at);
+                    let entryDateTime = new Date(baseDate);
                     entryDateTime.setHours(parts[0], parts[1], parts[2] || 0, 0);
-                    
+
+                    // If entry time appears to be for the next day (e.g., >6h after message time),
+                    // it actually belongs to the previous day from the feed context – shift back one day
+                    if (entryDateTime.getTime() - baseDate.getTime() > 6 * 60 * 60 * 1000) {
+                      entryDateTime.setDate(entryDateTime.getDate() - 1);
+                    }
+                      
                     // Parse timeframe to minutes
                     let tfMinutes = 1;
                     if (signal.timeframe) {
