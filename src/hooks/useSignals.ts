@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface Signal {
   id: string;
@@ -66,11 +67,20 @@ export const useSignals = () => {
               return [newSignal, ...prev.slice(0, 19)]; // Keep max 20
             });
           } else if (payload.eventType === 'UPDATE') {
-            setSignals(prev => 
-              prev.map(signal => 
-                signal.id === (payload.new as any).id ? payload.new as Signal : signal
-              )
-            );
+            const updated = payload.new as Signal;
+            setSignals(prev => {
+              const prevSignal = prev.find(s => s.id === updated.id);
+              if (prevSignal) {
+                if (!prevSignal.result && updated.result) {
+                  const label = updated.result === 'loss' ? '❌ خسارة' : (updated.result === 'win' ? '✅ ربح' : updated.result === 'win1' ? '✅ ربح ¹' : '✅ ربح ²');
+                  const isLoss = updated.result === 'loss';
+                  (isLoss ? toast.error : toast.success)(`نتيجة ${updated.asset}: ${label}`);
+                } else if (prevSignal.status !== 'executed' && updated.status === 'executed' && !updated.result) {
+                  toast.info(`بدء تنفيذ ${updated.asset} الآن ⏱️`);
+                }
+              }
+              return prev.map(signal => signal.id === updated.id ? updated : signal);
+            });
           } else if (payload.eventType === 'DELETE') {
             setSignals(prev => 
               prev.filter(signal => signal.id !== (payload.old as any).id)

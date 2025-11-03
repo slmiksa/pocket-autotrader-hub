@@ -6,6 +6,7 @@ import { useState } from "react";
 import { TrendingUp, TrendingDown, Activity, DollarSign, AlertCircle } from "lucide-react";
 import { LiveSignals } from "./LiveSignals";
 import { StatsCard } from "./StatsCard";
+import { TradeHistory } from "./TradeHistory";
 import { useSignals } from "@/hooks/useSignals";
 import { useAutoTrade } from "@/hooks/useAutoTrade";
 import { AutoTradeButton } from "./AutoTradeButton";
@@ -98,8 +99,11 @@ export const TradingDashboard = () => {
         />
       </div>
 
-      {/* Live Signals */}
-      <LiveSignals autoTradeEnabled={autoTradeEnabled} />
+      {/* Live Signals and Trade History */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <LiveSignals autoTradeEnabled={autoTradeEnabled} />
+        <TradeHistory />
+      </div>
     </div>
   );
 };

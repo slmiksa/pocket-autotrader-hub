@@ -41,7 +41,14 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
         refetch();
       }
       if (data.resultsUpdated > 0) {
-        toast.success(`تم تحديث ${data.resultsUpdated} نتيجة صفقة 📊`);
+        // Create detailed result notification
+        const resultMessage = data.resultsUpdated === 1 ? 
+          'تم تحديث نتيجة صفقة واحدة 📊' : 
+          `تم تحديث ${data.resultsUpdated} نتائج صفقات 📊`;
+        toast.success(resultMessage, {
+          duration: 4000,
+          description: 'تحققوا من النتائج في القائمة أدناه'
+        });
         // Refresh signals to show updated results
         refetch();
       }
@@ -57,10 +64,10 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
     // Fetch immediately on mount
     fetchTelegramMessages();
 
-    // Set up interval to fetch every 5 seconds (less aggressive)
+    // Set up interval to fetch every 3 seconds for better real-time updates
     const interval = setInterval(() => {
       fetchTelegramMessages();
-    }, 5000);
+    }, 3000);
 
     // Cleanup interval on unmount
     return () => clearInterval(interval);
@@ -210,18 +217,30 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                     </Badge>
                   )}
                   
-                  {/* Only show "executing" status for executed (not completed) signals */}
-                  {signal.status === "executed" && !signal.result && (() => {
-                    const signalTime = new Date(signal.received_at).getTime();
-                    const now = Date.now();
-                    const diffMinutes = (now - signalTime) / (1000 * 60);
+                  {/* Show executing status based on entry time and status */}
+                  {!signal.result && (() => {
+                    // Check if we're in execution window based on entry_time
+                    const isInExecutionWindow = (() => {
+                      if (!signal.entry_time) return false;
+                      const parts = signal.entry_time.split(":").map(Number);
+                      if (parts.length < 2) return false;
+                      
+                      const now = new Date();
+                      const entryDateTime = new Date(now);
+                      entryDateTime.setHours(parts[0], parts[1], parts[2] || 0, 0);
+                      
+                      const diffMin = (now.getTime() - entryDateTime.getTime()) / 60000;
+                      return diffMin >= -1 && diffMin <= 5; // 1 min before to 5 min after
+                    })();
                     
-                    // Only show if signal is less than 5 minutes old
-                    if (diffMinutes < 5) {
+                    const shouldShowExecuting = signal.status === "executed" || 
+                      (signal.status === "pending" && isInExecutionWindow);
+                    
+                    if (shouldShowExecuting) {
                       return (
                         <Badge 
                           variant="secondary"
-                          className="gap-1"
+                          className="gap-1 bg-blue-500/20 text-blue-400 border-blue-500/30"
                         >
                           <Loader2 className="h-3 w-3 animate-spin" />
                           جاري التنفيذ...
@@ -231,12 +250,34 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                     return null;
                   })()}
                   
-                  {signal.status === "pending" && (
-                    <Badge variant="outline" className="gap-1">
-                      <Clock className="h-3 w-3" />
-                      قيد الانتظار
-                    </Badge>
-                  )}
+                  {/* Show pending only when not in execution window and no result */}
+                  {signal.status === "pending" && !signal.result && (() => {
+                    if (!signal.entry_time) return (
+                      <Badge variant="outline" className="gap-1">
+                        <Clock className="h-3 w-3" />
+                        قيد الانتظار
+                      </Badge>
+                    );
+                    
+                    const parts = signal.entry_time.split(":").map(Number);
+                    if (parts.length < 2) return null;
+                    
+                    const now = new Date();
+                    const entryDateTime = new Date(now);
+                    entryDateTime.setHours(parts[0], parts[1], parts[2] || 0, 0);
+                    const diffMin = (now.getTime() - entryDateTime.getTime()) / 60000;
+                    
+                    // Show pending only if not yet in execution window
+                    if (diffMin < -1) {
+                      return (
+                        <Badge variant="outline" className="gap-1">
+                          <Clock className="h-3 w-3" />
+                          قيد الانتظار
+                        </Badge>
+                      );
+                    }
+                    return null;
+                  })()}
                   {signal.status === "failed" && (
                     <Badge variant="destructive" className="gap-1">
                       <XCircle className="h-3 w-3" />
