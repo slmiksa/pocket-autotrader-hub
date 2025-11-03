@@ -144,6 +144,17 @@ serve(async (req) => {
         );
       }
 
+      // CRITICAL: Delete webhook first to prevent conflicts with polling
+      // This is a one-time call to ensure no webhook interferes
+      try {
+        const deleteWebhookUrl = `https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook?drop_pending_updates=true`;
+        const webhookResponse = await fetch(deleteWebhookUrl);
+        const webhookData = await webhookResponse.json();
+        console.log('Webhook deletion result:', webhookData);
+      } catch (webhookError) {
+        console.warn('Failed to delete webhook (non-critical):', webhookError);
+      }
+
       // Read last processed update offset
       const offsetKey = 'telegram_update_offset';
       const offsetRow = await getSetting(offsetKey);
