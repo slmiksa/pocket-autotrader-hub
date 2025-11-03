@@ -92,15 +92,27 @@ function parseSignalFromMessage(text: string): any | null {
 }
 
 // Parse a result (win/loss) message
-function parseResultFromMessage(text: string): { asset?: string; timeframe?: string; result: 'win' | 'loss' } | null {
-  // Heuristics: look for win/loss keywords or icons
-  const isWin = /(✅|✔️|win|won|ربح)/i.test(text);
-  const isLoss = /(❌|⛔️|loss|lose|lost|خسارة|خسر)/i.test(text);
-  if (!isWin && !isLoss) return null;
+function parseResultFromMessage(text: string): { asset?: string; timeframe?: string; result: 'win' | 'win1' | 'win2' | 'loss' } | null {
+  // Detect win/loss and optional martingale index (1 or 2)
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  const hasWin = /(✅|✔️|\bwin\b|\bwon\b|ربح)/i.test(normalized);
+  const hasLoss = /(❌|⛔️|\bloss\b|\blose\b|\blost\b|خسارة|خسر)/i.test(normalized);
+  if (!hasWin && !hasLoss) return null;
 
-  // Try to extract asset and timeframe if present (often result messages omit them)
-  const assetMatch = text.match(/💷\s*([A-Z]{3}\/[A-Z]{3}|[A-Z]{6,}-OTC|[A-Z]{6})/i);
-  const timeframeMatch = text.match(/💎\s*(M\d+|H\d+)/i);
+  // Extract optional win level: "win 1", "win1", "WIN ✅ 1", or superscripts ¹ ², or Arabic ١ ٢
+  let result: 'win' | 'win1' | 'win2' | 'loss' = hasLoss ? 'loss' : 'win';
+  if (hasWin) {
+    const levelDigit = /win\s*([12])/i.exec(normalized)?.[1]
+      || (/win.*?(¹|²)/i.exec(normalized)?.[1] ? (/win.*?(¹|²)/i.exec(normalized)![1] === '¹' ? '1' : '2') : undefined)
+      || (/win.*?(١|٢)/i.exec(normalized)?.[1] ? (/win.*?(١|٢)/i.exec(normalized)![1] === '١' ? '1' : '2') : undefined)
+      || (/✅\s*([12])/i.exec(normalized)?.[1]);
+    if (levelDigit === '1') result = 'win1';
+    if (levelDigit === '2') result = 'win2';
+  }
+
+  // Try to extract asset/timeframe when present
+  const assetMatch = normalized.match(/💷\s*([A-Z]{3}\/[A-Z]{3}|[A-Z]{6,}-OTC|[A-Z]{6})/i);
+  const timeframeMatch = normalized.match(/💎\s*(M\d+|H\d+)/i);
 
   let asset = assetMatch ? assetMatch[1] : undefined;
   if (asset) {
@@ -110,7 +122,7 @@ function parseResultFromMessage(text: string): { asset?: string; timeframe?: str
     }
   }
 
-  return { asset, timeframe: timeframeMatch ? timeframeMatch[1] : undefined, result: isWin ? 'win' : 'loss' };
+  return { asset, timeframe: timeframeMatch ? timeframeMatch[1] : undefined, result };
 }
 
 // Helpers to match result to most likely signal when result message lacks details

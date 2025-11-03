@@ -172,7 +172,7 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                 </div>
 
                 <div className="flex flex-col items-end gap-1">
-                  {/* Show result (win/loss) first if completed */}
+                  {/* Show result based on exact result value */}
                   {signal.status === "completed" && signal.result === "win" && (
                     <Badge 
                       variant="default"
@@ -180,6 +180,24 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                     >
                       <CheckCircle2 className="h-4 w-4" />
                       ✅ ربح
+                    </Badge>
+                  )}
+                  {signal.status === "completed" && signal.result === "win1" && (
+                    <Badge 
+                      variant="default"
+                      className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      ✅ ربح ¹
+                    </Badge>
+                  )}
+                  {signal.status === "completed" && signal.result === "win2" && (
+                    <Badge 
+                      variant="default"
+                      className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      ✅ ربح ²
                     </Badge>
                   )}
                   {signal.status === "completed" && signal.result === "loss" && (
@@ -192,14 +210,14 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                     </Badge>
                   )}
                   
-                  {/* Show "executing" only for the most recent signal or signals with very recent received_at */}
-                  {signal.status === "executed" && (() => {
+                  {/* Only show "executing" status for executed (not completed) signals */}
+                  {signal.status === "executed" && !signal.result && (() => {
                     const signalTime = new Date(signal.received_at).getTime();
                     const now = Date.now();
                     const diffMinutes = (now - signalTime) / (1000 * 60);
                     
-                    // Only show "جاري التنفيذ" if signal is less than 10 minutes old
-                    if (diffMinutes < 10) {
+                    // Only show if signal is less than 5 minutes old
+                    if (diffMinutes < 5) {
                       return (
                         <Badge 
                           variant="secondary"

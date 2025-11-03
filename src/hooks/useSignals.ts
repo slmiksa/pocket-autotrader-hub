@@ -11,7 +11,7 @@ export interface Signal {
   received_at: string;
   raw_message?: string;
   telegram_message_id?: string;
-  result?: string | null; // 'win', 'loss', or null
+  result?: string | null; // 'win', 'win1', 'win2', 'loss', or null
   entry_time?: string | null;
 }
 
