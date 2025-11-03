@@ -80,6 +80,71 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_codes: {
+        Row: {
+          code: string
+          created_at: string
+          current_uses: number | null
+          duration_days: number
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_uses?: number | null
+          duration_days: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_uses?: number | null
+          duration_days?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          activated_at: string
+          code_id: string
+          device_id: string
+          expires_at: string
+          id: string
+        }
+        Insert: {
+          activated_at?: string
+          code_id: string
+          device_id: string
+          expires_at: string
+          id?: string
+        }
+        Update: {
+          activated_at?: string
+          code_id?: string
+          device_id?: string
+          expires_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trades: {
         Row: {
           amount: number
