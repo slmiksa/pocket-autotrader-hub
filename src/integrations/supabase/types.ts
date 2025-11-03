@@ -46,7 +46,7 @@ export type Database = {
           raw_message: string | null
           received_at: string
           status: string
-          telegram_message_id: number | null
+          telegram_message_id: string | null
           timeframe: string
         }
         Insert: {
@@ -59,7 +59,7 @@ export type Database = {
           raw_message?: string | null
           received_at?: string
           status?: string
-          telegram_message_id?: number | null
+          telegram_message_id?: string | null
           timeframe: string
         }
         Update: {
@@ -72,7 +72,7 @@ export type Database = {
           raw_message?: string | null
           received_at?: string
           status?: string
-          telegram_message_id?: number | null
+          telegram_message_id?: string | null
           timeframe?: string
         }
         Relationships: []

@@ -160,7 +160,7 @@ serve(async (req) => {
           const { data: existing } = await supabase
             .from('signals')
             .select('id')
-            .eq('telegram_message_id', pubDate)
+            .eq('telegram_message_id', pubDate.toString())
             .limit(1);
 
           if (!existing || existing.length === 0) {
@@ -172,7 +172,7 @@ serve(async (req) => {
                 direction: signal.direction,
                 entry_time: signal.entry_time,
                 raw_message: signal.raw_message,
-                telegram_message_id: pubDate,
+                telegram_message_id: pubDate.toString(),
                 status: 'pending'
               })
               .select()
@@ -266,7 +266,7 @@ serve(async (req) => {
                 direction: signal.direction,
                 entry_time: signal.entry_time,
                 raw_message: signal.raw_message,
-                telegram_message_id: parseInt(messageId, 16),
+                telegram_message_id: messageId,
                 status: 'pending'
               })
               .select()
