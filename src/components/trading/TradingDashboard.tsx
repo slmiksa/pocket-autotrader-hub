@@ -6,9 +6,15 @@ import { useState } from "react";
 import { TrendingUp, TrendingDown, Activity, DollarSign, AlertCircle } from "lucide-react";
 import { LiveSignals } from "./LiveSignals";
 import { StatsCard } from "./StatsCard";
+import { useSignals } from "@/hooks/useSignals";
+import { useAutoTrade } from "@/hooks/useAutoTrade";
 
 export const TradingDashboard = () => {
   const [autoTradeEnabled, setAutoTradeEnabled] = useState(false);
+  const { signals } = useSignals();
+  
+  // Enable auto-trading when switch is on
+  useAutoTrade(autoTradeEnabled, signals);
   
   return (
     <div className="space-y-6">
