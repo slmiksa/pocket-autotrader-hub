@@ -10,10 +10,49 @@ const corsHeaders = {
 function parseSignalFromMessage(text: string): any | null {
   console.log('Parsing message:', text);
   
-  // Example formats:
-  // "EUR/USD M5 CALL"
-  // "EURUSD M5 BUY"
-  // "GOLD M15 PUT"
+  // NEW: Parse the actual format from EyadTraderBot2 channel
+  // Format example:
+  // 🛰 POCKET OPTION [M1]
+  // 💷 AUDCHF-OTC
+  // 💎 M1
+  // ⌚️ 16:15:00
+  // 🔼 call (or 🔽 put)
+  
+  // Extract asset (after 💷)
+  const assetMatch = text.match(/💷\s*([A-Z]{6,}-OTC|[A-Z]{3}\/[A-Z]{3}|[A-Z]{6})/i);
+  
+  // Extract timeframe (after 💎)
+  const timeframeMatch = text.match(/💎\s*(M\d+|H\d+)/i);
+  
+  // Extract direction (after 🔼 or 🔽)
+  const callMatch = text.match(/🔼\s*(call|buy)/i);
+  const putMatch = text.match(/🔽\s*(put|sell)/i);
+  
+  if (assetMatch && timeframeMatch && (callMatch || putMatch)) {
+    let asset = assetMatch[1];
+    
+    // Clean asset name: remove -OTC suffix
+    asset = asset.replace('-OTC', '');
+    
+    // Convert AUDCHF to AUD/CHF if needed
+    if (asset.length === 6 && !asset.includes('/')) {
+      asset = asset.substring(0, 3) + '/' + asset.substring(3);
+    }
+    
+    const timeframe = timeframeMatch[1];
+    const direction = callMatch ? 'CALL' : 'PUT';
+    
+    console.log('Signal extracted:', { asset, timeframe, direction });
+    
+    return {
+      asset,
+      timeframe,
+      direction,
+      raw_message: text,
+    };
+  }
+  
+  // Fallback: Try old formats for compatibility
   const patterns = [
     /([A-Z]{3}\/[A-Z]{3})\s+(M\d+|H\d+)\s+(CALL|PUT)/i,
     /([A-Z]{3}[A-Z]{3})\s+(M\d+|H\d+)\s+(CALL|PUT|BUY|SELL)/i,
@@ -24,7 +63,6 @@ function parseSignalFromMessage(text: string): any | null {
     const match = text.match(pattern);
     if (match) {
       let asset = match[1];
-      // Convert EURUSD to EUR/USD if needed
       if (asset.length === 6 && !asset.includes('/')) {
         asset = asset.substring(0, 3) + '/' + asset.substring(3);
       }
