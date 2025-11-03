@@ -87,16 +87,15 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
     // Fetch immediately on mount
     fetchTelegramMessages();
 
-    // Aggressive polling for immediate updates (every 3 seconds)
-    const aggressiveInterval = setInterval(() => {
+    // Moderate polling (every 5 seconds) - avoid conflicts
+    const interval = setInterval(() => {
       fetchTelegramMessages();
-    }, 3000);
+    }, 5000);
 
-    // Cleanup intervals on unmount
     return () => {
-      clearInterval(aggressiveInterval);
+      clearInterval(interval);
     };
-  }, [isPolling]);
+  }, []);
 
   if (loading) {
     return (

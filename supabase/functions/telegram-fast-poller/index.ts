@@ -151,17 +151,51 @@ serve(async (req) => {
       );
     }
 
-    console.log('🚀 Fast Telegram poller starting...');
+    // CRITICAL: Check lock to prevent concurrent getUpdates calls
+    const lockKey = 'fast_telegram_poller_lock';
+    const now = new Date();
+    const lockTTL = 8000; // 8 seconds lock
 
-    // Ensure no webhook conflicts with getUpdates
-    try {
-      const deleteWebhookUrl = `https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook?drop_pending_updates=true`;
-      const webhookResponse = await fetch(deleteWebhookUrl);
-      const webhookData = await webhookResponse.json();
-      console.log('Webhook deletion (fast-poller):', webhookData);
-    } catch (webhookError) {
-      console.warn('Failed to delete webhook in fast-poller (non-critical):', webhookError);
+    const { data: lockData } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', lockKey)
+      .limit(1);
+
+    const lockedUntil = lockData?.[0]?.value?.until ? new Date(lockData[0].value.until) : null;
+
+    if (lockedUntil && lockedUntil > now) {
+      console.log('⏸️ Another poller is running, skipping. Locked until:', lockedUntil.toISOString());
+      return new Response(
+        JSON.stringify({ success: true, skipped: true, reason: 'locked' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    // Acquire lock
+    const newLockUntil = new Date(now.getTime() + lockTTL).toISOString();
+    await supabase
+      .from('settings')
+      .upsert({ key: lockKey, value: { until: newLockUntil } });
+
+    const releaseLock = async () => {
+      await supabase
+        .from('settings')
+        .upsert({ key: lockKey, value: { until: new Date(0).toISOString() } });
+    };
+
+    try {
+      console.log('🚀 Fast Telegram poller starting...');
+
+      // Ensure no webhook conflicts with getUpdates
+      try {
+        const deleteWebhookUrl = `https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook?drop_pending_updates=false`;
+        const webhookResponse = await fetch(deleteWebhookUrl);
+        const webhookData = await webhookResponse.json();
+        console.log('Webhook check:', webhookData);
+      } catch (webhookError) {
+        console.warn('Webhook check failed (non-critical):', webhookError);
+      }
 
     // Get last processed update offset
     const { data: offsetData } = await supabase
@@ -259,28 +293,34 @@ serve(async (req) => {
       }
     }
 
-    // Update offset for next poll
-    if (maxUpdateId >= lastOffset) {
-      await supabase
-        .from('settings')
-        .upsert({
-          key: 'fast_telegram_offset',
-          value: { offset: maxUpdateId + 1 }
-        });
+      // Update offset for next poll
+      if (maxUpdateId >= lastOffset) {
+        await supabase
+          .from('settings')
+          .upsert({
+            key: 'fast_telegram_offset',
+            value: { offset: maxUpdateId + 1 }
+          });
+      }
+
+      await releaseLock();
+
+      console.log(`⚡ Fast poll complete: ${updates.length} messages, ${signals.length} signals, ${resultsUpdated} results`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          messagesChecked: updates.length,
+          signalsFound: signals.length,
+          resultsUpdated,
+          signals
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (innerError) {
+      await releaseLock();
+      throw innerError;
     }
-
-    console.log(`⚡ Fast poll complete: ${updates.length} messages, ${signals.length} signals, ${resultsUpdated} results`);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        messagesChecked: updates.length,
-        signalsFound: signals.length,
-        resultsUpdated,
-        signals
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
   } catch (error) {
     console.error('❌ Error in fast telegram poller:', error);
     const message = error instanceof Error ? error.message : String(error);
