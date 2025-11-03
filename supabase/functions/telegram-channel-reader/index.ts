@@ -151,21 +151,18 @@ async function findBestSignalForResult(supabase: any, parsed: { asset?: string; 
     .limit(30);
   if (!recent || recent.length === 0) return null;
 
-  // Filter signals from last 10 minutes only AND past their entry_time
-  const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+  // Filter signals that have passed their entry_time (executing or should be finished)
   let candidates = recent.filter((s: any) => {
-    const receivedTime = new Date(s.received_at).getTime();
-    if (receivedTime < tenMinutesAgo) return false;
-    
-    // Must have entry_time and be past it
+    // Must have entry_time
     if (!s.entry_time) return false;
     const mins = minutesSinceEntry(s.entry_time);
-    return mins >= 0 && mins <= 5; // Between entry and 5 min after
+    // Accept signals that started executing (0-20 minutes window for results)
+    return mins >= 0 && mins <= 20;
   });
   
   if (candidates.length === 0) return null;
 
-  // If asset/timeframe present, filter by them
+  // If asset/timeframe present, filter by them for better accuracy
   if (parsed.asset) {
     const cond = toCondensedAsset(parsed.asset);
     const assetMatches = candidates.filter((s: any) => toCondensedAsset(s.asset || '').includes(cond));

@@ -13,61 +13,61 @@ const Index = () => {
     <div className="min-h-screen bg-background dark">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary p-2">
-                <TrendingUp className="h-6 w-6 text-primary-foreground" />
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="rounded-lg bg-primary p-1.5 sm:p-2 shrink-0">
+                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">PocketOption Auto Trader</h1>
-                <p className="text-sm text-muted-foreground">نظام التداول الآلي من تيليجرام</p>
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">PocketOption Auto Trader</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">نظام التداول الآلي من تيليجرام</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <div className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
-              <span className="text-sm text-muted-foreground">متصل</span>
+              <span className="text-xs sm:text-sm text-muted-foreground">متصل</span>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-            <TabsTrigger value="dashboard" className="gap-2">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-3 h-auto">
+            <TabsTrigger value="dashboard" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2">
               <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">لوحة التحكم</span>
+              <span>لوحة التحكم</span>
             </TabsTrigger>
-            <TabsTrigger value="history" className="gap-2">
+            <TabsTrigger value="history" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2">
               <History className="h-4 w-4" />
-              <span className="hidden sm:inline">السجل</span>
+              <span>السجل</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2">
+            <TabsTrigger value="settings" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2">
               <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">الإعدادات</span>
+              <span>الإعدادات</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="space-y-6">
+          <TabsContent value="dashboard" className="space-y-4 sm:space-y-6">
             <TradingDashboard />
           </TabsContent>
 
-          <TabsContent value="history" className="space-y-6">
+          <TabsContent value="history" className="space-y-4 sm:space-y-6">
             <SignalHistory />
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
+          <TabsContent value="settings" className="space-y-4 sm:space-y-6">
             <SettingsPanel />
           </TabsContent>
         </Tabs>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card mt-12">
-        <div className="container mx-auto px-4 py-6">
-          <div className="text-center text-sm text-muted-foreground">
+      <footer className="border-t border-border bg-card mt-8 sm:mt-12">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+          <div className="text-center text-xs sm:text-sm text-muted-foreground">
             <p>تطوير: Salem Alquzi | تحذير: التداول يحمل مخاطر عالية. استخدم على مسؤوليتك الخاصة.</p>
           </div>
         </div>

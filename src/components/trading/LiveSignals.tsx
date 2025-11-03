@@ -95,14 +95,14 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
   }
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
+      <CardHeader className="px-3 sm:px-6 py-3 sm:py-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
               <div className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
               التوصيات المباشرة
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs sm:text-sm">
               آخر التوصيات من قناة تيليجرام
             </CardDescription>
           </div>
@@ -111,15 +111,15 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
             disabled={fetching}
             size="sm"
             variant="outline"
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
           >
             <RefreshCw className={cn("h-4 w-4", fetching && "animate-spin")} />
-            جلب الرسائل
+            <span className="text-xs sm:text-sm">جلب الرسائل</span>
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[400px] pr-4">
+      <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+        <ScrollArea className="h-[400px] pr-2 sm:pr-4">
           {(() => {
             // Filter to show only recent signals (last 12 hours)
             const twelveHoursAgo = Date.now() - 12 * 60 * 60 * 1000;
@@ -129,9 +129,9 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
 
             if (recentSignals.length === 0) {
               return (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <Clock className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">لا توجد توصيات حديثة</p>
+                <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                  <Clock className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-4" />
+                  <p className="text-sm sm:text-base text-muted-foreground">لا توجد توصيات حديثة</p>
                   <p className="text-xs text-muted-foreground mt-2">
                     سيتم عرض التوصيات الجديدة تلقائياً عند وصولها
                   </p>
@@ -144,23 +144,23 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                 {recentSignals.map((signal) => (
               <div
                 key={signal.id}
-                className="flex items-center justify-between rounded-lg border border-border bg-card p-4 hover:bg-accent/50 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border bg-card p-3 sm:p-4 hover:bg-accent/50 transition-colors"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
                   <div className={cn(
-                    "flex h-12 w-12 items-center justify-center rounded-lg",
+                    "flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg shrink-0",
                     signal.direction === "CALL" ? "bg-success/20" : "bg-danger/20"
                   )}>
                     {signal.direction === "CALL" ? (
-                      <TrendingUp className="h-6 w-6 text-success" />
+                      <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
                     ) : (
-                      <TrendingDown className="h-6 w-6 text-danger" />
+                      <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6 text-danger" />
                     )}
                   </div>
                   
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-foreground">{signal.asset}</span>
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-foreground text-sm sm:text-base">{signal.asset}</span>
                       <Badge variant="outline" className="text-xs">
                         {signal.timeframe}
                       </Badge>
@@ -174,7 +174,7 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                         {signal.direction}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {format(new Date(signal.received_at), 'HH:mm:ss')}
@@ -189,7 +189,7 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
                   </div>
                 </div>
 
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-1 shrink-0">
                   {/* Dynamic status calculation based on result and entry_time */}
                   {(() => {
                     // Priority 1: Show result if it exists

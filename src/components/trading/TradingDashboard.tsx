@@ -22,9 +22,9 @@ export const TradingDashboard = () => {
     <div className="space-y-6">
       {/* Warning Banner */}
       <Card className="border-warning bg-warning/10">
-        <CardContent className="flex items-center gap-3 py-4">
-          <AlertCircle className="h-5 w-5 text-warning shrink-0" />
-          <p className="text-sm text-foreground">
+        <CardContent className="flex items-start sm:items-center gap-2 sm:gap-3 py-3 sm:py-4 px-3 sm:px-6">
+          <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-warning shrink-0 mt-0.5 sm:mt-0" />
+          <p className="text-xs sm:text-sm text-foreground">
             <strong>تحذير:</strong> النظام حالياً متصل بحساب تجريبي (Demo). تأكد من اختبار كل شيء قبل التبديل إلى الحساب الحقيقي.
           </p>
         </CardContent>
@@ -32,10 +32,10 @@ export const TradingDashboard = () => {
 
       {autoTradeEnabled && (
         <Card className="border-success/30 bg-success/10">
-          <CardContent className="flex items-center gap-3 py-4">
-            <Activity className="h-5 w-5 text-success shrink-0 animate-pulse" />
+          <CardContent className="flex items-start sm:items-center gap-2 sm:gap-3 py-3 sm:py-4 px-3 sm:px-6">
+            <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-success shrink-0 animate-pulse mt-0.5 sm:mt-0" />
             <div>
-              <p className="text-sm font-semibold text-success">✅ التداول التلقائي مفعّل</p>
+              <p className="text-xs sm:text-sm font-semibold text-success">✅ التداول التلقائي مفعّل</p>
               <p className="text-xs text-muted-foreground mt-1">
                 سيتم تنفيذ التوصيات الجديدة تلقائياً في الوقت المحدد. تأكد من فتح Pocket Option في متصفح آخر.
               </p>
@@ -46,29 +46,31 @@ export const TradingDashboard = () => {
 
       {/* Auto Trade Control */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <CardHeader className="px-3 sm:px-6 py-3 sm:py-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
             <div>
-              <CardTitle>التداول الآلي</CardTitle>
-              <CardDescription>تفعيل/إيقاف نسخ الصفقات تلقائياً</CardDescription>
+              <CardTitle className="text-base sm:text-lg">التداول الآلي</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">تفعيل/إيقاف نسخ الصفقات تلقائياً</CardDescription>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-start">
               <AutoTradeButton />
-              <Badge variant={autoTradeEnabled ? "default" : "secondary"} className="text-sm">
-                {autoTradeEnabled ? "مُفعّل" : "مُعطّل"}
-              </Badge>
-              <Switch 
-                checked={autoTradeEnabled} 
-                onCheckedChange={setAutoTradeEnabled}
-                className="data-[state=checked]:bg-success"
-              />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Badge variant={autoTradeEnabled ? "default" : "secondary"} className="text-xs sm:text-sm">
+                  {autoTradeEnabled ? "مُفعّل" : "مُعطّل"}
+                </Badge>
+                <Switch 
+                  checked={autoTradeEnabled} 
+                  onCheckedChange={setAutoTradeEnabled}
+                  className="data-[state=checked]:bg-success"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
       </Card>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="إجمالي الأرباح"
           value="$1,234.56"
@@ -100,7 +102,7 @@ export const TradingDashboard = () => {
       </div>
 
       {/* Live Signals and Trade History */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <LiveSignals autoTradeEnabled={autoTradeEnabled} />
         <TradeHistory />
       </div>
