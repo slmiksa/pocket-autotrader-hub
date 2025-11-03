@@ -7,6 +7,7 @@ import { TrendingUp, TrendingDown, Activity, DollarSign, AlertCircle } from "luc
 import { LiveSignals } from "./LiveSignals";
 import { StatsCard } from "./StatsCard";
 import { TradeHistory } from "./TradeHistory";
+import { TradingAdvice } from "./TradingAdvice";
 import { useSignals } from "@/hooks/useSignals";
 import { useAutoTrade } from "@/hooks/useAutoTrade";
 import { AutoTradeButton } from "./AutoTradeButton";
@@ -20,6 +21,9 @@ export const TradingDashboard = () => {
   
   return (
     <div className="space-y-6">
+      {/* Trading Advice */}
+      <TradingAdvice />
+
       {/* Warning Banner */}
       <Card className="border-warning bg-warning/10">
         <CardContent className="flex items-start sm:items-center gap-2 sm:gap-3 py-3 sm:py-4 px-3 sm:px-6">

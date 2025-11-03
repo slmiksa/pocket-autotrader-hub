@@ -1,13 +1,64 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { TradingDashboard } from "@/components/trading/TradingDashboard";
 import { SignalHistory } from "@/components/trading/SignalHistory";
 import { SettingsPanel } from "@/components/trading/SettingsPanel";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
-import { BarChart3, Settings, History, TrendingUp } from "lucide-react";
+import { BarChart3, Settings, History, TrendingUp, LogOut, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import type { User } from "@supabase/supabase-js";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
+
+  useEffect(() => {
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+      
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      
+      if (event === 'SIGNED_OUT' || !session) {
+        navigate("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("تم تسجيل الخروج بنجاح");
+    } catch (error) {
+      toast.error("حدث خطأ في تسجيل الخروج");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background dark">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background dark">
@@ -21,12 +72,18 @@ const Index = () => {
               </div>
               <div className="min-w-0">
                 <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">PocketOption Auto Trader</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">نظام التداول الآلي من تيليجرام</p>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                  {user.user_metadata?.name || user.email}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <div className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
-              <span className="text-xs sm:text-sm text-muted-foreground">متصل</span>
+              <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">متصل</span>
+              <Button onClick={handleLogout} variant="outline" size="sm" className="ml-2">
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline ml-2">خروج</span>
+              </Button>
             </div>
           </div>
         </div>
