@@ -47,9 +47,14 @@ const Auth = () => {
       });
       if (error) throw error;
       
-      toast.success("تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني لتأكيد الحساب");
-      setEmail("");
-      setPassword("");
+      if (data.session) {
+        toast.success("تم إنشاء الحساب بنجاح!");
+        navigate("/");
+      } else {
+        toast.success("تم إنشاء الحساب بنجاح!");
+        setEmail("");
+        setPassword("");
+      }
     } catch (error: any) {
       console.error("Error signing up:", error);
       toast.error(error.message || "فشل إنشاء الحساب");
