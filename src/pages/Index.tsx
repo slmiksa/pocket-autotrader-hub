@@ -12,11 +12,12 @@ const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
+  const [imageAnalysisEnabled, setImageAnalysisEnabled] = useState(false);
   const checkSubscription = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("subscription_expires_at")
+        .select("subscription_expires_at, image_analysis_enabled")
         .eq("user_id", userId)
         .single();
 
@@ -33,6 +34,7 @@ const Index = () => {
         
         if (expiresAt > now) {
           setSubscriptionExpiresAt(data.subscription_expires_at);
+          setImageAnalysisEnabled(data.image_analysis_enabled || false);
           setLoading(false);
           return true;
         }
@@ -133,16 +135,18 @@ const Index = () => {
                   </div>
                 );
               })()}
-              <Button 
-                onClick={() => navigate('/image-analysis')} 
-                variant="outline" 
-                size="sm"
-                className="gap-1.5"
-              >
-                <Image className="h-4 w-4" />
-                <span className="hidden sm:inline">تحليل بالصورة</span>
-              </Button>
-              <Button 
+              {imageAnalysisEnabled && (
+                <Button 
+                  onClick={() => navigate('/image-analysis')} 
+                  variant="outline" 
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  <Image className="h-4 w-4" />
+                  <span className="hidden sm:inline">تحليل بالصورة</span>
+                </Button>
+              )}
+              <Button
                 onClick={() => window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank')} 
                 variant="outline" 
                 size="sm"

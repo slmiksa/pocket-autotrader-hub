@@ -20,6 +20,7 @@ const AdminDashboard = () => {
   const [codes, setCodes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
 
   // Form state
   const [newCode, setNewCode] = useState("");
@@ -45,6 +46,7 @@ const AdminDashboard = () => {
         if (data) {
           setIsAdmin(true);
           loadCodes();
+          loadUsers();
         } else {
           setIsAdmin(false);
           setLoading(false);
@@ -118,6 +120,49 @@ const AdminDashboard = () => {
       toast.error("فشل تحميل الأكواد");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, subscription_expires_at, image_analysis_enabled, created_at");
+
+      if (error) throw error;
+
+      // Get user emails from auth
+      const usersWithEmails = await Promise.all(
+        (data || []).map(async (profile) => {
+          const { data: { user } } = await supabase.auth.admin.getUserById(profile.user_id);
+          return {
+            ...profile,
+            email: user?.email || "لا يوجد",
+          };
+        })
+      );
+
+      setUsers(usersWithEmails);
+    } catch (error) {
+      console.error("Error loading users:", error);
+      toast.error("فشل تحميل المستخدمين");
+    }
+  };
+
+  const toggleImageAnalysis = async (userId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ image_analysis_enabled: !currentStatus })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast.success("تم تحديث حالة ميزة تحليل الصورة");
+      loadUsers();
+    } catch (error: any) {
+      console.error("Error updating image analysis:", error);
+      toast.error("فشل تحديث الميزة");
     }
   };
 
@@ -290,6 +335,66 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Users Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle>إدارة المستخدمين</CardTitle>
+            <CardDescription>
+              عرض وتعديل صلاحيات المستخدمين
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {users.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">لا يوجد مستخدمين</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>البريد الإلكتروني</TableHead>
+                      <TableHead>تاريخ التسجيل</TableHead>
+                      <TableHead>تاريخ انتهاء الاشتراك</TableHead>
+                      <TableHead>تحليل الصورة</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.map((user) => (
+                      <TableRow key={user.user_id}>
+                        <TableCell className="font-medium">{user.email}</TableCell>
+                        <TableCell>
+                          {format(new Date(user.created_at), "yyyy-MM-dd")}
+                        </TableCell>
+                        <TableCell>
+                          {user.subscription_expires_at ? (
+                            <span className={
+                              new Date(user.subscription_expires_at) > new Date()
+                                ? "text-success"
+                                : "text-destructive"
+                            }>
+                              {format(new Date(user.subscription_expires_at), "yyyy-MM-dd")}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">غير مفعل</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant={user.image_analysis_enabled ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => toggleImageAnalysis(user.user_id, user.image_analysis_enabled)}
+                          >
+                            {user.image_analysis_enabled ? "مفعل" : "معطل"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Admin Account Settings */}
         <Card>
           <CardHeader>

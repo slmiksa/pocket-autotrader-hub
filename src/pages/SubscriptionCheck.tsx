@@ -257,7 +257,7 @@ const SubscriptionCheck = () => {
             <CardDescription>اختر الباقة المناسبة لك</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-3 gap-4">
               {/* 1 Month Package */}
               <div className="border rounded-lg p-6 space-y-4 hover:border-primary transition-colors">
                 <div>
@@ -306,6 +306,40 @@ const SubscriptionCheck = () => {
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-success" />
                     <span>دعم فني</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Premium Package with Image Analysis */}
+              <div className="border-2 border-amber-500 rounded-lg p-6 space-y-4 relative">
+                <Badge className="absolute -top-3 right-4 bg-amber-500">باقة مميزة</Badge>
+                <div>
+                  <h3 className="text-xl font-bold">شهرين + تحليل الصور</h3>
+                  <div className="flex items-baseline gap-2 mt-2">
+                    <span className="text-3xl font-bold text-amber-500">450</span>
+                    <span className="text-muted-foreground">ريال</span>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    <span>توصيات تداول مباشرة</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    <span>تداول آلي</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    <span>دعم فني</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-amber-500" />
+                    <span className="font-semibold">تحليل السوق بالصور</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-amber-500" />
+                    <span className="font-semibold">توصيات CALL/PUT من الصور</span>
                   </li>
                 </ul>
               </div>
