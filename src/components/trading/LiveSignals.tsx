@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle, Loader2, RefreshCw, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSignals } from "@/hooks/useSignals";
 import { format } from "date-fns";
@@ -46,14 +46,17 @@ export const LiveSignals = ({
     }
   };
   useEffect(() => {
-    // Set up fast polling to check for new Telegram messages every 2 seconds
+    // Fetch immediately on mount
+    fetchTelegramMessages();
+
+    // Set up aggressive polling to check for new Telegram messages every 3 seconds
     const pollInterval = setInterval(async () => {
       try {
-        // Use fast-poller for realtime updates
+        // Use channel reader for direct message fetching
         const {
           data,
           error
-        } = await supabase.functions.invoke('telegram-fast-poller');
+        } = await supabase.functions.invoke('telegram-channel-reader');
         if (!error && data) {
           console.log('📡 Telegram poll result:', data);
           // If new signals were found, refetch to update UI
@@ -64,7 +67,7 @@ export const LiveSignals = ({
       } catch (error) {
         console.error('Polling error:', error);
       }
-    }, 2000); // Poll every 2 seconds for near-realtime updates
+    }, 3000); // Poll every 3 seconds for near-realtime updates
 
     return () => {
       clearInterval(pollInterval);
@@ -130,7 +133,20 @@ export const LiveSignals = ({
                   
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-foreground text-sm sm:text-base">{signal.asset}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold text-foreground text-sm sm:text-base">{signal.asset}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            navigator.clipboard.writeText(signal.asset);
+                            toast.success('تم نسخ اسم السوق');
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
                       <Badge variant="outline" className="text-xs">
                         {signal.timeframe}
                       </Badge>
