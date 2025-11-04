@@ -71,7 +71,7 @@ export const LiveSignals = ({
     // Fetch immediately on mount
     fetchTelegramMessages();
 
-    // Set up fast polling to check for new Telegram messages every 5 seconds
+    // Set up fast polling to check for new Telegram messages every 2 seconds
     const pollInterval = setInterval(async () => {
       try {
         // Use fast-poller for realtime updates
@@ -89,7 +89,7 @@ export const LiveSignals = ({
       } catch (error) {
         console.error('Polling error:', error);
       }
-    }, 5000); // Poll every 5 seconds for near-realtime updates
+    }, 2000); // Poll every 2 seconds for near-realtime updates
 
     return () => {
       clearInterval(pollInterval);
