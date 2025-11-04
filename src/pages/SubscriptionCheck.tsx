@@ -127,9 +127,16 @@ const SubscriptionCheck = () => {
         .update({ current_uses: (codeData.current_uses || 0) + 1 })
         .eq("id", codeData.id);
 
-      toast.success("تم تفعيل الاشتراك بنجاح!");
-      await checkUserSubscription(user.id);
+      toast.success("تم تفعيل الاشتراك بنجاح! انتظر جاري تحويلك إلى صفحة التوصيات...");
+      // حدث الحالة محلياً لتفادي أي وميض قبل الانتقال
+      setHasActiveSubscription(true);
+      setSubscriptionExpiresAt(expiresAt.toISOString());
       setSubscriptionCode("");
+
+      // انتقل تلقائياً إلى صفحة التوصيات بعد لحظات قصيرة
+      setTimeout(() => {
+        navigate("/");
+      }, 1200);
     } catch (error: any) {
       console.error("Error activating code:", error);
       toast.error(error.message || "فشل تفعيل الكود");
