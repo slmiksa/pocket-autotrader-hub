@@ -22,7 +22,10 @@ export const LiveSignals = ({
     loading,
     refetch
   } = useSignals();
-  const { saveUserResult, getUserResult } = useUserTradeResults();
+  const {
+    saveUserResult,
+    getUserResult
+  } = useUserTradeResults();
   const [fetching, setFetching] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [selectedSignal, setSelectedSignal] = useState<string | null>(null);
@@ -104,9 +107,7 @@ export const LiveSignals = ({
               <div className="flex h-2 w-2 rounded-full bg-success animate-pulse" />
               التوصيات المباشرة
             </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              آخر التوصيات من قناة تيليجرام
-            </CardDescription>
+            <CardDescription className="text-xs sm:text-sm"></CardDescription>
           </div>
           <Button onClick={fetchTelegramMessages} disabled={fetching} size="sm" variant="outline" className="gap-2 w-full sm:w-auto">
             <RefreshCw className={cn("h-4 w-4", fetching && "animate-spin")} />
@@ -117,19 +118,19 @@ export const LiveSignals = ({
       <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
         <ScrollArea className="h-[400px] pr-2 sm:pr-4">
           {(() => {
-          // Filter to show only recent signals (last 12 hours)
-          const twelveHoursAgo = Date.now() - 12 * 60 * 60 * 1000;
-          const recentSignals = signals.filter(signal => new Date(signal.received_at).getTime() >= twelveHoursAgo);
-          if (recentSignals.length === 0) {
-            return <div className="flex flex-col items-center justify-center h-full text-center px-4">
+            // Filter to show only recent signals (last 12 hours)
+            const twelveHoursAgo = Date.now() - 12 * 60 * 60 * 1000;
+            const recentSignals = signals.filter(signal => new Date(signal.received_at).getTime() >= twelveHoursAgo);
+            if (recentSignals.length === 0) {
+              return <div className="flex flex-col items-center justify-center h-full text-center px-4">
                   <Clock className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-4" />
                   <p className="text-sm sm:text-base text-muted-foreground">لا توجد توصيات حديثة</p>
                   <p className="text-xs text-muted-foreground mt-2">
                     سيتم عرض التوصيات الجديدة تلقائياً عند وصولها
                   </p>
                 </div>;
-          }
-          return <div className="space-y-3">
+            }
+            return <div className="space-y-3">
                 {recentSignals.map(signal => <div key={signal.id} className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 sm:p-4 hover:bg-accent/50 transition-colors">
                 <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
                   <div className={cn("flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg shrink-0", signal.direction === "CALL" ? "bg-success/20" : "bg-danger/20")}>
@@ -140,15 +141,10 @@ export const LiveSignals = ({
                     <div className="flex items-center gap-2 flex-wrap">
                       <div className="flex items-center gap-1">
                         <span className="font-semibold text-foreground text-sm sm:text-base">{signal.asset}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => {
-                            navigator.clipboard.writeText(signal.asset);
-                            toast.success('تم نسخ اسم السوق');
-                          }}
-                        >
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                          navigator.clipboard.writeText(signal.asset);
+                          toast.success('تم نسخ اسم السوق');
+                        }}>
                           <Copy className="h-3 w-3" />
                         </Button>
                       </div>
@@ -176,85 +172,85 @@ export const LiveSignals = ({
                   {/* Dynamic status calculation based on result and entry_time */}
                   <div className="flex items-center gap-2">
                   {(() => {
-                  // Priority 1: Show result if it exists
-                  if (signal.result === "win") {
-                    return <Badge variant="default" className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1">
+                      // Priority 1: Show result if it exists
+                      if (signal.result === "win") {
+                        return <Badge variant="default" className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1">
                           <CheckCircle2 className="h-4 w-4" />
                           ✅ ربح
                         </Badge>;
-                  }
-                  if (signal.result === "win1") {
-                    return <Badge variant="default" className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1">
+                      }
+                      if (signal.result === "win1") {
+                        return <Badge variant="default" className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1">
                           <CheckCircle2 className="h-4 w-4" />
                           ✅ ربح ¹
                         </Badge>;
-                  }
-                  if (signal.result === "win2") {
-                    return <Badge variant="default" className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1">
+                      }
+                      if (signal.result === "win2") {
+                        return <Badge variant="default" className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1">
                           <CheckCircle2 className="h-4 w-4" />
                           ✅ ربح ²
                         </Badge>;
-                  }
-                  if (signal.result === "loss") {
-                    return <Badge variant="destructive" className="gap-1 text-base px-3 py-1">
+                      }
+                      if (signal.result === "loss") {
+                        return <Badge variant="destructive" className="gap-1 text-base px-3 py-1">
                           <XCircle className="h-4 w-4" />
                           ❌ خسارة
                         </Badge>;
-                  }
+                      }
 
-                  // Priority 2: No result - calculate status based on entry_time
-                  if (!signal.entry_time) {
-                    return <Badge variant="outline" className="gap-1">
+                      // Priority 2: No result - calculate status based on entry_time
+                      if (!signal.entry_time) {
+                        return <Badge variant="outline" className="gap-1">
                           <Clock className="h-3 w-3" />
                           قيد الانتظار
                         </Badge>;
-                  }
-                  const parts = signal.entry_time.split(":").map(Number);
-                  if (parts.length < 2) {
-                    return <Badge variant="outline" className="gap-1">
+                      }
+                      const parts = signal.entry_time.split(":").map(Number);
+                      if (parts.length < 2) {
+                        return <Badge variant="outline" className="gap-1">
                           <Clock className="h-3 w-3" />
                           قيد الانتظار
                         </Badge>;
-                  }
-                  const now = new Date();
-                  // Anchor entry time to the signal's received_at date to avoid day rollover issues
-                  const baseDate = new Date(signal.received_at);
-                  let entryDateTime = new Date(baseDate);
-                  entryDateTime.setHours(parts[0], parts[1], parts[2] || 0, 0);
+                      }
+                      const now = new Date();
+                      // Anchor entry time to the signal's received_at date to avoid day rollover issues
+                      const baseDate = new Date(signal.received_at);
+                      let entryDateTime = new Date(baseDate);
+                      entryDateTime.setHours(parts[0], parts[1], parts[2] || 0, 0);
 
-                  // If entry time appears to be for the next day (e.g., >6h after message time),
-                  // it actually belongs to the previous day from the feed context – shift back one day
-                  if (entryDateTime.getTime() - baseDate.getTime() > 6 * 60 * 60 * 1000) {
-                    entryDateTime.setDate(entryDateTime.getDate() - 1);
-                  }
+                      // If entry time appears to be for the next day (e.g., >6h after message time),
+                      // it actually belongs to the previous day from the feed context – shift back one day
+                      if (entryDateTime.getTime() - baseDate.getTime() > 6 * 60 * 60 * 1000) {
+                        entryDateTime.setDate(entryDateTime.getDate() - 1);
+                      }
 
-                  // Parse timeframe to minutes
-                  let tfMinutes = 1;
-                  if (signal.timeframe) {
-                    const tf = signal.timeframe.toUpperCase();
-                    if (tf.startsWith('M')) tfMinutes = parseInt(tf.slice(1)) || 1;else if (tf.startsWith('H')) tfMinutes = (parseInt(tf.slice(1)) || 1) * 60;
-                  }
-                  const executionEndTime = new Date(entryDateTime.getTime() + tfMinutes * 60000);
+                      // Parse timeframe to minutes
+                      let tfMinutes = 1;
+                      if (signal.timeframe) {
+                        const tf = signal.timeframe.toUpperCase();
+                        if (tf.startsWith('M')) tfMinutes = parseInt(tf.slice(1)) || 1;else if (tf.startsWith('H')) tfMinutes = (parseInt(tf.slice(1)) || 1) * 60;
+                      }
+                      const executionEndTime = new Date(entryDateTime.getTime() + tfMinutes * 60000);
 
-                  // Before entry time → قيد الانتظار
-                  if (now < entryDateTime) {
-                    return <Badge variant="outline" className="gap-1">
+                      // Before entry time → قيد الانتظار
+                      if (now < entryDateTime) {
+                        return <Badge variant="outline" className="gap-1">
                           <Clock className="h-3 w-3" />
                           قيد الانتظار
                         </Badge>;
-                  }
+                      }
 
-                  // During execution window (entry_time to entry_time + timeframe) → جاري التنفيذ
-                  if (now >= entryDateTime && now <= executionEndTime) {
-                    return <Badge variant="default" className="gap-1 bg-blue-500 hover:bg-blue-600 text-white">
+                      // During execution window (entry_time to entry_time + timeframe) → جاري التنفيذ
+                      if (now >= entryDateTime && now <= executionEndTime) {
+                        return <Badge variant="default" className="gap-1 bg-blue-500 hover:bg-blue-600 text-white">
                           <Loader2 className="h-3 w-3 animate-spin" />
                           جاري التنفيذ...
                         </Badge>;
-                  }
+                      }
 
-                  // After execution window without result → Show button to enter result
-                  return null;
-                })()}
+                      // After execution window without result → Show button to enter result
+                      return null;
+                    })()}
 
                   {signal.status === "failed" && <Badge variant="destructive" className="gap-1">
                       <XCircle className="h-3 w-3" />
@@ -267,37 +263,26 @@ export const LiveSignals = ({
                     // Don't show button if user already entered result or official result exists
                     const userResult = getUserResult(signal.id);
                     if (userResult || signal.result) return null;
-                    
                     if (!signal.entry_time) return null;
-                    
                     const parts = signal.entry_time.split(":").map(Number);
                     if (parts.length < 2) return null;
-                    
                     const now = new Date();
                     const baseDate = new Date(signal.received_at);
                     let entryDateTime = new Date(baseDate);
                     entryDateTime.setHours(parts[0], parts[1], parts[2] || 0, 0);
-                    
                     if (entryDateTime.getTime() - baseDate.getTime() > 6 * 60 * 60 * 1000) {
                       entryDateTime.setDate(entryDateTime.getDate() - 1);
                     }
-                    
                     let tfMinutes = 1;
                     if (signal.timeframe) {
                       const tf = signal.timeframe.toUpperCase();
-                      if (tf.startsWith('M')) tfMinutes = parseInt(tf.slice(1)) || 1;
-                      else if (tf.startsWith('H')) tfMinutes = (parseInt(tf.slice(1)) || 1) * 60;
+                      if (tf.startsWith('M')) tfMinutes = parseInt(tf.slice(1)) || 1;else if (tf.startsWith('H')) tfMinutes = (parseInt(tf.slice(1)) || 1) * 60;
                     }
                     const executionEndTime = new Date(entryDateTime.getTime() + tfMinutes * 60000);
-                    
+
                     // Only show button if trade has finished
                     if (now > executionEndTime) {
-                      return <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedSignal(signal.id)}
-                        className="text-xs"
-                      >
+                      return <Button variant="outline" size="sm" onClick={() => setSelectedSignal(signal.id)} className="text-xs">
                         ما هي نتيجتك؟
                       </Button>;
                     }
@@ -306,13 +291,13 @@ export const LiveSignals = ({
                 </div>
                 </div>)}
               </div>;
-        })()}
+          })()}
         </ScrollArea>
       </CardContent>
     </Card>
 
     {/* Result Selection Dialog */}
-    <Dialog open={!!selectedSignal} onOpenChange={(open) => !open && setSelectedSignal(null)}>
+    <Dialog open={!!selectedSignal} onOpenChange={open => !open && setSelectedSignal(null)}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>ما هي نتيجة الصفقة؟</DialogTitle>
@@ -321,28 +306,21 @@ export const LiveSignals = ({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 py-4">
-          <Button
-            className="w-full bg-success hover:bg-success/90 text-white gap-2 py-6 text-lg"
-            onClick={async () => {
-              if (selectedSignal) {
-                await saveUserResult(selectedSignal, 'win');
-                setSelectedSignal(null);
-              }
-            }}
-          >
+          <Button className="w-full bg-success hover:bg-success/90 text-white gap-2 py-6 text-lg" onClick={async () => {
+            if (selectedSignal) {
+              await saveUserResult(selectedSignal, 'win');
+              setSelectedSignal(null);
+            }
+          }}>
             <CheckCircle2 className="h-5 w-5" />
             صفقة ناجحة ✅
           </Button>
-          <Button
-            variant="destructive"
-            className="w-full gap-2 py-6 text-lg"
-            onClick={async () => {
-              if (selectedSignal) {
-                await saveUserResult(selectedSignal, 'loss');
-                setSelectedSignal(null);
-              }
-            }}
-          >
+          <Button variant="destructive" className="w-full gap-2 py-6 text-lg" onClick={async () => {
+            if (selectedSignal) {
+              await saveUserResult(selectedSignal, 'loss');
+              setSelectedSignal(null);
+            }
+          }}>
             <XCircle className="h-5 w-5" />
             صفقة خاسرة ❌
           </Button>
