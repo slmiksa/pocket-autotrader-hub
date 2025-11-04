@@ -3,20 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { TradingDashboard } from "@/components/trading/TradingDashboard";
-import { TradeHistory } from "@/components/trading/TradeHistory";
-import { SettingsPanel } from "@/components/trading/SettingsPanel";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Settings, History, TrendingUp, Loader2, LogOut, Calendar } from "lucide-react";
+import { TrendingUp, Loader2, LogOut, Calendar } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
 const Index = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("dashboard");
   const checkSubscription = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -149,34 +144,7 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-3 h-auto">
-            <TabsTrigger value="dashboard" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2">
-              <BarChart3 className="h-4 w-4" />
-              <span>لوحة التحكم</span>
-            </TabsTrigger>
-            <TabsTrigger value="history" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2">
-              <History className="h-4 w-4" />
-              <span>السجل</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-1 sm:gap-2 text-xs sm:text-sm py-2">
-              <Settings className="h-4 w-4" />
-              <span>الإعدادات</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard" className="space-y-4 sm:space-y-6">
-            <TradingDashboard />
-          </TabsContent>
-
-          <TabsContent value="history" className="space-y-4 sm:space-y-6">
-            <TradeHistory />
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-4 sm:space-y-6">
-            <SettingsPanel />
-          </TabsContent>
-        </Tabs>
+        <TradingDashboard />
       </main>
 
       {/* Footer */}
