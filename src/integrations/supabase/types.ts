@@ -16,7 +16,9 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          activated_code: string | null
           created_at: string
+          email: string | null
           id: string
           image_analysis_enabled: boolean | null
           subscription_expires_at: string | null
@@ -24,7 +26,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          activated_code?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           image_analysis_enabled?: boolean | null
           subscription_expires_at?: string | null
@@ -32,7 +36,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          activated_code?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           image_analysis_enabled?: boolean | null
           subscription_expires_at?: string | null

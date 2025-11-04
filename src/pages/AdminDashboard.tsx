@@ -127,22 +127,12 @@ const AdminDashboard = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, subscription_expires_at, image_analysis_enabled, created_at");
+        .select("user_id, email, subscription_expires_at, image_analysis_enabled, activated_code, created_at")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      // Get user emails from auth
-      const usersWithEmails = await Promise.all(
-        (data || []).map(async (profile) => {
-          const { data: { user } } = await supabase.auth.admin.getUserById(profile.user_id);
-          return {
-            ...profile,
-            email: user?.email || "لا يوجد",
-          };
-        })
-      );
-
-      setUsers(usersWithEmails);
+      setUsers(data || []);
     } catch (error) {
       console.error("Error loading users:", error);
       toast.error("فشل تحميل المستخدمين");
@@ -353,41 +343,52 @@ const AdminDashboard = () => {
                     <TableRow>
                       <TableHead>البريد الإلكتروني</TableHead>
                       <TableHead>تاريخ التسجيل</TableHead>
+                      <TableHead>حالة الاشتراك</TableHead>
                       <TableHead>تاريخ انتهاء الاشتراك</TableHead>
+                      <TableHead>الكود المستخدم</TableHead>
                       <TableHead>تحليل الصورة</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.user_id}>
-                        <TableCell className="font-medium">{user.email}</TableCell>
-                        <TableCell>
-                          {format(new Date(user.created_at), "yyyy-MM-dd")}
-                        </TableCell>
-                        <TableCell>
-                          {user.subscription_expires_at ? (
-                            <span className={
-                              new Date(user.subscription_expires_at) > new Date()
-                                ? "text-success"
-                                : "text-destructive"
-                            }>
-                              {format(new Date(user.subscription_expires_at), "yyyy-MM-dd")}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">غير مفعل</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant={user.image_analysis_enabled ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => toggleImageAnalysis(user.user_id, user.image_analysis_enabled)}
-                          >
-                            {user.image_analysis_enabled ? "مفعل" : "معطل"}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {users.map((user) => {
+                      const isActive = user.subscription_expires_at && new Date(user.subscription_expires_at) > new Date();
+                      return (
+                        <TableRow key={user.user_id}>
+                          <TableCell className="font-medium">{user.email || "لا يوجد"}</TableCell>
+                          <TableCell>
+                            {format(new Date(user.created_at), "yyyy-MM-dd")}
+                          </TableCell>
+                          <TableCell>
+                            {isActive ? (
+                              <Badge className="bg-success">نشط</Badge>
+                            ) : (
+                              <Badge variant="destructive">منتهي</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {user.subscription_expires_at ? (
+                              <span className={isActive ? "text-success" : "text-destructive"}>
+                                {format(new Date(user.subscription_expires_at), "yyyy-MM-dd")}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">غير مفعل</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {user.activated_code || "لا يوجد"}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant={user.image_analysis_enabled ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => toggleImageAnalysis(user.user_id, user.image_analysis_enabled)}
+                            >
+                              {user.image_analysis_enabled ? "مفعل" : "معطل"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>

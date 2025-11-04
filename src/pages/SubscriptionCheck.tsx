@@ -103,7 +103,9 @@ const SubscriptionCheck = () => {
         error: profileError
       } = await supabase.from("profiles").upsert({
         user_id: user.id,
+        email: user.email,
         subscription_expires_at: expiresAt.toISOString(),
+        activated_code: subscriptionCode.toUpperCase(),
         updated_at: new Date().toISOString()
       }, {
         onConflict: "user_id"
