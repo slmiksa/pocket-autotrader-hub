@@ -86,7 +86,7 @@ const ImageAnalysis = () => {
           <CardHeader>
             <CardTitle className="text-2xl">تحليل الشارت بالصورة</CardTitle>
             <CardDescription>
-              قم برفع صورة الشارت والشموع اليابانية للحصول على تحليل دقيق من الذكاء الاصطناعي
+              قم برفع صورة الشارت من منصة Pocket Option للحصول على تحليل دقيق وتوصية CALL أو PUT مع تحديد وقت الدخول المثالي
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -152,14 +152,29 @@ const ImageAnalysis = () => {
             </Button>
 
             {analysis && (
-              <div className="space-y-2">
-                <Label>نتيجة التحليل</Label>
-                <Textarea
-                  value={analysis}
-                  readOnly
-                  className="min-h-[300px] font-mono text-sm"
-                  dir="rtl"
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>نتيجة التحليل</Label>
+                  <div className="bg-card border rounded-lg p-4 space-y-3">
+                    <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl">
+                      <div className="whitespace-pre-wrap text-foreground leading-relaxed">
+                        {analysis}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-muted/50 border border-primary/20 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">💡</div>
+                    <div className="space-y-1 text-sm">
+                      <p className="font-semibold text-foreground">نصيحة مهمة:</p>
+                      <p className="text-muted-foreground">
+                        منصة Pocket Option لا تحتوي على وقف خسارة. تأكد من فهم التحليل جيداً قبل الدخول في الصفقة وحدد المبلغ المناسب لك.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </CardContent>
