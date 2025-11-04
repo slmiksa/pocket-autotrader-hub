@@ -26,6 +26,11 @@ const AdminDashboard = () => {
   const [durationDays, setDurationDays] = useState("30");
   const [maxUses, setMaxUses] = useState("1");
   const [codeExpiresAt, setCodeExpiresAt] = useState("");
+  
+  // Admin account settings state
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     const checkAdmin = async (userId: string) => {
@@ -187,6 +192,65 @@ const AdminDashboard = () => {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
+  const handleUpdateEmail = async () => {
+    if (!newEmail) {
+      toast.error("يرجى إدخال البريد الإلكتروني الجديد");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: newEmail
+      });
+
+      if (error) throw error;
+
+      toast.success("تم تحديث البريد الإلكتروني بنجاح");
+      setNewEmail("");
+    } catch (error: any) {
+      console.error("Error updating email:", error);
+      toast.error(error.message || "فشل تحديث البريد الإلكتروني");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      toast.error("يرجى إدخال كلمة المرور وتأكيدها");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("كلمات المرور غير متطابقة");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast.success("تم تحديث كلمة المرور بنجاح");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      console.error("Error updating password:", error);
+      toast.error(error.message || "فشل تحديث كلمة المرور");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading || !isAdmin || !user || !session) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background dark">
@@ -226,6 +290,80 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Admin Account Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              إعدادات حساب المسؤول
+            </CardTitle>
+            <CardDescription>
+              تغيير البريد الإلكتروني وكلمة المرور للحساب
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Email Section */}
+            <div className="space-y-4 pb-6 border-b border-border">
+              <h3 className="text-lg font-semibold">تغيير البريد الإلكتروني</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="currentEmail">البريد الحالي</Label>
+                  <Input
+                    id="currentEmail"
+                    type="email"
+                    value={user?.email || ""}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newEmail">البريد الجديد</Label>
+                  <Input
+                    id="newEmail"
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="admin@example.com"
+                  />
+                </div>
+              </div>
+              <Button onClick={handleUpdateEmail} disabled={loading || !newEmail}>
+                تحديث البريد الإلكتروني
+              </Button>
+            </div>
+
+            {/* Password Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">تغيير كلمة المرور</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">كلمة المرور الجديدة</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">تأكيد كلمة المرور</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+              <Button onClick={handleUpdatePassword} disabled={loading || !newPassword || !confirmPassword}>
+                تحديث كلمة المرور
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Create New Code */}
         <Card>
           <CardHeader>
