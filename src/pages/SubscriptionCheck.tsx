@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Key, Shield, MessageCircle, Calendar, CheckCircle2, XCircle, LogOut, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-
 const SubscriptionCheck = () => {
   const navigate = useNavigate();
   const [subscriptionCode, setSubscriptionCode] = useState("");
@@ -19,28 +18,22 @@ const SubscriptionCheck = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
-
   const checkUserSubscription = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("subscription_expires_at")
-        .eq("user_id", userId)
-        .single();
-
+      const {
+        data,
+        error
+      } = await supabase.from("profiles").select("subscription_expires_at").eq("user_id", userId).single();
       if (error) throw error;
-
       if (data && data.subscription_expires_at) {
         const expiresAt = new Date(data.subscription_expires_at);
         const now = new Date();
-        
         if (expiresAt > now) {
           setSubscriptionExpiresAt(data.subscription_expires_at);
           setHasActiveSubscription(true);
           return true;
         }
       }
-
       setHasActiveSubscription(false);
       return false;
     } catch (error) {
@@ -49,7 +42,6 @@ const SubscriptionCheck = () => {
       return false;
     }
   };
-
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -60,35 +52,28 @@ const SubscriptionCheck = () => {
       toast.error("فشل تسجيل الخروج");
     }
   };
-
   const openWhatsApp = () => {
     const phoneNumber = "966575594911"; // Saudi Arabia format
     const message = "مرحباً، أريد الاشتراك في PocketOption Auto Trader";
     const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
-
   const handleActivateCode = async () => {
     if (!user) {
       toast.error("يجب تسجيل الدخول أولاً");
       return;
     }
-
     if (!subscriptionCode.trim()) {
       toast.error("يرجى إدخال كود الاشتراك");
       return;
     }
-
     setLoading(true);
     try {
       // Validate the code
-      const { data: codeData, error: codeError } = await supabase
-        .from("subscription_codes")
-        .select("*")
-        .eq("code", subscriptionCode.toUpperCase())
-        .eq("is_active", true)
-        .single();
-
+      const {
+        data: codeData,
+        error: codeError
+      } = await supabase.from("subscription_codes").select("*").eq("code", subscriptionCode.toUpperCase()).eq("is_active", true).single();
       if (codeError || !codeData) {
         toast.error("كود الاشتراك غير صحيح أو منتهي الصلاحية");
         setLoading(false);
@@ -114,27 +99,24 @@ const SubscriptionCheck = () => {
       expiresAt.setDate(expiresAt.getDate() + codeData.duration_days);
 
       // Create or update user profile with subscription
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert({ 
-          user_id: user.id,
-          subscription_expires_at: expiresAt.toISOString(),
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: "user_id"
-        });
-
+      const {
+        error: profileError
+      } = await supabase.from("profiles").upsert({
+        user_id: user.id,
+        subscription_expires_at: expiresAt.toISOString(),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: "user_id"
+      });
       if (profileError) {
         console.error("Profile error:", profileError);
         throw profileError;
       }
 
       // Update code usage count
-      await supabase
-        .from("subscription_codes")
-        .update({ current_uses: (codeData.current_uses || 0) + 1 })
-        .eq("id", codeData.id);
-
+      await supabase.from("subscription_codes").update({
+        current_uses: (codeData.current_uses || 0) + 1
+      }).eq("id", codeData.id);
       toast.success("تم تفعيل الاشتراك بنجاح! انتظر جاري تحويلك إلى صفحة التوصيات...");
       // حدث الحالة محلياً لتفادي أي وميض قبل الانتقال
       setHasActiveSubscription(true);
@@ -152,34 +134,36 @@ const SubscriptionCheck = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          setTimeout(() => {
-            checkUserSubscription(session.user.id).then((isActive) => {
-              if (isActive) {
-                navigate("/");
-              }
-              setLoading(false);
-            });
-          }, 0);
-        } else {
-          setLoading(false);
-        }
+    const {
+      data: {
+        subscription
       }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
       if (session?.user) {
-        checkUserSubscription(session.user.id).then((isActive) => {
+        setTimeout(() => {
+          checkUserSubscription(session.user.id).then(isActive => {
+            if (isActive) {
+              navigate("/");
+            }
+            setLoading(false);
+          });
+        }, 0);
+      } else {
+        setLoading(false);
+      }
+    });
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        checkUserSubscription(session.user.id).then(isActive => {
           if (isActive) {
             navigate("/");
           }
@@ -189,32 +173,25 @@ const SubscriptionCheck = () => {
         setLoading(false);
       }
     });
-
     return () => subscription.unsubscribe();
   }, [navigate]);
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background dark">
+    return <div className="min-h-screen flex items-center justify-center bg-background dark">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
 
   // If user has active subscription, this should not be shown
   // because useEffect will redirect to dashboard
   if (hasActiveSubscription && user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background dark">
+    return <div className="min-h-screen flex items-center justify-center bg-background dark">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
 
   // If not logged in
   if (!user) {
-    return (
-      <div className="min-h-screen bg-background dark flex items-center justify-center p-4">
+    return <div className="min-h-screen bg-background dark flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
@@ -227,23 +204,17 @@ const SubscriptionCheck = () => {
             <Button onClick={() => navigate("/auth")} className="w-full" size="lg">
               تسجيل الدخول / التسجيل
             </Button>
-            <Button
-              onClick={() => navigate("/admin-login")}
-              variant="outline"
-              className="w-full"
-            >
+            <Button onClick={() => navigate("/admin-login")} variant="outline" className="w-full">
               <Shield className="h-4 w-4 ml-2" />
               دخول المسؤول
             </Button>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
 
   // Main subscription page (user logged in but no active subscription)
-  return (
-    <div className="min-h-screen bg-background dark p-4">
+  return <div className="min-h-screen bg-background dark p-4">
       <div className="container mx-auto max-w-4xl space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -252,7 +223,7 @@ const SubscriptionCheck = () => {
               <TrendingUp className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">PocketOption Auto Trader</h1>
+              <h1 className="text-2xl font-bold text-slate-50">PocketOption Auto Trader</h1>
               <p className="text-sm text-muted-foreground">تفعيل الاشتراك</p>
             </div>
           </div>
@@ -370,36 +341,17 @@ const SubscriptionCheck = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="code">كود الاشتراك</Label>
-              <Input
-                id="code"
-                value={subscriptionCode}
-                onChange={(e) => setSubscriptionCode(e.target.value.toUpperCase())}
-                onKeyPress={(e) => e.key === "Enter" && handleActivateCode()}
-                placeholder="XXXX-XXXX-XXXX"
-                className="font-mono text-center text-lg"
-                maxLength={14}
-              />
+              <Input id="code" value={subscriptionCode} onChange={e => setSubscriptionCode(e.target.value.toUpperCase())} onKeyPress={e => e.key === "Enter" && handleActivateCode()} placeholder="XXXX-XXXX-XXXX" className="font-mono text-center text-lg" maxLength={14} />
             </div>
-            <Button
-              onClick={handleActivateCode}
-              disabled={loading || !subscriptionCode.trim()}
-              className="w-full"
-              size="lg"
-            >
-              {loading ? (
-                <>
+            <Button onClick={handleActivateCode} disabled={loading || !subscriptionCode.trim()} className="w-full" size="lg">
+              {loading ? <>
                   <Loader2 className="h-4 w-4 ml-2 animate-spin" />
                   جاري التفعيل...
-                </>
-              ) : (
-                "تفعيل الاشتراك"
-              )}
+                </> : "تفعيل الاشتراك"}
             </Button>
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default SubscriptionCheck;
