@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Upload, Loader2 } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, MessageCircle, Lock } from "lucide-react";
 
 const ImageAnalysis = () => {
   const navigate = useNavigate();
@@ -17,6 +17,51 @@ const ImageAnalysis = () => {
   const [timeframe, setTimeframe] = useState<string>("");
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
+
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          toast.error("يجب تسجيل الدخول أولاً");
+          navigate("/auth");
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("image_analysis_enabled")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error) {
+          console.error("Error checking access:", error);
+          setHasAccess(false);
+          setLoading(false);
+          return;
+        }
+
+        setHasAccess(data?.image_analysis_enabled || false);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error:", error);
+        setHasAccess(false);
+        setLoading(false);
+      }
+    };
+
+    checkAccess();
+  }, [navigate]);
+
+  const openWhatsApp = () => {
+    const phoneNumber = "966575594911";
+    const message = "مرحباً، أريد ترقية الباقة للحصول على ميزة تحليل الصور";
+    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,6 +114,80 @@ const ImageAnalysis = () => {
       setAnalyzing(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-2xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            className="mb-4"
+          >
+            <ArrowLeft className="ml-2 h-4 w-4" />
+            رجوع
+          </Button>
+
+          <Card className="border-amber-500">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10">
+                <Lock className="h-8 w-8 text-amber-500" />
+              </div>
+              <CardTitle className="text-2xl">ميزة غير متاحة</CardTitle>
+              <CardDescription>
+                اشتراكك الحالي لا يسمح بالوصول إلى ميزة تحليل الصور
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="bg-muted rounded-lg p-6 space-y-4">
+                <h3 className="font-semibold text-lg">للحصول على هذه الميزة:</h3>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-primary" />
+                    <span>تحليل الشارت من الصور مباشرة</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-primary" />
+                    <span>توصيات CALL أو PUT دقيقة</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-primary" />
+                    <span>تحديد أفضل وقت للدخول</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-primary" />
+                    <span>تحليل فني شامل</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="text-center space-y-4">
+                <p className="text-muted-foreground">
+                  تواصل معنا لترقية باقتك والحصول على هذه الميزة المتقدمة
+                </p>
+                <Button 
+                  onClick={openWhatsApp} 
+                  className="w-full gap-2" 
+                  size="lg"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  تواصل معنا لترقية الباقة
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4">
