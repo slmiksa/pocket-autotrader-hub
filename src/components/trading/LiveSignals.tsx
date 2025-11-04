@@ -176,15 +176,6 @@ export const LiveSignals = ({
                   {/* Dynamic status calculation based on result and entry_time */}
                   <div className="flex items-center gap-2">
                   {(() => {
-                  // Check if user has manually entered result
-                  const userResult = getUserResult(signal.id);
-                  if (userResult) {
-                    return <Badge variant={userResult === 'win' ? 'default' : 'destructive'} className={cn("gap-1 text-base px-3 py-1", userResult === 'win' ? 'bg-success hover:bg-success/90' : '')}>
-                          {userResult === 'win' ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                          {userResult === 'win' ? '✅ ربح' : '❌ خسارة'}
-                        </Badge>;
-                  }
-                  
                   // Priority 1: Show result if it exists
                   if (signal.result === "win") {
                     return <Badge variant="default" className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1">
@@ -273,6 +264,7 @@ export const LiveSignals = ({
                   
                   {/* Show result button if trade is finished and no result yet */}
                   {(() => {
+                    // Don't show button if user already entered result or official result exists
                     const userResult = getUserResult(signal.id);
                     if (userResult || signal.result) return null;
                     
