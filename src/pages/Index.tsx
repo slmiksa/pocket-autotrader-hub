@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { TradingDashboard } from "@/components/trading/TradingDashboard";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle } from "lucide-react";
+import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image } from "lucide-react";
 import { toast } from "sonner";
 const Index = () => {
   const navigate = useNavigate();
@@ -133,6 +133,15 @@ const Index = () => {
                   </div>
                 );
               })()}
+              <Button 
+                onClick={() => navigate('/image-analysis')} 
+                variant="outline" 
+                size="sm"
+                className="gap-1.5"
+              >
+                <Image className="h-4 w-4" />
+                <span className="hidden sm:inline">تحليل بالصورة</span>
+              </Button>
               <Button 
                 onClick={() => window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank')} 
                 variant="outline" 
