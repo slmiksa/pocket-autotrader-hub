@@ -15,23 +15,19 @@ const Index = () => {
   const [imageAnalysisEnabled, setImageAnalysisEnabled] = useState(false);
   const checkSubscription = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("subscription_expires_at, image_analysis_enabled")
-        .eq("user_id", userId)
-        .single();
-
+      const {
+        data,
+        error
+      } = await supabase.from("profiles").select("subscription_expires_at, image_analysis_enabled").eq("user_id", userId).single();
       if (error) {
         console.error("Error fetching profile:", error);
         setLoading(false);
         navigate("/subscription");
         return false;
       }
-
       if (data && data.subscription_expires_at) {
         const expiresAt = new Date(data.subscription_expires_at);
         const now = new Date();
-        
         if (expiresAt > now) {
           setSubscriptionExpiresAt(data.subscription_expires_at);
           setImageAnalysisEnabled(data.image_analysis_enabled || false);
@@ -52,7 +48,6 @@ const Index = () => {
       return false;
     }
   };
-
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -63,30 +58,33 @@ const Index = () => {
       toast.error("فشل تسجيل الخروج");
     }
   };
-
   useEffect(() => {
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          setTimeout(() => {
-            checkSubscription(session.user.id);
-          }, 0);
-        } else {
-          setLoading(false);
-          navigate("/auth");
-        }
+    const {
+      data: {
+        subscription
       }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+      if (session?.user) {
+        setTimeout(() => {
+          checkSubscription(session.user.id);
+        }, 0);
+      } else {
+        setLoading(false);
+        navigate("/auth");
+      }
+    });
+
+    // Check for existing session
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
       if (session?.user) {
         checkSubscription(session.user.id);
       } else {
@@ -94,37 +92,26 @@ const Index = () => {
         navigate("/auth");
       }
     });
-
     return () => subscription.unsubscribe();
   }, [navigate]);
 
   // Realtime subscription for profile changes
   useEffect(() => {
     if (!user?.id) return;
-
     console.log("🔔 Setting up realtime subscription for profile changes");
-    
-    const channel = supabase
-      .channel('profile-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log("🔔 Profile updated:", payload);
-          const newData = payload.new as any;
-          if (newData.image_analysis_enabled !== undefined) {
-            setImageAnalysisEnabled(newData.image_analysis_enabled);
-            console.log("✅ Image analysis updated to:", newData.image_analysis_enabled);
-          }
-        }
-      )
-      .subscribe();
-
+    const channel = supabase.channel('profile-changes').on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'profiles',
+      filter: `user_id=eq.${user.id}`
+    }, payload => {
+      console.log("🔔 Profile updated:", payload);
+      const newData = payload.new as any;
+      if (newData.image_analysis_enabled !== undefined) {
+        setImageAnalysisEnabled(newData.image_analysis_enabled);
+        console.log("✅ Image analysis updated to:", newData.image_analysis_enabled);
+      }
+    }).subscribe();
     return () => {
       console.log("🔕 Cleaning up realtime subscription");
       supabase.removeChannel(channel);
@@ -148,7 +135,7 @@ const Index = () => {
                 <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">PocketOption Auto Trader</h1>
+                <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">PocketOption هوامير </h1>
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">
                   توصيات تداول مباشرة
                 </p>
@@ -156,36 +143,21 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {subscriptionExpiresAt && (() => {
-                const expiresAt = new Date(subscriptionExpiresAt);
-                const now = new Date();
-                const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                
-                return (
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10 text-xs sm:text-sm">
+              const expiresAt = new Date(subscriptionExpiresAt);
+              const now = new Date();
+              const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+              return <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10 text-xs sm:text-sm">
                     <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                     <span className="font-semibold text-primary">
                       {daysLeft} {daysLeft === 1 ? 'يوم' : 'أيام'}
                     </span>
-                  </div>
-                );
-              })()}
-              {imageAnalysisEnabled && (
-                <Button 
-                  onClick={() => navigate('/image-analysis')} 
-                  variant="outline" 
-                  size="sm"
-                  className="gap-1.5"
-                >
+                  </div>;
+            })()}
+              {imageAnalysisEnabled && <Button onClick={() => navigate('/image-analysis')} variant="outline" size="sm" className="gap-1.5">
                   <Image className="h-4 w-4" />
                   <span className="hidden sm:inline">تحليل بالصورة</span>
-                </Button>
-              )}
-              <Button
-                onClick={() => window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank')} 
-                variant="outline" 
-                size="sm"
-                className="gap-1.5"
-              >
+                </Button>}
+              <Button onClick={() => window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank')} variant="outline" size="sm" className="gap-1.5">
                 <MessageCircle className="h-4 w-4" />
                 <span className="hidden sm:inline">دعم فني</span>
               </Button>
