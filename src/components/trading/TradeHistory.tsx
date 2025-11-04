@@ -9,9 +9,9 @@ import { format } from "date-fns";
 
 export const TradeHistory = () => {
   const { signals, loading } = useSignals();
-  const { userResults, getStats } = useUserTradeResults();
+  const { userResults, loading: loadingResults, getStats } = useUserTradeResults();
   
-  if (loading) {
+  if (loading || loadingResults) {
     return <Card>
         <CardHeader>
           <CardTitle>صفقاتي</CardTitle>

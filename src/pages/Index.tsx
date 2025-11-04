@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { TradingDashboard } from "@/components/trading/TradingDashboard";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Loader2, LogOut, Calendar } from "lucide-react";
+import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 const Index = () => {
   const navigate = useNavigate();
@@ -125,17 +125,26 @@ const Index = () => {
                 const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
                 
                 return (
-                  <div className="flex items-center gap-2 text-xs sm:text-sm">
-                    <Calendar className="h-4 w-4" />
-                    <span className="font-medium text-primary">
-                      {daysLeft} {daysLeft === 1 ? 'يوم' : 'أيام'} متبقية
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10 text-xs sm:text-sm">
+                    <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                    <span className="font-semibold text-primary">
+                      {daysLeft} {daysLeft === 1 ? 'يوم' : 'أيام'}
                     </span>
                   </div>
                 );
               })()}
+              <Button 
+                onClick={() => window.open('https://wa.me/00966575594911', '_blank')} 
+                variant="outline" 
+                size="sm"
+                className="gap-1.5"
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">دعم فني</span>
+              </Button>
               <Button onClick={handleLogout} variant="ghost" size="sm">
                 <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline ml-2">تسجيل خروج</span>
+                <span className="hidden sm:inline ml-2">خروج</span>
               </Button>
             </div>
           </div>
