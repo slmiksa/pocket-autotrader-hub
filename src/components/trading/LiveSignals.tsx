@@ -67,11 +67,28 @@ export const LiveSignals = ({ autoTradeEnabled }: LiveSignalsProps) => {
     // Fetch immediately on mount
     fetchTelegramMessages();
 
-    // No polling needed with webhooks; just ensure setup once.
-    // Any new signals will arrive via realtime subscription.
+    // Set up fast polling to check for new Telegram messages every 5 seconds
+    const pollInterval = setInterval(async () => {
+      try {
+        // Use fast-poller for realtime updates
+        const { data, error } = await supabase.functions.invoke('telegram-fast-poller');
+        
+        if (!error && data) {
+          console.log('📡 Telegram poll result:', data);
+          // If new signals were found, refetch to update UI
+          if (data.signalsFound > 0 || data.resultsUpdated > 0) {
+            refetch();
+          }
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+      }
+    }, 5000); // Poll every 5 seconds for near-realtime updates
 
-    return () => {};
-  }, []);
+    return () => {
+      clearInterval(pollInterval);
+    };
+  }, [refetch]);
 
   if (loading) {
     return (
