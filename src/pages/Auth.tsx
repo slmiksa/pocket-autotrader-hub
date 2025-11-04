@@ -156,11 +156,7 @@ const Auth = () => {
             </TabsContent>
           </Tabs>
 
-          <div className="mt-4 text-center">
-            <Button onClick={() => navigate("/subscription")} variant="link" size="sm">
-              لديك كود اشتراك؟ قم بتفعيله
-            </Button>
-          </div>
+          
         </CardContent>
       </Card>
     </div>;
