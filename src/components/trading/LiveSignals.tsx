@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useSignals } from "@/hooks/useSignals";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 interface LiveSignalsProps {
   autoTradeEnabled: boolean;
@@ -22,7 +22,6 @@ export const LiveSignals = ({
   } = useSignals();
   const [fetching, setFetching] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
-  const lastSignalCount = useRef(0);
   const fetchTelegramMessages = async () => {
     // Prevent concurrent requests
     if (isPolling) {
@@ -32,45 +31,21 @@ export const LiveSignals = ({
     setIsPolling(true);
     setFetching(true);
     try {
-      // Ensure webhook is configured (idempotent)
+      // Directly fetch from channel reader without webhook setup
       const {
-        data,
-        error
-      } = await supabase.functions.invoke('telegram-webhook-setup');
-      if (error) {
-        console.warn('Failed to setup webhook:', error);
-        return;
-      }
-
-      // Webhook-setup completed; rely on realtime to update UI.
-      // As a fallback, occasionally trigger channel reader to backfill if needed.
-      const nowTs = Date.now();
-      if (!lastSignalCount.current || nowTs - (lastSignalCount.current as number) > 20000) {
-        try {
-          const {
-            data: readerData
-          } = await supabase.functions.invoke('telegram-channel-reader');
-          if (readerData && (readerData.signalsFound > 0 || readerData.resultsUpdated > 0)) {
-            refetch();
-          }
-        } catch (_) {}
-        lastSignalCount.current = nowTs;
+        data: readerData
+      } = await supabase.functions.invoke('telegram-channel-reader');
+      if (readerData && (readerData.signalsFound > 0 || readerData.resultsUpdated > 0)) {
+        refetch();
       }
     } catch (error) {
       console.error('Error fetching Telegram messages:', error);
-      // Only show error for critical failures
-      if (error?.message && !error.message.includes('429')) {
-        // Don't show error toast for rate limiting
-      }
     } finally {
       setFetching(false);
       setIsPolling(false);
     }
   };
   useEffect(() => {
-    // Fetch immediately on mount
-    fetchTelegramMessages();
-
     // Set up fast polling to check for new Telegram messages every 2 seconds
     const pollInterval = setInterval(async () => {
       try {
