@@ -25,7 +25,12 @@ const Index = () => {
         .eq("user_id", userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching profile:", error);
+        setLoading(false);
+        navigate("/subscription");
+        return false;
+      }
 
       if (data && data.subscription_expires_at) {
         const expiresAt = new Date(data.subscription_expires_at);
@@ -119,14 +124,20 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {subscriptionExpiresAt && (
-                <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span className="hidden sm:inline">
-                    ينتهي: {format(new Date(subscriptionExpiresAt), "yyyy-MM-dd")}
-                  </span>
-                </div>
-              )}
+              {subscriptionExpiresAt && (() => {
+                const expiresAt = new Date(subscriptionExpiresAt);
+                const now = new Date();
+                const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                
+                return (
+                  <div className="flex items-center gap-2 text-xs sm:text-sm">
+                    <Calendar className="h-4 w-4" />
+                    <span className="font-medium text-primary">
+                      {daysLeft} {daysLeft === 1 ? 'يوم' : 'أيام'} متبقية
+                    </span>
+                  </div>
+                );
+              })()}
               <Button onClick={handleLogout} variant="ghost" size="sm">
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline ml-2">تسجيل خروج</span>

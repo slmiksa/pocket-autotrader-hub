@@ -146,7 +146,12 @@ const SubscriptionCheck = () => {
         
         if (session?.user) {
           setTimeout(() => {
-            checkUserSubscription(session.user.id).then(() => setLoading(false));
+            checkUserSubscription(session.user.id).then((isActive) => {
+              if (isActive) {
+                navigate("/");
+              }
+              setLoading(false);
+            });
           }, 0);
         } else {
           setLoading(false);
@@ -159,14 +164,19 @@ const SubscriptionCheck = () => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        checkUserSubscription(session.user.id).then(() => setLoading(false));
+        checkUserSubscription(session.user.id).then((isActive) => {
+          if (isActive) {
+            navigate("/");
+          }
+          setLoading(false);
+        });
       } else {
         setLoading(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -176,39 +186,12 @@ const SubscriptionCheck = () => {
     );
   }
 
-  // If user has active subscription, redirect to dashboard
+  // If user has active subscription, this should not be shown
+  // because useEffect will redirect to dashboard
   if (hasActiveSubscription && user) {
     return (
-      <div className="min-h-screen bg-background dark flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
-              <CheckCircle2 className="h-8 w-8 text-success" />
-            </div>
-            <CardTitle>الاشتراك نشط!</CardTitle>
-            <CardDescription>لديك اشتراك نشط حالياً</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {subscriptionExpiresAt && (
-              <div className="p-4 rounded-lg bg-muted space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">تاريخ الانتهاء:</span>
-                  <Badge variant="outline" className="gap-2">
-                    <Calendar className="h-3 w-3" />
-                    {format(new Date(subscriptionExpiresAt), "yyyy-MM-dd")}
-                  </Badge>
-                </div>
-              </div>
-            )}
-            <Button onClick={() => navigate("/")} className="w-full" size="lg">
-              الذهاب إلى لوحة التحكم
-            </Button>
-            <Button onClick={handleLogout} variant="outline" className="w-full">
-              <LogOut className="h-4 w-4 ml-2" />
-              تسجيل الخروج
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center bg-background dark">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
