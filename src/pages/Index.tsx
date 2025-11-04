@@ -134,7 +134,7 @@ const Index = () => {
                 );
               })()}
               <Button 
-                onClick={() => window.open('https://wa.me/00966575594911', '_blank')} 
+                onClick={() => window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank')} 
                 variant="outline" 
                 size="sm"
                 className="gap-1.5"
