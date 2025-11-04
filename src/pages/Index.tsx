@@ -35,6 +35,7 @@ const Index = () => {
         if (expiresAt > now) {
           setSubscriptionExpiresAt(data.subscription_expires_at);
           setImageAnalysisEnabled(data.image_analysis_enabled || false);
+          console.log("✅ Image analysis enabled:", data.image_analysis_enabled);
           setLoading(false);
           return true;
         }
@@ -96,6 +97,39 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Realtime subscription for profile changes
+  useEffect(() => {
+    if (!user?.id) return;
+
+    console.log("🔔 Setting up realtime subscription for profile changes");
+    
+    const channel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log("🔔 Profile updated:", payload);
+          const newData = payload.new as any;
+          if (newData.image_analysis_enabled !== undefined) {
+            setImageAnalysisEnabled(newData.image_analysis_enabled);
+            console.log("✅ Image analysis updated to:", newData.image_analysis_enabled);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log("🔕 Cleaning up realtime subscription");
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-background dark">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
