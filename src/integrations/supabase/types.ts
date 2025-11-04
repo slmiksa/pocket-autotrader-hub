@@ -246,6 +246,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_trade_results: {
+        Row: {
+          created_at: string
+          id: string
+          signal_id: string
+          user_id: string
+          user_result: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          signal_id: string
+          user_id: string
+          user_result: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          signal_id?: string
+          user_id?: string
+          user_result?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_trade_results_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

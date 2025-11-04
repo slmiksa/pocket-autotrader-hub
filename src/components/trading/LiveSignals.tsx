@@ -9,6 +9,8 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useUserTradeResults } from "@/hooks/useUserTradeResults";
 interface LiveSignalsProps {
   autoTradeEnabled: boolean;
 }
@@ -20,8 +22,10 @@ export const LiveSignals = ({
     loading,
     refetch
   } = useSignals();
+  const { saveUserResult, getUserResult } = useUserTradeResults();
   const [fetching, setFetching] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
+  const [selectedSignal, setSelectedSignal] = useState<string | null>(null);
   const fetchTelegramMessages = async () => {
     // Prevent concurrent requests
     if (isPolling) {
@@ -91,7 +95,8 @@ export const LiveSignals = ({
         </CardContent>
       </Card>;
   }
-  return <Card className="mx-0 my-0 px-0 py-0">
+  return <>
+    <Card className="w-full">
       <CardHeader className="px-3 sm:px-6 py-3 sm:py-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
@@ -125,7 +130,7 @@ export const LiveSignals = ({
                 </div>;
           }
           return <div className="space-y-3">
-                {recentSignals.map(signal => <div key={signal.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border bg-card p-3 sm:p-4 hover:bg-accent/50 transition-colors">
+                {recentSignals.map(signal => <div key={signal.id} className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 sm:p-4 hover:bg-accent/50 transition-colors">
                 <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
                   <div className={cn("flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg shrink-0", signal.direction === "CALL" ? "bg-success/20" : "bg-danger/20")}>
                     {signal.direction === "CALL" ? <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-success" /> : <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6 text-danger" />}
@@ -167,9 +172,19 @@ export const LiveSignals = ({
                   </div>
                 </div>
 
-                <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-1 shrink-0">
+                <div className="flex flex-row items-center justify-between w-full gap-2">
                   {/* Dynamic status calculation based on result and entry_time */}
+                  <div className="flex items-center gap-2">
                   {(() => {
+                  // Check if user has manually entered result
+                  const userResult = getUserResult(signal.id);
+                  if (userResult) {
+                    return <Badge variant={userResult === 'win' ? 'default' : 'destructive'} className={cn("gap-1 text-base px-3 py-1", userResult === 'win' ? 'bg-success hover:bg-success/90' : '')}>
+                          {userResult === 'win' ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                          {userResult === 'win' ? '✅ ربح' : '❌ خسارة'}
+                        </Badge>;
+                  }
+                  
                   // Priority 1: Show result if it exists
                   if (signal.result === "win") {
                     return <Badge variant="default" className="gap-1 bg-success hover:bg-success/90 text-base px-3 py-1">
@@ -246,21 +261,101 @@ export const LiveSignals = ({
                         </Badge>;
                   }
 
-                  // After execution window without result → منتهية
-                  return <Badge variant="outline" className="gap-1 text-muted-foreground">
-                        منتهية
-                      </Badge>;
+                  // After execution window without result → Show button to enter result
+                  return null;
                 })()}
 
                   {signal.status === "failed" && <Badge variant="destructive" className="gap-1">
                       <XCircle className="h-3 w-3" />
                       فشل التنفيذ
                     </Badge>}
+                  </div>
+                  
+                  {/* Show result button if trade is finished and no result yet */}
+                  {(() => {
+                    const userResult = getUserResult(signal.id);
+                    if (userResult || signal.result) return null;
+                    
+                    if (!signal.entry_time) return null;
+                    
+                    const parts = signal.entry_time.split(":").map(Number);
+                    if (parts.length < 2) return null;
+                    
+                    const now = new Date();
+                    const baseDate = new Date(signal.received_at);
+                    let entryDateTime = new Date(baseDate);
+                    entryDateTime.setHours(parts[0], parts[1], parts[2] || 0, 0);
+                    
+                    if (entryDateTime.getTime() - baseDate.getTime() > 6 * 60 * 60 * 1000) {
+                      entryDateTime.setDate(entryDateTime.getDate() - 1);
+                    }
+                    
+                    let tfMinutes = 1;
+                    if (signal.timeframe) {
+                      const tf = signal.timeframe.toUpperCase();
+                      if (tf.startsWith('M')) tfMinutes = parseInt(tf.slice(1)) || 1;
+                      else if (tf.startsWith('H')) tfMinutes = (parseInt(tf.slice(1)) || 1) * 60;
+                    }
+                    const executionEndTime = new Date(entryDateTime.getTime() + tfMinutes * 60000);
+                    
+                    // Only show button if trade has finished
+                    if (now > executionEndTime) {
+                      return <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedSignal(signal.id)}
+                        className="text-xs"
+                      >
+                        ما هي نتيجتك؟
+                      </Button>;
+                    }
+                    return null;
+                  })()}
                 </div>
                 </div>)}
               </div>;
         })()}
         </ScrollArea>
       </CardContent>
-    </Card>;
+    </Card>
+
+    {/* Result Selection Dialog */}
+    <Dialog open={!!selectedSignal} onOpenChange={(open) => !open && setSelectedSignal(null)}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>ما هي نتيجة الصفقة؟</DialogTitle>
+          <DialogDescription>
+            اختر نتيجة الصفقة لتسجيلها في قسم صفقاتي
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-3 py-4">
+          <Button
+            className="w-full bg-success hover:bg-success/90 text-white gap-2 py-6 text-lg"
+            onClick={async () => {
+              if (selectedSignal) {
+                await saveUserResult(selectedSignal, 'win');
+                setSelectedSignal(null);
+              }
+            }}
+          >
+            <CheckCircle2 className="h-5 w-5" />
+            صفقة ناجحة ✅
+          </Button>
+          <Button
+            variant="destructive"
+            className="w-full gap-2 py-6 text-lg"
+            onClick={async () => {
+              if (selectedSignal) {
+                await saveUserResult(selectedSignal, 'loss');
+                setSelectedSignal(null);
+              }
+            }}
+          >
+            <XCircle className="h-5 w-5" />
+            صفقة خاسرة ❌
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  </>;
 };
