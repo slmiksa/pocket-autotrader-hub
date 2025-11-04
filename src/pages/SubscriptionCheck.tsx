@@ -113,13 +113,21 @@ const SubscriptionCheck = () => {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + codeData.duration_days);
 
-      // Update user profile with subscription
+      // Create or update user profile with subscription
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ subscription_expires_at: expiresAt.toISOString() })
-        .eq("user_id", user.id);
+        .upsert({ 
+          user_id: user.id,
+          subscription_expires_at: expiresAt.toISOString(),
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: "user_id"
+        });
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Profile error:", profileError);
+        throw profileError;
+      }
 
       // Update code usage count
       await supabase
