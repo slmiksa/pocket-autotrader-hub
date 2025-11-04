@@ -46,20 +46,10 @@ const Auth = () => {
         }
       });
       if (error) throw error;
-      if (data.user) {
-        // Create profile for the user
-        const {
-          error: profileError
-        } = await supabase.from("profiles").insert({
-          user_id: data.user.id,
-          subscription_expires_at: null
-        });
-        if (profileError) {
-          console.error("Error creating profile:", profileError);
-        }
-        toast.success("تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول");
-        setIsLogin(true);
-      }
+      
+      toast.success("تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني لتأكيد الحساب");
+      setEmail("");
+      setPassword("");
     } catch (error: any) {
       console.error("Error signing up:", error);
       toast.error(error.message || "فشل إنشاء الحساب");
