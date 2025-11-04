@@ -25,12 +25,7 @@ export const TradingDashboard = () => {
 
       {/* Warning Banner */}
       <Card className="border-warning bg-warning/10">
-        <CardContent className="flex items-start sm:items-center gap-2 sm:gap-3 py-3 sm:py-4 px-3 sm:px-6">
-          <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-warning shrink-0 mt-0.5 sm:mt-0" />
-          <p className="text-xs sm:text-sm text-foreground">
-            <strong>تحذير:</strong> النظام حالياً متصل بحساب تجريبي (Demo). تأكد من اختبار كل شيء قبل التبديل إلى الحساب الحقيقي.
-          </p>
-        </CardContent>
+        
       </Card>
 
       {autoTradeEnabled && <Card className="border-success/30 bg-success/10">
