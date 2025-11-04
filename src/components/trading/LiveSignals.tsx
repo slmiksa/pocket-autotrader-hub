@@ -111,7 +111,7 @@ export const LiveSignals = ({
           </div>
           <Button onClick={fetchTelegramMessages} disabled={fetching} size="sm" variant="outline" className="gap-2 w-full sm:w-auto">
             <RefreshCw className={cn("h-4 w-4", fetching && "animate-spin")} />
-            <span className="text-xs sm:text-sm">جلب الرسائل</span>
+            <span className="text-xs sm:text-sm">جاري جلب الفرص</span>
           </Button>
         </div>
       </CardHeader>
