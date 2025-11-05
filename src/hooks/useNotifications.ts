@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { playNotificationSound } from '@/utils/soundNotification';
 
 export const useNotifications = () => {
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -55,6 +56,9 @@ export const useNotifications = () => {
     }
 
     try {
+      // Play notification sound
+      playNotificationSound();
+      
       const notification = new Notification(title, {
         icon: '/favicon.png',
         badge: '/favicon.png',
