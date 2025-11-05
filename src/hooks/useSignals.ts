@@ -70,10 +70,12 @@ export const useSignals = () => {
               // Send notification for new signal
               if (permission === 'granted') {
                 const directionText = newSignal.direction === 'CALL' ? '📈 شراء' : '📉 بيع';
+                const soundType = newSignal.direction === 'CALL' ? 'call' : 'put';
                 sendNotification('🔔 توصية جديدة', {
                   body: `${newSignal.asset} - ${directionText}\nالفترة: ${newSignal.timeframe}`,
                   tag: newSignal.id,
                   requireInteraction: false,
+                  soundType: soundType,
                 });
               }
               

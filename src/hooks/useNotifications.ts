@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { playNotificationSound } from '@/utils/soundNotification';
+import { playCallNotificationSound, playPutNotificationSound, playNotificationSound } from '@/utils/soundNotification';
 
 export const useNotifications = () => {
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -44,7 +44,7 @@ export const useNotifications = () => {
     return false;
   };
 
-  const sendNotification = (title: string, options?: NotificationOptions) => {
+  const sendNotification = (title: string, options?: NotificationOptions & { soundType?: 'call' | 'put' | 'default' }) => {
     if (!isSupported) {
       console.log('Notifications not supported');
       return;
@@ -56,15 +56,25 @@ export const useNotifications = () => {
     }
 
     try {
-      // Play notification sound
-      playNotificationSound();
+      // Play appropriate sound based on signal type
+      const soundType = options?.soundType || 'default';
+      if (soundType === 'call') {
+        playCallNotificationSound();
+      } else if (soundType === 'put') {
+        playPutNotificationSound();
+      } else {
+        playNotificationSound();
+      }
+      
+      // Remove soundType from options before passing to Notification API
+      const { soundType: _, ...notificationOptions } = options || {};
       
       const notification = new Notification(title, {
         icon: '/favicon.png',
         badge: '/favicon.png',
         dir: 'rtl',
         lang: 'ar',
-        ...options,
+        ...notificationOptions,
       });
 
       // Auto-close after 10 seconds
