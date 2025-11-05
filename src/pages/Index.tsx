@@ -6,6 +6,7 @@ import { TradingDashboard } from "@/components/trading/TradingDashboard";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image } from "lucide-react";
 import { toast } from "sonner";
+import { useNotifications } from "@/hooks/useNotifications";
 const Index = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -13,6 +14,7 @@ const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [imageAnalysisEnabled, setImageAnalysisEnabled] = useState(false);
+  const { requestPermission, isSupported } = useNotifications();
   const checkSubscription = async (userId: string) => {
     try {
       const {
@@ -94,6 +96,18 @@ const Index = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Request notification permission on first load
+  useEffect(() => {
+    if (user && isSupported) {
+      // Request permission after a short delay to avoid overwhelming the user
+      const timer = setTimeout(() => {
+        requestPermission();
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [user, isSupported, requestPermission]);
 
   // Realtime subscription for profile changes
   useEffect(() => {

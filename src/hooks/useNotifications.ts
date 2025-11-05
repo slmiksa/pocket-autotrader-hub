@@ -1,0 +1,89 @@
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+export const useNotifications = () => {
+  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [isSupported, setIsSupported] = useState(false);
+
+  useEffect(() => {
+    // Check if notifications are supported
+    if ('Notification' in window) {
+      setIsSupported(true);
+      setPermission(Notification.permission);
+    }
+  }, []);
+
+  const requestPermission = async () => {
+    if (!isSupported) {
+      toast.error('المتصفح لا يدعم الإشعارات');
+      return false;
+    }
+
+    if (permission === 'granted') {
+      return true;
+    }
+
+    try {
+      const result = await Notification.requestPermission();
+      setPermission(result);
+      
+      if (result === 'granted') {
+        toast.success('تم تفعيل الإشعارات بنجاح');
+        return true;
+      } else if (result === 'denied') {
+        toast.error('تم رفض الإشعارات. يمكنك تفعيلها من إعدادات المتصفح');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      toast.error('فشل طلب إذن الإشعارات');
+      return false;
+    }
+    
+    return false;
+  };
+
+  const sendNotification = (title: string, options?: NotificationOptions) => {
+    if (!isSupported) {
+      console.log('Notifications not supported');
+      return;
+    }
+
+    if (permission !== 'granted') {
+      console.log('Notification permission not granted');
+      return;
+    }
+
+    try {
+      const notification = new Notification(title, {
+        icon: '/favicon.png',
+        badge: '/favicon.png',
+        dir: 'rtl',
+        lang: 'ar',
+        ...options,
+      });
+
+      // Auto-close after 10 seconds
+      setTimeout(() => {
+        notification.close();
+      }, 10000);
+
+      // Handle click to focus window
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+
+      return notification;
+    } catch (error) {
+      console.error('Error sending notification:', error);
+    }
+  };
+
+  return {
+    permission,
+    isSupported,
+    requestPermission,
+    sendNotification,
+  };
+};
