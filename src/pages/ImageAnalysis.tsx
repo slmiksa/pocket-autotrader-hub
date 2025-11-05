@@ -225,6 +225,14 @@ const ImageAnalysis = () => {
                   <SelectItem value="1d">يوم واحد</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mt-2">
+                <div className="flex items-start gap-2">
+                  <div className="text-lg">💡</div>
+                  <p className="text-sm text-foreground">
+                    <span className="font-semibold">توصية:</span> يُنصح باختيار فترة الشمعة 5 دقائق ومدة الصفقة 5 دقائق للحصول على أفضل النتائج
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">
