@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { TradingDashboard } from "@/components/trading/TradingDashboard";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image } from "lucide-react";
 import { toast } from "sonner";
@@ -140,8 +141,11 @@ const Index = () => {
     return null;
   }
   return <div className="min-h-screen bg-background dark">
+      {/* Announcement Banner */}
+      <AnnouncementBanner />
+      
       {/* Header */}
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-border bg-card sticky top-0 z-50">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">

@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcement_banner: {
+        Row: {
+          background_color: string
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          text_color: string
+          updated_at: string
+        }
+        Insert: {
+          background_color?: string
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          text_color?: string
+          updated_at?: string
+        }
+        Update: {
+          background_color?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          text_color?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           activated_code: string | null

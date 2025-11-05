@@ -21,6 +21,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [users, setUsers] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
 
   // Form state
   const [newCode, setNewCode] = useState("");
@@ -32,6 +33,11 @@ const AdminDashboard = () => {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Announcement state
+  const [announcementContent, setAnnouncementContent] = useState("");
+  const [announcementBgColor, setAnnouncementBgColor] = useState("#1a1a1a");
+  const [announcementTextColor, setAnnouncementTextColor] = useState("#ffffff");
 
   useEffect(() => {
     const checkAdmin = async (userId: string) => {
@@ -47,6 +53,7 @@ const AdminDashboard = () => {
           setIsAdmin(true);
           loadCodes();
           loadUsers();
+          loadAnnouncements();
         } else {
           setIsAdmin(false);
           setLoading(false);
@@ -136,6 +143,89 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Error loading users:", error);
       toast.error("فشل تحميل المستخدمين");
+    }
+  };
+
+  const loadAnnouncements = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("announcement_banner")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setAnnouncements(data || []);
+    } catch (error) {
+      console.error("Error loading announcements:", error);
+      toast.error("فشل تحميل الإعلانات");
+    }
+  };
+
+  const handleCreateAnnouncement = async () => {
+    if (!announcementContent) {
+      toast.error("يرجى إدخال محتوى الإعلان");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("announcement_banner")
+        .insert({
+          content: announcementContent,
+          background_color: announcementBgColor,
+          text_color: announcementTextColor,
+          is_active: true
+        });
+
+      if (error) throw error;
+
+      toast.success("تم إنشاء الإعلان بنجاح");
+      setAnnouncementContent("");
+      setAnnouncementBgColor("#1a1a1a");
+      setAnnouncementTextColor("#ffffff");
+      loadAnnouncements();
+    } catch (error: any) {
+      console.error("Error creating announcement:", error);
+      toast.error("فشل إنشاء الإعلان");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleAnnouncement = async (id: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("announcement_banner")
+        .update({ is_active: !currentStatus })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("تم تحديث حالة الإعلان");
+      loadAnnouncements();
+    } catch (error: any) {
+      console.error("Error toggling announcement:", error);
+      toast.error("فشل تحديث الإعلان");
+    }
+  };
+
+  const handleDeleteAnnouncement = async (id: string) => {
+    if (!confirm("هل أنت متأكد من حذف هذا الإعلان؟")) return;
+
+    try {
+      const { error } = await supabase
+        .from("announcement_banner")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("تم حذف الإعلان بنجاح");
+      loadAnnouncements();
+    } catch (error: any) {
+      console.error("Error deleting announcement:", error);
+      toast.error("فشل حذف الإعلان");
     }
   };
 
@@ -325,6 +415,140 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Announcement Banner Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              إدارة الشريط الإعلاني
+            </CardTitle>
+            <CardDescription>
+              إنشاء وإدارة الشريط الإعلاني المتحرك في الصفحة الرئيسية
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-3 space-y-2">
+                <Label htmlFor="announcementContent">محتوى الإعلان</Label>
+                <Input
+                  id="announcementContent"
+                  value={announcementContent}
+                  onChange={(e) => setAnnouncementContent(e.target.value)}
+                  placeholder="مثال: احصل على خصم 50% على جميع الباقات - العرض ساري حتى نهاية الشهر!"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bgColor">لون الخلفية</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="bgColor"
+                    type="color"
+                    value={announcementBgColor}
+                    onChange={(e) => setAnnouncementBgColor(e.target.value)}
+                    className="w-20 h-10"
+                  />
+                  <Input
+                    value={announcementBgColor}
+                    onChange={(e) => setAnnouncementBgColor(e.target.value)}
+                    placeholder="#1a1a1a"
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="textColor">لون النص</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="textColor"
+                    type="color"
+                    value={announcementTextColor}
+                    onChange={(e) => setAnnouncementTextColor(e.target.value)}
+                    className="w-20 h-10"
+                  />
+                  <Input
+                    value={announcementTextColor}
+                    onChange={(e) => setAnnouncementTextColor(e.target.value)}
+                    placeholder="#ffffff"
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 flex items-end">
+                <Button onClick={handleCreateAnnouncement} disabled={loading} className="w-full">
+                  <Plus className="h-4 w-4 ml-2" />
+                  إضافة الإعلان
+                </Button>
+              </div>
+            </div>
+
+            {/* Preview */}
+            {announcementContent && (
+              <div className="space-y-2">
+                <Label>معاينة</Label>
+                <div 
+                  className="overflow-hidden rounded-lg py-2 px-4"
+                  style={{ 
+                    backgroundColor: announcementBgColor,
+                    color: announcementTextColor
+                  }}
+                >
+                  <div className="animate-marquee whitespace-nowrap">
+                    <span className="mx-4 text-sm font-medium inline-block">
+                      {announcementContent}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Existing Announcements */}
+            {announcements.length > 0 && (
+              <div className="space-y-2 pt-4 border-t border-border">
+                <Label>الإعلانات الحالية</Label>
+                <div className="space-y-2">
+                  {announcements.map((announcement) => (
+                    <div 
+                      key={announcement.id}
+                      className="flex items-center gap-2 p-3 rounded-lg border border-border"
+                    >
+                      <div 
+                        className="flex-1 px-3 py-1 rounded text-sm truncate"
+                        style={{
+                          backgroundColor: announcement.background_color,
+                          color: announcement.text_color
+                        }}
+                      >
+                        {announcement.content}
+                      </div>
+                      <Badge variant={announcement.is_active ? "default" : "secondary"}>
+                        {announcement.is_active ? "نشط" : "معطل"}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleToggleAnnouncement(announcement.id, announcement.is_active)}
+                      >
+                        {announcement.is_active ? "تعطيل" : "تفعيل"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDeleteAnnouncement(announcement.id)}
+                        className="text-danger hover:text-danger"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Users Management */}
         <Card>
           <CardHeader>
