@@ -23,6 +23,10 @@ export type Database = {
           is_active: boolean
           text_color: string
           updated_at: string
+          website_text: string | null
+          website_url: string | null
+          whatsapp_number: string | null
+          whatsapp_text: string | null
         }
         Insert: {
           background_color?: string
@@ -32,6 +36,10 @@ export type Database = {
           is_active?: boolean
           text_color?: string
           updated_at?: string
+          website_text?: string | null
+          website_url?: string | null
+          whatsapp_number?: string | null
+          whatsapp_text?: string | null
         }
         Update: {
           background_color?: string
@@ -41,6 +49,10 @@ export type Database = {
           is_active?: boolean
           text_color?: string
           updated_at?: string
+          website_text?: string | null
+          website_url?: string | null
+          whatsapp_number?: string | null
+          whatsapp_text?: string | null
         }
         Relationships: []
       }

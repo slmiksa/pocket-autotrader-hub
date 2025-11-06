@@ -38,6 +38,10 @@ const AdminDashboard = () => {
   const [announcementContent, setAnnouncementContent] = useState("");
   const [announcementBgColor, setAnnouncementBgColor] = useState("#1a1a1a");
   const [announcementTextColor, setAnnouncementTextColor] = useState("#ffffff");
+  const [announcementWhatsApp, setAnnouncementWhatsApp] = useState("");
+  const [announcementWhatsAppText, setAnnouncementWhatsAppText] = useState("تواصل معنا");
+  const [announcementWebsite, setAnnouncementWebsite] = useState("");
+  const [announcementWebsiteText, setAnnouncementWebsiteText] = useState("زيارة الموقع");
 
   useEffect(() => {
     const checkAdmin = async (userId: string) => {
@@ -175,6 +179,10 @@ const AdminDashboard = () => {
           content: announcementContent,
           background_color: announcementBgColor,
           text_color: announcementTextColor,
+          whatsapp_number: announcementWhatsApp || null,
+          whatsapp_text: announcementWhatsApp ? announcementWhatsAppText : null,
+          website_url: announcementWebsite || null,
+          website_text: announcementWebsite ? announcementWebsiteText : null,
           is_active: true
         });
 
@@ -184,6 +192,10 @@ const AdminDashboard = () => {
       setAnnouncementContent("");
       setAnnouncementBgColor("#1a1a1a");
       setAnnouncementTextColor("#ffffff");
+      setAnnouncementWhatsApp("");
+      setAnnouncementWhatsAppText("تواصل معنا");
+      setAnnouncementWebsite("");
+      setAnnouncementWebsiteText("زيارة الموقع");
       loadAnnouncements();
     } catch (error: any) {
       console.error("Error creating announcement:", error);
@@ -427,8 +439,8 @@ const AdminDashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-3 space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="announcementContent">محتوى الإعلان</Label>
                 <Input
                   id="announcementContent"
@@ -476,7 +488,52 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              <div className="space-y-2 flex items-end">
+              <div className="md:col-span-2 pt-4 border-t border-border">
+                <h3 className="text-sm font-semibold mb-3">أزرار الإجراءات (اختياري)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsappNumber">رقم واتساب (مع رمز الدولة)</Label>
+                    <Input
+                      id="whatsappNumber"
+                      value={announcementWhatsApp}
+                      onChange={(e) => setAnnouncementWhatsApp(e.target.value)}
+                      placeholder="966575594911"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsappText">نص زر الواتساب</Label>
+                    <Input
+                      id="whatsappText"
+                      value={announcementWhatsAppText}
+                      onChange={(e) => setAnnouncementWhatsAppText(e.target.value)}
+                      placeholder="تواصل معنا"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="websiteUrl">رابط الموقع</Label>
+                    <Input
+                      id="websiteUrl"
+                      value={announcementWebsite}
+                      onChange={(e) => setAnnouncementWebsite(e.target.value)}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="websiteText">نص زر الموقع</Label>
+                    <Input
+                      id="websiteText"
+                      value={announcementWebsiteText}
+                      onChange={(e) => setAnnouncementWebsiteText(e.target.value)}
+                      placeholder="زيارة الموقع"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="md:col-span-2 flex items-end">
                 <Button onClick={handleCreateAnnouncement} disabled={loading} className="w-full">
                   <Plus className="h-4 w-4 ml-2" />
                   إضافة الإعلان

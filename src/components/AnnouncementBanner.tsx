@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X } from "lucide-react";
+import { X, MessageCircle, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Announcement {
   id: string;
   content: string;
   background_color: string;
   text_color: string;
+  whatsapp_number: string | null;
+  whatsapp_text: string | null;
+  website_url: string | null;
+  website_text: string | null;
 }
 
 export const AnnouncementBanner = () => {
@@ -54,32 +59,94 @@ export const AnnouncementBanner = () => {
 
   if (!announcement || !isVisible) return null;
 
+  const handleWhatsAppClick = () => {
+    if (announcement.whatsapp_number) {
+      window.open(`https://wa.me/${announcement.whatsapp_number}`, '_blank');
+    }
+  };
+
+  const handleWebsiteClick = () => {
+    if (announcement.website_url) {
+      window.open(announcement.website_url, '_blank');
+    }
+  };
+
   return (
     <div 
-      className="relative overflow-hidden py-2 px-4"
+      className="relative overflow-hidden py-3 px-4 shadow-md"
       style={{ 
         backgroundColor: announcement.background_color,
         color: announcement.text_color
       }}
     >
-      <div className="animate-marquee whitespace-nowrap">
-        <span className="mx-4 text-sm font-medium inline-block">
-          {announcement.content}
-        </span>
-        <span className="mx-4 text-sm font-medium inline-block">
-          {announcement.content}
-        </span>
-        <span className="mx-4 text-sm font-medium inline-block">
-          {announcement.content}
-        </span>
+      <div className="container mx-auto">
+        <div className="flex items-center justify-between gap-4">
+          {/* Close button */}
+          <button
+            onClick={() => setIsVisible(false)}
+            className="p-1.5 hover:opacity-70 transition-opacity rounded-md shrink-0"
+            style={{ color: announcement.text_color }}
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          {/* Scrolling content */}
+          <div className="flex-1 overflow-hidden">
+            <div className="animate-marquee whitespace-nowrap">
+              <span className="mx-6 text-sm font-medium inline-block">
+                {announcement.content}
+              </span>
+              <span className="mx-6 text-sm font-medium inline-block">
+                {announcement.content}
+              </span>
+              <span className="mx-6 text-sm font-medium inline-block">
+                {announcement.content}
+              </span>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 shrink-0">
+            {announcement.whatsapp_number && (
+              <Button
+                onClick={handleWhatsAppClick}
+                size="sm"
+                className="gap-2"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  color: announcement.text_color,
+                  borderColor: announcement.text_color
+                }}
+                variant="outline"
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {announcement.whatsapp_text || 'تواصل معنا'}
+                </span>
+              </Button>
+            )}
+            
+            {announcement.website_url && (
+              <Button
+                onClick={handleWebsiteClick}
+                size="sm"
+                className="gap-2"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  color: announcement.text_color,
+                  borderColor: announcement.text_color
+                }}
+                variant="outline"
+              >
+                <ExternalLink className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {announcement.website_text || 'زيارة الموقع'}
+                </span>
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
-      <button
-        onClick={() => setIsVisible(false)}
-        className="absolute left-2 top-1/2 -translate-y-1/2 p-1 hover:opacity-70 transition-opacity"
-        style={{ color: announcement.text_color }}
-      >
-        <X className="h-4 w-4" />
-      </button>
     </div>
   );
 };
