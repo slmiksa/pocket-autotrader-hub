@@ -276,7 +276,7 @@ const SubscriptionCheck = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-success" />
-                    <span>تداول آلي</span>
+                    <span>سجل خاص لإحصاء صفقاتك</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-success" />
@@ -303,7 +303,7 @@ const SubscriptionCheck = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-success" />
-                    <span>تداول آلي</span>
+                    <span>سجل خاص لإحصاء صفقاتك</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-success" />
@@ -329,7 +329,7 @@ const SubscriptionCheck = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-success" />
-                    <span>تداول آلي</span>
+                    <span>سجل خاص لإحصاء صفقاتك</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-success" />
