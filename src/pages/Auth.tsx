@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 const Auth = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -88,8 +89,10 @@ const Auth = () => {
       setLoading(false);
     }
   };
-  return <div className="min-h-screen bg-background dark flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+  return <div className="min-h-screen bg-background dark">
+      <AnnouncementBanner />
+      <div className="flex items-center justify-center p-4 min-h-[calc(100vh-56px)]">
+        <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
             <TrendingUp className="h-8 w-8 text-primary" />
@@ -154,6 +157,7 @@ const Auth = () => {
           
         </CardContent>
       </Card>
+      </div>
     </div>;
 };
 export default Auth;
