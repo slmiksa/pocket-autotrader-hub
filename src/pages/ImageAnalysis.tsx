@@ -56,6 +56,31 @@ const ImageAnalysis = () => {
     checkAccess();
   }, [navigate]);
 
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const blob = items[i].getAsFile();
+          if (blob) {
+            setImage(blob);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(blob);
+            toast.success("تم لصق الصورة بنجاح");
+          }
+        }
+      }
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, []);
+
   const openWhatsApp = () => {
     const phoneNumber = "966575594911";
     const message = "مرحباً، أريد ترقية الباقة للحصول على ميزة تحليل الصور";
@@ -246,6 +271,11 @@ const ImageAnalysis = () => {
                   className="cursor-pointer"
                 />
                 <Upload className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mt-2">
+                <p className="text-xs text-foreground">
+                  💡 <span className="font-semibold">نصيحة:</span> يمكنك لصق الصورة مباشرة من الحافظة باستخدام Ctrl+V أو Cmd+V
+                </p>
               </div>
             </div>
 
