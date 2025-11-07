@@ -14,9 +14,9 @@ export const useNotifications = () => {
     }
   }, []);
 
-  const requestPermission = async () => {
+  const requestPermission = async (silent = false) => {
     if (!isSupported) {
-      toast.error('المتصفح لا يدعم الإشعارات');
+      if (!silent) toast.error('المتصفح لا يدعم الإشعارات');
       return false;
     }
 
@@ -29,15 +29,15 @@ export const useNotifications = () => {
       setPermission(result);
       
       if (result === 'granted') {
-        toast.success('تم تفعيل الإشعارات بنجاح');
+        if (!silent) toast.success('تم تفعيل الإشعارات بنجاح');
         return true;
-      } else if (result === 'denied') {
-        toast.error('تم رفض الإشعارات. يمكنك تفعيلها من إعدادات المتصفح');
-        return false;
       }
+      // Don't show error toast when denied, just log it
+      console.log('Notification permission:', result);
+      return false;
     } catch (error) {
       console.error('Error requesting notification permission:', error);
-      toast.error('فشل طلب إذن الإشعارات');
+      if (!silent) toast.error('فشل طلب إذن الإشعارات');
       return false;
     }
     
