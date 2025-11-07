@@ -15,7 +15,10 @@ const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [imageAnalysisEnabled, setImageAnalysisEnabled] = useState(false);
-  const { requestPermission, isSupported } = useNotifications();
+  const {
+    requestPermission,
+    isSupported
+  } = useNotifications();
   const checkSubscription = async (userId: string) => {
     try {
       const {
@@ -105,7 +108,6 @@ const Index = () => {
       const timer = setTimeout(() => {
         requestPermission(true); // Silent mode - no error toasts
       }, 2000);
-      
       return () => clearTimeout(timer);
     }
   }, [user, isSupported, requestPermission]);
@@ -224,7 +226,7 @@ const Index = () => {
       <footer className="border-t border-border bg-card mt-8 sm:mt-12">
         <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
           <div className="text-center text-xs sm:text-sm text-muted-foreground">
-            <p>تطوير: Salem Alquzi | تحذير: التداول يحمل مخاطر عالية. استخدم على مسؤوليتك الخاصة.</p>
+            <p> | تحذير: التداول يحمل مخاطر عالية. استخدم على مسؤوليتك الخاصة.</p>
           </div>
         </div>
       </footer>
