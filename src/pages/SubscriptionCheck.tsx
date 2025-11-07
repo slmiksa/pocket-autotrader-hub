@@ -259,7 +259,32 @@ const SubscriptionCheck = () => {
             <CardDescription>اختر الباقة المناسبة لك</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* 1 Day Package */}
+              <div className="border rounded-lg p-6 space-y-4 hover:border-primary transition-colors">
+                <div>
+                  <h3 className="text-xl font-bold">يوم واحد</h3>
+                  <div className="flex items-baseline gap-2 mt-2">
+                    <span className="text-3xl font-bold text-primary">25</span>
+                    <span className="text-muted-foreground">ريال</span>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    <span>توصيات تداول مباشرة</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    <span>سجل خاص لإحصاء صفقاتك</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    <span>دعم فني</span>
+                  </li>
+                </ul>
+              </div>
+
               {/* 1 Month Package */}
               <div className="border rounded-lg p-6 space-y-4 hover:border-primary transition-colors">
                 <div>
