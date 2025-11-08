@@ -5,7 +5,7 @@ import type { User, Session } from "@supabase/supabase-js";
 import { TradingDashboard } from "@/components/trading/TradingDashboard";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image } from "lucide-react";
+import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
 const Index = () => {
@@ -17,7 +17,8 @@ const Index = () => {
   const [imageAnalysisEnabled, setImageAnalysisEnabled] = useState(false);
   const {
     requestPermission,
-    isSupported
+    isSupported,
+    permission
   } = useNotifications();
   const checkSubscription = async (userId: string) => {
     try {
@@ -101,16 +102,12 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Request notification permission on first load (silently)
-  useEffect(() => {
-    if (user && isSupported) {
-      // Request permission after a short delay to avoid overwhelming the user
-      const timer = setTimeout(() => {
-        requestPermission(true); // Silent mode - no error toasts
-      }, 2000);
-      return () => clearTimeout(timer);
+  const handleNotificationToggle = async () => {
+    const granted = await requestPermission(false);
+    if (!granted && permission === 'denied') {
+      toast.error('يرجى السماح بالإشعارات من إعدادات المتصفح');
     }
-  }, [user, isSupported, requestPermission]);
+  };
 
   // Realtime subscription for profile changes
   useEffect(() => {
@@ -170,6 +167,19 @@ const Index = () => {
                     </span>
                   </div>;
             })()}
+              {isSupported && (
+                <Button 
+                  onClick={handleNotificationToggle} 
+                  variant={permission === 'granted' ? 'default' : 'outline'} 
+                  size="sm" 
+                  className="gap-1.5"
+                >
+                  {permission === 'granted' ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+                  <span className="hidden sm:inline">
+                    {permission === 'granted' ? 'مفعّلة' : 'تفعيل الإشعارات'}
+                  </span>
+                </Button>
+              )}
               {imageAnalysisEnabled && <Button onClick={() => navigate('/image-analysis')} variant="outline" size="sm" className="gap-1.5">
                   <Image className="h-4 w-4" />
                   <span className="hidden sm:inline">تحليل بالصورة</span>
