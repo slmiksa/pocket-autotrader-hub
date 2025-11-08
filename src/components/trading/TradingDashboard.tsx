@@ -30,8 +30,7 @@ export const TradingDashboard = () => {
             <div className="text-2xl">⚠️</div>
             <div className="space-y-2 text-sm">
               <p className="font-semibold text-foreground">معلومة مهمة لدخول الصفقات:</p>
-              <p className="text-red-800 text-sm font-extrabold text-center">قبل الدخول في أي صفقة قم بتعديل المنطقة الزمنية الى 
-UTC - 3<span className="font-bold">المنطقة الزمنية</span> والوقت في منصة Pocket Option بشكل صحيح قبل فتح الصفقة. اختر التوقيت المحلي أو UTC حسب إعدادات المنصة لديك، وحدد مدة الصفقة المناسبة كما هو موضح في التوصية.
+              <p className="text-red-800 text-sm font-extrabold text-center"> UTC - 3 قبل الدخول في أي صفقة قم بتعديل المنطقة الزمنية الى<span className="font-bold">المنطقة الزمنية</span> والوقت في منصة Pocket Option بشكل صحيح قبل فتح الصفقة. اختر التوقيت المحلي أو UTC حسب إعدادات المنصة لديك، وحدد مدة الصفقة المناسبة كما هو موضح في التوصية.
               </p>
             </div>
           </div>

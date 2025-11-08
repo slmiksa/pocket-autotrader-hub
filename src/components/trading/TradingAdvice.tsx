@@ -29,7 +29,7 @@ export const TradingAdvice = () => {
       
 
       {/* Trading Tips */}
-      <Card>
+      <Card className="mx-0">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-primary" />
