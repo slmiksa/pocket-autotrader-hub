@@ -2,10 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, TrendingUp, Target, Shield, Lightbulb } from "lucide-react";
-
 export const TradingAdvice = () => {
-  return (
-    <div className="space-y-4">
+  return <div className="space-y-4">
       {/* Success Rate Banner */}
       <Card className="border-success/50 bg-success/5">
         <CardHeader className="pb-3">
@@ -28,18 +26,7 @@ export const TradingAdvice = () => {
       </Card>
 
       {/* Martingale Warning */}
-      <Alert className="border-warning bg-warning/10">
-        <AlertTriangle className="h-4 w-4 text-warning" />
-        <AlertDescription className="text-sm">
-          <strong className="text-warning">تنبيه هام عن المضاعفة:</strong>
-          <br />
-          في حالة الخسارة، يمكنك الدخول مرة أخرى بمضاعفتين فقط لتعويض الخسارة.
-          <br />
-          <span className="text-muted-foreground">
-            ⚠️ لا ننصح بالمضاعفة أكثر من مرتين للحفاظ على رأس المال
-          </span>
-        </AlertDescription>
-      </Alert>
+      
 
       {/* Trading Tips */}
       <Card>
@@ -91,6 +78,5 @@ export const TradingAdvice = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
