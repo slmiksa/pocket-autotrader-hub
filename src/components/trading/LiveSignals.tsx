@@ -252,10 +252,7 @@ export const LiveSignals = ({
                       return null;
                     })()}
 
-                  {signal.status === "failed" && <Badge variant="destructive" className="gap-1">
-                      <XCircle className="h-3 w-3" />
-                      فشل التنفيذ
-                    </Badge>}
+                  {signal.status === "failed"}
                   </div>
                   
                   {/* Show result button if trade is finished and no result yet */}
