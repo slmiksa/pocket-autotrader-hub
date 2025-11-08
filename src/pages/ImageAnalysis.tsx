@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, Loader2, MessageCircle, Lock } from "lucide-react";
-
 const ImageAnalysis = () => {
   const navigate = useNavigate();
   const [image, setImage] = useState<File | null>(null);
@@ -19,31 +18,29 @@ const ImageAnalysis = () => {
   const [analysis, setAnalysis] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
-
   useEffect(() => {
     const checkAccess = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
+        const {
+          data: {
+            user
+          }
+        } = await supabase.auth.getUser();
         if (!user) {
           toast.error("يجب تسجيل الدخول أولاً");
           navigate("/auth");
           return;
         }
-
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("image_analysis_enabled")
-          .eq("user_id", user.id)
-          .single();
-
+        const {
+          data,
+          error
+        } = await supabase.from("profiles").select("image_analysis_enabled").eq("user_id", user.id).single();
         if (error) {
           console.error("Error checking access:", error);
           setHasAccess(false);
           setLoading(false);
           return;
         }
-
         setHasAccess(data?.image_analysis_enabled || false);
         setLoading(false);
       } catch (error) {
@@ -52,15 +49,12 @@ const ImageAnalysis = () => {
         setLoading(false);
       }
     };
-
     checkAccess();
   }, [navigate]);
-
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
       if (!items) return;
-
       for (let i = 0; i < items.length; i++) {
         if (items[i].type.indexOf('image') !== -1) {
           const blob = items[i].getAsFile();
@@ -76,18 +70,15 @@ const ImageAnalysis = () => {
         }
       }
     };
-
     document.addEventListener('paste', handlePaste);
     return () => document.removeEventListener('paste', handlePaste);
   }, []);
-
   const openWhatsApp = () => {
     const phoneNumber = "966575594911";
     const message = "مرحباً، أريد ترقية الباقة للحصول على ميزة تحليل الصور";
     const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -103,31 +94,28 @@ const ImageAnalysis = () => {
       reader.readAsDataURL(file);
     }
   };
-
   const handleAnalyze = async () => {
     if (!image || !timeframe) {
       toast.error("يرجى رفع صورة واختيار فترة الشمعة");
       return;
     }
-
     setAnalyzing(true);
     setAnalysis("");
-
     try {
       // Convert image to base64
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64Image = reader.result as string;
-
-        const { data, error } = await supabase.functions.invoke('analyze-chart-image', {
+        const {
+          data,
+          error
+        } = await supabase.functions.invoke('analyze-chart-image', {
           body: {
             image: base64Image,
             timeframe: timeframe
           }
         });
-
         if (error) throw error;
-
         setAnalysis(data.analysis);
         toast.success("تم تحليل الصورة بنجاح");
       };
@@ -139,24 +127,15 @@ const ImageAnalysis = () => {
       setAnalyzing(false);
     }
   };
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
   if (!hasAccess) {
-    return (
-      <div className="min-h-screen bg-background p-4">
+    return <div className="min-h-screen bg-background p-4">
         <div className="max-w-2xl mx-auto">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
+          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
             <ArrowLeft className="ml-2 h-4 w-4" />
             رجوع
           </Button>
@@ -198,11 +177,7 @@ const ImageAnalysis = () => {
                 <p className="text-muted-foreground">
                   تواصل معنا لترقية باقتك والحصول على هذه الميزة المتقدمة
                 </p>
-                <Button 
-                  onClick={openWhatsApp} 
-                  className="w-full gap-2" 
-                  size="lg"
-                >
+                <Button onClick={openWhatsApp} className="w-full gap-2" size="lg">
                   <MessageCircle className="h-5 w-5" />
                   تواصل معنا لترقية الباقة
                 </Button>
@@ -210,18 +185,11 @@ const ImageAnalysis = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background p-4">
+  return <div className="min-h-screen bg-background p-4">
       <div className="max-w-4xl mx-auto">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
           <ArrowLeft className="ml-2 h-4 w-4" />
           رجوع
         </Button>
@@ -263,13 +231,7 @@ const ImageAnalysis = () => {
             <div className="space-y-2">
               <Label htmlFor="image">صورة الشارت</Label>
               <div className="flex items-center gap-4">
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="cursor-pointer"
-                />
+                <Input id="image" type="file" accept="image/*" onChange={handleImageChange} className="cursor-pointer" />
                 <Upload className="h-5 w-5 text-muted-foreground" />
               </div>
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mt-2">
@@ -279,37 +241,21 @@ const ImageAnalysis = () => {
               </div>
             </div>
 
-            {imagePreview && (
-              <div className="space-y-2">
+            {imagePreview && <div className="space-y-2">
                 <Label>معاينة الصورة</Label>
                 <div className="border rounded-lg p-4 bg-muted/50">
-                  <img
-                    src={imagePreview}
-                    alt="Chart preview"
-                    className="max-w-full h-auto rounded"
-                  />
+                  <img src={imagePreview} alt="Chart preview" className="max-w-full h-auto rounded" />
                 </div>
-              </div>
-            )}
+              </div>}
 
-            <Button
-              onClick={handleAnalyze}
-              disabled={!image || !timeframe || analyzing}
-              className="w-full"
-              size="lg"
-            >
-              {analyzing ? (
-                <>
+            <Button onClick={handleAnalyze} disabled={!image || !timeframe || analyzing} className="w-full" size="lg">
+              {analyzing ? <>
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                   جاري التحليل...
-                </>
-              ) : (
-                "تحليل الشارت"
-              )}
+                </> : "تحليل الشارت"}
             </Button>
 
-            {analysis && (
-              <div className="space-y-4">
+            {analysis && <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>نتيجة التحليل</Label>
                   <div className="bg-card border rounded-lg p-4 space-y-3">
@@ -321,29 +267,9 @@ const ImageAnalysis = () => {
                   </div>
                 </div>
                 
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="text-2xl">⚠️</div>
-                    <div className="space-y-2 text-sm">
-                      <p className="font-semibold text-foreground">معلومة مهمة لدخول الصفقات:</p>
-                      <p className="text-foreground">
-                        تأكد من ضبط <span className="font-bold">المنطقة الزمنية</span> والوقت في منصة Pocket Option بشكل صحيح قبل فتح الصفقة. اختر التوقيت المحلي أو UTC حسب إعدادات المنصة لديك، وحدد مدة الصفقة المناسبة كما هو موضح في التحليل أعلاه.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                
 
-                <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="text-2xl">⚡</div>
-                    <div className="space-y-2 text-sm">
-                      <p className="font-semibold text-foreground">ملاحظة هامة - استراتيجية المضاعفة:</p>
-                      <p className="text-foreground">
-                        في حالة خسارة التوصية من المرة الأولى، لديك <span className="font-bold text-destructive">مضاعفتان فقط</span> للنجاح بالصفقة. لا تضاعف أكثر من مرتين للحفاظ على رأس مالك.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                
 
                 <div className="bg-muted/50 border border-primary/20 rounded-lg p-4">
                   <div className="flex items-start gap-3">
@@ -356,13 +282,10 @@ const ImageAnalysis = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              </div>}
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default ImageAnalysis;
