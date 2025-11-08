@@ -203,33 +203,6 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <TradingDashboard />
-        
-        {/* Important Trading Information */}
-        <div className="mt-6 space-y-4">
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <div className="text-2xl">⚠️</div>
-              <div className="space-y-2 text-sm">
-                <p className="font-semibold text-foreground">معلومة مهمة لدخول الصفقات:</p>
-                <p className="text-foreground">
-                  تأكد من ضبط <span className="font-bold">المنطقة الزمنية</span> والوقت في منصة Pocket Option بشكل صحيح قبل فتح الصفقة. اختر التوقيت المحلي أو UTC حسب إعدادات المنصة لديك، وحدد مدة الصفقة المناسبة كما هو موضح في التوصية.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <div className="text-2xl">⚡</div>
-              <div className="space-y-2 text-sm">
-                <p className="font-semibold text-foreground">ملاحظة هامة - استراتيجية المضاعفة:</p>
-                <p className="text-foreground">
-                  في حالة خسارة التوصية من المرة الأولى، لديك <span className="font-bold text-destructive">مضاعفتان فقط</span> للنجاح بالصفقة. لا تضاعف أكثر من مرتين للحفاظ على رأس مالك.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
       </main>
 
       {/* Footer */}

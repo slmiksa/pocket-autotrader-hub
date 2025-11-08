@@ -23,10 +23,32 @@ export const TradingDashboard = () => {
       {/* Trading Advice */}
       <TradingAdvice />
 
-      {/* Warning Banner */}
-      <Card className="border-warning bg-warning/10">
-        
-      </Card>
+      {/* Important Trading Information */}
+      <div className="space-y-4">
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="text-2xl">⚠️</div>
+            <div className="space-y-2 text-sm">
+              <p className="font-semibold text-foreground">معلومة مهمة لدخول الصفقات:</p>
+              <p className="text-foreground">
+                تأكد من ضبط <span className="font-bold">المنطقة الزمنية</span> والوقت في منصة Pocket Option بشكل صحيح قبل فتح الصفقة. اختر التوقيت المحلي أو UTC حسب إعدادات المنصة لديك، وحدد مدة الصفقة المناسبة كما هو موضح في التوصية.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="text-2xl">⚡</div>
+            <div className="space-y-2 text-sm">
+              <p className="font-semibold text-foreground">ملاحظة هامة - استراتيجية المضاعفة:</p>
+              <p className="text-foreground">
+                في حالة خسارة التوصية من المرة الأولى، لديك <span className="font-bold text-destructive">مضاعفتان فقط</span> للنجاح بالصفقة. لا تضاعف أكثر من مرتين للحفاظ على رأس مالك.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {autoTradeEnabled && <Card className="border-success/30 bg-success/10">
           <CardContent className="flex items-start sm:items-center gap-2 sm:gap-3 py-3 sm:py-4 px-3 sm:px-6">
