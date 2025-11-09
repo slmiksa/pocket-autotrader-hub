@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Upload, Loader2, MessageCircle, Lock } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, MessageCircle, Lock, TrendingUp, Target } from "lucide-react";
 const ImageAnalysis = () => {
   const navigate = useNavigate();
   const [image, setImage] = useState<File | null>(null);
@@ -16,6 +16,7 @@ const ImageAnalysis = () => {
   const [timeframe, setTimeframe] = useState<string>("");
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<string>("");
+  const [analysisType, setAnalysisType] = useState<"recommendation" | "support-resistance">("recommendation");
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
   useEffect(() => {
@@ -112,7 +113,8 @@ const ImageAnalysis = () => {
         } = await supabase.functions.invoke('analyze-chart-image', {
           body: {
             image: base64Image,
-            timeframe: timeframe
+            timeframe: timeframe,
+            analysisType: analysisType
           }
         });
         if (error) throw error;
@@ -198,10 +200,40 @@ const ImageAnalysis = () => {
           <CardHeader>
             <CardTitle className="text-2xl">تحليل الشارت بالصورة</CardTitle>
             <CardDescription>
-              قم برفع صورة الشارت من منصة Pocket Option للحصول على تحليل دقيق وتوصية CALL أو PUT مع تحديد وقت الدخول المثالي
+              اختر نوع التحليل المطلوب ثم قم برفع صورة الشارت
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Analysis Type Selection */}
+            <div className="space-y-2">
+              <Label>نوع التحليل</Label>
+              <Tabs value={analysisType} onValueChange={(v) => setAnalysisType(v as "recommendation" | "support-resistance")} className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="recommendation" className="gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    <span>توصية مباشرة</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="support-resistance" className="gap-2">
+                    <Target className="h-4 w-4" />
+                    <span>الدعوم والارتدادات</span>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              
+              {analysisType === "recommendation" ? (
+                <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mt-2">
+                  <p className="text-sm text-foreground">
+                    <span className="font-semibold">التوصية المباشرة:</span> ستحصل على توصية CALL أو PUT محددة مع وقت الدخول المثالي
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-success/10 border border-success/30 rounded-lg p-3 mt-2">
+                  <p className="text-sm text-foreground">
+                    <span className="font-semibold">الدعوم والارتدادات:</span> ستحصل على أرقام دقيقة لمستويات الدعم والمقاومة لتدخل بنفسك عند ارتداد السعر
+                  </p>
+                </div>
+              )}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="timeframe">فترة الشمعة</Label>
               <Select value={timeframe} onValueChange={setTimeframe}>
