@@ -28,7 +28,7 @@ export const TradingDashboard = () => {
       {/* Instructions Button */}
       <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
         <DialogTrigger asChild>
-          <Button variant="outline" className="w-full sm:w-auto" size="lg">
+          <Button variant="outline" className="w-full sm:w-auto animate-pulse hover:animate-none shadow-lg shadow-primary/20" size="lg">
             <BookOpen className="h-5 w-5 ml-2" />
             تعليمات استخدام التوصيات
           </Button>
