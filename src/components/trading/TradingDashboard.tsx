@@ -2,8 +2,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
-import { TrendingUp, TrendingDown, Activity, DollarSign, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, DollarSign, AlertCircle, BookOpen, CheckCircle2 } from "lucide-react";
 import { LiveSignals } from "./LiveSignals";
 import { StatsCard } from "./StatsCard";
 import { TradeHistory } from "./TradeHistory";
@@ -13,6 +14,7 @@ import { useAutoTrade } from "@/hooks/useAutoTrade";
 import { AutoTradeButton } from "./AutoTradeButton";
 export const TradingDashboard = () => {
   const [autoTradeEnabled, setAutoTradeEnabled] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const {
     signals
   } = useSignals();
@@ -22,6 +24,122 @@ export const TradingDashboard = () => {
   return <div className="space-y-6">
       {/* Trading Advice */}
       <TradingAdvice />
+
+      {/* Instructions Button */}
+      <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
+        <DialogTrigger asChild>
+          <Button variant="outline" className="w-full sm:w-auto" size="lg">
+            <BookOpen className="h-5 w-5 ml-2" />
+            تعليمات استخدام التوصيات
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <BookOpen className="h-6 w-6 text-primary" />
+              دليل استخدام التوصيات الاحترافي
+            </DialogTitle>
+            <DialogDescription>
+              اتبع هذه التعليمات بدقة لتحقيق أفضل النتائج وأعلى معدلات الربح
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Rule 1 */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="bg-primary/10 rounded-full p-2 shrink-0">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg mb-2">1. الالتزام الدقيق بالتوصية</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    يجب التقيد التام بالتوصية من حيث <span className="font-semibold text-foreground">التوقيت المحدد</span> و<span className="font-semibold text-foreground">الاتجاه (Call أو Put)</span>. لا تتداول قبل أو بعد الوقت المحدد، ولا تغير الاتجاه تحت أي ظرف.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Rule 2 */}
+            <div className="space-y-3 bg-warning/5 p-4 rounded-lg border border-warning/20">
+              <div className="flex items-start gap-3">
+                <div className="bg-warning/10 rounded-full p-2 shrink-0">
+                  <CheckCircle2 className="h-5 w-5 text-warning" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg mb-2">2. استراتيجية المضاعفة (3 محاولات)</h3>
+                  <div className="space-y-3">
+                    <p className="text-muted-foreground leading-relaxed">
+                      في حالة خسارة الصفقة، لديك <span className="font-bold text-warning">مضاعفتان إضافيتان</span> فقط لتعويض الخسارة:
+                    </p>
+                    
+                    <div className="bg-background rounded-lg p-4 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <span className="font-bold text-primary">•</span>
+                        <p className="text-sm">
+                          <span className="font-semibold">المحاولة الأولى:</span> ادخل بالمبلغ الأساسي (1% من رأس المال)
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="font-bold text-warning">•</span>
+                        <p className="text-sm">
+                          <span className="font-semibold">المحاولة الثانية (في حالة الخسارة):</span> ضاعف المبلغ في الدقيقة التالية مباشرة بنفس الاتجاه
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="font-bold text-destructive">•</span>
+                        <p className="text-sm">
+                          <span className="font-semibold">المحاولة الثالثة (في حالة الخسارة):</span> ضاعف المبلغ مرة أخرى عند بداية الدقيقة التالية بنفس الاتجاه
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3">
+                      <p className="text-sm font-semibold text-destructive">
+                        ⚠️ تنبيه هام: بعد المحاولة الثالثة، توقف تماماً وانتظر التوصية التالية
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Rule 3 */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="bg-success/10 rounded-full p-2 shrink-0">
+                  <CheckCircle2 className="h-5 w-5 text-success" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg mb-2">3. إدارة رأس المال</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    ادخل فقط بـ <span className="font-bold text-success text-xl">1%</span> من إجمالي رأس المال في كل صفقة. هذه النسبة تضمن لك حماية رأس المال وتحقيق نمو مستدام على المدى الطويل.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Success Message */}
+            <div className="bg-gradient-to-r from-primary/10 to-success/10 border border-primary/30 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="text-3xl">🎯</div>
+                <div>
+                  <h3 className="font-bold text-lg mb-2 text-primary">مفتاح النجاح</h3>
+                  <p className="text-foreground leading-relaxed">
+                    بالالتزام الكامل بهذه التعليمات، سوف تحقق <span className="font-bold text-success">أرباحاً استثنائية</span> بإذن الله. الانضباط والصبر هما سر التداول الناجح.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-4 border-t">
+            <Button onClick={() => setShowInstructions(false)} size="lg">
+              فهمت التعليمات
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Important Trading Information */}
       <div className="space-y-4">
