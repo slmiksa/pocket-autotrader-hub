@@ -1,4 +1,4 @@
-// Pocket Option Auto Trader - Background Service Worker
+// Pocket Option AI Assistant - Background Service Worker
 const SUPABASE_URL = 'https://ujguqvyshjnrxnmsvsdf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZ3VxdnlzaGpucnhubXN2c2RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxODMxNTAsImV4cCI6MjA3Nzc1OTE1MH0.utRPrAN2qr78HVvob3-1cA1mH0l4-SZveZcWWFB8Dj0';
 
@@ -13,7 +13,7 @@ chrome.storage.local.get(['autoTradeEnabled'], (result) => {
   }
 });
 
-// Listen for messages from popup
+// Listen for messages from popup and content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'toggleAutoTrade') {
     isAutoTradeEnabled = request.enabled;
@@ -28,6 +28,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
   } else if (request.action === 'getStatus') {
     sendResponse({ enabled: isAutoTradeEnabled });
+  } else if (request.action === 'captureVisibleTab') {
+    // Capture the visible tab for AI analysis
+    chrome.tabs.captureVisibleTab(null, { format: 'png' }, (dataUrl) => {
+      if (chrome.runtime.lastError) {
+        console.error('خطأ في التقاط الشاشة:', chrome.runtime.lastError);
+        sendResponse({ error: chrome.runtime.lastError.message });
+      } else {
+        sendResponse({ dataUrl: dataUrl });
+      }
+    });
+    return true; // Keep channel open for async response
+  } else if (request.action === 'signalExecuted') {
+    updateSignalStatus(request.signalId, 'executed', request.tradeId);
+  } else if (request.action === 'signalFailed') {
+    updateSignalStatus(request.signalId, 'failed');
   }
   return true;
 });
@@ -136,12 +151,3 @@ async function updateSignalStatus(signalId, status, tradeId = null) {
     console.error('خطأ في تحديث حالة الإشارة:', error);
   }
 }
-
-// Listen for execution results from content script
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'signalExecuted') {
-    updateSignalStatus(request.signalId, 'executed', request.tradeId);
-  } else if (request.action === 'signalFailed') {
-    updateSignalStatus(request.signalId, 'failed');
-  }
-});

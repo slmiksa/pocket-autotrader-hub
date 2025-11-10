@@ -1,12 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Pocket Option Auto Trader",
-  "version": "1.0.0",
-  "description": "التداول التلقائي على Pocket Option من خلال قراءة الإشارات",
+  "name": "Pocket Option AI Assistant",
+  "version": "2.0.0",
+  "description": "التحليل التلقائي والتوصيات الفورية لـ Pocket Option",
   "permissions": [
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "tabs",
+    "unlimitedStorage"
   ],
   "host_permissions": [
     "https://pocketoption.com/*",

@@ -120,6 +120,23 @@
       transform: translateX(-22px);
     }
 
+    .settings-container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .settings-container select {
+      outline: none;
+    }
+
+    .settings-container select option {
+      background: #1a1a2e;
+      color: white;
+    }
+
     .info {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
@@ -145,8 +162,8 @@
 </head>
 <body>
   <div class="header">
-    <h1>🤖 التداول التلقائي</h1>
-    <p>Pocket Option Auto Trader</p>
+    <h1>🤖 المحلل الذكي</h1>
+    <p>Pocket Option AI Assistant</p>
   </div>
 
   <div class="status">
@@ -156,17 +173,40 @@
 
   <div class="toggle-container">
     <div class="toggle-switch" id="toggleSwitch">
-      <label>تفعيل التداول التلقائي</label>
+      <label>تفعيل التحليل التلقائي</label>
       <div class="switch" id="switch"></div>
+    </div>
+  </div>
+
+  <div class="settings-container">
+    <div style="margin-bottom: 12px;">
+      <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600;">⏱️ فترة الشموع:</label>
+      <select id="timeframe" style="width: 100%; padding: 8px; border-radius: 8px; border: none; background: rgba(255,255,255,0.15); color: white; font-size: 13px; cursor: pointer;">
+        <option value="1m">1 دقيقة</option>
+        <option value="5m" selected>5 دقائق</option>
+        <option value="15m">15 دقيقة</option>
+        <option value="30m">30 دقيقة</option>
+        <option value="1h">1 ساعة</option>
+        <option value="4h">4 ساعات</option>
+      </select>
+    </div>
+    
+    <div>
+      <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600;">📊 نوع التحليل:</label>
+      <select id="analysisType" style="width: 100%; padding: 8px; border-radius: 8px; border: none; background: rgba(255,255,255,0.15); color: white; font-size: 13px; cursor: pointer;">
+        <option value="recommendation" selected>🎯 توصية مباشرة</option>
+        <option value="support-resistance">📍 الدعوم والارتدادات</option>
+      </select>
     </div>
   </div>
 
   <div class="info">
     <strong>📋 طريقة الاستخدام:</strong>
-    1. افتح صفحة Pocket Option في تبويب جديد<br>
-    2. سجل الدخول إلى حسابك<br>
-    3. فعّل التداول التلقائي أعلاه<br>
-    4. سيتم تنفيذ الإشارات تلقائياً!
+    1. افتح صفحة Pocket Option<br>
+    2. افتح الشارت الذي تريد تحليله<br>
+    3. اختر فترة الشموع ونوع التحليل<br>
+    4. فعّل التحليل التلقائي<br>
+    5. ستظهر التوصيات تلقائياً كل 30 ثانية!
   </div>
 
   <div class="footer">
