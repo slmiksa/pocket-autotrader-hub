@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.telegram-webhook-setup]
 verify_jwt = false
+
+[functions.analyze-chart-image]
+verify_jwt = false
+
+[functions.analyze-mt5-chart]
+verify_jwt = false

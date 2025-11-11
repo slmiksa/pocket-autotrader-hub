@@ -9,6 +9,7 @@ import AdminLogin from "./pages/AdminLogin";
 import Auth from "./pages/Auth";
 import SubscriptionCheck from "./pages/SubscriptionCheck";
 import ImageAnalysis from "./pages/ImageAnalysis";
+import MT5Analysis from "./pages/MT5Analysis";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/subscription" element={<SubscriptionCheck />} />
           <Route path="/image-analysis" element={<ImageAnalysis />} />
+          <Route path="/mt5-analysis" element={<MT5Analysis />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

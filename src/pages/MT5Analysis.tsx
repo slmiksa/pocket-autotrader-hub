@@ -1,0 +1,341 @@
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { ArrowUp, ArrowDown, TrendingUp, AlertCircle, Info } from 'lucide-react';
+
+const MT5Analysis = () => {
+  const [image, setImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string>('');
+  const [timeframe, setTimeframe] = useState<string>('5m');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<any>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (!image) {
+      toast.error('يرجى اختيار صورة للشارت');
+      return;
+    }
+
+    setAnalyzing(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        
+        const { data, error } = await supabase.functions.invoke('analyze-mt5-chart', {
+          body: { 
+            image: base64,
+            timeframe 
+          }
+        });
+
+        if (error) throw error;
+        
+        setAnalysis(data.analysis);
+        toast.success('تم التحليل بنجاح 🎯');
+      };
+      reader.readAsDataURL(image);
+    } catch (error) {
+      console.error('Error analyzing:', error);
+      toast.error('حدث خطأ أثناء التحليل');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-8" dir="rtl">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <Card className="border-2 border-primary/20 shadow-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              تحليل شارت MT5 الذكي
+            </CardTitle>
+            <CardDescription className="text-lg">
+              تحليل فني متقدم مع توصيات دقيقة لنقاط الدخول والخروج
+            </CardDescription>
+          </CardHeader>
+        </Card>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Upload Section */}
+          <Card className="border-2 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                تحميل الشارت
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>الإطار الزمني</Label>
+                <Select value={timeframe} onValueChange={setTimeframe}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1m">1 دقيقة</SelectItem>
+                    <SelectItem value="5m">5 دقائق</SelectItem>
+                    <SelectItem value="15m">15 دقيقة</SelectItem>
+                    <SelectItem value="30m">30 دقيقة</SelectItem>
+                    <SelectItem value="1h">1 ساعة</SelectItem>
+                    <SelectItem value="4h">4 ساعات</SelectItem>
+                    <SelectItem value="1d">يوم واحد</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>صورة الشارت</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="cursor-pointer"
+                />
+              </div>
+
+              {preview && (
+                <div className="rounded-lg border-2 border-primary/20 overflow-hidden">
+                  <img src={preview} alt="Preview" className="w-full" />
+                </div>
+              )}
+
+              <Button 
+                onClick={handleAnalyze}
+                disabled={analyzing || !image}
+                className="w-full"
+                size="lg"
+              >
+                {analyzing ? 'جاري التحليل...' : 'تحليل الشارت'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Instructions */}
+          <Card className="border-2 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Info className="w-5 h-5" />
+                تعليمات الاستخدام
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="capture" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="capture">التقاط الشارت</TabsTrigger>
+                  <TabsTrigger value="trade">تنفيذ الصفقة</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="capture" className="space-y-3 text-sm">
+                  <div className="p-4 bg-primary/5 rounded-lg space-y-2">
+                    <h4 className="font-bold text-primary">كيفية التقاط صورة الشارت:</h4>
+                    <ol className="list-decimal list-inside space-y-2 mr-2">
+                      <li>افتح منصة MT5 واختر الزوج المراد تحليله (مثل AUD/USD)</li>
+                      <li>اختر الإطار الزمني المناسب من أعلى الشارت</li>
+                      <li>تأكد من ظهور الشموع اليابانية بوضوح</li>
+                      <li>التقط صورة للشاشة (Screenshot) أو استخدم أداة القص</li>
+                      <li>ارفع الصورة هنا واختر نفس الإطار الزمني</li>
+                    </ol>
+                  </div>
+                  
+                  <div className="p-4 bg-accent/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground">
+                      💡 <strong>نصيحة:</strong> تأكد من وضوح الشموع والأسعار في الصورة للحصول على تحليل دقيق
+                    </p>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="trade" className="space-y-3 text-sm">
+                  <div className="p-4 bg-primary/5 rounded-lg space-y-2">
+                    <h4 className="font-bold text-primary">خطوات تنفيذ الصفقة في MT5:</h4>
+                    <ol className="list-decimal list-inside space-y-2 mr-2">
+                      <li>اضغط على زر "طلب تداول" في MT5</li>
+                      <li>اختر نوع الطلب: "السوق" للتنفيذ الفوري</li>
+                      <li>حدد حجم الصفقة (اللوت) المناسب لرأس مالك</li>
+                      <li>في قسم "شروط إبرام الصفقة" قم بتفعيل:</li>
+                      <ul className="list-disc list-inside mr-6 space-y-1">
+                        <li><strong>وقف الخسارة (Stop Loss):</strong> ضع السعر الذي سيعطيه التحليل</li>
+                        <li><strong>جني الأرباح (Take Profit):</strong> ضع الهدف المحدد</li>
+                      </ul>
+                      <li>إذا كانت التوصية شراء: اضغط زر "شراء" الأخضر</li>
+                      <li>إذا كانت التوصية بيع: اضغط زر "بيع" الأحمر</li>
+                    </ol>
+                  </div>
+
+                  <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                    <p className="text-xs flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                      <span><strong>تحذير:</strong> لا تتداول بأكثر من 2-3% من رأس مالك في صفقة واحدة. التزم دائماً بوقف الخسارة.</span>
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Analysis Results */}
+        {analysis && (
+          <Card className="border-2 border-primary/20 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-2xl">نتيجة التحليل</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Main Recommendation */}
+              <div className={`p-6 rounded-xl border-2 ${
+                analysis.direction === 'شراء' || analysis.direction === 'BUY'
+                  ? 'bg-green-500/10 border-green-500'
+                  : 'bg-red-500/10 border-red-500'
+              }`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    {(analysis.direction === 'شراء' || analysis.direction === 'BUY') ? (
+                      <ArrowUp className="w-8 h-8 text-green-500" />
+                    ) : (
+                      <ArrowDown className="w-8 h-8 text-red-500" />
+                    )}
+                    <div>
+                      <h3 className="text-2xl font-bold">
+                        {analysis.direction === 'شراء' || analysis.direction === 'BUY' ? 'توصية شراء' : 'توصية بيع'}
+                      </h3>
+                      <p className="text-sm opacity-80">
+                        قوة الإشارة: {analysis.confidence || analysis.signalStrength || 'متوسطة'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm opacity-80">الإطار الزمني</p>
+                    <p className="text-xl font-bold">{timeframe}</p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-background/50 rounded-lg">
+                    <p className="text-sm opacity-80 mb-1">نقطة الدخول</p>
+                    <p className="text-xl font-bold">{analysis.entryPoint || analysis.entry || 'السعر الحالي'}</p>
+                  </div>
+                  <div className="p-4 bg-background/50 rounded-lg">
+                    <p className="text-sm opacity-80 mb-1">وقف الخسارة</p>
+                    <p className="text-xl font-bold text-red-500">{analysis.stopLoss || 'غير محدد'}</p>
+                  </div>
+                  <div className="p-4 bg-background/50 rounded-lg">
+                    <p className="text-sm opacity-80 mb-1">جني الأرباح</p>
+                    <p className="text-xl font-bold text-green-500">{analysis.takeProfit || analysis.target || 'غير محدد'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Technical Analysis */}
+              {(analysis.trend || analysis.pattern) && (
+                <div className="grid md:grid-cols-2 gap-4">
+                  {analysis.trend && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">الاتجاه العام</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-foreground/80">{analysis.trend}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+                  {analysis.pattern && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">نمط الشموع</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-foreground/80">{analysis.pattern}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
+
+              {/* Support & Resistance */}
+              {(analysis.support || analysis.resistance) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">مستويات الدعم والمقاومة</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid md:grid-cols-2 gap-4">
+                    {analysis.support && (
+                      <div className="p-4 bg-green-500/10 rounded-lg">
+                        <p className="text-sm opacity-80 mb-1">الدعم</p>
+                        <p className="text-xl font-bold">{analysis.support}</p>
+                      </div>
+                    )}
+                    {analysis.resistance && (
+                      <div className="p-4 bg-red-500/10 rounded-lg">
+                        <p className="text-sm opacity-80 mb-1">المقاومة</p>
+                        <p className="text-xl font-bold">{analysis.resistance}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Advice */}
+              {analysis.advice && (
+                <Card className="border-primary/30">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Info className="w-5 h-5" />
+                      نصائح مهمة
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="prose prose-sm max-w-none text-foreground/80">
+                      {typeof analysis.advice === 'string' ? (
+                        <p className="whitespace-pre-wrap">{analysis.advice}</p>
+                      ) : (
+                        <ul className="space-y-2">
+                          {Object.values(analysis.advice).map((tip: any, idx) => (
+                            <li key={idx}>{tip}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Full Analysis */}
+              {analysis.analysis && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">التحليل التفصيلي</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-foreground/80 whitespace-pre-wrap">{analysis.analysis}</p>
+                  </CardContent>
+                </Card>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default MT5Analysis;
