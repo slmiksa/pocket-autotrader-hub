@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ArrowUp, ArrowDown, TrendingUp, AlertCircle, Info } from 'lucide-react';
+import { ArrowUp, ArrowDown, TrendingUp, AlertCircle, Info, ArrowRight } from 'lucide-react';
 import mt5TradeInterface from '@/assets/mt5-trade-interface.png';
 
 const MT5Analysis = () => {
+  const navigate = useNavigate();
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>('');
   const [timeframe, setTimeframe] = useState<string>('5m');
@@ -115,6 +117,16 @@ const MT5Analysis = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-8" dir="rtl">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* زر الرجوع */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/')}
+          className="gap-2 hover:gap-3 transition-all"
+        >
+          <ArrowRight className="w-4 h-4" />
+          العودة للصفحة الرئيسية
+        </Button>
+        
         {/* Header */}
         <Card className="border-2 border-primary/20 shadow-lg">
           <CardHeader className="text-center">
