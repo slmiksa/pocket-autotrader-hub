@@ -16,18 +16,68 @@ const MT5Analysis = () => {
   const [timeframe, setTimeframe] = useState<string>('5m');
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<any>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  const processImageFile = (file: File) => {
+    if (file && file.type.startsWith('image/')) {
       setImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+      toast.success('تم تحميل الصورة بنجاح');
+    } else {
+      toast.error('يرجى اختيار ملف صورة صحيح');
     }
   };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
+  };
+
+  const handlePaste = (e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            processImageFile(file);
+          }
+        }
+      }
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
+  };
+
+  // Add paste event listener
+  useState(() => {
+    const pasteHandler = (e: ClipboardEvent) => handlePaste(e);
+    window.addEventListener('paste', pasteHandler as any);
+    return () => window.removeEventListener('paste', pasteHandler as any);
+  });
 
   const handleAnalyze = async () => {
     if (!image) {
@@ -105,14 +155,40 @@ const MT5Analysis = () => {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>صورة الشارت</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="cursor-pointer"
-                />
+              {/* Drop Zone */}
+              <div 
+                className={`space-y-2 rounded-lg border-2 border-dashed p-6 transition-all ${
+                  isDragging 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-primary/20 hover:border-primary/40'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <div className="text-center space-y-3">
+                  <div className="flex justify-center">
+                    <TrendingUp className="w-12 h-12 text-primary/60" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-primary">الصق الصورة هنا (Ctrl+V)</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      أو اسحب وأفلت الصورة، أو اختر ملف
+                    </p>
+                  </div>
+                  <Label htmlFor="file-upload" className="cursor-pointer">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors">
+                      <span className="text-sm font-medium">اختر صورة من الجهاز</span>
+                    </div>
+                    <Input
+                      id="file-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                  </Label>
+                </div>
               </div>
 
               {preview && (
