@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ArrowUp, ArrowDown, TrendingUp, AlertCircle, Info } from 'lucide-react';
+import mt5TradeInterface from '@/assets/mt5-trade-interface.png';
 
 const MT5Analysis = () => {
   const [image, setImage] = useState<File | null>(null);
@@ -180,6 +181,18 @@ const MT5Analysis = () => {
                       <li>إذا كانت التوصية شراء: اضغط زر "شراء" الأخضر</li>
                       <li>إذا كانت التوصية بيع: اضغط زر "بيع" الأحمر</li>
                     </ol>
+                  </div>
+
+                  {/* MT5 Interface Image */}
+                  <div className="rounded-lg border-2 border-primary/20 overflow-hidden bg-background">
+                    <img 
+                      src={mt5TradeInterface} 
+                      alt="واجهة تنفيذ الصفقة في MT5" 
+                      className="w-full"
+                    />
+                    <p className="text-xs text-center text-muted-foreground p-2 bg-primary/5">
+                      واجهة تنفيذ الصفقة في MT5 - ضع Stop Loss و Take Profit في الخانات المخصصة
+                    </p>
                   </div>
 
                   <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
