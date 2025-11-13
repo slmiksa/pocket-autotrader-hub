@@ -41,6 +41,9 @@ serve(async (req) => {
         console.error('Error fetching crypto data:', error);
         priceData = 'لا يمكن الحصول على بيانات السعر حالياً';
       }
+    } else if (assetType === 'forex') {
+      // For forex, we'll use a simpler approach
+      priceData = `زوج العملات: ${symbol}\nنوع الأصل: فوريكس`;
     } else {
       // For stocks, we'll use a simpler approach since we don't have a free real-time API
       priceData = `الرمز: ${symbol}\nنوع الأصل: سهم أمريكي`;
@@ -56,7 +59,11 @@ serve(async (req) => {
       '1d': 'يوم واحد أو أكثر'
     };
 
-    const systemPrompt = `أنت محلل فني خبير في الأسواق المالية. مهمتك تحليل ${assetType === 'crypto' ? 'العملة الرقمية' : 'السهم'} ${symbol} وتقديم توصيات دقيقة.
+    let assetName = 'السهم';
+    if (assetType === 'crypto') assetName = 'العملة الرقمية';
+    if (assetType === 'forex') assetName = 'زوج العملات';
+    
+    const systemPrompt = `أنت محلل فني خبير في الأسواق المالية. مهمتك تحليل ${assetName} ${symbol} وتقديم توصيات دقيقة.
 
 معلومات السوق الحالية:
 ${priceData}
