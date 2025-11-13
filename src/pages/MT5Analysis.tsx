@@ -8,8 +8,36 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ArrowUp, ArrowDown, TrendingUp, AlertCircle, Info, ArrowRight } from 'lucide-react';
+import { ArrowUp, ArrowDown, TrendingUp, AlertCircle, Info, ArrowRight, Loader2 } from 'lucide-react';
 import mt5TradeInterface from '@/assets/mt5-trade-interface.png';
+
+// Popular cryptocurrencies
+const CRYPTO_LIST = [
+  { symbol: 'BTCUSDT', name: 'Bitcoin', id: 'bitcoin' },
+  { symbol: 'ETHUSDT', name: 'Ethereum', id: 'ethereum' },
+  { symbol: 'BNBUSDT', name: 'Binance Coin', id: 'binancecoin' },
+  { symbol: 'XRPUSDT', name: 'Ripple', id: 'ripple' },
+  { symbol: 'ADAUSDT', name: 'Cardano', id: 'cardano' },
+  { symbol: 'DOGEUSDT', name: 'Dogecoin', id: 'dogecoin' },
+  { symbol: 'SOLUSDT', name: 'Solana', id: 'solana' },
+  { symbol: 'DOTUSDT', name: 'Polkadot', id: 'polkadot' },
+  { symbol: 'MATICUSDT', name: 'Polygon', id: 'matic-network' },
+  { symbol: 'LTCUSDT', name: 'Litecoin', id: 'litecoin' },
+];
+
+// Popular US stocks
+const STOCKS_LIST = [
+  { symbol: 'AAPL', name: 'Apple Inc.' },
+  { symbol: 'MSFT', name: 'Microsoft Corporation' },
+  { symbol: 'GOOGL', name: 'Alphabet Inc.' },
+  { symbol: 'AMZN', name: 'Amazon.com Inc.' },
+  { symbol: 'TSLA', name: 'Tesla Inc.' },
+  { symbol: 'META', name: 'Meta Platforms Inc.' },
+  { symbol: 'NVDA', name: 'NVIDIA Corporation' },
+  { symbol: 'JPM', name: 'JPMorgan Chase & Co.' },
+  { symbol: 'V', name: 'Visa Inc.' },
+  { symbol: 'WMT', name: 'Walmart Inc.' },
+];
 
 const MT5Analysis = () => {
   const navigate = useNavigate();
@@ -19,6 +47,8 @@ const MT5Analysis = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<any>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [assetType, setAssetType] = useState<'crypto' | 'stock'>('crypto');
+  const [selectedSymbol, setSelectedSymbol] = useState<string>('');
 
   const processImageFile = (file: File) => {
     if (file && file.type.startsWith('image/')) {
@@ -81,6 +111,34 @@ const MT5Analysis = () => {
     return () => window.removeEventListener('paste', pasteHandler as any);
   });
 
+  const handleAnalyzeSymbol = async () => {
+    if (!selectedSymbol) {
+      toast.error('يرجى اختيار رمز للتحليل');
+      return;
+    }
+
+    setAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-symbol', {
+        body: { 
+          symbol: selectedSymbol,
+          timeframe,
+          assetType
+        }
+      });
+
+      if (error) throw error;
+      
+      setAnalysis(data.analysis);
+      toast.success('تم التحليل بنجاح 🎯');
+    } catch (error) {
+      console.error('Error analyzing:', error);
+      toast.error('حدث خطأ أثناء التحليل');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const handleAnalyze = async () => {
     if (!image) {
       toast.error('يرجى اختيار صورة للشارت');
@@ -116,6 +174,19 @@ const MT5Analysis = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-8" dir="rtl">
+      {/* Loading Overlay */}
+      {analyzing && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <Card className="border-2 border-primary/20 shadow-2xl p-8">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="w-16 h-16 animate-spin text-primary" />
+              <p className="text-2xl font-bold text-primary">جاري التحليل...</p>
+              <p className="text-muted-foreground">يرجى الانتظار، نقوم بتحليل الشارت</p>
+            </div>
+          </Card>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto space-y-6">
         {/* زر الرجوع */}
         <Button
@@ -137,6 +208,94 @@ const MT5Analysis = () => {
               تحليل فني متقدم مع توصيات دقيقة لنقاط الدخول والخروج
             </CardDescription>
           </CardHeader>
+        </Card>
+
+        {/* Symbol Analysis Section */}
+        <Card className="border-2 border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              تحليل الرموز التلقائي
+            </CardTitle>
+            <CardDescription>
+              اختر عملة رقمية أو سهم أمريكي للحصول على تحليل فوري
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Tabs value={assetType} onValueChange={(v) => {
+              setAssetType(v as 'crypto' | 'stock');
+              setSelectedSymbol('');
+              setAnalysis(null);
+            }}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="crypto">العملات الرقمية</TabsTrigger>
+                <TabsTrigger value="stock">الأسهم الأمريكية</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="crypto" className="space-y-4">
+                <div className="space-y-2">
+                  <Label>اختر العملة الرقمية</Label>
+                  <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر عملة رقمية" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CRYPTO_LIST.map((crypto) => (
+                        <SelectItem key={crypto.symbol} value={crypto.id}>
+                          {crypto.name} ({crypto.symbol})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="stock" className="space-y-4">
+                <div className="space-y-2">
+                  <Label>اختر السهم</Label>
+                  <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر سهم" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STOCKS_LIST.map((stock) => (
+                        <SelectItem key={stock.symbol} value={stock.symbol}>
+                          {stock.name} ({stock.symbol})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <div className="space-y-2">
+              <Label>الإطار الزمني</Label>
+              <Select value={timeframe} onValueChange={setTimeframe}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1m">1 دقيقة</SelectItem>
+                  <SelectItem value="5m">5 دقائق</SelectItem>
+                  <SelectItem value="15m">15 دقيقة</SelectItem>
+                  <SelectItem value="30m">30 دقيقة</SelectItem>
+                  <SelectItem value="1h">1 ساعة</SelectItem>
+                  <SelectItem value="4h">4 ساعات</SelectItem>
+                  <SelectItem value="1d">يوم واحد</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button 
+              onClick={handleAnalyzeSymbol}
+              disabled={analyzing || !selectedSymbol}
+              className="w-full"
+              size="lg"
+            >
+              {analyzing ? 'جاري التحليل...' : 'تحليل الآن'}
+            </Button>
+          </CardContent>
         </Card>
 
         <div className="grid md:grid-cols-2 gap-6">
