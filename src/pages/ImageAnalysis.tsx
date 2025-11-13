@@ -8,7 +8,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Upload, Loader2, MessageCircle, Lock, TrendingUp, Target } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, MessageCircle, Lock, TrendingUp, Target, Activity } from "lucide-react";
+
+const FOREX_PAIRS = [
+  { value: "EURUSD", label: "EUR/USD - Euro/US Dollar" },
+  { value: "GBPUSD", label: "GBP/USD - British Pound/US Dollar" },
+  { value: "USDJPY", label: "USD/JPY - US Dollar/Japanese Yen" },
+  { value: "USDCHF", label: "USD/CHF - US Dollar/Swiss Franc" },
+  { value: "AUDUSD", label: "AUD/USD - Australian Dollar/US Dollar" },
+  { value: "USDCAD", label: "USD/CAD - US Dollar/Canadian Dollar" },
+  { value: "NZDUSD", label: "NZD/USD - New Zealand Dollar/US Dollar" },
+  { value: "EURGBP", label: "EUR/GBP - Euro/British Pound" },
+  { value: "EURJPY", label: "EUR/JPY - Euro/Japanese Yen" },
+  { value: "GBPJPY", label: "GBP/JPY - British Pound/Japanese Yen" },
+];
 const ImageAnalysis = () => {
   const navigate = useNavigate();
   const [image, setImage] = useState<File | null>(null);
@@ -19,6 +32,8 @@ const ImageAnalysis = () => {
   const [analysisType, setAnalysisType] = useState<"recommendation" | "support-resistance">("recommendation");
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+  const [selectedForexPair, setSelectedForexPair] = useState<string>("");
+  const [forexTimeframe, setForexTimeframe] = useState<string>("5m");
   useEffect(() => {
     const checkAccess = async () => {
       try {
@@ -95,6 +110,54 @@ const ImageAnalysis = () => {
       reader.readAsDataURL(file);
     }
   };
+  const handleAnalyzeForex = async () => {
+    if (!selectedForexPair) {
+      toast.error("الرجاء اختيار زوج العملات");
+      return;
+    }
+
+    setAnalyzing(true);
+    setAnalysis("");
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-symbol', {
+        body: {
+          symbol: selectedForexPair,
+          timeframe: forexTimeframe,
+          assetType: 'forex'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        const formatted = `
+🔍 نتيجة التحليل:
+
+📊 الاتجاه: ${data.direction}
+💰 نقطة الدخول: ${data.entryPoint}
+🛡️ وقف الخسارة: ${data.stopLoss}
+🎯 جني الأرباح: ${data.takeProfit}
+📈 الثقة: ${data.confidence}
+🔄 الاتجاه العام: ${data.trend}
+
+📝 التحليل التفصيلي:
+${data.analysis}
+
+💡 النصيحة:
+${data.advice}
+        `;
+        setAnalysis(formatted);
+        toast.success("تم التحليل بنجاح");
+      }
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast.error("حدث خطأ أثناء تحليل زوج العملات");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const handleAnalyze = async () => {
     if (!image || !timeframe) {
       toast.error("يرجى رفع صورة واختيار فترة الشمعة");
@@ -196,29 +259,42 @@ const ImageAnalysis = () => {
           رجوع
         </Button>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">تحليل الشارت بالصورة</CardTitle>
-            <CardDescription>
-              اختر نوع التحليل المطلوب ثم قم برفع صورة الشارت
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Analysis Type Selection */}
-            <div className="space-y-2">
-              <Label>نوع التحليل</Label>
-              <Tabs value={analysisType} onValueChange={(v) => setAnalysisType(v as "recommendation" | "support-resistance")} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="recommendation" className="gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    <span>توصية مباشرة</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="support-resistance" className="gap-2">
-                    <Target className="h-4 w-4" />
-                    <span>الدعوم والارتدادات</span>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+        <Tabs defaultValue="image" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="image" className="gap-2">
+              <Upload className="h-4 w-4" />
+              تحليل صورة
+            </TabsTrigger>
+            <TabsTrigger value="forex" className="gap-2">
+              <Activity className="h-4 w-4" />
+              تحليل الفوريكس
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="image">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">تحليل الشارت بالصورة</CardTitle>
+                <CardDescription>
+                  اختر نوع التحليل المطلوب ثم قم برفع صورة الشارت
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Analysis Type Selection */}
+                <div className="space-y-2">
+                  <Label>نوع التحليل</Label>
+                  <Tabs value={analysisType} onValueChange={(v) => setAnalysisType(v as "recommendation" | "support-resistance")} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="recommendation" className="gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        <span>توصية مباشرة</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="support-resistance" className="gap-2">
+                        <Target className="h-4 w-4" />
+                        <span>الدعوم والارتدادات</span>
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
               
               {analysisType === "recommendation" ? (
                 <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mt-2">
@@ -317,6 +393,106 @@ const ImageAnalysis = () => {
               </div>}
           </CardContent>
         </Card>
+      </TabsContent>
+
+      <TabsContent value="forex">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">تحليل الفوريكس</CardTitle>
+            <CardDescription>
+              اختر زوج العملات والإطار الزمني للحصول على تحليل شامل
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label>اختر زوج العملات</Label>
+              <Select value={selectedForexPair} onValueChange={setSelectedForexPair}>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر زوج العملات" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FOREX_PAIRS.map((pair) => (
+                    <SelectItem key={pair.value} value={pair.value}>
+                      {pair.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>الإطار الزمني</Label>
+              <Select value={forexTimeframe} onValueChange={setForexTimeframe}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1m">دقيقة واحدة</SelectItem>
+                  <SelectItem value="5m">5 دقائق</SelectItem>
+                  <SelectItem value="15m">15 دقيقة</SelectItem>
+                  <SelectItem value="30m">30 دقيقة</SelectItem>
+                  <SelectItem value="1h">ساعة واحدة</SelectItem>
+                  <SelectItem value="4h">4 ساعات</SelectItem>
+                  <SelectItem value="1d">يوم واحد</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleAnalyzeForex}
+              disabled={!selectedForexPair || analyzing}
+              className="w-full"
+              size="lg"
+            >
+              {analyzing ? (
+                <>
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  جاري التحليل...
+                </>
+              ) : (
+                "تحليل الآن"
+              )}
+            </Button>
+
+            {analysis && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>نتيجة التحليل</Label>
+                  <div className="bg-card border rounded-lg p-4 space-y-3">
+                    <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl">
+                      <div className="whitespace-pre-wrap text-foreground leading-relaxed">
+                        {analysis}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-muted/50 border border-primary/20 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">💡</div>
+                    <div className="space-y-1 text-sm">
+                      <p className="font-semibold text-foreground">نصيحة عامة:</p>
+                      <p className="text-muted-foreground">
+                        تأكد من فهم التحليل جيداً قبل الدخول في الصفقة وحدد المبلغ المناسب لك.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
+
+      {analyzing && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto" />
+            <p className="text-2xl font-bold text-foreground">جاري التحليل...</p>
+          </div>
+        </div>
+      )}
       </div>
     </div>;
 };
