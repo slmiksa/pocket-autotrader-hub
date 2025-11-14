@@ -130,22 +130,23 @@ const ImageAnalysis = () => {
 
       if (error) throw error;
 
-      if (data) {
+      if (data?.analysis) {
+        const analysisData = data.analysis;
         const formatted = `
 🔍 نتيجة التحليل:
 
-📊 الاتجاه: ${data.direction}
-💰 نقطة الدخول: ${data.entryPoint}
-🛡️ وقف الخسارة: ${data.stopLoss}
-🎯 جني الأرباح: ${data.takeProfit}
-📈 الثقة: ${data.confidence}
-🔄 الاتجاه العام: ${data.trend}
+📊 الاتجاه: ${analysisData.direction}
+💰 نقطة الدخول: ${analysisData.entryPoint}
+🛡️ وقف الخسارة: ${analysisData.stopLoss}
+🎯 جني الأرباح: ${analysisData.takeProfit}
+📈 الثقة: ${analysisData.confidence}
+🔄 الاتجاه العام: ${analysisData.trend}
 
 📝 التحليل التفصيلي:
-${data.analysis}
+${analysisData.analysis}
 
 💡 النصيحة:
-${data.advice}
+${analysisData.advice}
         `;
         setAnalysis(formatted);
         toast.success("تم التحليل بنجاح");
