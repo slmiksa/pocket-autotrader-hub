@@ -42,8 +42,27 @@ serve(async (req) => {
         priceData = 'لا يمكن الحصول على بيانات السعر حالياً';
       }
     } else if (assetType === 'forex') {
-      // For forex, we'll use a simpler approach
-      priceData = `زوج العملات: ${symbol}\nنوع الأصل: فوريكس`;
+      // Fetch forex data from exchangerate.host (free API)
+      try {
+        // Parse the forex pair (e.g., EURUSD -> EUR and USD)
+        const baseCurrency = symbol.slice(0, 3);
+        const quoteCurrency = symbol.slice(3, 6);
+        
+        const response = await fetch(
+          `https://api.exchangerate.host/latest?base=${baseCurrency}&symbols=${quoteCurrency}`
+        );
+        const data = await response.json();
+        
+        if (data && data.rates && data.rates[quoteCurrency]) {
+          currentPrice = data.rates[quoteCurrency].toFixed(5);
+          priceData = `زوج العملات: ${symbol}\nالسعر الحالي: ${currentPrice}\nتاريخ البيانات: ${data.date}`;
+        } else {
+          priceData = `زوج العملات: ${symbol}\nلا يمكن الحصول على بيانات السعر حالياً`;
+        }
+      } catch (error) {
+        console.error('Error fetching forex data:', error);
+        priceData = `زوج العملات: ${symbol}\nلا يمكن الحصول على بيانات السعر حالياً`;
+      }
     } else {
       // For stocks, we'll use a simpler approach since we don't have a free real-time API
       priceData = `الرمز: ${symbol}\nنوع الأصل: سهم أمريكي`;
