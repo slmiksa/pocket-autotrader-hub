@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Upload, Loader2, MessageCircle, Lock, TrendingUp, Target, Activity } from "lucide-react";
 
 const FOREX_PAIRS = [
+  // Major Pairs
   { value: "EURUSD", label: "EUR/USD - Euro/US Dollar" },
   { value: "GBPUSD", label: "GBP/USD - British Pound/US Dollar" },
   { value: "USDJPY", label: "USD/JPY - US Dollar/Japanese Yen" },
@@ -18,9 +19,50 @@ const FOREX_PAIRS = [
   { value: "AUDUSD", label: "AUD/USD - Australian Dollar/US Dollar" },
   { value: "USDCAD", label: "USD/CAD - US Dollar/Canadian Dollar" },
   { value: "NZDUSD", label: "NZD/USD - New Zealand Dollar/US Dollar" },
+  
+  // Cross Pairs
   { value: "EURGBP", label: "EUR/GBP - Euro/British Pound" },
   { value: "EURJPY", label: "EUR/JPY - Euro/Japanese Yen" },
   { value: "GBPJPY", label: "GBP/JPY - British Pound/Japanese Yen" },
+  { value: "EURCHF", label: "EUR/CHF - Euro/Swiss Franc" },
+  { value: "EURAUD", label: "EUR/AUD - Euro/Australian Dollar" },
+  { value: "EURCAD", label: "EUR/CAD - Euro/Canadian Dollar" },
+  { value: "EURNZD", label: "EUR/NZD - Euro/New Zealand Dollar" },
+  { value: "GBPCHF", label: "GBP/CHF - British Pound/Swiss Franc" },
+  { value: "GBPAUD", label: "GBP/AUD - British Pound/Australian Dollar" },
+  { value: "GBPCAD", label: "GBP/CAD - British Pound/Canadian Dollar" },
+  { value: "GBPNZD", label: "GBP/NZD - British Pound/New Zealand Dollar" },
+  { value: "AUDCAD", label: "AUD/CAD - Australian Dollar/Canadian Dollar" },
+  { value: "AUDJPY", label: "AUD/JPY - Australian Dollar/Japanese Yen" },
+  { value: "AUDNZD", label: "AUD/NZD - Australian Dollar/New Zealand Dollar" },
+  { value: "AUDCHF", label: "AUD/CHF - Australian Dollar/Swiss Franc" },
+  { value: "CADJPY", label: "CAD/JPY - Canadian Dollar/Japanese Yen" },
+  { value: "CHFJPY", label: "CHF/JPY - Swiss Franc/Japanese Yen" },
+  { value: "NZDJPY", label: "NZD/JPY - New Zealand Dollar/Japanese Yen" },
+  { value: "NZDCAD", label: "NZD/CAD - New Zealand Dollar/Canadian Dollar" },
+  { value: "NZDCHF", label: "NZD/CHF - New Zealand Dollar/Swiss Franc" },
+  
+  // Exotic Pairs
+  { value: "USDTRY", label: "USD/TRY - US Dollar/Turkish Lira" },
+  { value: "USDZAR", label: "USD/ZAR - US Dollar/South African Rand" },
+  { value: "USDMXN", label: "USD/MXN - US Dollar/Mexican Peso" },
+  { value: "USDBRL", label: "USD/BRL - US Dollar/Brazilian Real" },
+  { value: "USDSGD", label: "USD/SGD - US Dollar/Singapore Dollar" },
+  { value: "USDHKD", label: "USD/HKD - US Dollar/Hong Kong Dollar" },
+  { value: "USDSEK", label: "USD/SEK - US Dollar/Swedish Krona" },
+  { value: "USDNOK", label: "USD/NOK - US Dollar/Norwegian Krone" },
+  { value: "USDDKK", label: "USD/DKK - US Dollar/Danish Krone" },
+  { value: "USDPLN", label: "USD/PLN - US Dollar/Polish Zloty" },
+];
+
+const TIMEFRAMES = [
+  { value: "1m", label: "1 دقيقة" },
+  { value: "5m", label: "5 دقائق" },
+  { value: "15m", label: "15 دقيقة" },
+  { value: "30m", label: "30 دقيقة" },
+  { value: "1h", label: "ساعة واحدة" },
+  { value: "4h", label: "4 ساعات" },
+  { value: "1d", label: "يوم واحد" },
 ];
 const ImageAnalysis = () => {
   const navigate = useNavigate();
