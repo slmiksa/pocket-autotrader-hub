@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { TradingDashboard } from "@/components/trading/TradingDashboard";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import { MarketTicker } from "@/components/MarketTicker";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart } from "lucide-react";
 import { toast } from "sonner";
@@ -203,6 +204,10 @@ const Index = () => {
 
       {/* Announcement Banner */}
       <AnnouncementBanner />
+
+      {/* Market Tickers */}
+      <MarketTicker type="forex" />
+      <MarketTicker type="stocks" />
 
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
