@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Upload, Loader2, MessageCircle, Lock, TrendingUp, Target, Activity } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, MessageCircle, Lock, TrendingUp, Target, Activity, ArrowUp, ArrowDown, Shield, DollarSign, Image as ImageIcon } from "lucide-react";
+import { AnalysisResult } from "@/components/AnalysisResult";
 
 const FOREX_PAIRS = [
   // Major Pairs
@@ -160,6 +162,7 @@ const ImageAnalysis = () => {
   const [selectedStock, setSelectedStock] = useState<string>("");
   const [stockTimeframe, setStockTimeframe] = useState<string>("1d");
   const [stockAnalysisType, setStockAnalysisType] = useState<string>("trading");
+  const [isDragging, setIsDragging] = useState(false);
   useEffect(() => {
     const checkAccess = async () => {
       try {
@@ -193,21 +196,49 @@ const ImageAnalysis = () => {
     };
     checkAccess();
   }, [navigate]);
+  const processImageFile = (file: File) => {
+    if (file && file.type.startsWith('image/')) {
+      setImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      toast.success('تم تحميل الصورة بنجاح');
+    } else {
+      toast.error('يرجى اختيار ملف صورة صحيح');
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
+  };
+
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
-      if (!items) return;
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-          const blob = items[i].getAsFile();
-          if (blob) {
-            setImage(blob);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(blob);
-            toast.success("تم لصق الصورة بنجاح");
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            if (file) {
+              processImageFile(file);
+            }
           }
         }
       }
@@ -257,24 +288,7 @@ const ImageAnalysis = () => {
       if (error) throw error;
 
       if (data?.analysis) {
-        const analysisData = data.analysis;
-        const formatted = `
-🔍 نتيجة التحليل:
-
-📊 الاتجاه: ${analysisData.direction}
-💰 نقطة الدخول: ${analysisData.entryPoint}
-🛡️ وقف الخسارة: ${analysisData.stopLoss}
-🎯 جني الأرباح: ${analysisData.takeProfit}
-📈 الثقة: ${analysisData.confidence}
-🔄 الاتجاه العام: ${analysisData.trend}
-
-📝 التحليل التفصيلي:
-${analysisData.analysis}
-
-💡 النصيحة:
-${analysisData.advice}
-        `;
-        setAnalysis(formatted);
+        setAnalysis(JSON.stringify(data.analysis));
         toast.success("تم التحليل بنجاح");
       }
     } catch (error) {
@@ -307,24 +321,7 @@ ${analysisData.advice}
       if (error) throw error;
 
       if (data?.analysis) {
-        const analysisData = data.analysis;
-        const formatted = `
-🔍 نتيجة التحليل:
-
-📊 الاتجاه: ${analysisData.direction}
-💰 نقطة الدخول: ${analysisData.entryPoint}
-🛡️ وقف الخسارة: ${analysisData.stopLoss}
-🎯 جني الأرباح: ${analysisData.takeProfit}
-📈 الثقة: ${analysisData.confidence}
-🔄 الاتجاه العام: ${analysisData.trend}
-
-📝 التحليل التفصيلي:
-${analysisData.analysis}
-
-💡 النصيحة:
-${analysisData.advice}
-        `;
-        setAnalysis(formatted);
+        setAnalysis(JSON.stringify(data.analysis));
         toast.success("تم التحليل بنجاح");
       }
     } catch (error) {
@@ -358,7 +355,7 @@ ${analysisData.advice}
           }
         });
         if (error) throw error;
-        setAnalysis(data.analysis);
+        setAnalysis(JSON.stringify(data.analysis));
         toast.success("تم تحليل الصورة بنجاح");
       };
       reader.readAsDataURL(image);
@@ -544,34 +541,100 @@ ${analysisData.advice}
                 </> : "تحليل الشارت"}
             </Button>
 
-            {analysis && <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>نتيجة التحليل</Label>
-                  <div className="bg-card border rounded-lg p-4 space-y-3">
-                    <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl">
-                      <div className="whitespace-pre-wrap text-foreground leading-relaxed">
-                        {analysis}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                
+            {analysis && (
+              <div className="space-y-2">
+                <Label>نتيجة التحليل</Label>
+                <AnalysisResult analysis={analysis} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
 
-                
+      <TabsContent value="mt5">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">تحليل من MT5 و TradingView</CardTitle>
+            <CardDescription>
+              ارفع صورة الشارت من منصة MT5 أو TradingView مباشرة
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="timeframe">فترة الشمعة</Label>
+              <Select value={timeframe} onValueChange={setTimeframe}>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر فترة الشمعة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1m">1 دقيقة</SelectItem>
+                  <SelectItem value="5m">5 دقائق</SelectItem>
+                  <SelectItem value="15m">15 دقيقة</SelectItem>
+                  <SelectItem value="30m">30 دقيقة</SelectItem>
+                  <SelectItem value="1h">1 ساعة</SelectItem>
+                  <SelectItem value="3h">3 ساعات</SelectItem>
+                  <SelectItem value="4h">4 ساعات</SelectItem>
+                  <SelectItem value="1d">يوم واحد</SelectItem>
+                  <SelectItem value="1w">أسبوع واحد</SelectItem>
+                  <SelectItem value="1M">شهر واحد</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-                <div className="bg-muted/50 border border-primary/20 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="text-2xl">💡</div>
-                    <div className="space-y-1 text-sm">
-                      <p className="font-semibold text-foreground">نصيحة عامة:</p>
-                      <p className="text-muted-foreground">
-                        منصة Pocket Option لا تحتوي على وقف خسارة. تأكد من فهم التحليل جيداً قبل الدخول في الصفقة وحدد المبلغ المناسب لك.
-                      </p>
-                    </div>
-                  </div>
+            <div 
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                isDragging ? 'border-primary bg-primary/5' : 'border-border'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-sm font-medium mb-2">اسحب وأفلت الصورة هنا</p>
+              <p className="text-xs text-muted-foreground mb-4">أو</p>
+              <Input 
+                id="mt5-image" 
+                type="file" 
+                accept="image/*" 
+                onChange={handleImageChange} 
+                className="cursor-pointer max-w-sm mx-auto" 
+              />
+              <p className="text-xs text-muted-foreground mt-4">
+                💡 يمكنك لصق الصورة مباشرة من الحافظة باستخدام Ctrl+V
+              </p>
+            </div>
+
+            {imagePreview && (
+              <div className="space-y-2">
+                <Label>معاينة الصورة</Label>
+                <div className="border rounded-lg p-4 bg-muted/50">
+                  <img src={imagePreview} alt="Chart preview" className="max-w-full h-auto rounded" />
                 </div>
-              </div>}
+              </div>
+            )}
+
+            <Button 
+              onClick={handleAnalyze} 
+              disabled={!image || !timeframe || analyzing} 
+              className="w-full" 
+              size="lg"
+            >
+              {analyzing ? (
+                <>
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  جاري التحليل...
+                </>
+              ) : (
+                "تحليل الآن"
+              )}
+            </Button>
+
+            {analysis && (
+              <div className="space-y-2">
+                <Label>نتيجة التحليل</Label>
+                <AnalysisResult analysis={analysis} />
+              </div>
+            )}
           </CardContent>
         </Card>
       </TabsContent>
@@ -634,29 +697,9 @@ ${analysisData.advice}
             </Button>
 
             {analysis && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>نتيجة التحليل</Label>
-                  <div className="bg-card border rounded-lg p-4 space-y-3">
-                    <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl">
-                      <div className="whitespace-pre-wrap text-foreground leading-relaxed">
-                        {analysis}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-muted/50 border border-primary/20 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="text-2xl">💡</div>
-                    <div className="space-y-1 text-sm">
-                      <p className="font-semibold text-foreground">نصيحة عامة:</p>
-                      <p className="text-muted-foreground">
-                        تأكد من فهم التحليل جيداً قبل الدخول في الصفقة وحدد المبلغ المناسب لك.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label>نتيجة التحليل</Label>
+                <AnalysisResult analysis={analysis} />
               </div>
             )}
           </CardContent>
@@ -737,29 +780,9 @@ ${analysisData.advice}
             </Button>
 
             {analysis && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>نتيجة التحليل</Label>
-                  <div className="bg-card border rounded-lg p-4 space-y-3">
-                    <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl">
-                      <div className="whitespace-pre-wrap text-foreground leading-relaxed">
-                        {analysis}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-muted/50 border border-primary/20 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="text-2xl">💡</div>
-                    <div className="space-y-1 text-sm">
-                      <p className="font-semibold text-foreground">نصيحة عامة:</p>
-                      <p className="text-muted-foreground">
-                        تأكد من فهم التحليل جيداً قبل الدخول في الصفقة وحدد المبلغ المناسب لك.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label>نتيجة التحليل</Label>
+                <AnalysisResult analysis={analysis} />
               </div>
             )}
           </CardContent>
