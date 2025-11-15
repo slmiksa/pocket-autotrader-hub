@@ -12,8 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    const { symbol, timeframe, assetType } = await req.json();
-    console.log('Analyzing symbol:', symbol, 'timeframe:', timeframe, 'type:', assetType);
+    const { symbol, timeframe, assetType, analysisType = 'trading' } = await req.json();
+    console.log('Analyzing symbol:', symbol, 'timeframe:', timeframe, 'type:', assetType, 'analysisType:', analysisType);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -64,8 +64,27 @@ serve(async (req) => {
         priceData = `زوج العملات: ${symbol}\nلا يمكن الحصول على بيانات السعر حالياً`;
       }
     } else {
-      // For stocks, we'll use a simpler approach since we don't have a free real-time API
-      priceData = `الرمز: ${symbol}\nنوع الأصل: سهم أمريكي`;
+      // For stocks, try to get real-time data from Yahoo Finance API (free)
+      try {
+        const response = await fetch(
+          `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`
+        );
+        const data = await response.json();
+        
+        if (data?.chart?.result?.[0]) {
+          const quote = data.chart.result[0];
+          const meta = quote.meta;
+          currentPrice = `$${meta.regularMarketPrice?.toFixed(2) || 'N/A'}`;
+          const change = meta.regularMarketPrice - meta.chartPreviousClose;
+          const changePercent = ((change / meta.chartPreviousClose) * 100).toFixed(2);
+          priceData = `الرمز: ${symbol}\nالسعر الحالي: ${currentPrice}\nالتغير: ${change >= 0 ? '+' : ''}$${change.toFixed(2)} (${changePercent}%)`;
+        } else {
+          priceData = `الرمز: ${symbol}\nنوع الأصل: سهم أمريكي`;
+        }
+      } catch (error) {
+        console.error('Error fetching stock data:', error);
+        priceData = `الرمز: ${symbol}\nنوع الأصل: سهم أمريكي`;
+      }
     }
 
     const timeframeMap: { [key: string]: string } = {
@@ -74,13 +93,39 @@ serve(async (req) => {
       '15m': '15-30 دقيقة',
       '30m': '30-60 دقيقة',
       '1h': '1-2 ساعة',
+      '3h': '3-6 ساعات',
       '4h': '4-8 ساعات',
-      '1d': 'يوم واحد أو أكثر'
+      '1d': 'يوم واحد أو أكثر',
+      '1w': 'أسبوع أو أكثر',
+      '1M': 'شهر أو أكثر'
     };
 
     let assetName = 'السهم';
     if (assetType === 'crypto') assetName = 'العملة الرقمية';
     if (assetType === 'forex') assetName = 'زوج العملات';
+    
+    let analysisContext = '';
+    if (analysisType === 'investment') {
+      analysisContext = `
+نوع التحليل: استثمار طويل الأجل
+التركيز على:
+- التحليل الأساسي والفني معاً
+- الأهداف طويلة الأجل (أسابيع إلى أشهر)
+- نقاط دخول استراتيجية للمستثمرين
+- مستويات وقف خسارة واسعة لتحمل التقلبات
+- التوصية بالاحتفاظ أو البيع بناءً على القيمة الاستثمارية
+`;
+    } else {
+      analysisContext = `
+نوع التحليل: مضاربة قصيرة الأجل
+التركيز على:
+- التحليل الفني والأنماط السعرية
+- الأهداف قصيرة الأجل (دقائق إلى ساعات)
+- نقاط دخول دقيقة للمضاربين
+- مستويات وقف خسارة محكمة
+- التوصية بالشراء أو البيع للاستفادة من التحركات السريعة
+`;
+    }
     
     const systemPrompt = `أنت محلل فني خبير في الأسواق المالية. مهمتك تحليل ${assetName} ${symbol} وتقديم توصيات دقيقة.
 
@@ -90,24 +135,28 @@ ${priceData}
 الإطار الزمني المختار: ${timeframe}
 مدة الصفقة المتوقعة: ${timeframeMap[timeframe] || 'متوسط'}
 
+${analysisContext}
+
 قدم تحليل شامل يتضمن:
 1. الاتجاه العام للسعر (صاعد/هابط/محايد)
-2. توصية واضحة (شراء/بيع)
+2. توصية واضحة (شراء/بيع${analysisType === 'investment' ? '/احتفظ' : ''})
 3. نقطة الدخول المقترحة
 4. مستوى وقف الخسارة (Stop Loss)
 5. هدف جني الأرباح (Take Profit)
 6. قوة الإشارة (ضعيفة/متوسطة/قوية/قوية جداً)
-7. نصائح مهمة لإدارة المخاطر
+7. نصائح مهمة لإدارة المخاطر${analysisType === 'investment' ? ' والعوامل الأساسية' : ''}
+
+${analysisType === 'investment' ? 'ملاحظة: يجب أن يركز التحليل على القيمة طويلة الأجل وليس التحركات قصيرة الأجل.' : 'ملاحظة: يجب أن يكون التحليل مناسباً للمضاربة وليس الاستثمار طويل الأجل.'}
 
 يجب أن يكون الرد بصيغة JSON بالشكل التالي:
 {
-  "direction": "شراء أو بيع",
+  "direction": "شراء أو بيع${analysisType === 'investment' ? ' أو احتفظ' : ''}",
   "entryPoint": "السعر المقترح للدخول",
   "stopLoss": "سعر وقف الخسارة",
   "takeProfit": "سعر جني الأرباح",
   "confidence": "قوة الإشارة",
   "trend": "وصف الاتجاه العام",
-  "analysis": "تحليل تفصيلي للوضع الحالي",
+  "analysis": "تحليل تفصيلي للوضع الحالي${analysisType === 'investment' ? ' يشمل العوامل الأساسية' : ''}",
   "advice": "نصائح مهمة لإدارة المخاطر"
 }`;
 
