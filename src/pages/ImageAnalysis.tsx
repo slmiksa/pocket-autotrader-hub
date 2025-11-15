@@ -61,8 +61,89 @@ const TIMEFRAMES = [
   { value: "15m", label: "15 دقيقة" },
   { value: "30m", label: "30 دقيقة" },
   { value: "1h", label: "ساعة واحدة" },
+  { value: "3h", label: "3 ساعات" },
   { value: "4h", label: "4 ساعات" },
   { value: "1d", label: "يوم واحد" },
+  { value: "1w", label: "أسبوع واحد" },
+  { value: "1M", label: "شهر واحد" },
+];
+
+const US_STOCKS = [
+  // Technology
+  { value: "AAPL", label: "Apple Inc. (AAPL)" },
+  { value: "MSFT", label: "Microsoft Corporation (MSFT)" },
+  { value: "GOOGL", label: "Alphabet Inc. (GOOGL)" },
+  { value: "AMZN", label: "Amazon.com Inc. (AMZN)" },
+  { value: "META", label: "Meta Platforms Inc. (META)" },
+  { value: "NVDA", label: "NVIDIA Corporation (NVDA)" },
+  { value: "TSLA", label: "Tesla Inc. (TSLA)" },
+  { value: "NFLX", label: "Netflix Inc. (NFLX)" },
+  { value: "ADBE", label: "Adobe Inc. (ADBE)" },
+  { value: "CRM", label: "Salesforce Inc. (CRM)" },
+  { value: "ORCL", label: "Oracle Corporation (ORCL)" },
+  { value: "CSCO", label: "Cisco Systems Inc. (CSCO)" },
+  { value: "INTC", label: "Intel Corporation (INTC)" },
+  { value: "AMD", label: "Advanced Micro Devices (AMD)" },
+  { value: "QCOM", label: "QUALCOMM Inc. (QCOM)" },
+  
+  // Finance
+  { value: "JPM", label: "JPMorgan Chase & Co. (JPM)" },
+  { value: "BAC", label: "Bank of America Corp. (BAC)" },
+  { value: "WFC", label: "Wells Fargo & Co. (WFC)" },
+  { value: "GS", label: "Goldman Sachs Group Inc. (GS)" },
+  { value: "MS", label: "Morgan Stanley (MS)" },
+  { value: "V", label: "Visa Inc. (V)" },
+  { value: "MA", label: "Mastercard Inc. (MA)" },
+  { value: "AXP", label: "American Express Co. (AXP)" },
+  { value: "BLK", label: "BlackRock Inc. (BLK)" },
+  
+  // Healthcare
+  { value: "JNJ", label: "Johnson & Johnson (JNJ)" },
+  { value: "UNH", label: "UnitedHealth Group Inc. (UNH)" },
+  { value: "PFE", label: "Pfizer Inc. (PFE)" },
+  { value: "ABBV", label: "AbbVie Inc. (ABBV)" },
+  { value: "TMO", label: "Thermo Fisher Scientific (TMO)" },
+  { value: "MRK", label: "Merck & Co. Inc. (MRK)" },
+  { value: "LLY", label: "Eli Lilly and Co. (LLY)" },
+  { value: "ABT", label: "Abbott Laboratories (ABT)" },
+  
+  // Consumer
+  { value: "WMT", label: "Walmart Inc. (WMT)" },
+  { value: "PG", label: "Procter & Gamble Co. (PG)" },
+  { value: "KO", label: "Coca-Cola Co. (KO)" },
+  { value: "PEP", label: "PepsiCo Inc. (PEP)" },
+  { value: "COST", label: "Costco Wholesale Corp. (COST)" },
+  { value: "NKE", label: "Nike Inc. (NKE)" },
+  { value: "MCD", label: "McDonald's Corp. (MCD)" },
+  { value: "SBUX", label: "Starbucks Corp. (SBUX)" },
+  { value: "TGT", label: "Target Corp. (TGT)" },
+  { value: "HD", label: "Home Depot Inc. (HD)" },
+  { value: "LOW", label: "Lowe's Companies Inc. (LOW)" },
+  
+  // Energy
+  { value: "XOM", label: "Exxon Mobil Corp. (XOM)" },
+  { value: "CVX", label: "Chevron Corp. (CVX)" },
+  { value: "COP", label: "ConocoPhillips (COP)" },
+  { value: "SLB", label: "Schlumberger NV (SLB)" },
+  
+  // Industrial
+  { value: "BA", label: "Boeing Co. (BA)" },
+  { value: "CAT", label: "Caterpillar Inc. (CAT)" },
+  { value: "GE", label: "General Electric Co. (GE)" },
+  { value: "MMM", label: "3M Co. (MMM)" },
+  { value: "UPS", label: "United Parcel Service (UPS)" },
+  { value: "HON", label: "Honeywell International (HON)" },
+  
+  // Telecom & Media
+  { value: "T", label: "AT&T Inc. (T)" },
+  { value: "VZ", label: "Verizon Communications (VZ)" },
+  { value: "DIS", label: "Walt Disney Co. (DIS)" },
+  { value: "CMCSA", label: "Comcast Corp. (CMCSA)" },
+];
+
+const ANALYSIS_TYPES = [
+  { value: "trading", label: "مضاربة قصيرة الأجل" },
+  { value: "investment", label: "استثمار طويل الأجل" },
 ];
 const ImageAnalysis = () => {
   const navigate = useNavigate();
@@ -76,6 +157,9 @@ const ImageAnalysis = () => {
   const [hasAccess, setHasAccess] = useState(false);
   const [selectedForexPair, setSelectedForexPair] = useState<string>("");
   const [forexTimeframe, setForexTimeframe] = useState<string>("5m");
+  const [selectedStock, setSelectedStock] = useState<string>("");
+  const [stockTimeframe, setStockTimeframe] = useState<string>("1d");
+  const [stockAnalysisType, setStockAnalysisType] = useState<string>("trading");
   useEffect(() => {
     const checkAccess = async () => {
       try {
@@ -201,6 +285,56 @@ ${analysisData.advice}
     }
   };
 
+  const handleAnalyzeStock = async () => {
+    if (!selectedStock) {
+      toast.error("الرجاء اختيار السهم");
+      return;
+    }
+
+    setAnalyzing(true);
+    setAnalysis("");
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-symbol', {
+        body: {
+          symbol: selectedStock,
+          timeframe: stockTimeframe,
+          assetType: 'stock',
+          analysisType: stockAnalysisType
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.analysis) {
+        const analysisData = data.analysis;
+        const formatted = `
+🔍 نتيجة التحليل:
+
+📊 الاتجاه: ${analysisData.direction}
+💰 نقطة الدخول: ${analysisData.entryPoint}
+🛡️ وقف الخسارة: ${analysisData.stopLoss}
+🎯 جني الأرباح: ${analysisData.takeProfit}
+📈 الثقة: ${analysisData.confidence}
+🔄 الاتجاه العام: ${analysisData.trend}
+
+📝 التحليل التفصيلي:
+${analysisData.analysis}
+
+💡 النصيحة:
+${analysisData.advice}
+        `;
+        setAnalysis(formatted);
+        toast.success("تم التحليل بنجاح");
+      }
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast.error("حدث خطأ أثناء تحليل السهم");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const handleAnalyze = async () => {
     if (!image || !timeframe) {
       toast.error("يرجى رفع صورة واختيار فترة الشمعة");
@@ -303,14 +437,18 @@ ${analysisData.advice}
         </Button>
 
         <Tabs defaultValue="image" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="image" className="gap-2">
               <Upload className="h-4 w-4" />
               تحليل صورة
             </TabsTrigger>
             <TabsTrigger value="forex" className="gap-2">
               <Activity className="h-4 w-4" />
-              تحليل الفوريكس
+              الفوريكس
+            </TabsTrigger>
+            <TabsTrigger value="stocks" className="gap-2">
+              <TrendingUp className="h-4 w-4" />
+              الأسهم
             </TabsTrigger>
           </TabsList>
 
@@ -470,13 +608,11 @@ ${analysisData.advice}
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1m">دقيقة واحدة</SelectItem>
-                  <SelectItem value="5m">5 دقائق</SelectItem>
-                  <SelectItem value="15m">15 دقيقة</SelectItem>
-                  <SelectItem value="30m">30 دقيقة</SelectItem>
-                  <SelectItem value="1h">ساعة واحدة</SelectItem>
-                  <SelectItem value="4h">4 ساعات</SelectItem>
-                  <SelectItem value="1d">يوم واحد</SelectItem>
+                  {TIMEFRAMES.map((tf) => (
+                    <SelectItem key={tf.value} value={tf.value}>
+                      {tf.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -484,6 +620,109 @@ ${analysisData.advice}
             <Button
               onClick={handleAnalyzeForex}
               disabled={!selectedForexPair || analyzing}
+              className="w-full"
+              size="lg"
+            >
+              {analyzing ? (
+                <>
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  جاري التحليل...
+                </>
+              ) : (
+                "تحليل الآن"
+              )}
+            </Button>
+
+            {analysis && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>نتيجة التحليل</Label>
+                  <div className="bg-card border rounded-lg p-4 space-y-3">
+                    <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl">
+                      <div className="whitespace-pre-wrap text-foreground leading-relaxed">
+                        {analysis}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-muted/50 border border-primary/20 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">💡</div>
+                    <div className="space-y-1 text-sm">
+                      <p className="font-semibold text-foreground">نصيحة عامة:</p>
+                      <p className="text-muted-foreground">
+                        تأكد من فهم التحليل جيداً قبل الدخول في الصفقة وحدد المبلغ المناسب لك.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="stocks">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">تحليل الأسهم الأمريكية</CardTitle>
+            <CardDescription>
+              اختر السهم والإطار الزمني ونوع التحليل للحصول على تحليل شامل
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label>اختر سهم</Label>
+              <Select value={selectedStock} onValueChange={setSelectedStock}>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر سهم" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {US_STOCKS.map((stock) => (
+                    <SelectItem key={stock.value} value={stock.value}>
+                      {stock.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>نوع التحليل</Label>
+              <Select value={stockAnalysisType} onValueChange={setStockAnalysisType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ANALYSIS_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>الإطار الزمني</Label>
+              <Select value={stockTimeframe} onValueChange={setStockTimeframe}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIMEFRAMES.map((tf) => (
+                    <SelectItem key={tf.value} value={tf.value}>
+                      {tf.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleAnalyzeStock}
+              disabled={!selectedStock || analyzing}
               className="w-full"
               size="lg"
             >
