@@ -11,10 +11,37 @@ export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
   try {
     data = JSON.parse(analysis);
   } catch {
+    // If not JSON, display as formatted markdown text
     return (
-      <div className="bg-card border rounded-lg p-4">
-        <div className="whitespace-pre-wrap text-foreground leading-relaxed">
-          {analysis}
+      <div className="bg-card border rounded-lg p-6">
+        <div className="whitespace-pre-wrap text-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert">
+          {analysis.split('\n').map((line, index) => {
+            // Handle headers
+            if (line.startsWith('## ')) {
+              return <h2 key={index} className="text-xl font-bold mt-6 mb-3 text-primary">{line.replace('## ', '')}</h2>;
+            }
+            if (line.startsWith('# ')) {
+              return <h1 key={index} className="text-2xl font-bold mt-6 mb-4 text-primary">{line.replace('# ', '')}</h1>;
+            }
+            // Handle bold text
+            if (line.includes('**')) {
+              const parts = line.split('**');
+              return (
+                <p key={index} className="mb-2">
+                  {parts.map((part, i) => i % 2 === 0 ? part : <strong key={i} className="font-bold text-foreground">{part}</strong>)}
+                </p>
+              );
+            }
+            // Handle bullet points
+            if (line.trim().startsWith('- ')) {
+              return <li key={index} className="ml-4 mb-1">{line.replace(/^- /, '')}</li>;
+            }
+            // Regular paragraphs
+            if (line.trim()) {
+              return <p key={index} className="mb-2">{line}</p>;
+            }
+            return <br key={index} />;
+          })}
         </div>
       </div>
     );
