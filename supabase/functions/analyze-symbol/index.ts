@@ -25,8 +25,46 @@ serve(async (req) => {
     let currentPrice = '';
 
     if (assetType === 'crypto') {
-      // Fetch crypto data from CoinGecko
-      const coinId = symbol.toLowerCase().replace('usdt', '');
+      // Map crypto symbols to CoinGecko IDs
+      const coinGeckoMap: { [key: string]: string } = {
+        'BTCUSD': 'bitcoin',
+        'ETHUSD': 'ethereum',
+        'BNBUSD': 'binancecoin',
+        'XRPUSD': 'ripple',
+        'ADAUSD': 'cardano',
+        'SOLUSD': 'solana',
+        'DOTUSD': 'polkadot',
+        'DOGEUSD': 'dogecoin',
+        'MATICUSD': 'matic-network',
+        'SHIBUSD': 'shiba-inu',
+        'AVAXUSD': 'avalanche-2',
+        'UNIUSD': 'uniswap',
+        'LINKUSD': 'chainlink',
+        'LTCUSD': 'litecoin',
+        'ATOMUSD': 'cosmos',
+        'TRXUSD': 'tron',
+        'ETCUSD': 'ethereum-classic',
+        'XLMUSD': 'stellar',
+        'ALGOUSD': 'algorand',
+        'VETUSD': 'vechain',
+        'ICPUSD': 'internet-computer',
+        'FILUSD': 'filecoin',
+        'FTMUSD': 'fantom',
+        'APTUSD': 'aptos',
+        'ARBUSD': 'arbitrum',
+        'OPUSD': 'optimism',
+        'NEARUSD': 'near',
+        'AAVEUSD': 'aave',
+        'GRTUSD': 'the-graph',
+        'SANDUSD': 'the-sandbox',
+        'MANAUSD': 'decentraland',
+        'LDOUSD': 'lido-dao',
+        'INJUSD': 'injective-protocol',
+        'RNDRUSD': 'render-token',
+        'PEPEUSD': 'pepe',
+      };
+      
+      const coinId = coinGeckoMap[symbol] || symbol.toLowerCase().replace('usd', '');
       try {
         const response = await fetch(
           `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`
@@ -35,11 +73,11 @@ serve(async (req) => {
         if (data[coinId]) {
           currentPrice = `$${data[coinId].usd}`;
           const change24h = data[coinId].usd_24h_change?.toFixed(2) || 'N/A';
-          priceData = `السعر الحالي: ${currentPrice}\nالتغير في 24 ساعة: ${change24h}%`;
+          priceData = `العملة: ${symbol}\nالسعر الحالي: ${currentPrice}\nالتغير في 24 ساعة: ${change24h}%`;
         }
       } catch (error) {
         console.error('Error fetching crypto data:', error);
-        priceData = 'لا يمكن الحصول على بيانات السعر حالياً';
+        priceData = `العملة: ${symbol}\nلا يمكن الحصول على بيانات السعر حالياً`;
       }
     } else if (assetType === 'forex') {
       // Fetch forex data from exchangerate.host (free API)

@@ -147,6 +147,46 @@ const ANALYSIS_TYPES = [
   { value: "trading", label: "مضاربة قصيرة الأجل" },
   { value: "investment", label: "استثمار طويل الأجل" },
 ];
+
+const CRYPTO_CURRENCIES = [
+  // Major Cryptocurrencies
+  { value: "BTCUSD", label: "Bitcoin (BTC)" },
+  { value: "ETHUSD", label: "Ethereum (ETH)" },
+  { value: "BNBUSD", label: "Binance Coin (BNB)" },
+  { value: "XRPUSD", label: "Ripple (XRP)" },
+  { value: "ADAUSD", label: "Cardano (ADA)" },
+  { value: "SOLUSD", label: "Solana (SOL)" },
+  { value: "DOTUSD", label: "Polkadot (DOT)" },
+  { value: "DOGEUSD", label: "Dogecoin (DOGE)" },
+  { value: "MATICUSD", label: "Polygon (MATIC)" },
+  { value: "SHIBUSD", label: "Shiba Inu (SHIB)" },
+  { value: "AVAXUSD", label: "Avalanche (AVAX)" },
+  { value: "UNIUSD", label: "Uniswap (UNI)" },
+  { value: "LINKUSD", label: "Chainlink (LINK)" },
+  { value: "LTCUSD", label: "Litecoin (LTC)" },
+  { value: "ATOMUSD", label: "Cosmos (ATOM)" },
+  { value: "TRXUSD", label: "TRON (TRX)" },
+  { value: "ETCUSD", label: "Ethereum Classic (ETC)" },
+  { value: "XLMUSD", label: "Stellar (XLM)" },
+  { value: "ALGOUSD", label: "Algorand (ALGO)" },
+  { value: "VETUSD", label: "VeChain (VET)" },
+  { value: "ICPUSD", label: "Internet Computer (ICP)" },
+  { value: "FILUSD", label: "Filecoin (FIL)" },
+  { value: "FTMUSD", label: "Fantom (FTM)" },
+  { value: "APTUSD", label: "Aptos (APT)" },
+  { value: "ARBUSD", label: "Arbitrum (ARB)" },
+  { value: "OPUSD", label: "Optimism (OP)" },
+  { value: "NEARUSD", label: "NEAR Protocol (NEAR)" },
+  { value: "AAVEUSD", label: "Aave (AAVE)" },
+  { value: "GRTUSD", label: "The Graph (GRT)" },
+  { value: "SANDUSD", label: "The Sandbox (SAND)" },
+  { value: "MANAUSD", label: "Decentraland (MANA)" },
+  { value: "LDOUSD", label: "Lido DAO (LDO)" },
+  { value: "INJUSD", label: "Injective (INJ)" },
+  { value: "RNDRUSD", label: "Render Token (RNDR)" },
+  { value: "PEPEUSD", label: "Pepe (PEPE)" },
+];
+
 const ImageAnalysis = () => {
   const navigate = useNavigate();
   const [image, setImage] = useState<File | null>(null);
@@ -163,6 +203,10 @@ const ImageAnalysis = () => {
   const [stockTimeframe, setStockTimeframe] = useState<string>("1d");
   const [stockAnalysisType, setStockAnalysisType] = useState<string>("trading");
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedCrypto, setSelectedCrypto] = useState<string>("");
+  const [cryptoTimeframe, setCryptoTimeframe] = useState<string>("1h");
+  const [cryptoAnalysisType, setCryptoAnalysisType] = useState<string>("trading");
+
   useEffect(() => {
     const checkAccess = async () => {
       try {
@@ -332,6 +376,39 @@ const ImageAnalysis = () => {
     }
   };
 
+  const handleAnalyzeCrypto = async () => {
+    if (!selectedCrypto) {
+      toast.error("الرجاء اختيار العملة الرقمية");
+      return;
+    }
+
+    setAnalyzing(true);
+    setAnalysis("");
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-symbol', {
+        body: {
+          symbol: selectedCrypto,
+          timeframe: cryptoTimeframe,
+          assetType: 'crypto',
+          analysisType: cryptoAnalysisType
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.analysis) {
+        setAnalysis(JSON.stringify(data.analysis));
+        toast.success("تم التحليل بنجاح");
+      }
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast.error("حدث خطأ أثناء تحليل العملة الرقمية");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const handleAnalyze = async () => {
     if (!image || !timeframe) {
       toast.error("يرجى رفع صورة واختيار فترة الشمعة");
@@ -434,7 +511,7 @@ const ImageAnalysis = () => {
         </Button>
 
         <Tabs defaultValue="image" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="image" className="gap-2">
               <ImageIcon className="h-4 w-4" />
               تحليل صورة
@@ -446,6 +523,10 @@ const ImageAnalysis = () => {
             <TabsTrigger value="stocks" className="gap-2">
               <TrendingUp className="h-4 w-4" />
               الأسهم
+            </TabsTrigger>
+            <TabsTrigger value="crypto" className="gap-2">
+              <DollarSign className="h-4 w-4" />
+              العملات
             </TabsTrigger>
           </TabsList>
 
@@ -703,6 +784,89 @@ const ImageAnalysis = () => {
             <Button
               onClick={handleAnalyzeStock}
               disabled={!selectedStock || analyzing}
+              className="w-full"
+              size="lg"
+            >
+              {analyzing ? (
+                <>
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  جاري التحليل...
+                </>
+              ) : (
+                "تحليل الآن"
+              )}
+            </Button>
+
+            {analysis && (
+              <div className="space-y-2">
+                <Label>نتيجة التحليل</Label>
+                <AnalysisResult analysis={analysis} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="crypto">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">تحليل العملات الرقمية</CardTitle>
+            <CardDescription>
+              اختر العملة الرقمية والإطار الزمني ونوع التحليل للحصول على تحليل شامل
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label>اختر عملة رقمية</Label>
+              <Select value={selectedCrypto} onValueChange={setSelectedCrypto}>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر عملة رقمية" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {CRYPTO_CURRENCIES.map((crypto) => (
+                    <SelectItem key={crypto.value} value={crypto.value}>
+                      {crypto.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>نوع التحليل</Label>
+              <Select value={cryptoAnalysisType} onValueChange={setCryptoAnalysisType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ANALYSIS_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>الإطار الزمني</Label>
+              <Select value={cryptoTimeframe} onValueChange={setCryptoTimeframe}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIMEFRAMES.map((tf) => (
+                    <SelectItem key={tf.value} value={tf.value}>
+                      {tf.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleAnalyzeCrypto}
+              disabled={!selectedCrypto || analyzing}
               className="w-full"
               size="lg"
             >
