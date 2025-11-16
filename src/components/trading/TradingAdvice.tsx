@@ -7,8 +7,7 @@ export const TradingAdvice = () => {
       {/* Success Rate Banner */}
       <Card className="border-success/50 bg-success/5">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-success"> توصيات باينري أوبشن لمنصة بوكيت اوبشننسبة نجاح التوصيات
-
+          <CardTitle className="flex items-center gap-2 text-success">نظام توصيات مباشرة لبوكيت أوبشن (خيارات ثنائية)
           <Target className="h-5 w-5" />
             نسبة نجاح التوصيات
           </CardTitle>
