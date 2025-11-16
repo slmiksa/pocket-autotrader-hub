@@ -102,7 +102,6 @@ const Index = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
-
   const handleNotificationToggle = async () => {
     const granted = await requestPermission(false);
     if (!granted && permission === 'denied') {
@@ -168,27 +167,17 @@ const Index = () => {
                     </span>
                   </div>;
             })()}
-              {isSupported && (
-                <Button 
-                  onClick={handleNotificationToggle} 
-                  variant={permission === 'granted' ? 'default' : 'outline'} 
-                  size="sm" 
-                  className="gap-1.5"
-                >
+              {isSupported && <Button onClick={handleNotificationToggle} variant={permission === 'granted' ? 'default' : 'outline'} size="sm" className="gap-1.5">
                   {permission === 'granted' ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
                   <span className="hidden sm:inline">
                     {permission === 'granted' ? 'مفعّلة' : 'تفعيل الإشعارات'}
                   </span>
-                </Button>
-              )}
+                </Button>}
               {imageAnalysisEnabled && <Button onClick={() => navigate('/image-analysis')} variant="outline" size="sm" className="gap-1.5">
                   <Image className="h-4 w-4" />
-                  <span className="hidden sm:inline">تحليل بالصورة</span>
+                  <span className="hidden sm:inline">​تحليل الأسواق</span>
                 </Button>}
-              <Button onClick={() => navigate('/mt5-analysis')} variant="outline" size="sm" className="gap-1.5">
-                <LineChart className="h-4 w-4" />
-                <span className="hidden sm:inline">تحليل MT5</span>
-              </Button>
+              
               <Button onClick={() => window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank')} variant="outline" size="sm" className="gap-1.5">
                 <MessageCircle className="h-4 w-4" />
                 <span className="hidden sm:inline">دعم فني</span>
