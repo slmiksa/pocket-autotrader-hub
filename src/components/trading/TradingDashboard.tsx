@@ -52,7 +52,9 @@ export const TradingDashboard = () => {
                   <CheckCircle2 className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg mb-2">1. الالتزام الدقيق بالتوصية</h3>
+                  <h3 className="font-bold text-lg mb-2">        قم بتعديل المنطقة الزمنية على
+UTC-3 
+ 1. الالتزام الدقيق بالتوصية</h3>
                   <p className="text-muted-foreground leading-relaxed">
                     يجب التقيد التام بالتوصية من حيث <span className="font-semibold text-foreground">التوقيت المحدد</span> و<span className="font-semibold text-foreground">الاتجاه (Call أو Put)</span>. لا تتداول قبل أو بعد الوقت المحدد، ولا تغير الاتجاه تحت أي ظرف.
                   </p>
