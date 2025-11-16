@@ -436,7 +436,7 @@ const ImageAnalysis = () => {
         <Tabs defaultValue="image" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="image" className="gap-2">
-              <Upload className="h-4 w-4" />
+              <ImageIcon className="h-4 w-4" />
               تحليل صورة
             </TabsTrigger>
             <TabsTrigger value="forex" className="gap-2">
@@ -452,9 +452,9 @@ const ImageAnalysis = () => {
           <TabsContent value="image">
             <Card>
               <CardHeader>
-                <CardTitle className="text-2xl">تحليل الشارت بالصورة</CardTitle>
+                <CardTitle className="text-2xl">تحليل الشارت بالصورة (MT5 / TradingView / Pocket Option)</CardTitle>
                 <CardDescription>
-                  اختر نوع التحليل المطلوب ثم قم برفع صورة الشارت
+                  اختر نوع التحليل المطلوب ثم قم برفع صورة الشارت من أي منصة
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -481,7 +481,7 @@ const ImageAnalysis = () => {
                   </p>
                 </div>
               ) : (
-                <div className="bg-success/10 border border-success/30 rounded-lg p-3 mt-2">
+                <div className="bg-accent/10 border border-accent/30 rounded-lg p-3 mt-2">
                   <p className="text-sm text-foreground">
                     <span className="font-semibold">الدعوم والارتدادات:</span> ستحصل على أرقام دقيقة لمستويات الدعم والمقاومة لتدخل بنفسك عند ارتداد السعر
                   </p>
@@ -500,8 +500,11 @@ const ImageAnalysis = () => {
                   <SelectItem value="15m">15 دقيقة</SelectItem>
                   <SelectItem value="30m">30 دقيقة</SelectItem>
                   <SelectItem value="1h">1 ساعة</SelectItem>
+                  <SelectItem value="3h">3 ساعات</SelectItem>
                   <SelectItem value="4h">4 ساعات</SelectItem>
                   <SelectItem value="1d">يوم واحد</SelectItem>
+                  <SelectItem value="1w">أسبوع واحد</SelectItem>
+                  <SelectItem value="1M">شهر واحد</SelectItem>
                 </SelectContent>
               </Select>
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mt-2">
@@ -516,11 +519,32 @@ const ImageAnalysis = () => {
 
             <div className="space-y-2">
               <Label htmlFor="image">صورة الشارت</Label>
-              <div className="flex items-center gap-4">
-                <Input id="image" type="file" accept="image/*" onChange={handleImageChange} className="cursor-pointer" />
-                <Upload className="h-5 w-5 text-muted-foreground" />
+              <div 
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  isDragging ? 'border-primary bg-primary/5' : 'border-border'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <div className="space-y-4">
+                  <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Upload className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">اسحب وأفلت الصورة هنا</p>
+                    <p className="text-xs text-muted-foreground">أو انقر لاختيار ملف</p>
+                  </div>
+                  <Input 
+                    id="image" 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleImageChange} 
+                    className="cursor-pointer max-w-xs mx-auto" 
+                  />
+                </div>
               </div>
-              <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mt-2">
+              <div className="bg-primary/10 border border-primary/30 rounded-lg p-3">
                 <p className="text-xs text-foreground">
                   💡 <span className="font-semibold">نصيحة:</span> يمكنك لصق الصورة مباشرة من الحافظة باستخدام Ctrl+V أو Cmd+V
                 </p>
@@ -551,93 +575,6 @@ const ImageAnalysis = () => {
         </Card>
       </TabsContent>
 
-      <TabsContent value="mt5">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">تحليل من MT5 و TradingView</CardTitle>
-            <CardDescription>
-              ارفع صورة الشارت من منصة MT5 أو TradingView مباشرة
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="timeframe">فترة الشمعة</Label>
-              <Select value={timeframe} onValueChange={setTimeframe}>
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر فترة الشمعة" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1m">1 دقيقة</SelectItem>
-                  <SelectItem value="5m">5 دقائق</SelectItem>
-                  <SelectItem value="15m">15 دقيقة</SelectItem>
-                  <SelectItem value="30m">30 دقيقة</SelectItem>
-                  <SelectItem value="1h">1 ساعة</SelectItem>
-                  <SelectItem value="3h">3 ساعات</SelectItem>
-                  <SelectItem value="4h">4 ساعات</SelectItem>
-                  <SelectItem value="1d">يوم واحد</SelectItem>
-                  <SelectItem value="1w">أسبوع واحد</SelectItem>
-                  <SelectItem value="1M">شهر واحد</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div 
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                isDragging ? 'border-primary bg-primary/5' : 'border-border'
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-sm font-medium mb-2">اسحب وأفلت الصورة هنا</p>
-              <p className="text-xs text-muted-foreground mb-4">أو</p>
-              <Input 
-                id="mt5-image" 
-                type="file" 
-                accept="image/*" 
-                onChange={handleImageChange} 
-                className="cursor-pointer max-w-sm mx-auto" 
-              />
-              <p className="text-xs text-muted-foreground mt-4">
-                💡 يمكنك لصق الصورة مباشرة من الحافظة باستخدام Ctrl+V
-              </p>
-            </div>
-
-            {imagePreview && (
-              <div className="space-y-2">
-                <Label>معاينة الصورة</Label>
-                <div className="border rounded-lg p-4 bg-muted/50">
-                  <img src={imagePreview} alt="Chart preview" className="max-w-full h-auto rounded" />
-                </div>
-              </div>
-            )}
-
-            <Button 
-              onClick={handleAnalyze} 
-              disabled={!image || !timeframe || analyzing} 
-              className="w-full" 
-              size="lg"
-            >
-              {analyzing ? (
-                <>
-                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                  جاري التحليل...
-                </>
-              ) : (
-                "تحليل الآن"
-              )}
-            </Button>
-
-            {analysis && (
-              <div className="space-y-2">
-                <Label>نتيجة التحليل</Label>
-                <AnalysisResult analysis={analysis} />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
 
       <TabsContent value="forex">
         <Card>
