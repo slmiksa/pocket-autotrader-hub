@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUp, ArrowDown, Shield, DollarSign, Target, TrendingUp, AlertCircle } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
 
 interface AnalysisResultProps {
   analysis: string;
@@ -13,37 +14,33 @@ export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
   } catch {
     // If not JSON, display as formatted markdown text
     return (
-      <div className="bg-card border rounded-lg p-6">
-        <div className="whitespace-pre-wrap text-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert">
-          {analysis.split('\n').map((line, index) => {
-            // Handle headers
-            if (line.startsWith('## ')) {
-              return <h2 key={index} className="text-xl font-bold mt-6 mb-3 text-primary">{line.replace('## ', '')}</h2>;
-            }
-            if (line.startsWith('# ')) {
-              return <h1 key={index} className="text-2xl font-bold mt-6 mb-4 text-primary">{line.replace('# ', '')}</h1>;
-            }
-            // Handle bold text
-            if (line.includes('**')) {
-              const parts = line.split('**');
-              return (
-                <p key={index} className="mb-2">
-                  {parts.map((part, i) => i % 2 === 0 ? part : <strong key={i} className="font-bold text-foreground">{part}</strong>)}
-                </p>
-              );
-            }
-            // Handle bullet points
-            if (line.trim().startsWith('- ')) {
-              return <li key={index} className="ml-4 mb-1">{line.replace(/^- /, '')}</li>;
-            }
-            // Regular paragraphs
-            if (line.trim()) {
-              return <p key={index} className="mb-2">{line}</p>;
-            }
-            return <br key={index} />;
-          })}
-        </div>
-      </div>
+      <Card className="bg-card border-border">
+        <CardContent className="p-6">
+          <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{
+            fontSize: '15px',
+            lineHeight: '1.8',
+            textAlign: 'right'
+          }}>
+            <ReactMarkdown
+              components={{
+                h1: ({children}) => <h1 className="text-2xl font-bold mt-6 mb-4 text-foreground">{children}</h1>,
+                h2: ({children}) => <h2 className="text-xl font-bold mt-6 mb-3 text-foreground">{children}</h2>,
+                h3: ({children}) => <h3 className="text-lg font-semibold mt-4 mb-2 text-foreground">{children}</h3>,
+                p: ({children}) => <p className="mb-3 text-foreground">{children}</p>,
+                ul: ({children}) => <ul className="list-disc pr-6 mb-4 space-y-2">{children}</ul>,
+                ol: ({children}) => <ol className="list-decimal pr-6 mb-4 space-y-2">{children}</ol>,
+                li: ({children}) => <li className="text-foreground">{children}</li>,
+                strong: ({children}) => <strong className="font-bold text-primary">{children}</strong>,
+                em: ({children}) => <em className="italic text-foreground">{children}</em>,
+                blockquote: ({children}) => <blockquote className="border-r-4 border-primary pr-4 py-2 my-4 bg-muted/50 rounded">{children}</blockquote>,
+                code: ({children}) => <code className="bg-muted px-2 py-1 rounded text-sm">{children}</code>,
+              }}
+            >
+              {analysis}
+            </ReactMarkdown>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
