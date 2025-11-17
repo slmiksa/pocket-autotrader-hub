@@ -37,12 +37,12 @@ export const MarketTicker = ({
     return () => clearInterval(interval);
   }, [type]);
   return <div className="bg-card border-y border-border overflow-hidden">
-      <div className="animate-marquee whitespace-nowrap py-2 bg-yellow-400 rounded-none">
-        <div className="inline-flex gap-8">
+      <div className="relative w-full overflow-hidden bg-warning py-2">
+        <div className="animate-marquee inline-flex gap-8 whitespace-nowrap">
           {[...ticker, ...ticker].map((item, idx) => <div key={`${item.symbol}-${idx}`} className="inline-flex items-center gap-2 px-4">
-              <span className="font-semibold text-sm">{item.symbol}</span>
-              <span className="text-sm text-foreground">{item.price}</span>
-              <span className={`inline-flex items-center text-xs font-medium ${item.isPositive ? 'text-green-500' : 'text-red-500'}`}>
+              <span className="font-semibold text-sm text-warning-foreground">{item.symbol}</span>
+              <span className="text-sm text-warning-foreground">{item.price}</span>
+              <span className={`inline-flex items-center text-xs font-medium ${item.isPositive ? 'text-success' : 'text-danger'}`}>
                 {item.isPositive ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
                 {item.isPositive ? '+' : ''}{item.change}%
               </span>
