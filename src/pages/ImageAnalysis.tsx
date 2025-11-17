@@ -187,6 +187,14 @@ const CRYPTO_CURRENCIES = [
   { value: "PEPEUSD", label: "Pepe (PEPE)" },
 ];
 
+const METALS = [
+  { value: "gold", label: "الذهب (Gold)", icon: "🥇", coinGeckoId: "pax-gold" },
+  { value: "silver", label: "الفضة (Silver)", icon: "🥈", coinGeckoId: "silver-token" },
+  { value: "platinum", label: "البلاتين (Platinum)", icon: "⚪", coinGeckoId: "platinum" },
+  { value: "copper", label: "النحاس (Copper)", icon: "🟤", coinGeckoId: "copper-token" },
+  { value: "palladium", label: "البلاديوم (Palladium)", icon: "⚫", coinGeckoId: "palladium" },
+];
+
 const ImageAnalysis = () => {
   const navigate = useNavigate();
   const [image, setImage] = useState<File | null>(null);
@@ -206,6 +214,8 @@ const ImageAnalysis = () => {
   const [selectedCrypto, setSelectedCrypto] = useState<string>("");
   const [cryptoTimeframe, setCryptoTimeframe] = useState<string>("1h");
   const [cryptoAnalysisType, setCryptoAnalysisType] = useState<string>("trading");
+  const [selectedMetal, setSelectedMetal] = useState<string>("");
+  const [metalTimeframe, setMetalTimeframe] = useState<string>("1h");
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -409,6 +419,40 @@ const ImageAnalysis = () => {
     }
   };
 
+  const handleAnalyzeMetal = async () => {
+    if (!selectedMetal) {
+      toast.error("الرجاء اختيار المعدن");
+      return;
+    }
+
+    setAnalyzing(true);
+    setAnalysis("");
+
+    try {
+      const selectedMetalData = METALS.find(m => m.value === selectedMetal);
+      
+      const { data, error } = await supabase.functions.invoke('analyze-symbol', {
+        body: {
+          symbol: selectedMetalData?.coinGeckoId || selectedMetal,
+          timeframe: metalTimeframe,
+          assetType: 'metal'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.analysis) {
+        setAnalysis(JSON.stringify(data.analysis));
+        toast.success("تم التحليل بنجاح");
+      }
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast.error("حدث خطأ أثناء تحليل المعدن");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const handleAnalyze = async () => {
     if (!image || !timeframe) {
       toast.error("يرجى رفع صورة واختيار فترة الشمعة");
@@ -511,7 +555,7 @@ const ImageAnalysis = () => {
         </Button>
 
         <Tabs defaultValue="image" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="image" className="gap-2">
               <ImageIcon className="h-4 w-4" />
               تحليل صورة
@@ -527,6 +571,10 @@ const ImageAnalysis = () => {
             <TabsTrigger value="crypto" className="gap-2">
               <DollarSign className="h-4 w-4" />
               العملات
+            </TabsTrigger>
+            <TabsTrigger value="metals" className="gap-2">
+              <span className="text-lg">🥇</span>
+              المعادن
             </TabsTrigger>
           </TabsList>
 
@@ -867,6 +915,79 @@ const ImageAnalysis = () => {
             <Button
               onClick={handleAnalyzeCrypto}
               disabled={!selectedCrypto || analyzing}
+              className="w-full"
+              size="lg"
+            >
+              {analyzing ? (
+                <>
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  جاري التحليل...
+                </>
+              ) : (
+                "تحليل الآن"
+              )}
+            </Button>
+
+            {analysis && (
+              <div className="space-y-2">
+                <Label>نتيجة التحليل</Label>
+                <AnalysisResult analysis={analysis} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="metals">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <span className="text-3xl">🥇</span>
+              تحليل المعادن
+            </CardTitle>
+            <CardDescription>
+              اختر المعدن وفترة الشمعة للحصول على تحليل مفصل
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label>اختر المعدن</Label>
+              <Select value={selectedMetal} onValueChange={setSelectedMetal}>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر المعدن" />
+                </SelectTrigger>
+                <SelectContent>
+                  {METALS.map((metal) => (
+                    <SelectItem key={metal.value} value={metal.value}>
+                      <span className="flex items-center gap-2">
+                        <span>{metal.icon}</span>
+                        {metal.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>فترة الشمعة</Label>
+              <Select value={metalTimeframe} onValueChange={setMetalTimeframe}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIMEFRAMES.map((tf) => (
+                    <SelectItem key={tf.value} value={tf.value}>
+                      {tf.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={handleAnalyzeMetal}
+              disabled={!selectedMetal || analyzing}
               className="w-full"
               size="lg"
             >
