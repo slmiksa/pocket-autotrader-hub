@@ -342,7 +342,7 @@ const ImageAnalysis = () => {
       if (error) throw error;
 
       if (data?.analysis) {
-        setAnalysis(JSON.stringify(data.analysis));
+        setAnalysis(data.analysis);
         toast.success("تم التحليل بنجاح");
       }
     } catch (error) {
@@ -375,7 +375,7 @@ const ImageAnalysis = () => {
       if (error) throw error;
 
       if (data?.analysis) {
-        setAnalysis(JSON.stringify(data.analysis));
+        setAnalysis(data.analysis);
         toast.success("تم التحليل بنجاح");
       }
     } catch (error) {
@@ -408,7 +408,7 @@ const ImageAnalysis = () => {
       if (error) throw error;
 
       if (data?.analysis) {
-        setAnalysis(JSON.stringify(data.analysis));
+        setAnalysis(data.analysis);
         toast.success("تم التحليل بنجاح");
       }
     } catch (error) {
@@ -442,7 +442,7 @@ const ImageAnalysis = () => {
       if (error) throw error;
 
       if (data?.analysis) {
-        setAnalysis(JSON.stringify(data.analysis));
+        setAnalysis(data.analysis);
         toast.success("تم التحليل بنجاح");
       }
     } catch (error) {
@@ -476,7 +476,7 @@ const ImageAnalysis = () => {
           }
         });
         if (error) throw error;
-        setAnalysis(JSON.stringify(data.analysis));
+        setAnalysis(data.analysis);
         toast.success("تم تحليل الصورة بنجاح");
       };
       reader.readAsDataURL(image);
