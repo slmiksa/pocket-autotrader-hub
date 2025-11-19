@@ -80,26 +80,51 @@ serve(async (req) => {
         priceData = `العملة: ${symbol}\nلا يمكن الحصول على بيانات السعر حالياً`;
       }
     } else if (assetType === 'forex') {
-      // Fetch forex data from exchangerate.host (free API)
+      // Fetch forex data from frankfurter.app (reliable free API)
       try {
         // Parse the forex pair (e.g., EURUSD -> EUR and USD)
         const baseCurrency = symbol.slice(0, 3);
         const quoteCurrency = symbol.slice(3, 6);
         
+        console.log(`Fetching forex data for ${baseCurrency}/${quoteCurrency}`);
+        
         const response = await fetch(
-          `https://api.exchangerate.host/latest?base=${baseCurrency}&symbols=${quoteCurrency}`
+          `https://api.frankfurter.app/latest?from=${baseCurrency}&to=${quoteCurrency}`
         );
+        
+        if (!response.ok) {
+          console.error('Frankfurter API error:', response.status);
+          throw new Error('API failed');
+        }
+        
         const data = await response.json();
+        console.log('Forex data received:', data);
         
         if (data && data.rates && data.rates[quoteCurrency]) {
           currentPrice = data.rates[quoteCurrency].toFixed(5);
-          priceData = `زوج العملات: ${symbol}\nالسعر الحالي: ${currentPrice}\nتاريخ البيانات: ${data.date}`;
+          priceData = `زوج العملات: ${symbol}
+السعر الحالي: ${currentPrice}
+تاريخ البيانات: ${data.date}
+العملة الأساسية: ${baseCurrency}
+العملة المقابلة: ${quoteCurrency}`;
+          console.log('Price data prepared:', priceData);
         } else {
-          priceData = `زوج العملات: ${symbol}\nلا يمكن الحصول على بيانات السعر حالياً`;
+          // Provide general info even without live data
+          priceData = `زوج العملات: ${symbol}
+العملة الأساسية: ${baseCurrency}
+العملة المقابلة: ${quoteCurrency}
+ملاحظة: سيتم تقديم تحليل فني عام بناءً على الأنماط السعرية المتوقعة`;
+          console.log('No price data, using general info');
         }
       } catch (error) {
         console.error('Error fetching forex data:', error);
-        priceData = `زوج العملات: ${symbol}\nلا يمكن الحصول على بيانات السعر حالياً`;
+        // Provide general info for analysis
+        const baseCurrency = symbol.slice(0, 3);
+        const quoteCurrency = symbol.slice(3, 6);
+        priceData = `زوج العملات: ${symbol}
+العملة الأساسية: ${baseCurrency}
+العملة المقابلة: ${quoteCurrency}
+ملاحظة: سيتم تقديم تحليل فني عام بناءً على الأنماط السعرية المتوقعة للإطار الزمني ${timeframe}`;
       }
     } else {
       // For stocks, try to get real-time data from Yahoo Finance API (free)
@@ -165,40 +190,56 @@ serve(async (req) => {
 `;
     }
     
-    const systemPrompt = `أنت محلل فني خبير في الأسواق المالية. مهمتك تحليل ${assetName} ${symbol} وتقديم توصيات دقيقة.
+    const systemPrompt = `أنت محلل فني خبير متخصص في أسواق ${assetType === 'forex' ? 'الفوركس' : assetType === 'crypto' ? 'العملات الرقمية' : 'الأسهم'}. 
+مهمتك تقديم تحليل احترافي وتوصيات تداول واضحة ومحددة لـ ${assetName} ${symbol}.
 
-معلومات السوق الحالية:
+معلومات السوق:
 ${priceData}
 
-الإطار الزمني المختار: ${timeframe}
+الإطار الزمني: ${timeframe}
 مدة الصفقة المتوقعة: ${timeframeMap[timeframe] || 'متوسط'}
 
 ${analysisContext}
 
-قدم تحليل شامل يتضمن:
-1. الاتجاه العام للسعر (صاعد/هابط/محايد)
-2. توصية واضحة (شراء/بيع${analysisType === 'investment' ? '/احتفظ' : ''})
-3. نقطة الدخول المقترحة
-4. مستوى وقف الخسارة (Stop Loss)
-5. هدف جني الأرباح (Take Profit)
-6. قوة الإشارة (ضعيفة/متوسطة/قوية/قوية جداً)
-7. نصائح مهمة لإدارة المخاطر${analysisType === 'investment' ? ' والعوامل الأساسية' : ''}
+**مهم جداً**: يجب عليك تقديم توصية تداول كاملة ومحددة حتى لو لم تتوفر بيانات السعر الحية. 
+استخدم خبرتك في التحليل الفني لتقديم:
 
-${analysisType === 'investment' ? 'ملاحظة: يجب أن يركز التحليل على القيمة طويلة الأجل وليس التحركات قصيرة الأجل.' : 'ملاحظة: يجب أن يكون التحليل مناسباً للمضاربة وليس الاستثمار طويل الأجل.'}
+1. **الاتجاه المتوقع**: حدد بوضوح (صاعد للشراء/CALL أو هابط للبيع/PUT)
+2. **نقطة الدخول**: قدم نطاق سعري مقترح للدخول (مثال: 1.0850-1.0870)
+3. **وقف الخسارة**: حدد مستوى واضح لوقف الخسارة (مثال: 1.0820)
+4. **جني الأرباح**: حدد هدف واضح للأرباح (مثال: 1.0920)
+5. **قوة الإشارة**: حدد (ضعيفة/متوسطة/قوية/قوية جداً)
+6. **التحليل التفصيلي**: اشرح الأسباب الفنية للتوصية
+7. **نصائح إدارة المخاطر**: قدم نصائح عملية
 
-يجب أن يكون الرد بصيغة JSON بالشكل التالي:
+**قواعد إلزامية**:
+- لا تقل أبداً "لا يمكن التحديد" أو "لا توجد بيانات"
+- قدم دائماً أرقام وأسعار محددة للدخول والخروج
+- اعتمد على التحليل الفني والأنماط السعرية المعروفة للإطار الزمني ${timeframe}
+- كن واضحاً ومحدداً في كل نقطة
+
+يجب أن يكون الرد بصيغة JSON فقط بالشكل التالي:
 {
-  "direction": "شراء أو بيع${analysisType === 'investment' ? ' أو احتفظ' : ''}",
-  "entryPoint": "السعر المقترح للدخول",
-  "stopLoss": "سعر وقف الخسارة",
-  "takeProfit": "سعر جني الأرباح",
-  "confidence": "قوة الإشارة",
-  "trend": "وصف الاتجاه العام",
-  "analysis": "تحليل تفصيلي للوضع الحالي${analysisType === 'investment' ? ' يشمل العوامل الأساسية' : ''}",
-  "advice": "نصائح مهمة لإدارة المخاطر"
+  "direction": "شراء (CALL) أو بيع (PUT) - واضح ومحدد",
+  "entryPoint": "نطاق سعري محدد للدخول",
+  "stopLoss": "مستوى محدد لوقف الخسارة",
+  "takeProfit": "هدف محدد لجني الأرباح",
+  "confidence": "قوية جداً أو قوية أو متوسطة",
+  "trend": "وصف الاتجاه الفني المتوقع",
+  "analysis": "تحليل فني تفصيلي يشرح الأسباب${analysisType === 'investment' ? ' ويشمل العوامل الأساسية' : ''}",
+  "advice": "نصائح عملية لإدارة المخاطر"
 }`;
 
-    const userPrompt = `حلل ${symbol} على إطار ${timeframe} وقدم توصية تداول كاملة. تأكد من أن التحليل واقعي ومبني على المعطيات الحالية.`;
+    const userPrompt = `قدم تحليل احترافي وتوصية تداول كاملة ومحددة لـ ${symbol} على إطار ${timeframe}.
+
+يجب أن تتضمن التوصية:
+- اتجاه واضح (شراء أو بيع)
+- نقطة دخول محددة بالأرقام
+- وقف خسارة محدد
+- هدف ربح محدد
+- تحليل فني مفصل
+
+تذكر: قدم أرقاماً وتوصيات محددة، ولا تقل "لا يمكن التحديد". استخدم خبرتك الفنية.`;
 
     console.log('Calling Lovable AI for analysis...');
 
@@ -214,7 +255,8 @@ ${analysisType === 'investment' ? 'ملاحظة: يجب أن يركز التحل
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.7,
+        temperature: 0.5,
+        max_tokens: 2000,
       }),
     });
 
