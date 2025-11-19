@@ -4,15 +4,20 @@ import { ArrowUp, ArrowDown, Shield, DollarSign, Target, TrendingUp, AlertCircle
 import ReactMarkdown from 'react-markdown';
 
 interface AnalysisResultProps {
-  analysis: string;
+  analysis: string | any;
 }
 
 export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
   let data: any;
-  try {
-    data = JSON.parse(analysis);
-  } catch {
-    // If not JSON, display as formatted markdown text
+  
+  // Check if analysis is already an object
+  if (typeof analysis === 'object' && analysis !== null) {
+    data = analysis;
+  } else {
+    try {
+      data = JSON.parse(analysis);
+    } catch {
+      // If not JSON, display as formatted markdown text
     return (
       <Card className="bg-card border-border">
         <CardContent className="p-6">
@@ -42,6 +47,7 @@ export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
         </CardContent>
       </Card>
     );
+    }
   }
 
   const isUpDirection = data.direction?.includes('شراء') || data.direction?.includes('CALL') || data.direction?.toUpperCase().includes('BUY');
