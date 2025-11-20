@@ -23,3 +23,12 @@ verify_jwt = false
 
 [functions.analyze-mt5-chart]
 verify_jwt = false
+
+[functions.analyze-symbol]
+verify_jwt = false
+
+[functions.fetch-financial-news]
+verify_jwt = false
+
+[functions.translate-news]
+verify_jwt = false

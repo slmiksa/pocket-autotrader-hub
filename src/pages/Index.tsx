@@ -6,7 +6,7 @@ import { TradingDashboard } from "@/components/trading/TradingDashboard";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { LivePriceCards } from "@/components/LivePriceCards";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart } from "lucide-react";
+import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper } from "lucide-react";
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
 const Index = () => {
@@ -177,6 +177,10 @@ const Index = () => {
                   <Image className="h-4 w-4" />
                   <span className="hidden sm:inline">​تحليل الأسواق</span>
                 </Button>}
+              <Button onClick={() => navigate('/news')} variant="outline" size="sm" className="gap-1.5">
+                <Newspaper className="h-4 w-4" />
+                <span className="hidden sm:inline">الأخبار</span>
+              </Button>
               
               <Button onClick={() => window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank')} variant="outline" size="sm" className="gap-1.5">
                 <MessageCircle className="h-4 w-4" />
