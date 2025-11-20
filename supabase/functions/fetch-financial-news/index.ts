@@ -14,128 +14,128 @@ serve(async (req) => {
   try {
     console.log('Generating financial news...');
     
-    // Generate current financial news with realistic data
+    // Generate current financial news in Arabic
     const now = new Date();
     const newsArticles = [
       {
-        title: "Bitcoin Surges Past $92,000 as Institutional Interest Grows",
-        description: "Bitcoin continues its impressive rally, driven by increased institutional adoption and positive regulatory developments. Analysts predict further upside potential.",
+        title: "البيتكوين يتجاوز 92,000 دولار مع تزايد الاهتمام المؤسسي",
+        description: "يواصل البيتكوين ارتفاعه المثير للإعجاب، مدفوعاً بزيادة التبني المؤسسي والتطورات التنظيمية الإيجابية. يتوقع المحللون إمكانية مزيد من الصعود.",
         url: "https://www.coindesk.com/markets/",
         urlToImage: "https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=800&q=80",
         publishedAt: new Date(now.getTime() - 1800000).toISOString(),
-        source: { name: "CoinDesk" }
+        source: { name: "كوين ديسك" }
       },
       {
-        title: "Forex Market Sees USD Strength Against Major Currencies",
-        description: "The US Dollar gains momentum against major currency pairs as Federal Reserve maintains hawkish stance on interest rates.",
+        title: "سوق الفوركس يشهد قوة الدولار الأمريكي مقابل العملات الرئيسية",
+        description: "يكتسب الدولار الأمريكي زخماً أمام أزواج العملات الرئيسية حيث يحافظ الاحتياطي الفيدرالي على موقفه المتشدد بشأن أسعار الفائدة.",
         url: "https://www.forexfactory.com/",
         urlToImage: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80",
         publishedAt: new Date(now.getTime() - 3600000).toISOString(),
-        source: { name: "Forex Factory" }
+        source: { name: "فوركس فاكتوري" }
       },
       {
-        title: "Gold Prices Stabilize as Investors Await Economic Data",
-        description: "Gold trading remains range-bound as markets digest recent economic indicators and await key employment data releases.",
+        title: "أسعار الذهب تستقر مع انتظار المستثمرين للبيانات الاقتصادية",
+        description: "يظل تداول الذهب ضمن نطاق محدد بينما تهضم الأسواق المؤشرات الاقتصادية الأخيرة وتنتظر إصدارات بيانات التوظيف الرئيسية.",
         url: "https://www.kitco.com/",
         urlToImage: "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800&q=80",
         publishedAt: new Date(now.getTime() - 5400000).toISOString(),
-        source: { name: "Kitco News" }
+        source: { name: "كيتكو نيوز" }
       },
       {
-        title: "Stock Markets Hit Record Highs Led by Tech Giants",
-        description: "Major indices reach new peaks as technology stocks lead the rally. NASDAQ gains 2.3% while S&P 500 adds 1.8%.",
+        title: "أسواق الأسهم تحقق مستويات قياسية بقيادة عمالقة التكنولوجيا",
+        description: "تصل المؤشرات الرئيسية إلى قمم جديدة حيث تقود أسهم التكنولوجيا الارتفاع. يكسب ناسداك 2.3٪ بينما يضيف S&P 500 نسبة 1.8٪.",
         url: "https://www.bloomberg.com/markets/stocks",
         urlToImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
         publishedAt: new Date(now.getTime() - 7200000).toISOString(),
-        source: { name: "Bloomberg" }
+        source: { name: "بلومبرج" }
       },
       {
-        title: "Oil Prices Rise on Middle East Tensions and Supply Concerns",
-        description: "Crude oil futures climb 3% as geopolitical tensions escalate in key producing regions, raising supply disruption concerns.",
+        title: "أسعار النفط ترتفع على خلفية التوترات في الشرق الأوسط ومخاوف الإمدادات",
+        description: "ترتفع العقود الآجلة للنفط الخام بنسبة 3٪ مع تصاعد التوترات الجيوسياسية في المناطق المنتجة الرئيسية، مما يثير مخاوف من اضطراب الإمدادات.",
         url: "https://www.reuters.com/markets/commodities/",
         urlToImage: "https://images.unsplash.com/photo-1541844310068-fcd3935d8d51?w=800&q=80",
         publishedAt: new Date(now.getTime() - 9000000).toISOString(),
-        source: { name: "Reuters" }
+        source: { name: "رويترز" }
       },
       {
-        title: "EUR/USD Breaks Key Support Level Amid Economic Weakness",
-        description: "The Euro weakens against the Dollar as eurozone economic data disappoints, breaking below crucial 1.05 support level.",
+        title: "اليورو/دولار يكسر مستوى دعم رئيسي وسط ضعف اقتصادي",
+        description: "يضعف اليورو مقابل الدولار حيث تخيب البيانات الاقتصادية لمنطقة اليورو الآمال، ويكسر ما دون مستوى دعم حاسم عند 1.05.",
         url: "https://www.investing.com/currencies/eur-usd",
         urlToImage: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800&q=80",
         publishedAt: new Date(now.getTime() - 10800000).toISOString(),
-        source: { name: "Investing.com" }
+        source: { name: "إنفستنغ.كوم" }
       },
       {
-        title: "Cryptocurrency Market Cap Reaches New All-Time High",
-        description: "Total cryptocurrency market capitalization surpasses $3 trillion as altcoins rally alongside Bitcoin's impressive performance.",
+        title: "القيمة السوقية للعملات الرقمية تصل إلى مستوى قياسي جديد",
+        description: "تتجاوز القيمة السوقية الإجمالية للعملات الرقمية 3 تريليون دولار حيث ترتفع العملات البديلة جنباً إلى جنب مع الأداء المثير للإعجاب للبيتكوين.",
         url: "https://www.coinmarketcap.com/",
         urlToImage: "https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=800&q=80",
         publishedAt: new Date(now.getTime() - 12600000).toISOString(),
-        source: { name: "CoinMarketCap" }
+        source: { name: "كوين ماركت كاب" }
       },
       {
-        title: "Asian Markets Mixed as China Growth Data Disappoints",
-        description: "Asian stock markets show mixed performance after Chinese economic growth figures fall short of expectations.",
+        title: "الأسواق الآسيوية متباينة مع خيبة أمل بيانات النمو الصينية",
+        description: "تظهر أسواق الأسهم الآسيوية أداءً متبايناً بعد أن جاءت أرقام النمو الاقتصادي الصيني دون التوقعات.",
         url: "https://www.cnbc.com/world-markets/",
         urlToImage: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80",
         publishedAt: new Date(now.getTime() - 14400000).toISOString(),
-        source: { name: "CNBC" }
+        source: { name: "سي إن بي سي" }
       },
       {
-        title: "Silver Prices Jump 5% Following Gold's Upward Momentum",
-        description: "Silver catches up with gold's rally, posting strongest single-day gain in three months on industrial demand expectations.",
+        title: "أسعار الفضة تقفز 5٪ تبعاً لزخم الذهب الصاعد",
+        description: "يلحق الفضة بارتفاع الذهب، محققاً أقوى مكاسب يومية في ثلاثة أشهر على توقعات الطلب الصناعي.",
         url: "https://www.metals.com/",
         urlToImage: "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800&q=80",
         publishedAt: new Date(now.getTime() - 16200000).toISOString(),
-        source: { name: "Metals Daily" }
+        source: { name: "ميتالز ديلي" }
       },
       {
-        title: "Central Banks Signal Continued Support for Financial Markets",
-        description: "Major central banks reaffirm commitment to maintaining accommodative monetary policies, boosting risk appetite among investors.",
+        title: "البنوك المركزية تشير إلى استمرار الدعم للأسواق المالية",
+        description: "تؤكد البنوك المركزية الكبرى التزامها بالحفاظ على السياسات النقدية التيسيرية، مما يعزز الرغبة في المخاطرة بين المستثمرين.",
         url: "https://www.centralbanknews.com/",
         urlToImage: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800&q=80",
         publishedAt: new Date(now.getTime() - 18000000).toISOString(),
-        source: { name: "Central Banking" }
+        source: { name: "سنترال بانكينغ" }
       },
       {
-        title: "Emerging Market Currencies Gain on Dollar Weakness",
-        description: "Emerging market currencies rally as US Dollar weakens, with Turkish Lira and Brazilian Real posting significant gains.",
+        title: "عملات الأسواق الناشئة تكتسب قوة مع ضعف الدولار",
+        description: "ترتفع عملات الأسواق الناشئة مع ضعف الدولار الأمريكي، حيث تحقق الليرة التركية والريال البرازيلي مكاسب كبيرة.",
         url: "https://www.ft.com/markets",
         urlToImage: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80",
         publishedAt: new Date(now.getTime() - 19800000).toISOString(),
-        source: { name: "Financial Times" }
+        source: { name: "فاينانشال تايمز" }
       },
       {
-        title: "Ethereum Upgrade Boosts Network Activity and Price",
-        description: "Ethereum completes major network upgrade, resulting in reduced transaction fees and increased on-chain activity.",
+        title: "ترقية إيثيريوم تعزز نشاط الشبكة والسعر",
+        description: "تكمل إيثيريوم ترقية شبكة رئيسية، مما يؤدي إلى انخفاض رسوم المعاملات وزيادة النشاط على السلسلة.",
         url: "https://ethereum.org/",
         urlToImage: "https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=800&q=80",
         publishedAt: new Date(now.getTime() - 21600000).toISOString(),
-        source: { name: "Ethereum Foundation" }
+        source: { name: "مؤسسة إيثيريوم" }
       },
       {
-        title: "Commodities Rally as Inflation Concerns Persist",
-        description: "Broad-based commodity rally continues as investors seek inflation hedges amid persistent price pressures.",
+        title: "ارتفاع السلع الأساسية مع استمرار مخاوف التضخم",
+        description: "يستمر ارتفاع السلع الأساسية على نطاق واسع حيث يسعى المستثمرون إلى التحوط ضد التضخم وسط ضغوط الأسعار المستمرة.",
         url: "https://www.kitco.com/commodities/",
         urlToImage: "https://images.unsplash.com/photo-1541844310068-fcd3935d8d51?w=800&q=80",
         publishedAt: new Date(now.getTime() - 23400000).toISOString(),
-        source: { name: "Commodities News" }
+        source: { name: "كوموديتيز نيوز" }
       },
       {
-        title: "Japanese Yen Weakens to Multi-Year Lows Against Dollar",
-        description: "USD/JPY reaches 150 level as Bank of Japan maintains ultra-loose monetary policy despite global tightening trend.",
+        title: "الين الياباني يضعف إلى أدنى مستوياته منذ سنوات مقابل الدولار",
+        description: "يصل الدولار/ين إلى مستوى 150 حيث يحافظ بنك اليابان على السياسة النقدية شديدة التيسير رغم الاتجاه العالمي للتشديد.",
         url: "https://www.forexlive.com/",
         urlToImage: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80",
         publishedAt: new Date(now.getTime() - 25200000).toISOString(),
-        source: { name: "ForexLive" }
+        source: { name: "فوركس لايف" }
       },
       {
-        title: "Tech Stocks Lead Market Recovery After Yesterday's Selloff",
-        description: "Technology sector rebounds strongly with major tech stocks gaining 3-5% as investors view dip as buying opportunity.",
+        title: "أسهم التكنولوجيا تقود انتعاش السوق بعد عمليات البيع بالأمس",
+        description: "ينتعش قطاع التكنولوجيا بقوة مع ارتفاع أسهم التكنولوجيا الكبرى بنسبة 3-5٪ حيث يرى المستثمرون الانخفاض فرصة للشراء.",
         url: "https://www.marketwatch.com/",
         urlToImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
         publishedAt: new Date(now.getTime() - 27000000).toISOString(),
-        source: { name: "MarketWatch" }
+        source: { name: "ماركت ووتش" }
       }
     ];
 
