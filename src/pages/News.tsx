@@ -90,17 +90,44 @@ const News = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-lg text-muted-foreground">جاري تحميل الأخبار...</p>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          {/* Header Skeleton */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex-1">
+              <div className="h-10 w-96 bg-muted animate-pulse rounded-lg mb-2"></div>
+              <div className="h-5 w-72 bg-muted animate-pulse rounded-lg"></div>
+            </div>
+            <div className="h-10 w-32 bg-muted animate-pulse rounded-lg"></div>
+          </div>
+
+          {/* News Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="overflow-hidden border-border/50 bg-card/50">
+                <div className="h-56 bg-muted animate-pulse"></div>
+                <CardHeader className="space-y-3">
+                  <div className="h-6 bg-muted animate-pulse rounded w-3/4"></div>
+                  <div className="h-4 bg-muted animate-pulse rounded w-1/2"></div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="h-4 bg-muted animate-pulse rounded"></div>
+                    <div className="h-4 bg-muted animate-pulse rounded"></div>
+                    <div className="h-4 bg-muted animate-pulse rounded w-2/3"></div>
+                  </div>
+                  <div className="h-10 bg-muted animate-pulse rounded"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -119,7 +146,7 @@ const News = () => {
           {articles.map((article, index) => (
             <Card 
               key={index} 
-              className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-border/50 bg-card/50 backdrop-blur-sm"
+              className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border-border bg-card"
             >
               {article.urlToImage && (
                 <div className="relative h-56 overflow-hidden">
@@ -173,7 +200,7 @@ const News = () => {
 
       {/* Article Details Dialog */}
       <Dialog open={!!selectedArticle} onOpenChange={() => setSelectedArticle(null)}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto bg-card border-border">
           <DialogHeader>
             <DialogTitle className="text-3xl font-bold leading-tight">
               {selectedArticle?.title}
