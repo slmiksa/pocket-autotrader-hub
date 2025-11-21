@@ -188,8 +188,8 @@ const CRYPTO_CURRENCIES = [
 ];
 
 const METALS = [
-  { value: "gold", label: "الذهب (Gold)", icon: "🥇", coinGeckoId: "pax-gold" },
-  { value: "silver", label: "الفضة (Silver)", icon: "🥈", coinGeckoId: "silver-token" },
+  { value: "gold", label: "الذهب (Gold)", icon: "🥇", symbol: "XAUUSD" },
+  { value: "silver", label: "الفضة (Silver)", icon: "🥈", symbol: "XAGUSD" },
   { value: "platinum", label: "البلاتين (Platinum)", icon: "⚪", coinGeckoId: "platinum" },
   { value: "copper", label: "النحاس (Copper)", icon: "🟤", coinGeckoId: "copper-token" },
   { value: "palladium", label: "البلاديوم (Palladium)", icon: "⚫", coinGeckoId: "palladium" },
@@ -431,11 +431,15 @@ const ImageAnalysis = () => {
     try {
       const selectedMetalData = METALS.find(m => m.value === selectedMetal);
       
+      // Use symbol for gold/silver (forex pairs), otherwise use coinGeckoId for crypto-based metals
+      const symbolToUse = selectedMetalData?.symbol || selectedMetalData?.coinGeckoId || selectedMetal;
+      const assetType = selectedMetalData?.symbol ? 'forex' : 'metal';
+      
       const { data, error } = await supabase.functions.invoke('analyze-symbol', {
         body: {
-          symbol: selectedMetalData?.coinGeckoId || selectedMetal,
+          symbol: symbolToUse,
           timeframe: metalTimeframe,
-          assetType: 'metal'
+          assetType: assetType
         }
       });
 
