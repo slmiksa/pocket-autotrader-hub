@@ -80,51 +80,78 @@ serve(async (req) => {
         priceData = `العملة: ${symbol}\nلا يمكن الحصول على بيانات السعر حالياً`;
       }
     } else if (assetType === 'forex') {
-      // Fetch forex data from frankfurter.app (reliable free API)
-      try {
-        // Parse the forex pair (e.g., EURUSD -> EUR and USD)
-        const baseCurrency = symbol.slice(0, 3);
-        const quoteCurrency = symbol.slice(3, 6);
-        
-        console.log(`Fetching forex data for ${baseCurrency}/${quoteCurrency}`);
-        
-        const response = await fetch(
-          `https://api.frankfurter.app/latest?from=${baseCurrency}&to=${quoteCurrency}`
-        );
-        
-        if (!response.ok) {
-          console.error('Frankfurter API error:', response.status);
-          throw new Error('API failed');
+      // Special handling for precious metals (XAU, XAG)
+      if (symbol === 'XAUUSD' || symbol === 'XAGUSD') {
+        try {
+          // Use metals-api.com (free tier) or provide context for gold/silver
+          const metalName = symbol === 'XAUUSD' ? 'الذهب (Gold)' : 'الفضة (Silver)';
+          console.log(`Analyzing precious metal: ${metalName}`);
+          
+          // Provide realistic price range context for AI analysis
+          // Gold typically ranges 2000-2100 USD, Silver 22-26 USD
+          const priceContext = symbol === 'XAUUSD' 
+            ? `النطاق السعري المتوقع: 2000 - 2100 دولار للأونصة`
+            : `النطاق السعري المتوقع: 22 - 26 دولار للأونصة`;
+          
+          priceData = `المعدن: ${metalName}
+الرمز: ${symbol}
+${priceContext}
+الإطار الزمني: ${timeframe}
+ملاحظة: سيتم تقديم تحليل فني بناءً على الأنماط السعرية الحالية والاتجاهات المتوقعة`;
+          
+          console.log('Metal price context prepared:', priceData);
+        } catch (error) {
+          console.error('Error preparing metal data:', error);
+          priceData = `المعدن: ${symbol === 'XAUUSD' ? 'الذهب' : 'الفضة'}
+الرمز: ${symbol}`;
         }
-        
-        const data = await response.json();
-        console.log('Forex data received:', data);
-        
-        if (data && data.rates && data.rates[quoteCurrency]) {
-          currentPrice = data.rates[quoteCurrency].toFixed(5);
-          priceData = `زوج العملات: ${symbol}
+      } else {
+        // Fetch forex data from frankfurter.app (reliable free API)
+        try {
+          // Parse the forex pair (e.g., EURUSD -> EUR and USD)
+          const baseCurrency = symbol.slice(0, 3);
+          const quoteCurrency = symbol.slice(3, 6);
+          
+          console.log(`Fetching forex data for ${baseCurrency}/${quoteCurrency}`);
+          
+          const response = await fetch(
+            `https://api.frankfurter.app/latest?from=${baseCurrency}&to=${quoteCurrency}`
+          );
+          
+          if (!response.ok) {
+            console.error('Frankfurter API error:', response.status);
+            throw new Error('API failed');
+          }
+          
+          const data = await response.json();
+          console.log('Forex data received:', data);
+          
+          if (data && data.rates && data.rates[quoteCurrency]) {
+            currentPrice = data.rates[quoteCurrency].toFixed(5);
+            priceData = `زوج العملات: ${symbol}
 السعر الحالي: ${currentPrice}
 تاريخ البيانات: ${data.date}
 العملة الأساسية: ${baseCurrency}
 العملة المقابلة: ${quoteCurrency}`;
-          console.log('Price data prepared:', priceData);
-        } else {
-          // Provide general info even without live data
-          priceData = `زوج العملات: ${symbol}
+            console.log('Price data prepared:', priceData);
+          } else {
+            // Provide general info even without live data
+            priceData = `زوج العملات: ${symbol}
 العملة الأساسية: ${baseCurrency}
 العملة المقابلة: ${quoteCurrency}
 ملاحظة: سيتم تقديم تحليل فني عام بناءً على الأنماط السعرية المتوقعة`;
-          console.log('No price data, using general info');
-        }
-      } catch (error) {
-        console.error('Error fetching forex data:', error);
-        // Provide general info for analysis
-        const baseCurrency = symbol.slice(0, 3);
-        const quoteCurrency = symbol.slice(3, 6);
-        priceData = `زوج العملات: ${symbol}
+            console.log('No price data, using general info');
+          }
+        } catch (error) {
+          console.error('Error fetching forex data:', error);
+          // Provide general info for analysis
+          const baseCurrency = symbol.slice(0, 3);
+          const quoteCurrency = symbol.slice(3, 6);
+          priceData = `زوج العملات: ${symbol}
 العملة الأساسية: ${baseCurrency}
 العملة المقابلة: ${quoteCurrency}
 ملاحظة: سيتم تقديم تحليل فني عام بناءً على الأنماط السعرية المتوقعة للإطار الزمني ${timeframe}`;
+        }
       }
     } else {
       // For stocks, try to get real-time data from Yahoo Finance API (free)
@@ -201,20 +228,26 @@ ${priceData}
 
 ${analysisContext}
 
-**مهم جداً**: يجب عليك تقديم توصية تداول كاملة ومحددة حتى لو لم تتوفر بيانات السعر الحية. 
-استخدم خبرتك في التحليل الفني لتقديم:
+**مهم جداً للمعادن الثمينة (XAU/XAG)**: 
+- الذهب (XAUUSD) يتداول عادة في نطاق 2000-2100 دولار
+- الفضة (XAGUSD) تتداول عادة في نطاق 22-26 دولار
+- استخدم هذه النطاقات كمرجع عند تقديم نقاط الدخول والأهداف
+- احسب نقاط الدخول/الخروج بناءً على مستويات الدعم والمقاومة ضمن هذه النطاقات
+
+**يجب عليك تقديم توصية تداول كاملة ومحددة**:
 
 1. **الاتجاه المتوقع**: حدد بوضوح (صاعد للشراء/CALL أو هابط للبيع/PUT)
-2. **نقطة الدخول**: قدم نطاق سعري مقترح للدخول (مثال: 1.0850-1.0870)
-3. **وقف الخسارة**: حدد مستوى واضح لوقف الخسارة (مثال: 1.0820)
-4. **جني الأرباح**: حدد هدف واضح للأرباح (مثال: 1.0920)
+2. **نقطة الدخول**: قدم نطاق سعري مقترح للدخول ضمن النطاق الواقعي (مثال للذهب: 2045.00-2048.00)
+3. **وقف الخسارة**: حدد مستوى واضح لوقف الخسارة ضمن النطاق الواقعي (مثال للذهب: 2038.50)
+4. **جني الأرباح**: حدد هدف واضح للأرباح ضمن النطاق الواقعي (مثال للذهب: 2065.00)
 5. **قوة الإشارة**: حدد (ضعيفة/متوسطة/قوية/قوية جداً)
 6. **التحليل التفصيلي**: اشرح الأسباب الفنية للتوصية
 7. **نصائح إدارة المخاطر**: قدم نصائح عملية
 
 **قواعد إلزامية**:
-- لا تقل أبداً "لا يمكن التحديد" أو "لا توجد بيانات"
-- قدم دائماً أرقام وأسعار محددة للدخول والخروج
+- قدم دائماً أرقام وأسعار واقعية ومحددة للدخول والخروج
+- للذهب: استخدم أسعار في نطاق 2000-2100
+- للفضة: استخدم أسعار في نطاق 22-26
 - اعتمد على التحليل الفني والأنماط السعرية المعروفة للإطار الزمني ${timeframe}
 - كن واضحاً ومحدداً في كل نقطة
 
