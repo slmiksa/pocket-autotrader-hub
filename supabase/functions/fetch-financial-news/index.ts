@@ -25,15 +25,20 @@ serve(async (req) => {
   try {
     console.log('Fetching real-time financial news...');
     
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY is not configured');
+    }
+    
     // Use Lovable AI to get latest financial news
-    const aiResponse = await fetch('https://api.lovable.app/v1/ai/chat', {
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY') || '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'}`,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp',
+        model: 'google/gemini-2.5-flash',
         messages: [
           {
             role: 'user',
