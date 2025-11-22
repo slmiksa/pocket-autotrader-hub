@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Upload, Loader2, MessageCircle, Lock, TrendingUp, Target, Activity, ArrowUp, ArrowDown, Shield, DollarSign, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, MessageCircle, Lock, TrendingUp, Target, Activity, ArrowUp, ArrowDown, Shield, DollarSign, Image as ImageIcon, Search } from "lucide-react";
 import { AnalysisResult } from "@/components/AnalysisResult";
 
 const FOREX_PAIRS = [
@@ -216,6 +216,33 @@ const ImageAnalysis = () => {
   const [cryptoAnalysisType, setCryptoAnalysisType] = useState<string>("trading");
   const [selectedMetal, setSelectedMetal] = useState<string>("");
   const [metalTimeframe, setMetalTimeframe] = useState<string>("1h");
+  
+  // Search states
+  const [forexSearch, setForexSearch] = useState<string>("");
+  const [stockSearch, setStockSearch] = useState<string>("");
+  const [cryptoSearch, setCryptoSearch] = useState<string>("");
+  const [metalSearch, setMetalSearch] = useState<string>("");
+  
+  // Filtered lists
+  const filteredForexPairs = FOREX_PAIRS.filter(pair => 
+    pair.label.toLowerCase().includes(forexSearch.toLowerCase()) || 
+    pair.value.toLowerCase().includes(forexSearch.toLowerCase())
+  );
+  
+  const filteredStocks = US_STOCKS.filter(stock => 
+    stock.label.toLowerCase().includes(stockSearch.toLowerCase()) || 
+    stock.value.toLowerCase().includes(stockSearch.toLowerCase())
+  );
+  
+  const filteredCrypto = CRYPTO_CURRENCIES.filter(crypto => 
+    crypto.label.toLowerCase().includes(cryptoSearch.toLowerCase()) || 
+    crypto.value.toLowerCase().includes(cryptoSearch.toLowerCase())
+  );
+  
+  const filteredMetals = METALS.filter(metal => 
+    metal.label.toLowerCase().includes(metalSearch.toLowerCase()) || 
+    metal.value.toLowerCase().includes(metalSearch.toLowerCase())
+  );
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -559,24 +586,39 @@ const ImageAnalysis = () => {
         </Button>
 
         <Tabs defaultValue="image" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
-            <TabsTrigger value="image" className="gap-2">
+          <TabsList className="grid w-full grid-cols-5 mb-6 bg-card border border-border p-1.5 h-auto">
+            <TabsTrigger 
+              value="image" 
+              className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground hover:bg-muted/50 transition-colors"
+            >
               <ImageIcon className="h-4 w-4" />
               تحليل صورة
             </TabsTrigger>
-            <TabsTrigger value="forex" className="gap-2">
+            <TabsTrigger 
+              value="forex" 
+              className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground hover:bg-muted/50 transition-colors"
+            >
               <Activity className="h-4 w-4" />
               الفوريكس
             </TabsTrigger>
-            <TabsTrigger value="stocks" className="gap-2">
+            <TabsTrigger 
+              value="stocks" 
+              className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground hover:bg-muted/50 transition-colors"
+            >
               <TrendingUp className="h-4 w-4" />
               الأسهم
             </TabsTrigger>
-            <TabsTrigger value="crypto" className="gap-2">
+            <TabsTrigger 
+              value="crypto" 
+              className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground hover:bg-muted/50 transition-colors"
+            >
               <DollarSign className="h-4 w-4" />
               العملات
             </TabsTrigger>
-            <TabsTrigger value="metals" className="gap-2">
+            <TabsTrigger 
+              value="metals" 
+              className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground hover:bg-muted/50 transition-colors"
+            >
               <span className="text-lg">🥇</span>
               المعادن
             </TabsTrigger>
@@ -719,17 +761,37 @@ const ImageAnalysis = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
+              <Label>بحث في الفوريكس</Label>
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="ابحث عن زوج العملات..."
+                  value={forexSearch}
+                  onChange={(e) => setForexSearch(e.target.value)}
+                  className="pr-10"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
               <Label>اختر زوج العملات</Label>
               <Select value={selectedForexPair} onValueChange={setSelectedForexPair}>
                 <SelectTrigger>
                   <SelectValue placeholder="اختر زوج العملات" />
                 </SelectTrigger>
                 <SelectContent>
-                  {FOREX_PAIRS.map((pair) => (
-                    <SelectItem key={pair.value} value={pair.value}>
-                      {pair.label}
-                    </SelectItem>
-                  ))}
+                  {filteredForexPairs.length > 0 ? (
+                    filteredForexPairs.map((pair) => (
+                      <SelectItem key={pair.value} value={pair.value}>
+                        {pair.label}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-center text-sm text-muted-foreground">
+                      لا توجد نتائج
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -786,17 +848,37 @@ const ImageAnalysis = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
+              <Label>بحث في الأسهم</Label>
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="ابحث عن السهم..."
+                  value={stockSearch}
+                  onChange={(e) => setStockSearch(e.target.value)}
+                  className="pr-10"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
               <Label>اختر سهم</Label>
               <Select value={selectedStock} onValueChange={setSelectedStock}>
                 <SelectTrigger>
                   <SelectValue placeholder="اختر سهم" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  {US_STOCKS.map((stock) => (
-                    <SelectItem key={stock.value} value={stock.value}>
-                      {stock.label}
-                    </SelectItem>
-                  ))}
+                  {filteredStocks.length > 0 ? (
+                    filteredStocks.map((stock) => (
+                      <SelectItem key={stock.value} value={stock.value}>
+                        {stock.label}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-center text-sm text-muted-foreground">
+                      لا توجد نتائج
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -869,17 +951,37 @@ const ImageAnalysis = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
+              <Label>بحث في العملات الرقمية</Label>
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="ابحث عن العملة الرقمية..."
+                  value={cryptoSearch}
+                  onChange={(e) => setCryptoSearch(e.target.value)}
+                  className="pr-10"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
               <Label>اختر عملة رقمية</Label>
               <Select value={selectedCrypto} onValueChange={setSelectedCrypto}>
                 <SelectTrigger>
                   <SelectValue placeholder="اختر عملة رقمية" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  {CRYPTO_CURRENCIES.map((crypto) => (
-                    <SelectItem key={crypto.value} value={crypto.value}>
-                      {crypto.label}
-                    </SelectItem>
-                  ))}
+                  {filteredCrypto.length > 0 ? (
+                    filteredCrypto.map((crypto) => (
+                      <SelectItem key={crypto.value} value={crypto.value}>
+                        {crypto.label}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-center text-sm text-muted-foreground">
+                      لا توجد نتائج
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -955,20 +1057,40 @@ const ImageAnalysis = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
+              <Label>بحث في المعادن</Label>
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="ابحث عن المعدن..."
+                  value={metalSearch}
+                  onChange={(e) => setMetalSearch(e.target.value)}
+                  className="pr-10"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
               <Label>اختر المعدن</Label>
               <Select value={selectedMetal} onValueChange={setSelectedMetal}>
                 <SelectTrigger>
                   <SelectValue placeholder="اختر المعدن" />
                 </SelectTrigger>
                 <SelectContent>
-                  {METALS.map((metal) => (
-                    <SelectItem key={metal.value} value={metal.value}>
-                      <span className="flex items-center gap-2">
-                        <span>{metal.icon}</span>
-                        {metal.label}
-                      </span>
-                    </SelectItem>
-                  ))}
+                  {filteredMetals.length > 0 ? (
+                    filteredMetals.map((metal) => (
+                      <SelectItem key={metal.value} value={metal.value}>
+                        <span className="flex items-center gap-2">
+                          <span>{metal.icon}</span>
+                          {metal.label}
+                        </span>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-center text-sm text-muted-foreground">
+                      لا توجد نتائج
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
