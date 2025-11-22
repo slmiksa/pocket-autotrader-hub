@@ -368,6 +368,26 @@ const SubscriptionCheck = () => {
                     <CheckCircle2 className="h-4 w-4 text-amber-500" />
                     <span className="font-semibold">توصيات CALL/PUT من الصور</span>
                   </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-amber-500" />
+                    <span className="font-semibold">تحليل الفوريكس</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-amber-500" />
+                    <span className="font-semibold">تحليل الأسهم الأمريكية</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-amber-500" />
+                    <span className="font-semibold">تحليل العملات الرقمية</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-amber-500" />
+                    <span className="font-semibold">تحليل المعادن (ذهب، فضة)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-amber-500" />
+                    <span className="font-semibold">توصيات خاصة من محترفين</span>
+                  </li>
                 </ul>
               </div>
             </div>
