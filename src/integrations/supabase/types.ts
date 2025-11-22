@@ -56,6 +56,60 @@ export type Database = {
         }
         Relationships: []
       }
+      professional_signals: {
+        Row: {
+          analysis: string | null
+          asset: string
+          closed_at: string | null
+          confidence_level: string | null
+          created_at: string | null
+          created_by: string | null
+          direction: string
+          entry_price: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          result: string | null
+          stop_loss: string | null
+          target_price: string | null
+          timeframe: string
+        }
+        Insert: {
+          analysis?: string | null
+          asset: string
+          closed_at?: string | null
+          confidence_level?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          direction: string
+          entry_price?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          result?: string | null
+          stop_loss?: string | null
+          target_price?: string | null
+          timeframe: string
+        }
+        Update: {
+          analysis?: string | null
+          asset?: string
+          closed_at?: string | null
+          confidence_level?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          direction?: string
+          entry_price?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          result?: string | null
+          stop_loss?: string | null
+          target_price?: string | null
+          timeframe?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           activated_code: string | null
@@ -63,6 +117,7 @@ export type Database = {
           email: string | null
           id: string
           image_analysis_enabled: boolean | null
+          professional_signals_enabled: boolean | null
           subscription_expires_at: string | null
           updated_at: string
           user_id: string
@@ -73,6 +128,7 @@ export type Database = {
           email?: string | null
           id?: string
           image_analysis_enabled?: boolean | null
+          professional_signals_enabled?: boolean | null
           subscription_expires_at?: string | null
           updated_at?: string
           user_id: string
@@ -83,6 +139,7 @@ export type Database = {
           email?: string | null
           id?: string
           image_analysis_enabled?: boolean | null
+          professional_signals_enabled?: boolean | null
           subscription_expires_at?: string | null
           updated_at?: string
           user_id?: string

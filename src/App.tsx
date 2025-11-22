@@ -9,6 +9,7 @@ import AdminLogin from "./pages/AdminLogin";
 import Auth from "./pages/Auth";
 import SubscriptionCheck from "./pages/SubscriptionCheck";
 import ImageAnalysis from "./pages/ImageAnalysis";
+import ProfessionalSignals from "./pages/ProfessionalSignals";
 import News from "./pages/News";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/subscription" element={<SubscriptionCheck />} />
           <Route path="/image-analysis" element={<ImageAnalysis />} />
+          <Route path="/professional-signals" element={<ProfessionalSignals />} />
           <Route path="/news" element={<News />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

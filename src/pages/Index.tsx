@@ -6,7 +6,7 @@ import { TradingDashboard } from "@/components/trading/TradingDashboard";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { LivePriceCards } from "@/components/LivePriceCards";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper } from "lucide-react";
+import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
 const Index = () => {
@@ -16,6 +16,7 @@ const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [imageAnalysisEnabled, setImageAnalysisEnabled] = useState(false);
+  const [professionalSignalsEnabled, setProfessionalSignalsEnabled] = useState(false);
   const {
     requestPermission,
     isSupported,
@@ -26,7 +27,7 @@ const Index = () => {
       const {
         data,
         error
-      } = await supabase.from("profiles").select("subscription_expires_at, image_analysis_enabled").eq("user_id", userId).single();
+      } = await supabase.from("profiles").select("subscription_expires_at, image_analysis_enabled, professional_signals_enabled").eq("user_id", userId).single();
       if (error) {
         console.error("Error fetching profile:", error);
         setLoading(false);
@@ -39,7 +40,9 @@ const Index = () => {
         if (expiresAt > now) {
           setSubscriptionExpiresAt(data.subscription_expires_at);
           setImageAnalysisEnabled(data.image_analysis_enabled || false);
+          setProfessionalSignalsEnabled(data.professional_signals_enabled || false);
           console.log("✅ Image analysis enabled:", data.image_analysis_enabled);
+          console.log("✅ Professional signals enabled:", data.professional_signals_enabled);
           setLoading(false);
           return true;
         }
@@ -125,6 +128,10 @@ const Index = () => {
         setImageAnalysisEnabled(newData.image_analysis_enabled);
         console.log("✅ Image analysis updated to:", newData.image_analysis_enabled);
       }
+      if (newData.professional_signals_enabled !== undefined) {
+        setProfessionalSignalsEnabled(newData.professional_signals_enabled);
+        console.log("✅ Professional signals updated to:", newData.professional_signals_enabled);
+      }
     }).subscribe();
     return () => {
       console.log("🔕 Cleaning up realtime subscription");
@@ -176,6 +183,10 @@ const Index = () => {
               {imageAnalysisEnabled && <Button onClick={() => navigate('/image-analysis')} variant="outline" size="sm" className="gap-1.5">
                   <Image className="h-4 w-4" />
                   <span className="hidden sm:inline">​تحليل الأسواق</span>
+                </Button>}
+              {professionalSignalsEnabled && <Button onClick={() => navigate('/professional-signals')} variant="outline" size="sm" className="gap-1.5">
+                  <Shield className="h-4 w-4" />
+                  <span className="hidden sm:inline">توصيات المحترفين</span>
                 </Button>}
               <Button onClick={() => navigate('/news')} variant="outline" size="sm" className="gap-1.5">
                 <Newspaper className="h-4 w-4" />
