@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Shield, Plus, Trash2, Copy, Check, ArrowRight, LogOut, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { ProfessionalSignalsManager } from "@/components/admin/ProfessionalSignalsManager";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -250,11 +251,28 @@ const AdminDashboard = () => {
 
       if (error) throw error;
 
-      toast.success("تم تحديث حالة ميزة تحليل الصورة");
+      toast.success(`تم ${!currentStatus ? 'تفعيل' : 'تعطيل'} تحليل الصورة`);
       loadUsers();
     } catch (error: any) {
-      console.error("Error updating image analysis:", error);
-      toast.error("فشل تحديث الميزة");
+      console.error("Error toggling image analysis:", error);
+      toast.error("فشل تحديث حالة تحليل الصورة");
+    }
+  };
+
+  const toggleProfessionalSignals = async (userId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ professional_signals_enabled: !currentStatus })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast.success(`تم ${!currentStatus ? 'تفعيل' : 'تعطيل'} توصيات المحترفين`);
+      loadUsers();
+    } catch (error: any) {
+      console.error("Error toggling professional signals:", error);
+      toast.error("فشل تحديث حالة توصيات المحترفين");
     }
   };
 
@@ -628,6 +646,7 @@ const AdminDashboard = () => {
                       <TableHead>تاريخ انتهاء الاشتراك</TableHead>
                       <TableHead>الكود المستخدم</TableHead>
                       <TableHead>تحليل الصورة</TableHead>
+                      <TableHead>توصيات المحترفين</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -667,6 +686,15 @@ const AdminDashboard = () => {
                               {user.image_analysis_enabled ? "مفعل" : "معطل"}
                             </Button>
                           </TableCell>
+                          <TableCell>
+                            <Button
+                              variant={user.professional_signals_enabled ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => toggleProfessionalSignals(user.user_id, user.professional_signals_enabled)}
+                            >
+                              {user.professional_signals_enabled ? "مفعل" : "معطل"}
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       );
                     })}
@@ -676,6 +704,9 @@ const AdminDashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Professional Signals Management */}
+        <ProfessionalSignalsManager />
 
         {/* Admin Account Settings */}
         <Card>
