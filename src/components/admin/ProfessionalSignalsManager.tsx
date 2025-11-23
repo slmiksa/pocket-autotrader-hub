@@ -8,10 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Shield, Plus, Trash2, CheckCircle2, XCircle, Clock, Loader2 } from "lucide-react";
+import { Shield, Plus, Trash2, CheckCircle2, XCircle, Clock, Loader2, Edit, CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 interface ProfessionalSignal {
   id: string;
@@ -29,13 +33,46 @@ interface ProfessionalSignal {
   result: string | null;
 }
 
+// List of available markets
+const MARKET_SYMBOLS = [
+  // Forex
+  { value: "EURUSD", label: "EUR/USD", category: "Forex" },
+  { value: "GBPUSD", label: "GBP/USD", category: "Forex" },
+  { value: "USDJPY", label: "USD/JPY", category: "Forex" },
+  { value: "AUDUSD", label: "AUD/USD", category: "Forex" },
+  { value: "USDCAD", label: "USD/CAD", category: "Forex" },
+  { value: "NZDUSD", label: "NZD/USD", category: "Forex" },
+  { value: "EURGBP", label: "EUR/GBP", category: "Forex" },
+  // Crypto
+  { value: "BTCUSD", label: "Bitcoin (BTC/USD)", category: "Crypto" },
+  { value: "ETHUSD", label: "Ethereum (ETH/USD)", category: "Crypto" },
+  { value: "BNBUSD", label: "BNB (BNB/USD)", category: "Crypto" },
+  { value: "XRPUSD", label: "XRP (XRP/USD)", category: "Crypto" },
+  { value: "ADAUSD", label: "Cardano (ADA/USD)", category: "Crypto" },
+  // Metals
+  { value: "XAUUSD", label: "الذهب (XAU/USD)", category: "معادن" },
+  { value: "XAGUSD", label: "الفضة (XAG/USD)", category: "معادن" },
+  // Indices
+  { value: "US30", label: "Dow Jones (US30)", category: "مؤشرات" },
+  { value: "NAS100", label: "Nasdaq 100", category: "مؤشرات" },
+  { value: "SPX500", label: "S&P 500", category: "مؤشرات" },
+  // Stocks
+  { value: "AAPL", label: "Apple", category: "أسهم" },
+  { value: "GOOGL", label: "Google", category: "أسهم" },
+  { value: "MSFT", label: "Microsoft", category: "أسهم" },
+  { value: "TSLA", label: "Tesla", category: "أسهم" },
+  { value: "AMZN", label: "Amazon", category: "أسهم" },
+];
+
 export const ProfessionalSignalsManager = () => {
   const [signals, setSignals] = useState<ProfessionalSignal[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [editingSignal, setEditingSignal] = useState<ProfessionalSignal | null>(null);
 
   // Form state
   const [asset, setAsset] = useState("");
+  const [assetOpen, setAssetOpen] = useState(false);
   const [direction, setDirection] = useState("CALL");
   const [entryPrice, setEntryPrice] = useState("");
   const [targetPrice, setTargetPrice] = useState("");
@@ -43,7 +80,8 @@ export const ProfessionalSignalsManager = () => {
   const [timeframe, setTimeframe] = useState("5m");
   const [confidenceLevel, setConfidenceLevel] = useState("high");
   const [analysis, setAnalysis] = useState("");
-  const [expiresAt, setExpiresAt] = useState("");
+  const [expiresAt, setExpiresAt] = useState<Date | undefined>(undefined);
+  const [expiresAtTime, setExpiresAtTime] = useState("12:00");
 
   useEffect(() => {
     fetchSignals();
@@ -66,7 +104,7 @@ export const ProfessionalSignalsManager = () => {
     }
   };
 
-  const handleCreateSignal = async () => {
+  const handleCreateOrUpdateSignal = async () => {
     if (!asset || !direction || !timeframe) {
       toast.error("يرجى ملء الحقول المطلوبة");
       return;
@@ -74,7 +112,16 @@ export const ProfessionalSignalsManager = () => {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.from("professional_signals").insert({
+      // Combine date and time for expires_at
+      let expiresAtValue = null;
+      if (expiresAt) {
+        const [hours, minutes] = expiresAtTime.split(':');
+        const dateTime = new Date(expiresAt);
+        dateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        expiresAtValue = dateTime.toISOString();
+      }
+
+      const signalData = {
         asset,
         direction,
         entry_price: entryPrice || null,
@@ -83,33 +130,73 @@ export const ProfessionalSignalsManager = () => {
         timeframe,
         confidence_level: confidenceLevel,
         analysis: analysis || null,
-        expires_at: expiresAt || null,
+        expires_at: expiresAtValue,
         is_active: true,
-        result: 'pending'
-      });
+        result: editingSignal ? editingSignal.result : 'pending'
+      };
 
-      if (error) throw error;
+      if (editingSignal) {
+        // Update existing signal
+        const { error } = await supabase
+          .from("professional_signals")
+          .update(signalData)
+          .eq("id", editingSignal.id);
 
-      toast.success("تم إنشاء التوصية بنجاح");
+        if (error) throw error;
+        toast.success("تم تحديث التوصية بنجاح");
+      } else {
+        // Create new signal
+        const { error } = await supabase
+          .from("professional_signals")
+          .insert(signalData);
+
+        if (error) throw error;
+        toast.success("تم إنشاء التوصية بنجاح");
+      }
       
       // Reset form
-      setAsset("");
-      setDirection("CALL");
-      setEntryPrice("");
-      setTargetPrice("");
-      setStopLoss("");
-      setTimeframe("5m");
-      setConfidenceLevel("high");
-      setAnalysis("");
-      setExpiresAt("");
-      
+      resetForm();
       fetchSignals();
     } catch (error) {
-      console.error("Error creating signal:", error);
-      toast.error("فشل إنشاء التوصية");
+      console.error("Error saving signal:", error);
+      toast.error(editingSignal ? "فشل تحديث التوصية" : "فشل إنشاء التوصية");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const resetForm = () => {
+    setAsset("");
+    setDirection("CALL");
+    setEntryPrice("");
+    setTargetPrice("");
+    setStopLoss("");
+    setTimeframe("5m");
+    setConfidenceLevel("high");
+    setAnalysis("");
+    setExpiresAt(undefined);
+    setExpiresAtTime("12:00");
+    setEditingSignal(null);
+  };
+
+  const handleEditSignal = (signal: ProfessionalSignal) => {
+    setEditingSignal(signal);
+    setAsset(signal.asset);
+    setDirection(signal.direction);
+    setEntryPrice(signal.entry_price || "");
+    setTargetPrice(signal.target_price || "");
+    setStopLoss(signal.stop_loss || "");
+    setTimeframe(signal.timeframe);
+    setConfidenceLevel(signal.confidence_level || "high");
+    setAnalysis(signal.analysis || "");
+    
+    if (signal.expires_at) {
+      const date = new Date(signal.expires_at);
+      setExpiresAt(date);
+      setExpiresAtTime(format(date, "HH:mm"));
+    }
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDeleteSignal = async (id: string) => {
@@ -185,21 +272,65 @@ export const ProfessionalSignalsManager = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-amber-500" />
-            إنشاء توصية احترافية جديدة
+            {editingSignal ? "تعديل التوصية" : "إنشاء توصية احترافية جديدة"}
           </CardTitle>
           <CardDescription>
-            أضف توصية جديدة سيتم عرضها للمستخدمين المفعلين
+            {editingSignal ? "قم بتحديث بيانات التوصية" : "أضف توصية جديدة سيتم عرضها للمستخدمين المفعلين"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>الأصل / الرمز *</Label>
-              <Input
-                value={asset}
-                onChange={(e) => setAsset(e.target.value)}
-                placeholder="مثال: EURUSD, BTCUSD, GOLD"
-              />
+              <Popover open={assetOpen} onOpenChange={setAssetOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={assetOpen}
+                    className="w-full justify-between"
+                  >
+                    {asset
+                      ? MARKET_SYMBOLS.find((symbol) => symbol.value === asset)?.label
+                      : "ابحث عن الأصل..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="ابحث عن العملة أو السهم..." />
+                    <CommandList>
+                      <CommandEmpty>لا توجد نتائج</CommandEmpty>
+                      {["Forex", "Crypto", "معادن", "مؤشرات", "أسهم"].map((category) => {
+                        const items = MARKET_SYMBOLS.filter((s) => s.category === category);
+                        if (items.length === 0) return null;
+                        return (
+                          <CommandGroup key={category} heading={category}>
+                            {items.map((symbol) => (
+                              <CommandItem
+                                key={symbol.value}
+                                value={symbol.value}
+                                onSelect={(currentValue) => {
+                                  setAsset(currentValue);
+                                  setAssetOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    asset === symbol.value ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {symbol.label}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        );
+                      })}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
@@ -278,11 +409,46 @@ export const ProfessionalSignalsManager = () => {
 
             <div className="space-y-2">
               <Label>تاريخ الانتهاء</Label>
-              <Input
-                type="datetime-local"
-                value={expiresAt}
-                onChange={(e) => setExpiresAt(e.target.value)}
-              />
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "flex-1 justify-start text-left font-normal",
+                        !expiresAt && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="ml-2 h-4 w-4" />
+                      {expiresAt ? format(expiresAt, "PPP", { locale: ar }) : "اختر تاريخ"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={expiresAt}
+                      onSelect={setExpiresAt}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Input
+                  type="time"
+                  value={expiresAtTime}
+                  onChange={(e) => setExpiresAtTime(e.target.value)}
+                  className="w-32"
+                />
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setExpiresAt(new Date());
+                    setExpiresAtTime(format(new Date(), "HH:mm"));
+                  }}
+                >
+                  الآن
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -296,24 +462,44 @@ export const ProfessionalSignalsManager = () => {
             />
           </div>
 
-          <Button
-            onClick={handleCreateSignal}
-            disabled={submitting}
-            className="w-full"
-            size="lg"
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-                جاري الإنشاء...
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4 ml-2" />
-                إنشاء التوصية
-              </>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleCreateOrUpdateSignal}
+              disabled={submitting}
+              className="flex-1"
+              size="lg"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                  {editingSignal ? "جاري التحديث..." : "جاري الإنشاء..."}
+                </>
+              ) : (
+                <>
+                  {editingSignal ? (
+                    <>
+                      <Edit className="h-4 w-4 ml-2" />
+                      تحديث التوصية
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 ml-2" />
+                      إنشاء التوصية
+                    </>
+                  )}
+                </>
+              )}
+            </Button>
+            {editingSignal && (
+              <Button
+                onClick={resetForm}
+                variant="outline"
+                size="lg"
+              >
+                إلغاء التعديل
+              </Button>
             )}
-          </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -404,13 +590,22 @@ export const ProfessionalSignalsManager = () => {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteSignal(signal.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditSignal(signal)}
+                          >
+                            <Edit className="h-4 w-4 text-primary" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteSignal(signal.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
