@@ -83,27 +83,46 @@ serve(async (req) => {
       // Special handling for precious metals (XAU, XAG)
       if (symbol === 'XAUUSD' || symbol === 'XAGUSD') {
         try {
-          // Use metals-api.com (free tier) or provide context for gold/silver
           const metalName = symbol === 'XAUUSD' ? 'الذهب (Gold)' : 'الفضة (Silver)';
           console.log(`Analyzing precious metal: ${metalName}`);
           
-          // Provide realistic price range context for AI analysis
-          // Gold typically ranges 2000-2100 USD, Silver 22-26 USD
-          const priceContext = symbol === 'XAUUSD' 
-            ? `النطاق السعري المتوقع: 2000 - 2100 دولار للأونصة`
-            : `النطاق السعري المتوقع: 22 - 26 دولار للأونصة`;
+          // Use CoinGecko API to get real gold/silver prices
+          // PAX Gold (PAXG) represents physical gold (1 PAXG = 1 troy ounce of gold)
+          const coinId = symbol === 'XAUUSD' ? 'pax-gold' : 'silver'; // Note: silver may not be available
           
+          const response = await fetch(
+            `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true`
+          );
+          
+          if (!response.ok) {
+            throw new Error('CoinGecko API failed');
+          }
+          
+          const data = await response.json();
+          console.log('Metal price data received:', data);
+          
+          if (data[coinId]) {
+            currentPrice = data[coinId].usd.toFixed(2);
+            const change24h = data[coinId].usd_24h_change?.toFixed(2) || 'N/A';
+            
+            priceData = `المعدن: ${metalName}
+الرمز: ${symbol}
+السعر الحالي: $${currentPrice}
+التغير في 24 ساعة: ${change24h}%
+الإطار الزمني: ${timeframe}`;
+            
+            console.log('Metal price data prepared:', priceData);
+          } else {
+            throw new Error('No price data in response');
+          }
+        } catch (error) {
+          console.error('Error fetching metal data:', error);
+          // Fallback to providing context without live price
+          const metalName = symbol === 'XAUUSD' ? 'الذهب (Gold)' : 'الفضة (Silver)';
           priceData = `المعدن: ${metalName}
 الرمز: ${symbol}
-${priceContext}
 الإطار الزمني: ${timeframe}
-ملاحظة: سيتم تقديم تحليل فني بناءً على الأنماط السعرية الحالية والاتجاهات المتوقعة`;
-          
-          console.log('Metal price context prepared:', priceData);
-        } catch (error) {
-          console.error('Error preparing metal data:', error);
-          priceData = `المعدن: ${symbol === 'XAUUSD' ? 'الذهب' : 'الفضة'}
-الرمز: ${symbol}`;
+ملاحظة: سيتم تقديم تحليل فني بناءً على الأنماط السعرية الحالية`;
         }
       } else {
         // Fetch forex data from frankfurter.app (reliable free API)
@@ -229,10 +248,9 @@ ${priceData}
 ${analysisContext}
 
 **مهم جداً للمعادن الثمينة (XAU/XAG)**: 
-- الذهب (XAUUSD) يتداول عادة في نطاق 2000-2100 دولار
-- الفضة (XAGUSD) تتداول عادة في نطاق 22-26 دولار
-- استخدم هذه النطاقات كمرجع عند تقديم نقاط الدخول والأهداف
-- احسب نقاط الدخول/الخروج بناءً على مستويات الدعم والمقاومة ضمن هذه النطاقات
+- استخدم السعر الحالي المذكور في بيانات السوق كنقطة مرجعية
+- احسب نقاط الدخول/الخروج بناءً على مستويات الدعم والمقاومة القريبة من السعر الحالي
+- يجب أن تكون جميع الأسعار المقترحة قريبة ومنطقية بالنسبة للسعر الحالي (ضمن نطاق +/- 50 دولار للذهب)
 
 **يجب عليك تقديم توصية تداول كاملة ومحددة**:
 
@@ -246,8 +264,8 @@ ${analysisContext}
 
 **قواعد إلزامية**:
 - قدم دائماً أرقام وأسعار واقعية ومحددة للدخول والخروج
-- للذهب: استخدم أسعار في نطاق 2000-2100
-- للفضة: استخدم أسعار في نطاق 22-26
+- استخدم السعر الحالي المذكور في بيانات السوق كنقطة انطلاق
+- يجب أن تكون نقاط الدخول/الخروج قريبة من السعر الحالي ومنطقية (ضمن نطاق معقول)
 - اعتمد على التحليل الفني والأنماط السعرية المعروفة للإطار الزمني ${timeframe}
 - كن واضحاً ومحدداً في كل نقطة
 
