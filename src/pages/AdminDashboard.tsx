@@ -139,7 +139,7 @@ const AdminDashboard = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, email, subscription_expires_at, image_analysis_enabled, activated_code, created_at")
+        .select("user_id, email, subscription_expires_at, image_analysis_enabled, professional_signals_enabled, activated_code, created_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -682,6 +682,7 @@ const AdminDashboard = () => {
                               variant={user.image_analysis_enabled ? "default" : "outline"}
                               size="sm"
                               onClick={() => toggleImageAnalysis(user.user_id, user.image_analysis_enabled)}
+                              className={user.image_analysis_enabled ? "bg-success hover:bg-success/90" : ""}
                             >
                               {user.image_analysis_enabled ? "مفعل" : "معطل"}
                             </Button>
@@ -691,6 +692,7 @@ const AdminDashboard = () => {
                               variant={user.professional_signals_enabled ? "default" : "outline"}
                               size="sm"
                               onClick={() => toggleProfessionalSignals(user.user_id, user.professional_signals_enabled)}
+                              className={user.professional_signals_enabled ? "bg-primary hover:bg-primary/90" : "border-muted-foreground/30"}
                             >
                               {user.professional_signals_enabled ? "مفعل" : "معطل"}
                             </Button>
