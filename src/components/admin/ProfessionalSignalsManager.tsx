@@ -116,8 +116,12 @@ export const ProfessionalSignalsManager = () => {
       let expiresAtValue = null;
       if (expiresAt) {
         const [hours, minutes] = expiresAtTime.split(':');
-        const dateTime = new Date(expiresAt);
-        dateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        // Create a new date with the selected date
+        const year = expiresAt.getFullYear();
+        const month = expiresAt.getMonth();
+        const day = expiresAt.getDate();
+        // Create date with specified time in local timezone
+        const dateTime = new Date(year, month, day, parseInt(hours), parseInt(minutes), 0, 0);
         expiresAtValue = dateTime.toISOString();
       }
 
