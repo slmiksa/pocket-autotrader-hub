@@ -411,7 +411,7 @@ export const ProfessionalSignalsManager = () => {
               </Select>
             </div>
 
-            <div className="space-y-2">
+              <div className="space-y-2">
               <Label>تاريخ الانتهاء</Label>
               <div className="flex gap-2">
                 <Popover>
@@ -446,11 +446,24 @@ export const ProfessionalSignalsManager = () => {
                 <Button
                   variant="secondary"
                   onClick={() => {
-                    setExpiresAt(new Date());
-                    setExpiresAtTime(format(new Date(), "HH:mm"));
+                    const now = new Date();
+                    const inOneHour = new Date(now.getTime() + 60 * 60 * 1000);
+                    setExpiresAt(inOneHour);
+                    setExpiresAtTime(format(inOneHour, "HH:mm"));
                   }}
+                  title="تعيين الانتهاء بعد ساعة من الآن"
                 >
-                  الآن
+                  بعد ساعة
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setExpiresAt(undefined);
+                    setExpiresAtTime("12:00");
+                  }}
+                  title="بدون تاريخ انتهاء"
+                >
+                  بلا انتهاء
                 </Button>
               </div>
             </div>
