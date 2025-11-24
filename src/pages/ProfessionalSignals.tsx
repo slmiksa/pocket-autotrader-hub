@@ -77,7 +77,7 @@ const ProfessionalSignals = () => {
         .from("professional_signals")
         .select("*")
         .eq("is_active", true)
-        .gt("expires_at", new Date().toISOString())
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
