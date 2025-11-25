@@ -11,6 +11,7 @@ import SubscriptionCheck from "./pages/SubscriptionCheck";
 import ImageAnalysis from "./pages/ImageAnalysis";
 import ProfessionalSignals from "./pages/ProfessionalSignals";
 import News from "./pages/News";
+import LiveChart from "./pages/LiveChart";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/image-analysis" element={<ImageAnalysis />} />
           <Route path="/professional-signals" element={<ProfessionalSignals />} />
           <Route path="/news" element={<News />} />
+          <Route path="/live-chart" element={<LiveChart />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
