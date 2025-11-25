@@ -33,35 +33,138 @@ interface ProfessionalSignal {
   result: string | null;
 }
 
-// List of available markets
+// List of available markets - Comprehensive list
 const MARKET_SYMBOLS = [
-  // Forex
+  // Forex - Major Pairs
   { value: "EURUSD", label: "EUR/USD", category: "Forex" },
+  { value: "EURUSD-OTC", label: "EUR/USD (OTC)", category: "Forex" },
   { value: "GBPUSD", label: "GBP/USD", category: "Forex" },
+  { value: "GBPUSD-OTC", label: "GBP/USD (OTC)", category: "Forex" },
   { value: "USDJPY", label: "USD/JPY", category: "Forex" },
+  { value: "USDJPY-OTC", label: "USD/JPY (OTC)", category: "Forex" },
   { value: "AUDUSD", label: "AUD/USD", category: "Forex" },
+  { value: "AUDUSD-OTC", label: "AUD/USD (OTC)", category: "Forex" },
   { value: "USDCAD", label: "USD/CAD", category: "Forex" },
+  { value: "USDCAD-OTC", label: "USD/CAD (OTC)", category: "Forex" },
   { value: "NZDUSD", label: "NZD/USD", category: "Forex" },
+  { value: "NZDUSD-OTC", label: "NZD/USD (OTC)", category: "Forex" },
+  { value: "USDCHF", label: "USD/CHF", category: "Forex" },
+  { value: "USDCHF-OTC", label: "USD/CHF (OTC)", category: "Forex" },
+  
+  // Forex - Cross Pairs
   { value: "EURGBP", label: "EUR/GBP", category: "Forex" },
+  { value: "EURGBP-OTC", label: "EUR/GBP (OTC)", category: "Forex" },
+  { value: "EURJPY", label: "EUR/JPY", category: "Forex" },
+  { value: "EURJPY-OTC", label: "EUR/JPY (OTC)", category: "Forex" },
+  { value: "GBPJPY", label: "GBP/JPY", category: "Forex" },
+  { value: "GBPJPY-OTC", label: "GBP/JPY (OTC)", category: "Forex" },
+  { value: "AUDJPY", label: "AUD/JPY", category: "Forex" },
+  { value: "AUDJPY-OTC", label: "AUD/JPY (OTC)", category: "Forex" },
+  { value: "NZDJPY", label: "NZD/JPY", category: "Forex" },
+  { value: "NZDJPY-OTC", label: "NZD/JPY (OTC)", category: "Forex" },
+  { value: "AUDNZD", label: "AUD/NZD", category: "Forex" },
+  { value: "AUDNZD-OTC", label: "AUD/NZD (OTC)", category: "Forex" },
+  { value: "AUDCHF", label: "AUD/CHF", category: "Forex" },
+  { value: "AUDCHF-OTC", label: "AUD/CHF (OTC)", category: "Forex" },
+  { value: "CADCHF", label: "CAD/CHF", category: "Forex" },
+  { value: "CADCHF-OTC", label: "CAD/CHF (OTC)", category: "Forex" },
+  { value: "CHFJPY", label: "CHF/JPY", category: "Forex" },
+  { value: "CHFJPY-OTC", label: "CHF/JPY (OTC)", category: "Forex" },
+  { value: "EURCHF", label: "EUR/CHF", category: "Forex" },
+  { value: "EURCHF-OTC", label: "EUR/CHF (OTC)", category: "Forex" },
+  { value: "GBPCHF", label: "GBP/CHF", category: "Forex" },
+  { value: "GBPCHF-OTC", label: "GBP/CHF (OTC)", category: "Forex" },
+  
+  // Forex - Exotic & Emerging Markets
+  { value: "EURRUB", label: "EUR/RUB", category: "Forex" },
+  { value: "EURRUB-OTC", label: "EUR/RUB (OTC)", category: "Forex" },
+  { value: "USDINR", label: "USD/INR", category: "Forex" },
+  { value: "USDINR-OTC", label: "USD/INR (OTC)", category: "Forex" },
+  { value: "USDVND", label: "USD/VND", category: "Forex" },
+  { value: "USDVND-OTC", label: "USD/VND (OTC)", category: "Forex" },
+  { value: "USDPKR", label: "USD/PKR", category: "Forex" },
+  { value: "USDPKR-OTC", label: "USD/PKR (OTC)", category: "Forex" },
+  { value: "USDCLP", label: "USD/CLP", category: "Forex" },
+  { value: "USDCLP-OTC", label: "USD/CLP (OTC)", category: "Forex" },
+  { value: "USDBRL", label: "USD/BRL", category: "Forex" },
+  { value: "USDBRL-OTC", label: "USD/BRL (OTC)", category: "Forex" },
+  { value: "USDTRY", label: "USD/TRY", category: "Forex" },
+  { value: "USDTRY-OTC", label: "USD/TRY (OTC)", category: "Forex" },
+  { value: "USDMXN", label: "USD/MXN", category: "Forex" },
+  { value: "USDMXN-OTC", label: "USD/MXN (OTC)", category: "Forex" },
+  { value: "USDZAR", label: "USD/ZAR", category: "Forex" },
+  { value: "USDZAR-OTC", label: "USD/ZAR (OTC)", category: "Forex" },
+  
   // Crypto
   { value: "BTCUSD", label: "Bitcoin (BTC/USD)", category: "Crypto" },
+  { value: "BTCUSD-OTC", label: "Bitcoin (BTC/USD) OTC", category: "Crypto" },
   { value: "ETHUSD", label: "Ethereum (ETH/USD)", category: "Crypto" },
+  { value: "ETHUSD-OTC", label: "Ethereum (ETH/USD) OTC", category: "Crypto" },
   { value: "BNBUSD", label: "BNB (BNB/USD)", category: "Crypto" },
   { value: "XRPUSD", label: "XRP (XRP/USD)", category: "Crypto" },
   { value: "ADAUSD", label: "Cardano (ADA/USD)", category: "Crypto" },
+  { value: "SOLUSD", label: "Solana (SOL/USD)", category: "Crypto" },
+  { value: "DOTUSD", label: "Polkadot (DOT/USD)", category: "Crypto" },
+  { value: "DOGEUSD", label: "Dogecoin (DOGE/USD)", category: "Crypto" },
+  { value: "MATICUSD", label: "Polygon (MATIC/USD)", category: "Crypto" },
+  { value: "LTCUSD", label: "Litecoin (LTC/USD)", category: "Crypto" },
+  
   // Metals
   { value: "XAUUSD", label: "الذهب (XAU/USD)", category: "معادن" },
+  { value: "XAUUSD-OTC", label: "الذهب (XAU/USD) OTC", category: "معادن" },
   { value: "XAGUSD", label: "الفضة (XAG/USD)", category: "معادن" },
+  { value: "XAGUSD-OTC", label: "الفضة (XAG/USD) OTC", category: "معادن" },
+  { value: "XPTUSD", label: "البلاتين (XPT/USD)", category: "معادن" },
+  { value: "XPDUSD", label: "البلاديوم (XPD/USD)", category: "معادن" },
+  
+  // Commodities & Energy
+  { value: "WTIUSD", label: "النفط الخام WTI", category: "سلع وطاقة" },
+  { value: "WTIUSD-OTC", label: "النفط الخام WTI (OTC)", category: "سلع وطاقة" },
+  { value: "UKOIL", label: "نفط برنت", category: "سلع وطاقة" },
+  { value: "NATGAS", label: "الغاز الطبيعي", category: "سلع وطاقة" },
+  
   // Indices
   { value: "US30", label: "Dow Jones (US30)", category: "مؤشرات" },
+  { value: "US30-OTC", label: "Dow Jones (US30) OTC", category: "مؤشرات" },
   { value: "NAS100", label: "Nasdaq 100", category: "مؤشرات" },
+  { value: "NAS100-OTC", label: "Nasdaq 100 OTC", category: "مؤشرات" },
   { value: "SPX500", label: "S&P 500", category: "مؤشرات" },
-  // Stocks
+  { value: "SPX500-OTC", label: "S&P 500 OTC", category: "مؤشرات" },
+  { value: "UK100", label: "FTSE 100", category: "مؤشرات" },
+  { value: "GER40", label: "DAX 40", category: "مؤشرات" },
+  { value: "FRA40", label: "CAC 40", category: "مؤشرات" },
+  { value: "JPN225", label: "Nikkei 225", category: "مؤشرات" },
+  { value: "AUS200", label: "ASX 200", category: "مؤشرات" },
+  { value: "HKG50", label: "Hang Seng", category: "مؤشرات" },
+  
+  // Stocks - Tech
   { value: "AAPL", label: "Apple", category: "أسهم" },
+  { value: "AAPL-OTC", label: "Apple (OTC)", category: "أسهم" },
   { value: "GOOGL", label: "Google", category: "أسهم" },
+  { value: "GOOGL-OTC", label: "Google (OTC)", category: "أسهم" },
   { value: "MSFT", label: "Microsoft", category: "أسهم" },
+  { value: "MSFT-OTC", label: "Microsoft (OTC)", category: "أسهم" },
   { value: "TSLA", label: "Tesla", category: "أسهم" },
+  { value: "TSLA-OTC", label: "Tesla (OTC)", category: "أسهم" },
   { value: "AMZN", label: "Amazon", category: "أسهم" },
+  { value: "AMZN-OTC", label: "Amazon (OTC)", category: "أسهم" },
+  { value: "META", label: "Meta (Facebook)", category: "أسهم" },
+  { value: "NFLX", label: "Netflix", category: "أسهم" },
+  { value: "NVDA", label: "NVIDIA", category: "أسهم" },
+  { value: "AMD", label: "AMD", category: "أسهم" },
+  { value: "INTC", label: "Intel", category: "أسهم" },
+  
+  // Stocks - Finance & Others
+  { value: "JPM", label: "JPMorgan", category: "أسهم" },
+  { value: "BAC", label: "Bank of America", category: "أسهم" },
+  { value: "WMT", label: "Walmart", category: "أسهم" },
+  { value: "JNJ", label: "Johnson & Johnson", category: "أسهم" },
+  { value: "PFE", label: "Pfizer", category: "أسهم" },
+  { value: "XOM", label: "Exxon Mobil", category: "أسهم" },
+  { value: "CVX", label: "Chevron", category: "أسهم" },
+  { value: "KO", label: "Coca-Cola", category: "أسهم" },
+  { value: "DIS", label: "Disney", category: "أسهم" },
+  { value: "BA", label: "Boeing", category: "أسهم" },
 ];
 
 export const ProfessionalSignalsManager = () => {
