@@ -156,7 +156,7 @@ const Index = () => {
                 <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">PocketOption هوامير </h1>
+                <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">هوامير التوصيات                   </h1>
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">
                   توصيات تداول مباشرة
                 </p>
