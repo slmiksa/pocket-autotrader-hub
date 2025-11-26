@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.translate-news]
 verify_jwt = false
+
+[functions.analyze-supply-demand]
+verify_jwt = false
