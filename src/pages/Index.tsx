@@ -188,6 +188,10 @@ const Index = () => {
                   <Shield className="h-4 w-4" />
                   <span className="hidden sm:inline">توصيات المحترفين</span>
                 </Button>}
+              <Button onClick={() => navigate('/supply-demand')} variant="outline" size="sm" className="gap-1.5 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30 hover:bg-primary/20">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                <span className="hidden sm:inline">محلل العرض والطلب</span>
+              </Button>
               <Button onClick={() => navigate('/news')} variant="outline" size="sm" className="gap-1.5">
                 <Newspaper className="h-4 w-4" />
                 <span className="hidden sm:inline">الأخبار</span>
