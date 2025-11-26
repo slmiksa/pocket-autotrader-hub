@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,6 +49,122 @@ const SupplyDemandAnalyzer = () => {
     { value: "stocks", label: "أسهم - Stocks" },
     { value: "metals", label: "معادن - Metals" }
   ];
+
+  const forexSymbols = [
+    // Major Pairs
+    { value: "EURUSD", label: "EUR/USD - يورو/دولار" },
+    { value: "GBPUSD", label: "GBP/USD - جنيه/دولار" },
+    { value: "USDJPY", label: "USD/JPY - دولار/ين" },
+    { value: "USDCHF", label: "USD/CHF - دولار/فرنك" },
+    { value: "AUDUSD", label: "AUD/USD - دولار أسترالي/دولار" },
+    { value: "USDCAD", label: "USD/CAD - دولار/دولار كندي" },
+    { value: "NZDUSD", label: "NZD/USD - دولار نيوزيلندي/دولار" },
+    // Cross Pairs
+    { value: "EURJPY", label: "EUR/JPY - يورو/ين" },
+    { value: "GBPJPY", label: "GBP/JPY - جنيه/ين" },
+    { value: "EURGBP", label: "EUR/GBP - يورو/جنيه" },
+    { value: "EURAUD", label: "EUR/AUD - يورو/دولار أسترالي" },
+    { value: "EURCAD", label: "EUR/CAD - يورو/دولار كندي" },
+    { value: "EURCHF", label: "EUR/CHF - يورو/فرنك" },
+    { value: "AUDCAD", label: "AUD/CAD - دولار أسترالي/كندي" },
+    { value: "AUDCHF", label: "AUD/CHF - دولار أسترالي/فرنك" },
+    { value: "AUDJPY", label: "AUD/JPY - دولار أسترالي/ين" },
+    { value: "AUDNZD", label: "AUD/NZD - دولار أسترالي/نيوزيلندي" },
+    { value: "CADJPY", label: "CAD/JPY - دولار كندي/ين" },
+    { value: "CHFJPY", label: "CHF/JPY - فرنك/ين" },
+    { value: "GBPAUD", label: "GBP/AUD - جنيه/دولار أسترالي" },
+    { value: "GBPCAD", label: "GBP/CAD - جنيه/دولار كندي" },
+    { value: "GBPCHF", label: "GBP/CHF - جنيه/فرنك" },
+    { value: "GBPNZD", label: "GBP/NZD - جنيه/دولار نيوزيلندي" },
+    { value: "NZDCAD", label: "NZD/CAD - دولار نيوزيلندي/كندي" },
+    { value: "NZDCHF", label: "NZD/CHF - دولار نيوزيلندي/فرنك" },
+    { value: "NZDJPY", label: "NZD/JPY - دولار نيوزيلندي/ين" },
+  ];
+
+  const cryptoSymbols = [
+    { value: "BTCUSD", label: "BTC/USD - بيتكوين" },
+    { value: "ETHUSD", label: "ETH/USD - إيثريوم" },
+    { value: "BNBUSD", label: "BNB/USD - بينانس كوين" },
+    { value: "XRPUSD", label: "XRP/USD - ريبل" },
+    { value: "ADAUSD", label: "ADA/USD - كاردانو" },
+    { value: "SOLUSD", label: "SOL/USD - سولانا" },
+    { value: "DOTUSD", label: "DOT/USD - بولكادوت" },
+    { value: "DOGEUSD", label: "DOGE/USD - دوجكوين" },
+    { value: "MATICUSD", label: "MATIC/USD - بوليجون" },
+    { value: "SHIBUSD", label: "SHIB/USD - شيبا إينو" },
+    { value: "AVAXUSD", label: "AVAX/USD - أفالانش" },
+    { value: "LINKUSD", label: "LINK/USD - تشين لينك" },
+    { value: "UNIUSD", label: "UNI/USD - يونيسواب" },
+    { value: "LTCUSD", label: "LTC/USD - لايتكوين" },
+    { value: "BCHUSD", label: "BCH/USD - بيتكوين كاش" },
+    { value: "ATOMUSD", label: "ATOM/USD - كوزموس" },
+    { value: "FTMUSD", label: "FTM/USD - فانتوم" },
+    { value: "AAVEUSD", label: "AAVE/USD - آفي" },
+    { value: "ALGOUSD", label: "ALGO/USD - ألجوراند" },
+    { value: "APTUSD", label: "APT/USD - أبتوس" },
+  ];
+
+  const stockSymbols = [
+    // Tech Giants
+    { value: "AAPL", label: "AAPL - أبل" },
+    { value: "MSFT", label: "MSFT - مايكروسوفت" },
+    { value: "GOOGL", label: "GOOGL - جوجل" },
+    { value: "AMZN", label: "AMZN - أمازون" },
+    { value: "META", label: "META - ميتا" },
+    { value: "TSLA", label: "TSLA - تسلا" },
+    { value: "NVDA", label: "NVDA - إنفيديا" },
+    { value: "NFLX", label: "NFLX - نيتفليكس" },
+    // Financial
+    { value: "JPM", label: "JPM - جي بي مورجان" },
+    { value: "BAC", label: "BAC - بنك أوف أمريكا" },
+    { value: "WFC", label: "WFC - ويلز فارجو" },
+    { value: "GS", label: "GS - جولدمان ساكس" },
+    { value: "V", label: "V - فيزا" },
+    { value: "MA", label: "MA - ماستركارد" },
+    // Healthcare
+    { value: "JNJ", label: "JNJ - جونسون آند جونسون" },
+    { value: "PFE", label: "PFE - فايزر" },
+    { value: "UNH", label: "UNH - يونايتد هيلث" },
+    // Consumer
+    { value: "KO", label: "KO - كوكاكولا" },
+    { value: "PEP", label: "PEP - بيبسي" },
+    { value: "WMT", label: "WMT - وول مارت" },
+    { value: "MCD", label: "MCD - ماكدونالدز" },
+    { value: "NKE", label: "NKE - نايكي" },
+    // Industrial
+    { value: "BA", label: "BA - بوينج" },
+    { value: "CAT", label: "CAT - كاتربيلر" },
+    { value: "MMM", label: "MMM - 3M" },
+    // Energy
+    { value: "XOM", label: "XOM - إكسون موبيل" },
+    { value: "CVX", label: "CVX - شيفرون" },
+  ];
+
+  const metalSymbols = [
+    { value: "XAUUSD", label: "XAU/USD - الذهب" },
+    { value: "XAGUSD", label: "XAG/USD - الفضة" },
+    { value: "XPTUSD", label: "XPT/USD - البلاتين" },
+    { value: "XPDUSD", label: "XPD/USD - البلاديوم" },
+    { value: "XCUUSD", label: "XCU/USD - النحاس" },
+  ];
+
+  const getSymbolsForMarket = () => {
+    switch (market) {
+      case "forex": return forexSymbols;
+      case "crypto": return cryptoSymbols;
+      case "stocks": return stockSymbols;
+      case "metals": return metalSymbols;
+      default: return forexSymbols;
+    }
+  };
+
+  // Update symbol when market changes
+  useEffect(() => {
+    const symbols = getSymbolsForMarket();
+    if (symbols.length > 0) {
+      setSymbol(symbols[0].value);
+    }
+  }, [market]);
 
   const timeframeOptions = [
     { value: "1m", label: "1 دقيقة" },
@@ -172,12 +288,18 @@ const SupplyDemandAnalyzer = () => {
 
             <div className="space-y-2">
               <Label>رمز السوق</Label>
-              <Input
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                placeholder="EURUSD, BTCUSD, AAPL"
-                className="uppercase"
-              />
+              <Select value={symbol} onValueChange={setSymbol}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {getSymbolsForMarket().map((sym) => (
+                    <SelectItem key={sym.value} value={sym.value}>
+                      {sym.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
