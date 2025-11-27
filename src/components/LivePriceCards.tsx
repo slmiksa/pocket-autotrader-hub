@@ -2,31 +2,24 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, LineChart } from 'lucide-react';
-
 interface PriceData {
   price: number;
   change24h: number;
   isPositive: boolean;
 }
-
 export const LivePriceCards = () => {
   const navigate = useNavigate();
   const [goldPrice, setGoldPrice] = useState<PriceData | null>(null);
   const [btcPrice, setBtcPrice] = useState<PriceData | null>(null);
-
   useEffect(() => {
     const fetchPrices = async () => {
       try {
         // Fetch Bitcoin price from Binance (more accurate and real-time)
-        const btcResponse = await fetch(
-          'https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT'
-        );
+        const btcResponse = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
         const btcData = await btcResponse.json();
-
         if (btcData && btcData.lastPrice) {
           const btcPriceValue = parseFloat(btcData.lastPrice);
           const btcChange = parseFloat(btcData.priceChangePercent);
-          
           setBtcPrice({
             price: btcPriceValue,
             change24h: btcChange,
@@ -35,15 +28,11 @@ export const LivePriceCards = () => {
         }
 
         // Fetch Gold price (PAXG) from Binance
-        const goldResponse = await fetch(
-          'https://api.binance.com/api/v3/ticker/24hr?symbol=PAXGUSDT'
-        );
+        const goldResponse = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=PAXGUSDT');
         const goldData = await goldResponse.json();
-
         if (goldData && goldData.lastPrice) {
           const goldPriceValue = parseFloat(goldData.lastPrice);
           const goldChange = parseFloat(goldData.priceChangePercent);
-          
           setGoldPrice({
             price: goldPriceValue,
             change24h: goldChange,
@@ -52,14 +41,11 @@ export const LivePriceCards = () => {
         }
       } catch (error) {
         console.error('Error fetching prices from Binance:', error);
-        
+
         // Fallback to CoinGecko if Binance fails
         try {
-          const response = await fetch(
-            'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,pax-gold&vs_currencies=usd&include_24hr_change=true'
-          );
+          const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,pax-gold&vs_currencies=usd&include_24hr_change=true');
           const data = await response.json();
-
           if (data.bitcoin) {
             setBtcPrice({
               price: data.bitcoin.usd,
@@ -67,7 +53,6 @@ export const LivePriceCards = () => {
               isPositive: (data.bitcoin.usd_24h_change || 0) > 0
             });
           }
-
           if (data['pax-gold']) {
             setGoldPrice({
               price: data['pax-gold'].usd,
@@ -86,17 +71,11 @@ export const LivePriceCards = () => {
 
     // Update every 10 seconds for real-time data
     const interval = setInterval(fetchPrices, 10000);
-
     return () => clearInterval(interval);
   }, []);
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 py-6 bg-muted/30">
+  return <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 py-6 bg-muted/30">
       {/* Gold Card */}
-      <Card 
-        className="p-6 bg-gradient-to-br from-warning/10 to-warning/5 border-warning/20 hover:shadow-lg transition-all cursor-pointer group"
-        onClick={() => navigate('/live-chart?symbol=gold')}
-      >
+      <Card className="p-6 bg-gradient-to-br from-warning/10 to-warning/5 border-warning/20 hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/live-chart?symbol=gold')}>
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -104,53 +83,26 @@ export const LivePriceCards = () => {
               <LineChart className="h-4 w-4 text-warning opacity-60 group-hover:opacity-100 transition-opacity" />
             </div>
             <p className="text-3xl font-bold text-foreground">
-              {goldPrice ? `$${goldPrice.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'جاري التحميل...'}
+              {goldPrice ? `$${goldPrice.price.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}` : 'جاري التحميل...'}
             </p>
             <p className="text-xs text-muted-foreground mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
               اضغط لعرض الشارت المباشر
             </p>
           </div>
           <div className="text-right">
-            {goldPrice && (
-              <div className={`flex items-center gap-1 text-lg font-semibold ${goldPrice.isPositive ? 'text-success' : 'text-danger'}`}>
+            {goldPrice && <div className={`flex items-center gap-1 text-lg font-semibold ${goldPrice.isPositive ? 'text-success' : 'text-danger'}`}>
                 {goldPrice.isPositive ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
                 <span>{goldPrice.isPositive ? '+' : ''}{goldPrice.change24h.toFixed(2)}%</span>
-              </div>
-            )}
+              </div>}
             <p className="text-xs text-muted-foreground mt-1">24 ساعة</p>
           </div>
         </div>
       </Card>
 
       {/* Bitcoin Card */}
-      <Card 
-        className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hover:shadow-lg transition-all cursor-pointer group"
-        onClick={() => navigate('/live-chart?symbol=bitcoin')}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-sm font-medium text-muted-foreground">بيتكوين (BTC)</h3>
-              <LineChart className="h-4 w-4 text-primary opacity-60 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <p className="text-3xl font-bold text-foreground">
-              {btcPrice ? `$${btcPrice.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'جاري التحميل...'}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              اضغط لعرض الشارت المباشر
-            </p>
-          </div>
-          <div className="text-right">
-            {btcPrice && (
-              <div className={`flex items-center gap-1 text-lg font-semibold ${btcPrice.isPositive ? 'text-success' : 'text-danger'}`}>
-                {btcPrice.isPositive ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
-                <span>{btcPrice.isPositive ? '+' : ''}{btcPrice.change24h.toFixed(2)}%</span>
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground mt-1">24 ساعة</p>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
+      
+    </div>;
 };
