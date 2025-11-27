@@ -20,17 +20,17 @@ export default function LiveChart() {
   const getSymbolInfo = () => {
     if (symbol === "gold") {
       return {
-        tvSymbol: "TVC:GOLD",
+        tvSymbol: "OANDA:XAUUSD",
         displayName: "الذهب (XAU/USD)"
       };
     } else if (symbol === "bitcoin") {
       return {
-        tvSymbol: "BITSTAMP:BTCUSD",
+        tvSymbol: "CRYPTO:BTCUSD",
         displayName: "بيتكوين (BTC/USD)"
       };
     }
     return {
-      tvSymbol: "BITSTAMP:BTCUSD",
+      tvSymbol: "CRYPTO:BTCUSD",
       displayName: "بيتكوين (BTC/USD)"
     };
   };
