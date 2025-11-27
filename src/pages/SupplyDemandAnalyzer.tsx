@@ -32,6 +32,7 @@ const SupplyDemandAnalyzer = () => {
   const [market, setMarket] = useState<string>("forex");
   const [symbol, setSymbol] = useState<string>("EURUSD");
   const [timeframe, setTimeframe] = useState<string>("1H");
+  const [zoneDistance, setZoneDistance] = useState<string>("near"); // near or far
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [supplyZones, setSupplyZones] = useState<Zone[]>([]);
@@ -351,6 +352,14 @@ const SupplyDemandAnalyzer = () => {
     value: "1D",
     label: "يوم واحد"
   }];
+
+  const zoneDistanceOptions = [{
+    value: "near",
+    label: "قريبة (0.5% - 2%)"
+  }, {
+    value: "far",
+    label: "بعيدة (2% - 5%)"
+  }];
   const handleStartAnalysis = async () => {
     if (!symbol.trim()) {
       toast({
@@ -370,7 +379,8 @@ const SupplyDemandAnalyzer = () => {
         body: {
           market,
           symbol: symbol.toUpperCase(),
-          timeframe
+          timeframe,
+          zoneDistance
         }
       });
       if (error) throw error;
@@ -432,7 +442,7 @@ const SupplyDemandAnalyzer = () => {
 
         {/* Input Panel */}
         <Card className="p-6 border-primary/20 bg-card/50 backdrop-blur">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
             <div className="space-y-2">
               <Label>نوع السوق</Label>
               <Select value={market} onValueChange={setMarket}>
@@ -469,6 +479,20 @@ const SupplyDemandAnalyzer = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {timeframeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>مسافة المناطق</Label>
+              <Select value={zoneDistance} onValueChange={setZoneDistance}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {zoneDistanceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
                     </SelectItem>)}
                 </SelectContent>
