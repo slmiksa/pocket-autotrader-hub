@@ -17,37 +17,75 @@ export const LivePriceCards = () => {
   useEffect(() => {
     const fetchPrices = async () => {
       try {
-        // Fetch Bitcoin and Gold prices from CoinGecko API
-        const response = await fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,pax-gold&vs_currencies=usd&include_24hr_change=true'
+        // Fetch Bitcoin price from Binance (more accurate and real-time)
+        const btcResponse = await fetch(
+          'https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT'
         );
-        const data = await response.json();
+        const btcData = await btcResponse.json();
 
-        if (data.bitcoin) {
+        if (btcData && btcData.lastPrice) {
+          const btcPriceValue = parseFloat(btcData.lastPrice);
+          const btcChange = parseFloat(btcData.priceChangePercent);
+          
           setBtcPrice({
-            price: data.bitcoin.usd,
-            change24h: data.bitcoin.usd_24h_change || 0,
-            isPositive: (data.bitcoin.usd_24h_change || 0) > 0
+            price: btcPriceValue,
+            change24h: btcChange,
+            isPositive: btcChange > 0
           });
         }
 
-        if (data['pax-gold']) {
+        // Fetch Gold price (PAXG) from Binance
+        const goldResponse = await fetch(
+          'https://api.binance.com/api/v3/ticker/24hr?symbol=PAXGUSDT'
+        );
+        const goldData = await goldResponse.json();
+
+        if (goldData && goldData.lastPrice) {
+          const goldPriceValue = parseFloat(goldData.lastPrice);
+          const goldChange = parseFloat(goldData.priceChangePercent);
+          
           setGoldPrice({
-            price: data['pax-gold'].usd,
-            change24h: data['pax-gold'].usd_24h_change || 0,
-            isPositive: (data['pax-gold'].usd_24h_change || 0) > 0
+            price: goldPriceValue,
+            change24h: goldChange,
+            isPositive: goldChange > 0
           });
         }
       } catch (error) {
-        console.error('Error fetching prices:', error);
+        console.error('Error fetching prices from Binance:', error);
+        
+        // Fallback to CoinGecko if Binance fails
+        try {
+          const response = await fetch(
+            'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,pax-gold&vs_currencies=usd&include_24hr_change=true'
+          );
+          const data = await response.json();
+
+          if (data.bitcoin) {
+            setBtcPrice({
+              price: data.bitcoin.usd,
+              change24h: data.bitcoin.usd_24h_change || 0,
+              isPositive: (data.bitcoin.usd_24h_change || 0) > 0
+            });
+          }
+
+          if (data['pax-gold']) {
+            setGoldPrice({
+              price: data['pax-gold'].usd,
+              change24h: data['pax-gold'].usd_24h_change || 0,
+              isPositive: (data['pax-gold'].usd_24h_change || 0) > 0
+            });
+          }
+        } catch (fallbackError) {
+          console.error('Error fetching prices from CoinGecko:', fallbackError);
+        }
       }
     };
 
     // Fetch immediately
     fetchPrices();
 
-    // Update every 30 seconds
-    const interval = setInterval(fetchPrices, 30000);
+    // Update every 10 seconds for real-time data
+    const interval = setInterval(fetchPrices, 10000);
 
     return () => clearInterval(interval);
   }, []);
