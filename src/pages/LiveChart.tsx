@@ -20,18 +20,18 @@ export default function LiveChart() {
   const getSymbolInfo = () => {
     if (symbol === "gold") {
       return {
-        tvSymbol: "OANDA:XAUUSD",
+        tvSymbol: "TVC:GOLD",
         displayName: "الذهب (XAU/USD)"
       };
     } else if (symbol === "bitcoin") {
       return {
-        tvSymbol: "BINANCE:BTCUSDT",
-        displayName: "بيتكوين (BTC/USDT)"
+        tvSymbol: "BITSTAMP:BTCUSD",
+        displayName: "بيتكوين (BTC/USD)"
       };
     }
     return {
-      tvSymbol: "BINANCE:BTCUSDT",
-      displayName: "بيتكوين (BTC/USDT)"
+      tvSymbol: "BITSTAMP:BTCUSD",
+      displayName: "بيتكوين (BTC/USD)"
     };
   };
 
