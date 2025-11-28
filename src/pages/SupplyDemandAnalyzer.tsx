@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, TrendingUp, TrendingDown, Activity, Target } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Activity, Target, Upload, Image, Info, Camera, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface Zone {
   type: "supply" | "demand";
   upper_price: number;
@@ -26,13 +27,13 @@ interface TradeSetup {
 }
 const SupplyDemandAnalyzer = () => {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [market, setMarket] = useState<string>("forex");
   const [symbol, setSymbol] = useState<string>("EURUSD");
   const [timeframe, setTimeframe] = useState<string>("1H");
-  const [zoneDistance, setZoneDistance] = useState<string>("near"); // near or far
+  const [zoneDistance, setZoneDistance] = useState<string>("near");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [supplyZones, setSupplyZones] = useState<Zone[]>([]);
@@ -41,6 +42,9 @@ const SupplyDemandAnalyzer = () => {
   const [tradeSetup, setTradeSetup] = useState<TradeSetup | null>(null);
   const [signalStatus, setSignalStatus] = useState<"READY" | "WAITING" | "NOT_VALID">("WAITING");
   const [currentPrice, setCurrentPrice] = useState<number>(0);
+  const [analysisMode, setAnalysisMode] = useState<"auto" | "image">("image");
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [imageAnalysis, setImageAnalysis] = useState<string>("");
   const marketOptions = [{
     value: "forex",
     label: "فوريكس - Forex"
@@ -360,6 +364,93 @@ const SupplyDemandAnalyzer = () => {
     value: "far",
     label: "بعيدة (2% - 5%)"
   }];
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "خطأ",
+          description: "حجم الصورة كبير جداً. الحد الأقصى 10 ميجابايت",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUploadedImage(reader.result as string);
+        setAnalysisComplete(false);
+        setImageAnalysis("");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearImage = () => {
+    setUploadedImage(null);
+    setAnalysisComplete(false);
+    setImageAnalysis("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleImageAnalysis = async () => {
+    if (!uploadedImage) {
+      toast({
+        title: "خطأ",
+        description: "الرجاء رفع صورة الرسم البياني أولاً",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAnalysisComplete(false);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-supply-demand-image', {
+        body: {
+          image: uploadedImage,
+          market,
+          symbol,
+          timeframe,
+          zoneDistance
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success !== false) {
+        setSupplyZones(data.supplyZones || []);
+        setDemandZones(data.demandZones || []);
+        setTrend(data.trend || "");
+        setTradeSetup(data.tradeSetup || null);
+        setSignalStatus(data.signalStatus || "WAITING");
+        setCurrentPrice(data.currentPrice || 0);
+        setImageAnalysis(data.analysis || "");
+        setAnalysisComplete(true);
+        
+        toast({
+          title: "✅ تم التحليل بنجاح",
+          description: "تم تحليل الصورة وتحديد مناطق العرض والطلب"
+        });
+      } else {
+        throw new Error(data.error || "فشل التحليل");
+      }
+    } catch (error: any) {
+      console.error("Image analysis error:", error);
+      toast({
+        title: "خطأ في التحليل",
+        description: error.message || "حدث خطأ أثناء تحليل الصورة",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const handleStartAnalysis = async () => {
     if (!symbol.trim()) {
       toast({
@@ -440,80 +531,250 @@ const SupplyDemandAnalyzer = () => {
           </div>
         </div>
 
-        {/* Input Panel */}
-        <Card className="p-6 border-primary/20 bg-card/50 backdrop-blur">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-            <div className="space-y-2">
-              <Label>نوع السوق</Label>
-              <Select value={market} onValueChange={setMarket}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {marketOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Input Panel with Tabs */}
+        <Tabs value={analysisMode} onValueChange={(v) => setAnalysisMode(v as "auto" | "image")} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="image" className="flex items-center gap-2">
+              <Image className="w-4 h-4" />
+              تحليل بالصورة
+            </TabsTrigger>
+            <TabsTrigger value="auto" className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              تحليل تلقائي
+            </TabsTrigger>
+          </TabsList>
 
-            <div className="space-y-2">
-              <Label>رمز السوق</Label>
-              <Select value={symbol} onValueChange={setSymbol}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  {getSymbolsForMarket().map(sym => <SelectItem key={sym.value} value={sym.value}>
-                      {sym.label}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Image Analysis Tab */}
+          <TabsContent value="image" className="space-y-4">
+            {/* Screenshot Tips */}
+            <Card className="p-4 border-blue-500/20 bg-blue-500/5">
+              <div className="flex items-start gap-3">
+                <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-blue-400">نصائح لالتقاط صورة مثالية</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>📊 استخدم شارت نظيف بدون مؤشرات كثيرة</li>
+                    <li>🔍 تأكد من وضوح الأسعار على المحور الأيمن</li>
+                    <li>📏 أظهر ما لا يقل عن 50-100 شمعة</li>
+                    <li>🖼️ التقط الشاشة كاملة للرسم البياني</li>
+                    <li>⏰ تأكد من ظهور الإطار الزمني في الصورة</li>
+                    <li>💡 يفضل استخدام خلفية داكنة للوضوح</li>
+                  </ul>
+                </div>
+              </div>
+            </Card>
 
-            <div className="space-y-2">
-              <Label>الإطار الزمني</Label>
-              <Select value={timeframe} onValueChange={setTimeframe}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeframeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Image Upload Section */}
+            <Card className="p-6 border-primary/20 bg-card/50 backdrop-blur">
+              <div className="space-y-4">
+                {/* Settings Row */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>نوع السوق</Label>
+                    <Select value={market} onValueChange={setMarket}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {marketOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <div className="space-y-2">
-              <Label>مسافة المناطق</Label>
-              <Select value={zoneDistance} onValueChange={setZoneDistance}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {zoneDistanceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+                  <div className="space-y-2">
+                    <Label>رمز السوق</Label>
+                    <Select value={symbol} onValueChange={setSymbol}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        {getSymbolsForMarket().map(sym => <SelectItem key={sym.value} value={sym.value}>
+                          {sym.label}
+                        </SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <Button onClick={handleStartAnalysis} disabled={isAnalyzing} className="bg-primary hover:bg-primary/90" size="lg">
-              {isAnalyzing ? "جاري التحليل..." : "بدء التحليل"}
-            </Button>
-          </div>
-        </Card>
+                  <div className="space-y-2">
+                    <Label>الإطار الزمني</Label>
+                    <Select value={timeframe} onValueChange={setTimeframe}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {timeframeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>مسافة المناطق</Label>
+                    <Select value={zoneDistance} onValueChange={setZoneDistance}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {zoneDistanceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Image Upload Area */}
+                <div className="space-y-4">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  
+                  {!uploadedImage ? (
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed border-primary/30 rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all"
+                    >
+                      <Camera className="w-12 h-12 mx-auto text-primary/50 mb-4" />
+                      <p className="text-lg font-medium">اضغط لرفع صورة الرسم البياني</p>
+                      <p className="text-sm text-muted-foreground mt-2">PNG, JPG, WEBP - حد أقصى 10 ميجابايت</p>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <img
+                        src={uploadedImage}
+                        alt="Uploaded chart"
+                        className="w-full max-h-[400px] object-contain rounded-xl border border-primary/20"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2"
+                        onClick={clearImage}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Analyze Button */}
+                <Button
+                  onClick={handleImageAnalysis}
+                  disabled={isAnalyzing || !uploadedImage}
+                  className="w-full bg-primary hover:bg-primary/90"
+                  size="lg"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Activity className="w-4 h-4 mr-2 animate-spin" />
+                      جاري تحليل الصورة...
+                    </>
+                  ) : (
+                    <>
+                      <Target className="w-4 h-4 mr-2" />
+                      تحليل مناطق العرض والطلب
+                    </>
+                  )}
+                </Button>
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* Auto Analysis Tab */}
+          <TabsContent value="auto">
+            <Card className="p-6 border-primary/20 bg-card/50 backdrop-blur">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                <div className="space-y-2">
+                  <Label>نوع السوق</Label>
+                  <Select value={market} onValueChange={setMarket}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {marketOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>رمز السوق</Label>
+                  <Select value={symbol} onValueChange={setSymbol}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {getSymbolsForMarket().map(sym => <SelectItem key={sym.value} value={sym.value}>
+                        {sym.label}
+                      </SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>الإطار الزمني</Label>
+                  <Select value={timeframe} onValueChange={setTimeframe}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timeframeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>مسافة المناطق</Label>
+                  <Select value={zoneDistance} onValueChange={setZoneDistance}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {zoneDistanceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button onClick={handleStartAnalysis} disabled={isAnalyzing} className="bg-primary hover:bg-primary/90" size="lg">
+                  {isAnalyzing ? "جاري التحليل..." : "بدء التحليل"}
+                </Button>
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Results Section */}
         {analysisComplete && <>
+            {/* Image Analysis Text */}
+            {imageAnalysis && analysisMode === "image" && (
+              <Card className="p-6 border-primary/20 bg-gradient-to-br from-card/80 to-blue-500/5">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <Info className="w-5 h-5 text-blue-400" />
+                  تحليل الذكاء الاصطناعي
+                </h3>
+                <p className="text-muted-foreground whitespace-pre-line leading-relaxed">{imageAnalysis}</p>
+              </Card>
+            )}
+
             {/* Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card className="p-4 border-primary/20">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">الاتجاه</p>
-                    <p className="text-lg font-bold">{trend}</p>
+                    <p className="text-lg font-bold">{trend || "غير محدد"}</p>
                   </div>
                   {getTrendIcon()}
                 </div>
@@ -521,15 +782,21 @@ const SupplyDemandAnalyzer = () => {
 
               <Card className="p-4 border-primary/20">
                 <div>
-                  <p className="text-sm text-muted-foreground">مناطق العرض</p>
-                  <p className="text-lg font-bold text-red-400">{supplyZones.length}</p>
+                  <p className="text-sm text-muted-foreground">السعر الحالي</p>
+                  <p className="text-lg font-bold text-primary">{currentPrice > 0 ? currentPrice.toFixed(5) : "---"}</p>
                 </div>
               </Card>
 
               <Card className="p-4 border-primary/20">
-                <div>
-                  <p className="text-sm text-muted-foreground">مناطق الطلب</p>
-                  <p className="text-lg font-bold text-green-400">{demandZones.length}</p>
+                <div className="flex justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">مناطق العرض</p>
+                    <p className="text-lg font-bold text-red-400">{supplyZones.length}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">مناطق الطلب</p>
+                    <p className="text-lg font-bold text-green-400">{demandZones.length}</p>
+                  </div>
                 </div>
               </Card>
 

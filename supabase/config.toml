@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.analyze-supply-demand]
 verify_jwt = false
+
+[functions.analyze-supply-demand-image]
+verify_jwt = false
