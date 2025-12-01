@@ -28,29 +28,42 @@ export default function LiveChart() {
       usdcad: { tvSymbol: "FX:USDCAD", displayName: "دولار/كندي (USD/CAD)" },
       nzdusd: { tvSymbol: "FX:NZDUSD", displayName: "نيوزيلندي/دولار (NZD/USD)" },
       eurgbp: { tvSymbol: "FX:EURGBP", displayName: "يورو/جنيه (EUR/GBP)" },
+      eurjpy: { tvSymbol: "FX:EURJPY", displayName: "يورو/ين (EUR/JPY)" },
+      gbpjpy: { tvSymbol: "FX:GBPJPY", displayName: "جنيه/ين (GBP/JPY)" },
       
       // Crypto
-      bitcoin: { tvSymbol: "CRYPTO:BTCUSD", displayName: "بيتكوين (BTC/USD)" },
-      ethereum: { tvSymbol: "CRYPTO:ETHUSD", displayName: "إيثريوم (ETH/USD)" },
-      bnb: { tvSymbol: "CRYPTO:BNBUSD", displayName: "بي إن بي (BNB/USD)" },
-      solana: { tvSymbol: "CRYPTO:SOLUSD", displayName: "سولانا (SOL/USD)" },
-      xrp: { tvSymbol: "CRYPTO:XRPUSD", displayName: "ريبل (XRP/USD)" },
-      cardano: { tvSymbol: "CRYPTO:ADAUSD", displayName: "كاردانو (ADA/USD)" },
-      dogecoin: { tvSymbol: "CRYPTO:DOGEUSD", displayName: "دوجكوين (DOGE/USD)" },
-      litecoin: { tvSymbol: "CRYPTO:LTCUSD", displayName: "لايتكوين (LTC/USD)" },
+      bitcoin: { tvSymbol: "BINANCE:BTCUSDT", displayName: "بيتكوين (BTC/USD)" },
+      ethereum: { tvSymbol: "BINANCE:ETHUSDT", displayName: "إيثريوم (ETH/USD)" },
+      bnb: { tvSymbol: "BINANCE:BNBUSDT", displayName: "بي إن بي (BNB/USD)" },
+      solana: { tvSymbol: "BINANCE:SOLUSDT", displayName: "سولانا (SOL/USD)" },
+      xrp: { tvSymbol: "BINANCE:XRPUSDT", displayName: "ريبل (XRP/USD)" },
+      cardano: { tvSymbol: "BINANCE:ADAUSDT", displayName: "كاردانو (ADA/USD)" },
+      dogecoin: { tvSymbol: "BINANCE:DOGEUSDT", displayName: "دوجكوين (DOGE/USD)" },
+      litecoin: { tvSymbol: "BINANCE:LTCUSDT", displayName: "لايتكوين (LTC/USD)" },
+      avalanche: { tvSymbol: "BINANCE:AVAXUSDT", displayName: "أفالانش (AVAX/USD)" },
+      polkadot: { tvSymbol: "BINANCE:DOTUSDT", displayName: "بولكادوت (DOT/USD)" },
+      chainlink: { tvSymbol: "BINANCE:LINKUSDT", displayName: "تشين لينك (LINK/USD)" },
+      polygon: { tvSymbol: "BINANCE:MATICUSDT", displayName: "بوليجون (MATIC/USD)" },
+      shiba: { tvSymbol: "BINANCE:SHIBUSDT", displayName: "شيبا إينو (SHIB/USD)" },
+      tron: { tvSymbol: "BINANCE:TRXUSDT", displayName: "ترون (TRX/USD)" },
+      uniswap: { tvSymbol: "BINANCE:UNIUSDT", displayName: "يونيسواب (UNI/USD)" },
       
       // Commodities
       gold: { tvSymbol: "OANDA:XAUUSD", displayName: "الذهب (XAU/USD)" },
       silver: { tvSymbol: "OANDA:XAGUSD", displayName: "الفضة (XAG/USD)" },
       oil: { tvSymbol: "TVC:USOIL", displayName: "النفط الخام (WTI)" },
       naturalgas: { tvSymbol: "TVC:NATURALGAS", displayName: "الغاز الطبيعي" },
+      platinum: { tvSymbol: "TVC:PLATINUM", displayName: "البلاتين" },
+      copper: { tvSymbol: "TVC:COPPER", displayName: "النحاس" },
       
       // Indices
       sp500: { tvSymbol: "FOREXCOM:SPXUSD", displayName: "إس آند بي 500 (S&P 500)" },
-      dowjones: { tvSymbol: "FOREXCOM:DJI", displayName: "داو جونز (Dow Jones)" },
+      dowjones: { tvSymbol: "TVC:DJI", displayName: "داو جونز (Dow Jones)" },
       nasdaq: { tvSymbol: "NASDAQ:NDX", displayName: "ناسداك (NASDAQ)" },
       dax: { tvSymbol: "XETR:DAX", displayName: "داكس الألماني (DAX)" },
-      ftse100: { tvSymbol: "FTSE:UKX", displayName: "فوتسي 100 (FTSE 100)" },
+      ftse100: { tvSymbol: "TVC:UKX", displayName: "فوتسي 100 (FTSE 100)" },
+      nikkei: { tvSymbol: "TVC:NI225", displayName: "نيكاي 225 (Nikkei)" },
+      cac40: { tvSymbol: "TVC:CAC40", displayName: "كاك 40 (CAC 40)" },
       
       // Stocks
       apple: { tvSymbol: "NASDAQ:AAPL", displayName: "أبل (Apple)" },
@@ -60,9 +73,14 @@ export default function LiveChart() {
       microsoft: { tvSymbol: "NASDAQ:MSFT", displayName: "مايكروسوفت (Microsoft)" },
       meta: { tvSymbol: "NASDAQ:META", displayName: "ميتا (Meta)" },
       nvidia: { tvSymbol: "NASDAQ:NVDA", displayName: "إنفيديا (NVIDIA)" },
+      netflix: { tvSymbol: "NASDAQ:NFLX", displayName: "نتفليكس (Netflix)" },
+      amd: { tvSymbol: "NASDAQ:AMD", displayName: "إيه إم دي (AMD)" },
+      intel: { tvSymbol: "NASDAQ:INTC", displayName: "إنتل (Intel)" },
+      disney: { tvSymbol: "NYSE:DIS", displayName: "ديزني (Disney)" },
+      cocacola: { tvSymbol: "NYSE:KO", displayName: "كوكا كولا (Coca-Cola)" },
     };
 
-    return symbolMap[symbol] || { tvSymbol: "CRYPTO:BTCUSD", displayName: "بيتكوين (BTC/USD)" };
+    return symbolMap[symbol] || { tvSymbol: "BINANCE:BTCUSDT", displayName: "بيتكوين (BTC/USD)" };
   };
 
   const symbolInfo = getSymbolInfo();
