@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, TrendingUp, TrendingDown, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Loader2, RefreshCw, Star, User } from 'lucide-react';
+import { useFavorites } from '@/hooks/useFavorites';
 
 interface MarketItem {
   name: string;
@@ -95,10 +96,10 @@ const Markets = () => {
   const [prices, setPrices] = useState<Record<string, PriceData>>({});
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
 
   const fetchPrices = async () => {
     try {
-      // Fetch crypto prices from Binance
       const cryptoSymbols = markets
         .filter(m => m.binanceSymbol)
         .map(m => m.binanceSymbol);
@@ -152,6 +153,15 @@ const Markets = () => {
     }
   };
 
+  const handleFavoriteClick = (e: React.MouseEvent, market: MarketItem) => {
+    e.stopPropagation();
+    if (isFavorite(market.symbol)) {
+      removeFavorite(market.symbol);
+    } else {
+      addFavorite(market.symbol, market.nameAr, market.name, market.category);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0f]" dir="rtl">
       {/* Header */}
@@ -167,14 +177,24 @@ const Markets = () => {
               <ArrowLeft className="h-5 w-5 rotate-180" />
             </Button>
             <h1 className="text-xl font-bold text-white">جميع الأسواق</h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={fetchPrices}
-              className="text-white/70 hover:text-white hover:bg-white/10"
-            >
-              <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/profile')}
+                className="text-white/70 hover:text-white hover:bg-white/10"
+              >
+                <User className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={fetchPrices}
+                className="text-white/70 hover:text-white hover:bg-white/10"
+              >
+                <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </div>
           {lastUpdate && (
             <p className="text-center text-xs text-white/40 mt-2">
@@ -183,6 +203,27 @@ const Markets = () => {
           )}
         </div>
       </header>
+
+      {/* Favorites Quick Access */}
+      {favorites.length > 0 && (
+        <div className="container mx-auto px-4 py-4 border-b border-white/5">
+          <div className="flex items-center gap-3 mb-3">
+            <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+            <span className="text-white font-medium">المفضلة</span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {favorites.map((fav) => (
+              <button
+                key={fav.id}
+                onClick={() => navigate(`/live-chart?symbol=${fav.symbol}`)}
+                className="flex-shrink-0 px-4 py-2 bg-yellow-400/10 border border-yellow-400/20 rounded-full text-yellow-400 text-sm hover:bg-yellow-400/20 transition-colors"
+              >
+                {fav.symbol_name_ar}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Markets Grid */}
       <main className="container mx-auto px-4 py-6 space-y-10">
@@ -202,6 +243,7 @@ const Markets = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 {categoryMarkets.map((market) => {
                   const priceData = prices[market.symbol];
+                  const isMarketFavorite = isFavorite(market.symbol);
                   
                   return (
                     <Card
@@ -210,6 +252,18 @@ const Markets = () => {
                       onClick={() => navigate(`/live-chart?symbol=${market.symbol}`)}
                     >
                       <div className="p-4">
+                        {/* Favorite Button */}
+                        <button
+                          onClick={(e) => handleFavoriteClick(e, market)}
+                          className={`absolute top-2 left-2 p-1.5 rounded-full transition-all ${
+                            isMarketFavorite 
+                              ? 'text-yellow-400 bg-yellow-400/20' 
+                              : 'text-white/30 hover:text-yellow-400 hover:bg-yellow-400/10 opacity-0 group-hover:opacity-100'
+                          }`}
+                        >
+                          <Star className={`h-4 w-4 ${isMarketFavorite ? 'fill-yellow-400' : ''}`} />
+                        </button>
+
                         {/* Market Name */}
                         <div className="mb-3">
                           <p className="font-bold text-white text-base group-hover:text-primary transition-colors">
@@ -251,8 +305,8 @@ const Markets = () => {
                         )}
                         
                         {/* Hover Arrow */}
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <ArrowLeft className="h-5 w-5 text-primary" />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <ArrowLeft className="h-5 w-5 text-primary rotate-180" />
                         </div>
                       </div>
                       

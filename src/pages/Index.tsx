@@ -7,7 +7,7 @@ import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { LivePriceCards } from "@/components/LivePriceCards";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper, Shield, Menu } from "lucide-react";
+import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper, Shield, Menu, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
 const Index = () => {
@@ -218,6 +218,10 @@ const Index = () => {
                   <Newspaper className="h-4 w-4" />
                   <span>الأخبار</span>
                 </Button>
+                <Button onClick={() => navigate('/profile')} variant="outline" size="sm" className="gap-1.5">
+                  <UserIcon className="h-4 w-4" />
+                  <span>حسابي</span>
+                </Button>
                 <Button
                   onClick={() => window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank')}
                   variant="outline"
@@ -305,6 +309,17 @@ const Index = () => {
                     >
                       <Newspaper className="h-4 w-4" />
                       <span>الأخبار</span>
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        navigate('/profile');
+                        setMobileMenuOpen(false);
+                      }}
+                      variant="outline"
+                      className="w-full justify-start gap-2 bg-gradient-to-r from-yellow-500/10 to-yellow-500/5 border-yellow-500/30"
+                    >
+                      <UserIcon className="h-4 w-4 text-yellow-400" />
+                      <span>حسابي والمفضلة</span>
                     </Button>
                     <Button
                       onClick={() => {

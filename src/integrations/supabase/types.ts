@@ -336,6 +336,90 @@ export type Database = {
           },
         ]
       }
+      user_daily_journal: {
+        Row: {
+          created_at: string
+          daily_achieved: number | null
+          daily_goal: number | null
+          direction: string | null
+          entry_price: number | null
+          exit_price: number | null
+          id: string
+          lessons_learned: string | null
+          notes: string | null
+          profit_loss: number | null
+          result: string | null
+          symbol: string | null
+          trade_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_achieved?: number | null
+          daily_goal?: number | null
+          direction?: string | null
+          entry_price?: number | null
+          exit_price?: number | null
+          id?: string
+          lessons_learned?: string | null
+          notes?: string | null
+          profit_loss?: number | null
+          result?: string | null
+          symbol?: string | null
+          trade_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_achieved?: number | null
+          daily_goal?: number | null
+          direction?: string | null
+          entry_price?: number | null
+          exit_price?: number | null
+          id?: string
+          lessons_learned?: string | null
+          notes?: string | null
+          profit_loss?: number | null
+          result?: string | null
+          symbol?: string | null
+          trade_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_favorites: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          symbol: string
+          symbol_name_ar: string
+          symbol_name_en: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          symbol: string
+          symbol_name_ar: string
+          symbol_name_en: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          symbol?: string
+          symbol_name_ar?: string
+          symbol_name_en?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
