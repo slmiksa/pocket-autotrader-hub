@@ -1,20 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 
-declare global {
-  interface Window {
-    TradingView: any;
-  }
-}
-
 export default function LiveChart() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const symbol = searchParams.get("symbol") || "bitcoin";
-  const [isLoading, setIsLoading] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Get TradingView symbol and display name
   const getSymbolInfo = () => {
@@ -32,21 +26,21 @@ export default function LiveChart() {
       gbpjpy: { tvSymbol: "FX:GBPJPY", displayName: "جنيه/ين (GBP/JPY)" },
       
       // Crypto
-      bitcoin: { tvSymbol: "BINANCE:BTCUSDT", displayName: "بيتكوين (BTC/USD)" },
-      ethereum: { tvSymbol: "BINANCE:ETHUSDT", displayName: "إيثريوم (ETH/USD)" },
+      bitcoin: { tvSymbol: "BITSTAMP:BTCUSD", displayName: "بيتكوين (BTC/USD)" },
+      ethereum: { tvSymbol: "BITSTAMP:ETHUSD", displayName: "إيثريوم (ETH/USD)" },
       bnb: { tvSymbol: "BINANCE:BNBUSDT", displayName: "بي إن بي (BNB/USD)" },
-      solana: { tvSymbol: "BINANCE:SOLUSDT", displayName: "سولانا (SOL/USD)" },
-      xrp: { tvSymbol: "BINANCE:XRPUSDT", displayName: "ريبل (XRP/USD)" },
-      cardano: { tvSymbol: "BINANCE:ADAUSDT", displayName: "كاردانو (ADA/USD)" },
+      solana: { tvSymbol: "COINBASE:SOLUSD", displayName: "سولانا (SOL/USD)" },
+      xrp: { tvSymbol: "BITSTAMP:XRPUSD", displayName: "ريبل (XRP/USD)" },
+      cardano: { tvSymbol: "COINBASE:ADAUSD", displayName: "كاردانو (ADA/USD)" },
       dogecoin: { tvSymbol: "BINANCE:DOGEUSDT", displayName: "دوجكوين (DOGE/USD)" },
-      litecoin: { tvSymbol: "BINANCE:LTCUSDT", displayName: "لايتكوين (LTC/USD)" },
-      avalanche: { tvSymbol: "BINANCE:AVAXUSDT", displayName: "أفالانش (AVAX/USD)" },
-      polkadot: { tvSymbol: "BINANCE:DOTUSDT", displayName: "بولكادوت (DOT/USD)" },
-      chainlink: { tvSymbol: "BINANCE:LINKUSDT", displayName: "تشين لينك (LINK/USD)" },
-      polygon: { tvSymbol: "BINANCE:MATICUSDT", displayName: "بوليجون (MATIC/USD)" },
+      litecoin: { tvSymbol: "COINBASE:LTCUSD", displayName: "لايتكوين (LTC/USD)" },
+      avalanche: { tvSymbol: "COINBASE:AVAXUSD", displayName: "أفالانش (AVAX/USD)" },
+      polkadot: { tvSymbol: "COINBASE:DOTUSD", displayName: "بولكادوت (DOT/USD)" },
+      chainlink: { tvSymbol: "COINBASE:LINKUSD", displayName: "تشين لينك (LINK/USD)" },
+      polygon: { tvSymbol: "COINBASE:MATICUSD", displayName: "بوليجون (MATIC/USD)" },
       shiba: { tvSymbol: "BINANCE:SHIBUSDT", displayName: "شيبا إينو (SHIB/USD)" },
       tron: { tvSymbol: "BINANCE:TRXUSDT", displayName: "ترون (TRX/USD)" },
-      uniswap: { tvSymbol: "BINANCE:UNIUSDT", displayName: "يونيسواب (UNI/USD)" },
+      uniswap: { tvSymbol: "COINBASE:UNIUSD", displayName: "يونيسواب (UNI/USD)" },
       
       // Commodities
       gold: { tvSymbol: "OANDA:XAUUSD", displayName: "الذهب (XAU/USD)" },
@@ -80,112 +74,102 @@ export default function LiveChart() {
       cocacola: { tvSymbol: "NYSE:KO", displayName: "كوكا كولا (Coca-Cola)" },
     };
 
-    return symbolMap[symbol] || { tvSymbol: "BINANCE:BTCUSDT", displayName: "بيتكوين (BTC/USD)" };
+    return symbolMap[symbol] || { tvSymbol: "BITSTAMP:BTCUSD", displayName: "بيتكوين (BTC/USD)" };
   };
 
   const symbolInfo = getSymbolInfo();
 
-  const initWidget = () => {
-    if (typeof window.TradingView !== 'undefined') {
-      const container = document.getElementById('tradingview_widget');
-      if (container) {
-        container.innerHTML = '';
-        
-        new window.TradingView.widget({
-          autosize: true,
-          symbol: symbolInfo.tvSymbol,
-          interval: "D",
-          timezone: "Asia/Riyadh",
-          theme: "dark",
-          style: "1",
-          locale: "ar_AE",
-          enable_publishing: false,
-          allow_symbol_change: true,
-          container_id: "tradingview_widget",
-          hide_side_toolbar: false,
-          studies: ["RSI@tv-basicstudies", "MASimple@tv-basicstudies"],
-          withdateranges: true,
-          hide_top_toolbar: false,
-          save_image: true,
-          backgroundColor: "#1e293b",
-          gridColor: "rgba(255, 255, 255, 0.05)",
-        });
-        
-        setIsLoading(false);
-      }
-    }
-  };
-
   useEffect(() => {
-    const scriptId = 'tradingview-widget-script';
-    const existingScript = document.getElementById(scriptId);
+    if (!containerRef.current) return;
 
-    if (existingScript) {
-      // Script already loaded
-      initWidget();
-      return;
-    }
+    // Clear previous content
+    containerRef.current.innerHTML = '';
 
-    // Load script
+    // Create TradingView Advanced Chart Widget
     const script = document.createElement('script');
-    script.id = scriptId;
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
     script.type = 'text/javascript';
-    script.src = 'https://s3.tradingview.com/tv.js';
     script.async = true;
-    script.onload = () => {
-      // Wait a bit for TradingView to initialize
-      setTimeout(initWidget, 500);
-    };
-    
-    document.head.appendChild(script);
+    script.innerHTML = JSON.stringify({
+      autosize: true,
+      symbol: symbolInfo.tvSymbol,
+      interval: "D",
+      timezone: "Asia/Riyadh",
+      theme: "dark",
+      style: "1",
+      locale: "ar_AE",
+      enable_publishing: false,
+      allow_symbol_change: true,
+      calendar: false,
+      support_host: "https://www.tradingview.com",
+      hide_side_toolbar: false,
+      studies: ["RSI@tv-basicstudies", "MASimple@tv-basicstudies"],
+    });
+
+    const widgetContainer = document.createElement('div');
+    widgetContainer.className = 'tradingview-widget-container';
+    widgetContainer.style.height = '100%';
+    widgetContainer.style.width = '100%';
+
+    const widgetInner = document.createElement('div');
+    widgetInner.className = 'tradingview-widget-container__widget';
+    widgetInner.style.height = 'calc(100% - 32px)';
+    widgetInner.style.width = '100%';
+
+    widgetContainer.appendChild(widgetInner);
+    widgetContainer.appendChild(script);
+
+    containerRef.current.appendChild(widgetContainer);
 
     return () => {
-      // Cleanup on unmount
-      const container = document.getElementById('tradingview_widget');
-      if (container) {
-        container.innerHTML = '';
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
       }
     };
-  }, [symbol]);
+  }, [symbol, symbolInfo.tvSymbol]);
 
   const handleRefresh = () => {
-    setIsLoading(true);
-    const container = document.getElementById('tradingview_widget');
-    if (container) {
-      container.innerHTML = '';
+    if (containerRef.current) {
+      const currentContent = containerRef.current.innerHTML;
+      containerRef.current.innerHTML = '';
+      setTimeout(() => {
+        if (containerRef.current) {
+          containerRef.current.innerHTML = currentContent;
+        }
+      }, 100);
     }
-    setTimeout(initWidget, 100);
+    window.location.reload();
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a0a0f]" dir="rtl">
       {/* Header */}
-      <header className="border-b border-border bg-card sticky top-0 z-50">
+      <header className="border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <Button
-                onClick={() => navigate("/")}
+                onClick={() => navigate(-1)}
                 variant="ghost"
                 size="sm"
-                className="gap-2"
+                className="gap-2 text-white/70 hover:text-white hover:bg-white/10"
               >
                 <ArrowLeft className="h-4 w-4" />
                 رجوع
               </Button>
               <div>
-                <h1 className="text-xl font-bold text-foreground">{symbolInfo.displayName}</h1>
-                <p className="text-sm text-muted-foreground">شارت حقيقي مباشر من TradingView</p>
+                <h1 className="text-xl font-bold text-white">{symbolInfo.displayName}</h1>
+                <p className="text-sm text-white/50">شارت حقيقي مباشر من TradingView</p>
               </div>
             </div>
             <Button
               onClick={handleRefresh}
               variant="outline"
               size="sm"
-              className="gap-2"
+              className="gap-2 border-white/20 text-white/70 hover:text-white hover:bg-white/10"
             >
               <RefreshCw className="h-4 w-4" />
-              إعادة المحاولة
+              تحديث
             </Button>
           </div>
         </div>
@@ -193,41 +177,35 @@ export default function LiveChart() {
 
       {/* Chart Container */}
       <main className="container mx-auto px-4 py-6">
-        <Card className="p-6">
+        <Card className="p-4 bg-[#12121a] border-white/10">
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-foreground mb-1">
+            <h2 className="text-lg font-semibold text-white mb-1">
               الشارت المباشر - TradingView
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white/50">
               بيانات حقيقية ومباشرة مع الشموع اليابانية والمؤشرات الفنية
             </p>
           </div>
           
           {/* TradingView Chart Widget */}
-          <div className="tradingview-widget-container w-full">
-            <div 
-              id="tradingview_widget" 
-              className="w-full h-[600px] rounded-lg overflow-hidden bg-card"
-              style={{ minHeight: '600px' }}
-            />
-          </div>
+          <div 
+            ref={containerRef}
+            className="w-full rounded-lg overflow-hidden"
+            style={{ height: '600px' }}
+          />
           
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 rounded-lg bg-muted/30">
-              <p className="text-sm text-muted-foreground mb-1">المصدر</p>
-              <p className="text-lg font-bold text-foreground">
-                TradingView
-              </p>
+            <div className="text-center p-4 rounded-lg bg-white/5">
+              <p className="text-sm text-white/50 mb-1">المصدر</p>
+              <p className="text-lg font-bold text-white">TradingView</p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-muted/30">
-              <p className="text-sm text-muted-foreground mb-1">نوع البيانات</p>
-              <p className="text-lg font-bold text-success">
-                حقيقية ومباشرة
-              </p>
+            <div className="text-center p-4 rounded-lg bg-white/5">
+              <p className="text-sm text-white/50 mb-1">نوع البيانات</p>
+              <p className="text-lg font-bold text-emerald-400">حقيقية ومباشرة</p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-muted/30">
-              <p className="text-sm text-muted-foreground mb-1">التحديث</p>
-              <p className="text-lg font-bold text-foreground">لحظي</p>
+            <div className="text-center p-4 rounded-lg bg-white/5">
+              <p className="text-sm text-white/50 mb-1">التحديث</p>
+              <p className="text-lg font-bold text-white">لحظي</p>
             </div>
           </div>
         </Card>
