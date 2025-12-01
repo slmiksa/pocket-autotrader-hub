@@ -73,36 +73,80 @@ export const LivePriceCards = () => {
     const interval = setInterval(fetchPrices, 10000);
     return () => clearInterval(interval);
   }, []);
-  return <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 py-6 bg-muted/30">
-      {/* Gold Card */}
-      <Card className="p-6 bg-gradient-to-br from-warning/10 to-warning/5 border-warning/20 hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/live-chart?symbol=gold')}>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-sm font-medium text-muted-foreground">الذهب (أونصة)</h3>
-              <LineChart className="h-4 w-4 text-warning opacity-60 group-hover:opacity-100 transition-opacity" />
+  return (
+    <div className="px-4 py-6 bg-muted/30 space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Gold Card */}
+        <Card className="p-6 bg-gradient-to-br from-warning/10 to-warning/5 border-warning/20 hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/live-chart?symbol=gold')}>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-sm font-medium text-muted-foreground">الذهب (أونصة)</h3>
+                <LineChart className="h-4 w-4 text-warning opacity-60 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <p className="text-3xl font-bold text-foreground">
+                {goldPrice ? `$${goldPrice.price.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}` : 'جاري التحميل...'}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                اضغط لعرض الشارت المباشر
+              </p>
             </div>
-            <p className="text-3xl font-bold text-foreground">
-              {goldPrice ? `$${goldPrice.price.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2
-            })}` : 'جاري التحميل...'}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              اضغط لعرض الشارت المباشر
-            </p>
+            <div className="text-right">
+              {goldPrice && (
+                <div className={`flex items-center gap-1 text-lg font-semibold ${goldPrice.isPositive ? 'text-success' : 'text-danger'}`}>
+                  {goldPrice.isPositive ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+                  <span>{goldPrice.isPositive ? '+' : ''}{goldPrice.change24h.toFixed(2)}%</span>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">24 ساعة</p>
+            </div>
           </div>
-          <div className="text-right">
-            {goldPrice && <div className={`flex items-center gap-1 text-lg font-semibold ${goldPrice.isPositive ? 'text-success' : 'text-danger'}`}>
-                {goldPrice.isPositive ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
-                <span>{goldPrice.isPositive ? '+' : ''}{goldPrice.change24h.toFixed(2)}%</span>
-              </div>}
-            <p className="text-xs text-muted-foreground mt-1">24 ساعة</p>
-          </div>
-        </div>
-      </Card>
+        </Card>
 
-      {/* Bitcoin Card */}
-      
-    </div>;
+        {/* Bitcoin Card */}
+        <Card className="p-6 bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20 hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/live-chart?symbol=bitcoin')}>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-sm font-medium text-muted-foreground">بيتكوين (BTC)</h3>
+                <LineChart className="h-4 w-4 text-orange-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <p className="text-3xl font-bold text-foreground">
+                {btcPrice ? `$${btcPrice.price.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}` : 'جاري التحميل...'}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                اضغط لعرض الشارت المباشر
+              </p>
+            </div>
+            <div className="text-right">
+              {btcPrice && (
+                <div className={`flex items-center gap-1 text-lg font-semibold ${btcPrice.isPositive ? 'text-success' : 'text-danger'}`}>
+                  {btcPrice.isPositive ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+                  <span>{btcPrice.isPositive ? '+' : ''}{btcPrice.change24h.toFixed(2)}%</span>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">24 ساعة</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* View All Button */}
+      <div className="flex justify-center">
+        <button
+          onClick={() => navigate('/markets')}
+          className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-1 transition-colors"
+        >
+          عرض جميع الأسواق
+          <TrendingUp className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
 };
