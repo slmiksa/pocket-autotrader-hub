@@ -73,27 +73,27 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]" dir="rtl">
+    <div className="min-h-screen bg-background" dir="rtl">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#0a0a0f]/95 backdrop-blur border-b border-white/5">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate('/')}
-              className="text-white/70 hover:text-white hover:bg-white/10"
+              className="text-muted-foreground hover:text-foreground hover:bg-secondary"
             >
               <ArrowLeft className="h-5 w-5 rotate-180" />
             </Button>
-            <h1 className="text-xl font-bold text-white">الملف الشخصي</h1>
+            <h1 className="text-xl font-bold text-foreground">الملف الشخصي</h1>
             <div className="w-10" />
           </div>
         </div>
@@ -101,46 +101,46 @@ const Profile = () => {
 
       <main className="container mx-auto px-4 py-6 space-y-6">
         {/* User Info */}
-        <Card className="p-6 bg-[#12121a] border-white/10">
+        <Card className="p-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
               <User className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">{user?.email}</h2>
-              <p className="text-white/50 text-sm">متداول</p>
+              <h2 className="text-xl font-bold text-foreground">{user?.email}</h2>
+              <p className="text-muted-foreground text-sm">متداول</p>
             </div>
           </div>
         </Card>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="p-4 bg-[#12121a] border-white/10 text-center">
-            <p className="text-white/50 text-sm mb-1">إجمالي الصفقات</p>
-            <p className="text-2xl font-bold text-white">{stats.total}</p>
+          <Card className="p-4 text-center">
+            <p className="text-muted-foreground text-sm mb-1">إجمالي الصفقات</p>
+            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
           </Card>
-          <Card className="p-4 bg-[#12121a] border-white/10 text-center">
-            <p className="text-white/50 text-sm mb-1">نسبة النجاح</p>
-            <p className="text-2xl font-bold text-emerald-400">{stats.winRate}%</p>
+          <Card className="p-4 text-center">
+            <p className="text-muted-foreground text-sm mb-1">نسبة النجاح</p>
+            <p className="text-2xl font-bold text-success">{stats.winRate}%</p>
           </Card>
-          <Card className="p-4 bg-[#12121a] border-white/10 text-center">
-            <p className="text-white/50 text-sm mb-1">صفقات رابحة</p>
-            <p className="text-2xl font-bold text-emerald-400">{stats.wins}</p>
+          <Card className="p-4 text-center">
+            <p className="text-muted-foreground text-sm mb-1">صفقات رابحة</p>
+            <p className="text-2xl font-bold text-success">{stats.wins}</p>
           </Card>
-          <Card className="p-4 bg-[#12121a] border-white/10 text-center">
-            <p className="text-white/50 text-sm mb-1">صفقات خاسرة</p>
-            <p className="text-2xl font-bold text-red-400">{stats.losses}</p>
+          <Card className="p-4 text-center">
+            <p className="text-muted-foreground text-sm mb-1">صفقات خاسرة</p>
+            <p className="text-2xl font-bold text-destructive">{stats.losses}</p>
           </Card>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="favorites" className="w-full">
-          <TabsList className="w-full bg-[#12121a] border border-white/10">
-            <TabsTrigger value="favorites" className="flex-1 data-[state=active]:bg-primary">
+          <TabsList className="w-full">
+            <TabsTrigger value="favorites" className="flex-1">
               <Star className="h-4 w-4 ml-2" />
               المفضلة
             </TabsTrigger>
-            <TabsTrigger value="journal" className="flex-1 data-[state=active]:bg-primary">
+            <TabsTrigger value="journal" className="flex-1">
               <BookOpen className="h-4 w-4 ml-2" />
               دفتر التداول
             </TabsTrigger>
@@ -148,23 +148,23 @@ const Profile = () => {
 
           {/* Favorites Tab */}
           <TabsContent value="favorites" className="mt-4">
-            <Card className="p-4 bg-[#12121a] border-white/10">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <Star className="h-5 w-5 text-yellow-400" />
+            <Card className="p-4">
+              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <Star className="h-5 w-5 text-warning" />
                 الأسواق المفضلة ({favorites.length})
               </h3>
               
               {favLoading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-white/50" />
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : favorites.length === 0 ? (
-                <div className="text-center py-8 text-white/50">
+                <div className="text-center py-8 text-muted-foreground">
                   <Star className="h-12 w-12 mx-auto mb-3 opacity-30" />
                   <p>لا توجد أسواق في المفضلة</p>
                   <Button 
                     variant="outline" 
-                    className="mt-4 border-white/20"
+                    className="mt-4"
                     onClick={() => navigate('/markets')}
                   >
                     تصفح الأسواق
@@ -175,21 +175,21 @@ const Profile = () => {
                   {favorites.map((fav) => (
                     <div
                       key={fav.id}
-                      className="p-4 bg-white/5 rounded-lg group hover:bg-white/10 transition-colors"
+                      className="p-4 bg-secondary/50 rounded-lg group hover:bg-secondary transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <div 
                           className="flex-1 cursor-pointer"
                           onClick={() => navigate(`/live-chart?symbol=${fav.symbol}`)}
                         >
-                          <p className="font-medium text-white">{fav.symbol_name_ar}</p>
-                          <p className="text-xs text-white/50">{fav.symbol_name_en}</p>
-                          <span className="text-xs text-primary/70">{fav.category}</span>
+                          <p className="font-medium text-foreground">{fav.symbol_name_ar}</p>
+                          <p className="text-xs text-muted-foreground">{fav.symbol_name_en}</p>
+                          <span className="text-xs text-primary">{fav.category}</span>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           onClick={() => removeFavorite(fav.symbol)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -207,7 +207,7 @@ const Profile = () => {
             {/* Today's Summary */}
             <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-primary" />
                   صفقات اليوم
                 </h3>
@@ -218,36 +218,34 @@ const Profile = () => {
                       إضافة صفقة
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="bg-[#12121a] border-white/10 text-white max-h-[90vh] overflow-y-auto">
+                  <DialogContent className="max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>إضافة صفقة جديدة</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="text-sm text-white/70 mb-1 block">التاريخ</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">التاريخ</label>
                           <Input
                             type="date"
                             value={newEntry.trade_date}
                             onChange={(e) => setNewEntry({ ...newEntry, trade_date: e.target.value })}
-                            className="bg-white/5 border-white/10"
                           />
                         </div>
                         <div>
-                          <label className="text-sm text-white/70 mb-1 block">الرمز</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">الرمز</label>
                           <Input
                             placeholder="BTCUSD"
                             value={newEntry.symbol || ''}
                             onChange={(e) => setNewEntry({ ...newEntry, symbol: e.target.value })}
-                            className="bg-white/5 border-white/10"
                           />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="text-sm text-white/70 mb-1 block">الاتجاه</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">الاتجاه</label>
                           <Select onValueChange={(v) => setNewEntry({ ...newEntry, direction: v as any })}>
-                            <SelectTrigger className="bg-white/5 border-white/10">
+                            <SelectTrigger>
                               <SelectValue placeholder="اختر الاتجاه" />
                             </SelectTrigger>
                             <SelectContent>
@@ -259,9 +257,9 @@ const Profile = () => {
                           </Select>
                         </div>
                         <div>
-                          <label className="text-sm text-white/70 mb-1 block">النتيجة</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">النتيجة</label>
                           <Select onValueChange={(v) => setNewEntry({ ...newEntry, result: v as any })}>
-                            <SelectTrigger className="bg-white/5 border-white/10">
+                            <SelectTrigger>
                               <SelectValue placeholder="اختر النتيجة" />
                             </SelectTrigger>
                             <SelectContent>
@@ -275,60 +273,54 @@ const Profile = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="text-sm text-white/70 mb-1 block">سعر الدخول</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">سعر الدخول</label>
                           <Input
                             type="number"
                             placeholder="0.00"
                             onChange={(e) => setNewEntry({ ...newEntry, entry_price: parseFloat(e.target.value) || undefined })}
-                            className="bg-white/5 border-white/10"
                           />
                         </div>
                         <div>
-                          <label className="text-sm text-white/70 mb-1 block">سعر الخروج</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">سعر الخروج</label>
                           <Input
                             type="number"
                             placeholder="0.00"
                             onChange={(e) => setNewEntry({ ...newEntry, exit_price: parseFloat(e.target.value) || undefined })}
-                            className="bg-white/5 border-white/10"
                           />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="text-sm text-white/70 mb-1 block">الهدف اليومي ($)</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">الهدف اليومي ($)</label>
                           <Input
                             type="number"
                             placeholder="100"
                             onChange={(e) => setNewEntry({ ...newEntry, daily_goal: parseFloat(e.target.value) || undefined })}
-                            className="bg-white/5 border-white/10"
                           />
                         </div>
                         <div>
-                          <label className="text-sm text-white/70 mb-1 block">المحقق ($)</label>
+                          <label className="text-sm text-muted-foreground mb-1 block">المحقق ($)</label>
                           <Input
                             type="number"
                             placeholder="0"
                             onChange={(e) => setNewEntry({ ...newEntry, daily_achieved: parseFloat(e.target.value) || undefined })}
-                            className="bg-white/5 border-white/10"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="text-sm text-white/70 mb-1 block">ملاحظات</label>
+                        <label className="text-sm text-muted-foreground mb-1 block">ملاحظات</label>
                         <Textarea
                           placeholder="ملاحظات عن الصفقة..."
                           value={newEntry.notes || ''}
                           onChange={(e) => setNewEntry({ ...newEntry, notes: e.target.value })}
-                          className="bg-white/5 border-white/10"
                         />
                       </div>
                       <div>
-                        <label className="text-sm text-white/70 mb-1 block">الدروس المستفادة</label>
+                        <label className="text-sm text-muted-foreground mb-1 block">الدروس المستفادة</label>
                         <Textarea
                           placeholder="ما تعلمته من هذه الصفقة..."
                           value={newEntry.lessons_learned || ''}
                           onChange={(e) => setNewEntry({ ...newEntry, lessons_learned: e.target.value })}
-                          className="bg-white/5 border-white/10"
                         />
                       </div>
                       <Button onClick={handleAddEntry} className="w-full">
@@ -338,22 +330,22 @@ const Profile = () => {
                   </DialogContent>
                 </Dialog>
               </div>
-              <p className="text-white/70">{todayEntries.length} صفقة اليوم</p>
+              <p className="text-muted-foreground">{todayEntries.length} صفقة اليوم</p>
             </Card>
 
             {/* Journal Entries */}
-            <Card className="p-4 bg-[#12121a] border-white/10">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <Card className="p-4">
+              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
                 <Target className="h-5 w-5 text-primary" />
                 سجل الصفقات
               </h3>
               
               {journalLoading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-white/50" />
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : entries.length === 0 ? (
-                <div className="text-center py-8 text-white/50">
+                <div className="text-center py-8 text-muted-foreground">
                   <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
                   <p>لا توجد صفقات مسجلة</p>
                   <p className="text-sm mt-2">ابدأ بتسجيل صفقاتك اليومية</p>
@@ -363,26 +355,28 @@ const Profile = () => {
                   {entries.map((entry) => (
                     <div
                       key={entry.id}
-                      className="p-4 bg-white/5 rounded-lg"
+                      className="p-4 bg-secondary/50 rounded-lg"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            entry.result === 'win' ? 'bg-emerald-500/20 text-emerald-400' :
-                            entry.result === 'loss' ? 'bg-red-500/20 text-red-400' :
-                            entry.result === 'breakeven' ? 'bg-yellow-500/20 text-yellow-400' :
-                            'bg-white/10 text-white/70'
+                            entry.result === 'win' ? 'bg-success/20 text-success' :
+                            entry.result === 'loss' ? 'bg-destructive/20 text-destructive' :
+                            entry.result === 'breakeven' ? 'bg-warning/20 text-warning' :
+                            'bg-muted text-muted-foreground'
                           }`}>
                             {entry.result === 'win' ? 'ربح ✅' :
                              entry.result === 'loss' ? 'خسارة ❌' :
-                             entry.result === 'breakeven' ? 'تعادل' : 'قيد الانتظار'}
+                             entry.result === 'breakeven' ? 'تعادل ⚖️' : 'قيد الانتظار ⏳'}
                           </span>
-                          <span className="text-white font-medium">{entry.symbol || 'غير محدد'}</span>
+                          {entry.symbol && (
+                            <span className="text-sm font-medium text-foreground">{entry.symbol}</span>
+                          )}
                           {entry.direction && (
                             <span className={`flex items-center gap-1 text-xs ${
                               entry.direction === 'buy' || entry.direction === 'call' 
-                                ? 'text-emerald-400' 
-                                : 'text-red-400'
+                                ? 'text-success' 
+                                : 'text-destructive'
                             }`}>
                               {entry.direction === 'buy' || entry.direction === 'call' 
                                 ? <TrendingUp className="h-3 w-3" /> 
@@ -392,22 +386,45 @@ const Profile = () => {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-white/50 text-sm">{entry.trade_date}</span>
+                          <span className="text-xs text-muted-foreground">{entry.trade_date}</span>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                             onClick={() => deleteEntry(entry.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
+                      {entry.entry_price && entry.exit_price && (
+                        <div className="flex gap-4 text-sm text-muted-foreground mb-2">
+                          <span>دخول: {entry.entry_price}</span>
+                          <span>خروج: {entry.exit_price}</span>
+                          {entry.profit_loss !== null && (
+                            <span className={entry.profit_loss >= 0 ? 'text-success' : 'text-destructive'}>
+                              {entry.profit_loss >= 0 ? '+' : ''}{entry.profit_loss}$
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {entry.daily_goal && (
+                        <div className="flex gap-4 text-sm text-muted-foreground mb-2">
+                          <span>الهدف: {entry.daily_goal}$</span>
+                          {entry.daily_achieved !== null && (
+                            <span className={entry.daily_achieved >= entry.daily_goal ? 'text-success' : 'text-warning'}>
+                              المحقق: {entry.daily_achieved}$
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {entry.notes && (
-                        <p className="text-white/60 text-sm mt-2">{entry.notes}</p>
+                        <p className="text-sm text-muted-foreground mt-2 border-t border-border pt-2">
+                          {entry.notes}
+                        </p>
                       )}
                       {entry.lessons_learned && (
-                        <p className="text-primary/70 text-sm mt-2 border-r-2 border-primary pr-2">
+                        <p className="text-sm text-primary/80 mt-2 italic">
                           💡 {entry.lessons_learned}
                         </p>
                       )}
