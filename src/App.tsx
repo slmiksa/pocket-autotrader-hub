@@ -14,6 +14,7 @@ import News from "./pages/News";
 import LiveChart from "./pages/LiveChart";
 import SupplyDemandAnalyzer from "./pages/SupplyDemandAnalyzer";
 import Markets from "./pages/Markets";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/live-chart" element={<LiveChart />} />
           <Route path="/supply-demand" element={<SupplyDemandAnalyzer />} />
           <Route path="/markets" element={<Markets />} />
+          <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
