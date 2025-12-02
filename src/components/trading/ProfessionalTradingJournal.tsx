@@ -98,9 +98,33 @@ export const ProfessionalTradingJournal = () => {
 
   // Market session times
   const marketSessions = [
-    { name: 'السوق الآسيوي', time: '12:00 AM - 9:00 AM', icon: '🌏', color: 'text-blue-500' },
-    { name: 'السوق الأوروبي', time: '8:00 AM - 4:00 PM', icon: '🌍', color: 'text-green-500' },
-    { name: 'السوق الأمريكي', time: '1:00 PM - 10:00 PM', icon: '🌎', color: 'text-purple-500' },
+    { 
+      name: 'السوق الآسيوي', 
+      openTime: '12:00 صباحاً',
+      closeTime: '9:00 صباحاً',
+      days: 'الأحد - الجمعة',
+      icon: '🌏', 
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-500/10'
+    },
+    { 
+      name: 'السوق الأوروبي', 
+      openTime: '8:00 صباحاً',
+      closeTime: '4:00 مساءً',
+      days: 'الاثنين - الجمعة',
+      icon: '🌍', 
+      color: 'text-green-500',
+      bgColor: 'bg-green-500/10'
+    },
+    { 
+      name: 'السوق الأمريكي', 
+      openTime: '1:00 ظهراً',
+      closeTime: '10:00 مساءً',
+      days: 'الاثنين - الجمعة',
+      icon: '🌎', 
+      color: 'text-purple-500',
+      bgColor: 'bg-purple-500/10'
+    },
   ];
 
   return (
@@ -249,13 +273,28 @@ export const ProfessionalTradingJournal = () => {
           {marketSessions.map((session) => (
             <div
               key={session.name}
-              className="p-4 bg-secondary/30 rounded-lg border border-border hover:border-primary transition-colors"
+              className={`p-5 ${session.bgColor} rounded-lg border border-border hover:border-primary transition-all hover:shadow-md`}
             >
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">{session.icon}</span>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-3xl">{session.icon}</span>
                 <div>
-                  <p className={`font-bold ${session.color}`}>{session.name}</p>
-                  <p className="text-xs text-muted-foreground">{session.time}</p>
+                  <p className={`font-bold text-lg ${session.color}`}>{session.name}</p>
+                </div>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">يفتح:</span>
+                  <span className="font-semibold text-foreground">{session.openTime}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">يغلق:</span>
+                  <span className="font-semibold text-foreground">{session.closeTime}</span>
+                </div>
+                <div className="pt-2 border-t border-border/50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground text-xs">أيام العمل:</span>
+                    <span className="font-medium text-foreground text-xs">{session.days}</span>
+                  </div>
                 </div>
               </div>
             </div>
