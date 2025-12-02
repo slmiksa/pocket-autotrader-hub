@@ -45,6 +45,9 @@ const SupplyDemandAnalyzer = () => {
   const [analysisMode, setAnalysisMode] = useState<"auto" | "image">("image");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [imageAnalysis, setImageAnalysis] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
+  
   const marketOptions = [{
     value: "forex",
     label: "فوريكس - Forex"
@@ -327,6 +330,47 @@ const SupplyDemandAnalyzer = () => {
     }
   };
 
+  // Check access
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          toast({
+            title: "خطأ",
+            description: "يجب تسجيل الدخول أولاً",
+            variant: "destructive"
+          });
+          navigate("/auth");
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("supply_demand_enabled")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error) {
+          console.error("Error checking access:", error);
+          setHasAccess(false);
+          setLoading(false);
+          return;
+        }
+
+        setHasAccess(data?.supply_demand_enabled || false);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error:", error);
+        setHasAccess(false);
+        setLoading(false);
+      }
+    };
+
+    checkAccess();
+  }, [navigate]);
+
   // Update symbol when market changes
   useEffect(() => {
     const symbols = getSymbolsForMarket();
@@ -516,6 +560,71 @@ const SupplyDemandAnalyzer = () => {
     if (signalStatus === "WAITING") return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
     return "bg-red-500/20 text-red-400 border-red-500/30";
   };
+  
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Access denied state
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4">
+        <div className="max-w-2xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="hover:bg-primary/10">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                محلل العرض والطلب
+              </h1>
+              <p className="text-muted-foreground">Supply & Demand + Price Action Analysis</p>
+            </div>
+          </div>
+
+          {/* Access Denied Card */}
+          <Card className="p-8 text-center space-y-6 border-muted-foreground/20">
+            <div className="flex justify-center">
+              <div className="rounded-full bg-muted/20 p-4">
+                <Info className="w-12 h-12 text-muted-foreground" />
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <h2 className="text-2xl font-bold text-foreground">الميزة غير مفعلة</h2>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                محلل العرض والطلب غير متاح حالياً لحسابك. يرجى التواصل مع الإدارة لتفعيل هذه الميزة.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button onClick={() => navigate("/")} variant="outline" size="lg">
+                <ArrowLeft className="w-4 h-4 ml-2" />
+                العودة للرئيسية
+              </Button>
+              <Button
+                onClick={() => window.open("https://wa.me/966575594911?text=مرحباً، أريد تفعيل محلل العرض والطلب", "_blank")}
+                className="bg-green-600 hover:bg-green-700"
+                size="lg"
+              >
+                تواصل عبر واتساب
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+  
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
