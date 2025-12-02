@@ -158,38 +158,30 @@ const systemPrompt = `أنت محلل فني محترف متخصص في التح
     // Step 2: Generate annotated image
     console.log('Step 2: Generating annotated image...');
     
-    const actionMap: Record<string, string> = {
-      'شراء': 'BUY',
-      'بيع': 'SELL',
-      'انتظار': 'WAIT'
-    };
-    
-    const trendMap: Record<string, string> = {
-      'صاعد': 'UPTREND',
-      'هابط': 'DOWNTREND',
-      'عرضي': 'SIDEWAYS'
+    const actionIconMap: Record<string, string> = {
+      'شراء': '▲',
+      'بيع': '▼',
+      'انتظار': '⏸'
     };
 
-    const drawingPrompt = `Create an annotated version of this trading chart with the following elements:
+    const drawingPrompt = `Draw minimal annotations on this trading chart:
 
-**IMPORTANT: All text must be in ENGLISH and clearly readable with large font sizes**
+**Style: MINIMAL text, use VISUAL indicators and icons**
 
 1. Draw thick RED horizontal lines at resistance levels: ${analysis.resistanceLevels?.map((r: any) => r.price).join(', ')}
 2. Draw thick GREEN horizontal lines at support levels: ${analysis.supportLevels?.map((s: any) => s.price).join(', ')}
-3. Label each line with large, clear text (20-24px font) showing the price - numbers must be very clear
-4. Add a large, clear arrow indicating the expected trend: ${trendMap[analysis.trend] || analysis.trend}
-5. Place a large, readable text box in the top-left corner with semi-transparent background and large font (18-20px) containing:
-   📊 Action: ${actionMap[analysis.recommendation?.action] || analysis.recommendation?.action}
-   🎯 Entry: ${analysis.recommendation?.entry}
-   ⛔ Stop Loss: ${analysis.recommendation?.stopLoss}
-   ✅ Target 1: ${analysis.recommendation?.target1}
+3. Label each line with ONLY the price number (16px, bold)
+4. Add a clear colored arrow showing trend direction
+5. Add a small box in top-left corner with icons and numbers only:
+   ${actionIconMap[analysis.recommendation?.action] || '⏸'} ${analysis.recommendation?.entry || ''}
+   🛑 ${analysis.recommendation?.stopLoss || ''}
+   ✓ ${analysis.recommendation?.target1 || ''}
 
-**Additional requirements:**
-- Use bold fonts for all text
-- Ensure high contrast between text and background
-- Add white or black semi-transparent backgrounds behind text labels
-- All numbers must be clearly visible and easy to read
-- Use simple, clean lines and annotations`;
+**Requirements:**
+- Minimal English text, mostly numbers and symbols
+- Use icons/symbols instead of words
+- Bold 16-18px fonts for numbers
+- High contrast, simple and clean`;
 
     const imageResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
