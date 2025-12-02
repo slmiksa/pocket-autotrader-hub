@@ -150,7 +150,7 @@ const Profile = () => {
             </TabsTrigger>
             <TabsTrigger value="journal" className="flex-1">
               <BookOpen className="h-4 w-4 ml-2" />
-              دفتر التداول
+              حلل أهدافك
             </TabsTrigger>
           </TabsList>
 
