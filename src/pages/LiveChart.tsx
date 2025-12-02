@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Camera, Loader2 } from "lucide-react";
+import { ArrowLeft, RefreshCw, Upload, Loader2, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { toPng } from 'html-to-image';
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -13,6 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function LiveChart() {
   const navigate = useNavigate();
@@ -24,6 +31,7 @@ export default function LiveChart() {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState("D");
   const [selectedInterval, setSelectedInterval] = useState("يومي");
+  const [showInstructions, setShowInstructions] = useState(false);
 
   // Get TradingView symbol and display name
   const getSymbolInfo = () => {
@@ -156,57 +164,70 @@ export default function LiveChart() {
     window.location.reload();
   };
 
-  const handleCaptureAndAnalyze = async () => {
-    if (!containerRef.current) {
-      toast.error("لم يتم تحميل الشارت بعد");
+  const handleAnalyzeChart = async (imageFile?: File) => {
+    if (!imageFile) {
+      setShowInstructions(true);
       return;
     }
 
     setIsAnalyzing(true);
-    toast.info("جاري التقاط صورة الشارت...");
+    toast.info("جاري تحليل الشارت والرسم عليه...");
 
     try {
-      // Wait for chart to fully render
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Convert image to base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Image = reader.result as string;
 
-      // Capture the chart container as image
-      const dataUrl = await toPng(containerRef.current, {
-        quality: 0.95,
-        pixelRatio: 2,
-        backgroundColor: '#12121a',
-      });
+        // Send to AI for analysis and drawing
+        const { data, error } = await supabase.functions.invoke('analyze-chart-with-drawing', {
+          body: {
+            image: base64Image,
+            symbol: symbolInfo.displayName,
+            timeframe: selectedInterval
+          }
+        });
 
-      toast.info("جاري تحليل الشارت والرسم عليه...");
-
-      // Send to AI for analysis and drawing
-      const { data, error } = await supabase.functions.invoke('analyze-chart-with-drawing', {
-        body: {
-          image: dataUrl,
-          symbol: symbolInfo.displayName,
-          timeframe: selectedInterval
+        if (error) {
+          console.error('Supabase function error:', error);
+          toast.error("حدث خطأ أثناء الاتصال بالخادم");
+          setIsAnalyzing(false);
+          return;
         }
-      });
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        toast.error("حدث خطأ أثناء الاتصال بالخادم");
+        if (data?.success) {
+          setAnalysisResult(data);
+          setShowAnalysis(true);
+          toast.success("تم التحليل والرسم بنجاح!");
+        } else {
+          toast.error(data?.error || 'فشل التحليل');
+        }
+        
         setIsAnalyzing(false);
-        return;
-      }
+      };
 
-      if (data?.success) {
-        setAnalysisResult(data);
-        setShowAnalysis(true);
-        toast.success("تم التحليل والرسم بنجاح!");
-      } else {
-        toast.error(data?.error || 'فشل التحليل');
-      }
+      reader.onerror = () => {
+        toast.error("فشل قراءة الصورة");
+        setIsAnalyzing(false);
+      };
+
+      reader.readAsDataURL(imageFile);
 
     } catch (error: any) {
-      console.error('Error capturing/analyzing chart:', error);
-      toast.error(error.message || "حدث خطأ أثناء التقاط الشارت");
-    } finally {
+      console.error('Error analyzing chart:', error);
+      toast.error(error.message || "حدث خطأ أثناء التحليل");
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        handleAnalyzeChart(file);
+      } else {
+        toast.error("يرجى اختيار صورة فقط");
+      }
     }
   };
 
@@ -260,25 +281,46 @@ export default function LiveChart() {
                   <SelectItem value="W">أسبوعي</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <Button
-                onClick={handleCaptureAndAnalyze}
-                disabled={isAnalyzing}
-                className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                onClick={() => setShowInstructions(true)}
+                variant="outline"
                 size="sm"
+                className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
               >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    جاري التحليل...
-                  </>
-                ) : (
-                  <>
-                    <Camera className="h-4 w-4" />
-                    تحليل الشارت
-                  </>
-                )}
+                <Info className="h-4 w-4" />
+                كيفية التحليل
               </Button>
+              
+              <label htmlFor="chart-upload">
+                <Button
+                  type="button"
+                  disabled={isAnalyzing}
+                  className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                  size="sm"
+                  onClick={() => document.getElementById('chart-upload')?.click()}
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      جاري التحليل...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      رفع صورة الشارت
+                    </>
+                  )}
+                </Button>
+              </label>
+              <Input
+                id="chart-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
+                disabled={isAnalyzing}
+              />
               
               <Button
                 onClick={handleRefresh}
@@ -334,7 +376,7 @@ export default function LiveChart() {
           <Card className="mt-6 p-6 bg-[#12121a] border-white/10">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Camera className="h-5 w-5 text-primary" />
+                <Upload className="h-5 w-5 text-primary" />
                 نتيجة التحليل
               </h2>
               <Button
@@ -462,6 +504,73 @@ export default function LiveChart() {
             )}
           </Card>
         )}
+
+        {/* Instructions Dialog */}
+        <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
+          <DialogContent className="bg-[#12121a] border-white/10 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-white text-xl">كيفية تحليل الشارت</DialogTitle>
+              <DialogDescription className="text-white/70">
+                اتبع الخطوات التالية للحصول على تحليل دقيق
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 mt-4">
+              <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                <h3 className="font-bold text-white mb-2 flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-sm">1</span>
+                  اختر الإطار الزمني
+                </h3>
+                <p className="text-white/70 text-sm">
+                  حدد الإطار الزمني المناسب للشارت (دقيقة، 5 دقائق، ساعة، يومي، إلخ)
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                <h3 className="font-bold text-white mb-2 flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-sm">2</span>
+                  التقط صورة الشارت
+                </h3>
+                <p className="text-white/70 text-sm mb-2">
+                  استخدم أحد الطرق التالية:
+                </p>
+                <ul className="list-disc list-inside text-white/60 text-sm space-y-1 mr-4">
+                  <li><strong className="text-white/80">Windows:</strong> اضغط Print Screen أو Windows + Shift + S</li>
+                  <li><strong className="text-white/80">Mac:</strong> اضغط Command + Shift + 4</li>
+                  <li><strong className="text-white/80">الهاتف:</strong> استخدم خاصية Screenshot في جهازك</li>
+                </ul>
+              </div>
+
+              <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                <h3 className="font-bold text-white mb-2 flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-sm">3</span>
+                  ارفع الصورة
+                </h3>
+                <p className="text-white/70 text-sm">
+                  اضغط على زر "رفع صورة الشارت" واختر الصورة التي التقطتها
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+                <h3 className="font-bold text-success mb-2">💡 نصيحة</h3>
+                <p className="text-white/70 text-sm">
+                  تأكد أن الصورة واضحة وتحتوي على الشارت بالكامل مع المؤشرات الفنية لأفضل نتائج تحليل
+                </p>
+              </div>
+
+              <Button
+                onClick={() => {
+                  setShowInstructions(false);
+                  document.getElementById('chart-upload')?.click();
+                }}
+                className="w-full bg-gradient-to-r from-primary to-primary/80"
+              >
+                <Upload className="h-4 w-4 ml-2" />
+                رفع صورة الشارت الآن
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
