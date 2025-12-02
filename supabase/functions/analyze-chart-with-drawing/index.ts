@@ -31,40 +31,41 @@ serve(async (req) => {
       base64Image = image.split('base64,')[1];
     }
 
-    const systemPrompt = `أنت محلل فني محترف متخصص في التحليل الفني وتحديد مستويات الدعم والمقاومة والارتدادات.
+const systemPrompt = `أنت محلل فني محترف متخصص في التحليل الفني وتحديد مستويات الدعم والمقاومة والارتدادات.
+
+**مهم جداً:** يجب أن تكون إجابتك JSON فقط بدون أي نص إضافي.
 
 مهمتك:
 1. تحليل الشارت المرفق بدقة عالية
-2. تحديد مستويات الدعم والمقاومة الرئيسية
-3. تحديد نقاط الارتداد المحتملة
-4. تقديم توصية تداول واضحة
+2. تحديد مستويات الدعم والمقاومة الرئيسية (2-3 مستويات فقط)
+3. تقديم توصية تداول واضحة
 
-قدم تحليلك بتنسيق JSON فقط:
+قدم تحليلك بتنسيق JSON فقط بدون أي نص قبله أو بعده:
 {
-  "currentPrice": [السعر الحالي],
-  "trend": "[صاعد/هابط/عرضي]",
+  "currentPrice": "السعر الحالي كرقم أو نص",
+  "trend": "صاعد أو هابط أو عرضي",
   "supportLevels": [
-    { "price": [السعر], "strength": "[قوي/متوسط/ضعيف]" }
+    { "price": "السعر", "strength": "قوي أو متوسط" }
   ],
   "resistanceLevels": [
-    { "price": [السعر], "strength": "[قوي/متوسط/ضعيف]" }
+    { "price": "السعر", "strength": "قوي أو متوسط" }
   ],
   "recommendation": {
-    "action": "[شراء/بيع/انتظار]",
-    "entry": [سعر الدخول],
-    "stopLoss": [وقف الخسارة],
-    "target1": [الهدف الأول],
-    "target2": [الهدف الثاني],
-    "reason": "[السبب بالعربي]"
+    "action": "شراء أو بيع أو انتظار",
+    "entry": "سعر الدخول",
+    "stopLoss": "وقف الخسارة",
+    "target1": "الهدف الأول",
+    "target2": "الهدف الثاني",
+    "reason": "السبب"
   },
-  "analysis": "[تحليل مفصل بالعربي]"
+  "analysis": "تحليل مختصر"
 }`;
 
     const userPrompt = `حلل الشارت التالي:
 - الرمز: ${symbol || 'غير محدد'}
 - الإطار الزمني: ${timeframe || 'غير محدد'}
 
-حدد مستويات الدعم والمقاومة بدقة، وقدم توصية تداول واضحة مع الأسعار الدقيقة.`;
+**مهم:** أرجع JSON فقط بدون أي كلام قبله أو بعده. ابدأ مباشرة بـ { وانته بـ }`;
 
     // Step 1: Analyze the chart
     console.log('Step 1: Analyzing chart...');
@@ -107,17 +108,48 @@ serve(async (req) => {
       throw new Error('لم يتم الحصول على تحليل');
     }
 
-    // Clean and parse JSON
+    console.log('Raw analysis response:', analysisText.substring(0, 500));
+
+    // Clean and parse JSON with multiple attempts
     analysisText = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    // Remove any text before the first { and after the last }
+    const firstBrace = analysisText.indexOf('{');
+    const lastBrace = analysisText.lastIndexOf('}');
+    
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      analysisText = analysisText.substring(firstBrace, lastBrace + 1);
+    }
+
     let analysis;
     try {
       analysis = JSON.parse(analysisText);
     } catch (e) {
+      console.error('First JSON parse failed:', e);
+      // Try to extract JSON more aggressively
       const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        analysis = JSON.parse(jsonMatch[0]);
+        try {
+          analysis = JSON.parse(jsonMatch[0]);
+        } catch (e2) {
+          console.error('Second JSON parse failed:', e2);
+          // Last attempt: return a simpler response
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: 'فشل في تحليل استجابة الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.'
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+          );
+        }
       } else {
-        throw new Error('فشل في تحليل البيانات');
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'لم يتم الحصول على تحليل صالح من الذكاء الاصطناعي'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
       }
     }
 
