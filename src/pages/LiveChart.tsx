@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Sparkles, Loader2 } from "lucide-react";
-import html2canvas from "html2canvas";
+import { ArrowLeft, RefreshCw, Sparkles, Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 export default function LiveChart() {
   const navigate = useNavigate();
@@ -147,55 +147,70 @@ export default function LiveChart() {
     window.location.reload();
   };
 
-  const handleAnalyzeChart = async () => {
-    if (!containerRef.current) {
-      toast.error("لم يتم تحميل الشارت بعد");
+  const handleAnalyzeChart = async (imageFile?: File) => {
+    if (!imageFile) {
+      toast.error("يرجى اختيار صورة الشارت");
       return;
     }
 
     setIsAnalyzing(true);
-    toast.info("جاري التقاط صورة الشارت...");
+    toast.info("جاري تحليل الشارت والرسم عليه...");
 
     try {
-      // Wait a moment for TradingView to fully load
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Convert image to base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Image = reader.result as string;
 
-      // Capture the chart as image
-      const canvas = await html2canvas(containerRef.current, {
-        backgroundColor: '#12121a',
-        scale: 2,
-        logging: false,
-        useCORS: true,
-      });
+        // Send to AI for analysis and drawing
+        const { data, error } = await supabase.functions.invoke('analyze-chart-with-drawing', {
+          body: {
+            image: base64Image,
+            symbol: symbolInfo.displayName,
+            timeframe: 'يومي'
+          }
+        });
 
-      const imageBase64 = canvas.toDataURL('image/jpeg', 0.9);
-      
-      toast.info("جاري تحليل الشارت والرسم عليه...");
-
-      // Send to AI for analysis and drawing
-      const { data, error } = await supabase.functions.invoke('analyze-chart-with-drawing', {
-        body: {
-          image: imageBase64,
-          symbol: symbolInfo.displayName,
-          timeframe: 'يومي'
+        if (error) {
+          console.error('Supabase function error:', error);
+          toast.error("حدث خطأ أثناء الاتصال بالخادم");
+          setIsAnalyzing(false);
+          return;
         }
-      });
 
-      if (error) throw error;
+        if (data?.success) {
+          setAnalysisResult(data);
+          setShowAnalysis(true);
+          toast.success("تم التحليل والرسم بنجاح!");
+        } else {
+          toast.error(data?.error || 'فشل التحليل');
+        }
+        
+        setIsAnalyzing(false);
+      };
 
-      if (data.success) {
-        setAnalysisResult(data);
-        setShowAnalysis(true);
-        toast.success("تم التحليل والرسم بنجاح!");
-      } else {
-        throw new Error(data.error || 'فشل التحليل');
-      }
+      reader.onerror = () => {
+        toast.error("فشل قراءة الصورة");
+        setIsAnalyzing(false);
+      };
+
+      reader.readAsDataURL(imageFile);
 
     } catch (error: any) {
       console.error('Error analyzing chart:', error);
       toast.error(error.message || "حدث خطأ أثناء التحليل");
-    } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        handleAnalyzeChart(file);
+      } else {
+        toast.error("يرجى اختيار صورة فقط");
+      }
     }
   };
 
@@ -221,24 +236,35 @@ export default function LiveChart() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                onClick={handleAnalyzeChart}
+              <label htmlFor="chart-upload">
+                <Button
+                  type="button"
+                  disabled={isAnalyzing}
+                  className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                  size="sm"
+                  onClick={() => document.getElementById('chart-upload')?.click()}
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      جاري التحليل...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      تحليل صورة الشارت
+                    </>
+                  )}
+                </Button>
+              </label>
+              <Input
+                id="chart-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
                 disabled={isAnalyzing}
-                className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                size="sm"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    جاري التحليل...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    تحليل الشارت
-                  </>
-                )}
-              </Button>
+              />
               <Button
                 onClick={handleRefresh}
                 variant="outline"
