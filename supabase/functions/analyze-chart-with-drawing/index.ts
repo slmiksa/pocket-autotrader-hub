@@ -158,25 +158,38 @@ const systemPrompt = `أنت محلل فني محترف متخصص في التح
     // Step 2: Generate annotated image
     console.log('Step 2: Generating annotated image...');
     
-    const drawingPrompt = `قم بإنشاء نسخة من هذا الشارت مع إضافة الرسومات التالية:
+    const actionMap: Record<string, string> = {
+      'شراء': 'BUY',
+      'بيع': 'SELL',
+      'انتظار': 'WAIT'
+    };
+    
+    const trendMap: Record<string, string> = {
+      'صاعد': 'UPTREND',
+      'هابط': 'DOWNTREND',
+      'عرضي': 'SIDEWAYS'
+    };
 
-**مهم جداً: يجب أن تكون جميع النصوص كبيرة وواضحة ومقروءة بسهولة**
+    const drawingPrompt = `Create an annotated version of this trading chart with the following elements:
 
-1. ارسم خطوط أفقية حمراء سميكة عند مستويات المقاومة: ${analysis.resistanceLevels?.map((r: any) => r.price).join(', ')}
-2. ارسم خطوط أفقية خضراء سميكة عند مستويات الدعم: ${analysis.supportLevels?.map((s: any) => s.price).join(', ')}
-3. ضع علامات بخط كبير وواضح (حجم 20-24px) على كل خط بالسعر - يجب أن تكون الأرقام واضحة جداً
-4. أضف سهم كبير وواضح يشير إلى الاتجاه المتوقع: ${analysis.trend}
-5. ضع مربع نص كبير ومقروء في الزاوية العلوية اليسرى بخلفية شبه شفافة مع خط كبير (حجم 18-20px) يحتوي على:
-   📊 التوصية: ${analysis.recommendation?.action}
-   🎯 الدخول: ${analysis.recommendation?.entry}
-   ⛔ وقف الخسارة: ${analysis.recommendation?.stopLoss}
-   ✅ الهدف 1: ${analysis.recommendation?.target1}
+**IMPORTANT: All text must be in ENGLISH and clearly readable with large font sizes**
 
-**متطلبات إضافية:**
-- استخدم خطوط عريضة Bold للنصوص
-- تأكد من وجود تباين عالي بين لون النص والخلفية
-- ضع خلفية بيضاء أو سوداء شبه شفافة خلف النصوص لضمان الوضوح
-- جميع الأرقام يجب أن تكون واضحة ومقروءة بسهولة`;
+1. Draw thick RED horizontal lines at resistance levels: ${analysis.resistanceLevels?.map((r: any) => r.price).join(', ')}
+2. Draw thick GREEN horizontal lines at support levels: ${analysis.supportLevels?.map((s: any) => s.price).join(', ')}
+3. Label each line with large, clear text (20-24px font) showing the price - numbers must be very clear
+4. Add a large, clear arrow indicating the expected trend: ${trendMap[analysis.trend] || analysis.trend}
+5. Place a large, readable text box in the top-left corner with semi-transparent background and large font (18-20px) containing:
+   📊 Action: ${actionMap[analysis.recommendation?.action] || analysis.recommendation?.action}
+   🎯 Entry: ${analysis.recommendation?.entry}
+   ⛔ Stop Loss: ${analysis.recommendation?.stopLoss}
+   ✅ Target 1: ${analysis.recommendation?.target1}
+
+**Additional requirements:**
+- Use bold fonts for all text
+- Ensure high contrast between text and background
+- Add white or black semi-transparent backgrounds behind text labels
+- All numbers must be clearly visible and easy to read
+- Use simple, clean lines and annotations`;
 
     const imageResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
