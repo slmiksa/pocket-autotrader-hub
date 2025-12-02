@@ -205,7 +205,7 @@ const Profile = () => {
           {/* Journal Tab */}
           <TabsContent value="journal" className="mt-4 space-y-4">
             {/* Today's Summary */}
-            <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+            <Card className="p-4 bg-secondary/30 border-border">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-primary" />
