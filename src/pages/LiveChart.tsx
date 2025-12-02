@@ -33,7 +33,37 @@ export default function LiveChart() {
   const [selectedTimeframe, setSelectedTimeframe] = useState("D");
   const [selectedInterval, setSelectedInterval] = useState("يومي");
   const [showInstructions, setShowInstructions] = useState(false);
+  const [chartAnalysisEnabled, setChartAnalysisEnabled] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { saveAnalysis } = useSavedAnalyses();
+
+  // Check if chart analysis is enabled for the user
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('image_analysis_enabled')
+          .eq('user_id', user.id)
+          .single();
+
+        setChartAnalysisEnabled(profile?.image_analysis_enabled || false);
+      } catch (error) {
+        console.error('Error checking access:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAccess();
+  }, []);
 
   // Get TradingView symbol and display name
   const getSymbolInfo = () => {
@@ -167,6 +197,11 @@ export default function LiveChart() {
   };
 
   const handleAnalyzeChart = async (imageFile?: File) => {
+    if (!chartAnalysisEnabled) {
+      toast.error("ميزة تحليل الشارت غير مفعلة لحسابك");
+      return;
+    }
+
     if (!imageFile) {
       setShowInstructions(true);
       return;
@@ -296,45 +331,49 @@ export default function LiveChart() {
                 </SelectContent>
               </Select>
 
-              <Button
-                onClick={() => setShowInstructions(true)}
-                variant="outline"
-                size="sm"
-                className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
-              >
-                <Info className="h-4 w-4" />
-                كيفية التحليل
-              </Button>
-              
-              <label htmlFor="chart-upload">
-                <Button
-                  type="button"
-                  disabled={isAnalyzing}
-                  className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                  size="sm"
-                  onClick={() => document.getElementById('chart-upload')?.click()}
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      جاري التحليل...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4" />
-                      رفع صورة الشارت
-                    </>
-                  )}
-                </Button>
-              </label>
-              <Input
-                id="chart-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileSelect}
-                disabled={isAnalyzing}
-              />
+              {chartAnalysisEnabled && (
+                <>
+                  <Button
+                    onClick={() => setShowInstructions(true)}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                  >
+                    <Info className="h-4 w-4" />
+                    كيفية التحليل
+                  </Button>
+                  
+                  <label htmlFor="chart-upload">
+                    <Button
+                      type="button"
+                      disabled={isAnalyzing || !chartAnalysisEnabled}
+                      className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                      size="sm"
+                      onClick={() => document.getElementById('chart-upload')?.click()}
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          جاري التحليل...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4" />
+                          رفع صورة الشارت
+                        </>
+                      )}
+                    </Button>
+                  </label>
+                  <Input
+                    id="chart-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileSelect}
+                    disabled={isAnalyzing || !chartAnalysisEnabled}
+                  />
+                </>
+              )}
               
               <Button
                 onClick={handleRefresh}
