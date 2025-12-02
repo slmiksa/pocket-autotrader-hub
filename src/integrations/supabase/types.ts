@@ -146,6 +146,33 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_chart_analyses: {
+        Row: {
+          analysis_text: string
+          annotated_image_url: string
+          created_at: string
+          id: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          analysis_text: string
+          annotated_image_url: string
+          created_at?: string
+          id?: string
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          analysis_text?: string
+          annotated_image_url?: string
+          created_at?: string
+          id?: string
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           id: string
