@@ -8,24 +8,34 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  ArrowLeft, Star, TrendingUp, TrendingDown, Plus, Trash2, 
-  Calendar, Target, BookOpen, User, Loader2, Image as ImageIcon
-} from 'lucide-react';
+import { ArrowLeft, Star, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Target, BookOpen, User, Loader2, Image as ImageIcon } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useDailyJournal, NewJournalEntry } from '@/hooks/useDailyJournal';
 import { useSavedAnalyses } from '@/hooks/useSavedAnalyses';
 import { ProfessionalTradingJournal } from '@/components/trading/ProfessionalTradingJournal';
-
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { favorites, loading: favLoading, removeFavorite } = useFavorites();
-  const { entries, loading: journalLoading, addEntry, deleteEntry, getStats, getTodayEntries } = useDailyJournal();
-  const { analyses, loading: analysesLoading, deleteAnalysis } = useSavedAnalyses();
+  const {
+    favorites,
+    loading: favLoading,
+    removeFavorite
+  } = useFavorites();
+  const {
+    entries,
+    loading: journalLoading,
+    addEntry,
+    deleteEntry,
+    getStats,
+    getTodayEntries
+  } = useDailyJournal();
+  const {
+    analyses,
+    loading: analysesLoading,
+    deleteAnalysis
+  } = useSavedAnalyses();
   const [selectedAnalysis, setSelectedAnalysis] = useState<any>(null);
-  
   const [newEntry, setNewEntry] = useState<NewJournalEntry>({
     trade_date: new Date().toISOString().split('T')[0],
     symbol: '',
@@ -39,10 +49,13 @@ const Profile = () => {
     lessons_learned: ''
   });
   const [dialogOpen, setDialogOpen] = useState(false);
-
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) {
         navigate('/auth');
         return;
@@ -52,7 +65,6 @@ const Profile = () => {
     };
     checkUser();
   }, [navigate]);
-
   const handleAddEntry = async () => {
     const success = await addEntry(newEntry);
     if (success) {
@@ -71,30 +83,19 @@ const Profile = () => {
       });
     }
   };
-
   const stats = getStats();
   const todayEntries = getTodayEntries();
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background" dir="rtl">
+  return <div className="min-h-screen bg-background" dir="rtl">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/')}
-              className="text-muted-foreground hover:text-foreground hover:bg-secondary"
-            >
+            <Button variant="ghost" size="icon" onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground hover:bg-secondary">
               <ArrowLeft className="h-5 w-5 rotate-180" />
             </Button>
             <h1 className="text-xl font-bold text-foreground">الملف الشخصي</h1>
@@ -118,24 +119,7 @@ const Profile = () => {
         </Card>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="p-4 text-center">
-            <p className="text-muted-foreground text-sm mb-1">إجمالي الصفقات</p>
-            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-          </Card>
-          <Card className="p-4 text-center">
-            <p className="text-muted-foreground text-sm mb-1">نسبة النجاح</p>
-            <p className="text-2xl font-bold text-success">{stats.winRate}%</p>
-          </Card>
-          <Card className="p-4 text-center">
-            <p className="text-muted-foreground text-sm mb-1">صفقات رابحة</p>
-            <p className="text-2xl font-bold text-success">{stats.wins}</p>
-          </Card>
-          <Card className="p-4 text-center">
-            <p className="text-muted-foreground text-sm mb-1">صفقات خاسرة</p>
-            <p className="text-2xl font-bold text-destructive">{stats.losses}</p>
-          </Card>
-        </div>
+        
 
         {/* Tabs */}
         <Tabs defaultValue="favorites" className="w-full">
@@ -162,51 +146,28 @@ const Profile = () => {
                 الأسواق المفضلة ({favorites.length})
               </h3>
               
-              {favLoading ? (
-                <div className="flex justify-center py-8">
+              {favLoading ? <div className="flex justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : favorites.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                </div> : favorites.length === 0 ? <div className="text-center py-8 text-muted-foreground">
                   <Star className="h-12 w-12 mx-auto mb-3 opacity-30" />
                   <p>لا توجد أسواق في المفضلة</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={() => navigate('/markets')}
-                  >
+                  <Button variant="outline" className="mt-4" onClick={() => navigate('/markets')}>
                     تصفح الأسواق
                   </Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {favorites.map((fav) => (
-                    <div
-                      key={fav.id}
-                      className="p-4 bg-secondary/50 rounded-lg group hover:bg-secondary transition-colors"
-                    >
+                </div> : <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {favorites.map(fav => <div key={fav.id} className="p-4 bg-secondary/50 rounded-lg group hover:bg-secondary transition-colors">
                       <div className="flex items-center justify-between">
-                        <div 
-                          className="flex-1 cursor-pointer"
-                          onClick={() => navigate(`/live-chart?symbol=${fav.symbol}`)}
-                        >
+                        <div className="flex-1 cursor-pointer" onClick={() => navigate(`/live-chart?symbol=${fav.symbol}`)}>
                           <p className="font-medium text-foreground">{fav.symbol_name_ar}</p>
                           <p className="text-xs text-muted-foreground">{fav.symbol_name_en}</p>
                           <span className="text-xs text-primary">{fav.category}</span>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => removeFavorite(fav.symbol)}
-                        >
+                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => removeFavorite(fav.symbol)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    </div>)}
+                </div>}
             </Card>
           </TabsContent>
 
@@ -218,56 +179,31 @@ const Profile = () => {
                 تحليلاتي المحفوظة ({analyses.length})
               </h3>
               
-              {analysesLoading ? (
-                <div className="flex justify-center py-8">
+              {analysesLoading ? <div className="flex justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : analyses.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                </div> : analyses.length === 0 ? <div className="text-center py-8 text-muted-foreground">
                   <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
                   <p>لا توجد تحليلات محفوظة</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={() => navigate('/markets')}
-                  >
+                  <Button variant="outline" className="mt-4" onClick={() => navigate('/markets')}>
                     ابدأ التحليل
                   </Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {analyses.map((analysis) => {
-                    const analysisData = JSON.parse(analysis.analysis_text);
-                    return (
-                      <Card
-                        key={analysis.id}
-                        className="p-4 bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer"
-                        onClick={() => setSelectedAnalysis(analysis)}
-                      >
+                </div> : <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {analyses.map(analysis => {
+                const analysisData = JSON.parse(analysis.analysis_text);
+                return <Card key={analysis.id} className="p-4 bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer" onClick={() => setSelectedAnalysis(analysis)}>
                         {/* Analysis Image */}
-                        {analysis.annotated_image_url && (
-                          <div className="mb-3 rounded-lg overflow-hidden border border-border">
-                            <img 
-                              src={analysis.annotated_image_url} 
-                              alt={analysis.symbol}
-                              className="w-full h-48 object-cover"
-                            />
-                          </div>
-                        )}
+                        {analysis.annotated_image_url && <div className="mb-3 rounded-lg overflow-hidden border border-border">
+                            <img src={analysis.annotated_image_url} alt={analysis.symbol} className="w-full h-48 object-cover" />
+                          </div>}
                         
                         {/* Analysis Info */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
                             <h4 className="font-bold text-foreground">{analysis.symbol}</h4>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteAnalysis(analysis.id);
-                              }}
-                            >
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={e => {
+                        e.stopPropagation();
+                        deleteAnalysis(analysis.id);
+                      }}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -276,31 +212,27 @@ const Profile = () => {
                             <Calendar className="h-4 w-4 text-muted-foreground" />
                             <span className="text-muted-foreground">
                               {new Date(analysis.created_at).toLocaleDateString('ar-SA', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                             </span>
                           </div>
                           
-                          {analysisData.recommendation && (
-                            <div className="flex items-center gap-2 text-sm">
+                          {analysisData.recommendation && <div className="flex items-center gap-2 text-sm">
                               <span className="font-medium text-primary">
                                 {analysisData.recommendation.action}
                               </span>
                               <span className="text-muted-foreground">
                                 @ {analysisData.recommendation.entry}
                               </span>
-                            </div>
-                          )}
+                            </div>}
                         </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
+                      </Card>;
+              })}
+                </div>}
             </Card>
           </TabsContent>
 
@@ -311,24 +243,16 @@ const Profile = () => {
                 <DialogTitle className="text-xl">{selectedAnalysis?.symbol}</DialogTitle>
               </DialogHeader>
               
-              {selectedAnalysis && (
-                <div className="space-y-4">
+              {selectedAnalysis && <div className="space-y-4">
                   {/* Image */}
-                  {selectedAnalysis.annotated_image_url && (
-                    <div className="rounded-lg overflow-hidden border border-border">
-                      <img 
-                        src={selectedAnalysis.annotated_image_url} 
-                        alt={selectedAnalysis.symbol}
-                        className="w-full h-auto"
-                      />
-                    </div>
-                  )}
+                  {selectedAnalysis.annotated_image_url && <div className="rounded-lg overflow-hidden border border-border">
+                      <img src={selectedAnalysis.annotated_image_url} alt={selectedAnalysis.symbol} className="w-full h-auto" />
+                    </div>}
                   
                   {/* Analysis Details */}
                   {(() => {
-                    const data = JSON.parse(selectedAnalysis.analysis_text);
-                    return (
-                      <div className="space-y-4">
+                const data = JSON.parse(selectedAnalysis.analysis_text);
+                return <div className="space-y-4">
                         {/* Current Price & Trend */}
                         <div className="grid grid-cols-2 gap-4">
                           <Card className="p-4">
@@ -342,8 +266,7 @@ const Profile = () => {
                         </div>
                         
                         {/* Recommendation */}
-                        {data.recommendation && (
-                          <Card className="p-4 bg-primary/10">
+                        {data.recommendation && <Card className="p-4 bg-primary/10">
                             <h4 className="font-bold text-foreground mb-3">التوصية</h4>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                               <div>
@@ -363,21 +286,16 @@ const Profile = () => {
                                 <p className="font-bold text-success">{data.recommendation.target1}</p>
                               </div>
                             </div>
-                          </Card>
-                        )}
+                          </Card>}
                         
                         {/* Analysis Text */}
-                        {data.analysis && (
-                          <Card className="p-4">
+                        {data.analysis && <Card className="p-4">
                             <h4 className="font-bold text-foreground mb-2">التحليل المفصل</h4>
                             <p className="text-sm text-muted-foreground leading-relaxed">{data.analysis}</p>
-                          </Card>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
+                          </Card>}
+                      </div>;
+              })()}
+                </div>}
             </DialogContent>
           </Dialog>
 
@@ -387,8 +305,6 @@ const Profile = () => {
           </TabsContent>
         </Tabs>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Profile;
