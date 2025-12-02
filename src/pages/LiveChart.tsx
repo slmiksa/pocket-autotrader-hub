@@ -2,10 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Sparkles, Loader2, Upload } from "lucide-react";
+import { ArrowLeft, RefreshCw, Camera, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
+import { toPng } from 'html-to-image';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function LiveChart() {
   const navigate = useNavigate();
@@ -15,6 +22,8 @@ export default function LiveChart() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
+  const [selectedTimeframe, setSelectedTimeframe] = useState("D");
+  const [selectedInterval, setSelectedInterval] = useState("يومي");
 
   // Get TradingView symbol and display name
   const getSymbolInfo = () => {
@@ -99,7 +108,7 @@ export default function LiveChart() {
     script.innerHTML = JSON.stringify({
       autosize: true,
       symbol: symbolInfo.tvSymbol,
-      interval: "D",
+      interval: selectedTimeframe,
       timezone: "Asia/Riyadh",
       theme: "dark",
       style: "1",
@@ -132,7 +141,7 @@ export default function LiveChart() {
         containerRef.current.innerHTML = '';
       }
     };
-  }, [symbol, symbolInfo.tvSymbol]);
+  }, [symbol, symbolInfo.tvSymbol, selectedTimeframe]);
 
   const handleRefresh = () => {
     if (containerRef.current) {
@@ -147,70 +156,57 @@ export default function LiveChart() {
     window.location.reload();
   };
 
-  const handleAnalyzeChart = async (imageFile?: File) => {
-    if (!imageFile) {
-      toast.error("يرجى اختيار صورة الشارت");
+  const handleCaptureAndAnalyze = async () => {
+    if (!containerRef.current) {
+      toast.error("لم يتم تحميل الشارت بعد");
       return;
     }
 
     setIsAnalyzing(true);
-    toast.info("جاري تحليل الشارت والرسم عليه...");
+    toast.info("جاري التقاط صورة الشارت...");
 
     try {
-      // Convert image to base64
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Image = reader.result as string;
+      // Wait for chart to fully render
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // Send to AI for analysis and drawing
-        const { data, error } = await supabase.functions.invoke('analyze-chart-with-drawing', {
-          body: {
-            image: base64Image,
-            symbol: symbolInfo.displayName,
-            timeframe: 'يومي'
-          }
-        });
+      // Capture the chart container as image
+      const dataUrl = await toPng(containerRef.current, {
+        quality: 0.95,
+        pixelRatio: 2,
+        backgroundColor: '#12121a',
+      });
 
-        if (error) {
-          console.error('Supabase function error:', error);
-          toast.error("حدث خطأ أثناء الاتصال بالخادم");
-          setIsAnalyzing(false);
-          return;
+      toast.info("جاري تحليل الشارت والرسم عليه...");
+
+      // Send to AI for analysis and drawing
+      const { data, error } = await supabase.functions.invoke('analyze-chart-with-drawing', {
+        body: {
+          image: dataUrl,
+          symbol: symbolInfo.displayName,
+          timeframe: selectedInterval
         }
+      });
 
-        if (data?.success) {
-          setAnalysisResult(data);
-          setShowAnalysis(true);
-          toast.success("تم التحليل والرسم بنجاح!");
-        } else {
-          toast.error(data?.error || 'فشل التحليل');
-        }
-        
+      if (error) {
+        console.error('Supabase function error:', error);
+        toast.error("حدث خطأ أثناء الاتصال بالخادم");
         setIsAnalyzing(false);
-      };
+        return;
+      }
 
-      reader.onerror = () => {
-        toast.error("فشل قراءة الصورة");
-        setIsAnalyzing(false);
-      };
-
-      reader.readAsDataURL(imageFile);
+      if (data?.success) {
+        setAnalysisResult(data);
+        setShowAnalysis(true);
+        toast.success("تم التحليل والرسم بنجاح!");
+      } else {
+        toast.error(data?.error || 'فشل التحليل');
+      }
 
     } catch (error: any) {
-      console.error('Error analyzing chart:', error);
-      toast.error(error.message || "حدث خطأ أثناء التحليل");
+      console.error('Error capturing/analyzing chart:', error);
+      toast.error(error.message || "حدث خطأ أثناء التقاط الشارت");
+    } finally {
       setIsAnalyzing(false);
-    }
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.type.startsWith('image/')) {
-        handleAnalyzeChart(file);
-      } else {
-        toast.error("يرجى اختيار صورة فقط");
-      }
     }
   };
 
@@ -235,36 +231,55 @@ export default function LiveChart() {
                 <p className="text-sm text-white/50">شارت حقيقي مباشر من TradingView</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <label htmlFor="chart-upload">
-                <Button
-                  type="button"
-                  disabled={isAnalyzing}
-                  className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                  size="sm"
-                  onClick={() => document.getElementById('chart-upload')?.click()}
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      جاري التحليل...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4" />
-                      تحليل صورة الشارت
-                    </>
-                  )}
-                </Button>
-              </label>
-              <Input
-                id="chart-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileSelect}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select value={selectedTimeframe} onValueChange={(val) => {
+                setSelectedTimeframe(val);
+                const intervalMap: Record<string, string> = {
+                  "1": "دقيقة",
+                  "5": "5 دقائق",
+                  "15": "15 دقيقة",
+                  "30": "30 دقيقة",
+                  "60": "ساعة",
+                  "240": "4 ساعات",
+                  "D": "يومي",
+                  "W": "أسبوعي",
+                };
+                setSelectedInterval(intervalMap[val] || "يومي");
+              }}>
+                <SelectTrigger className="w-[120px] bg-background/50 border-white/20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 دقيقة</SelectItem>
+                  <SelectItem value="5">5 دقائق</SelectItem>
+                  <SelectItem value="15">15 دقيقة</SelectItem>
+                  <SelectItem value="30">30 دقيقة</SelectItem>
+                  <SelectItem value="60">ساعة</SelectItem>
+                  <SelectItem value="240">4 ساعات</SelectItem>
+                  <SelectItem value="D">يومي</SelectItem>
+                  <SelectItem value="W">أسبوعي</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button
+                onClick={handleCaptureAndAnalyze}
                 disabled={isAnalyzing}
-              />
+                className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                size="sm"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    جاري التحليل...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-4 w-4" />
+                    تحليل الشارت
+                  </>
+                )}
+              </Button>
+              
               <Button
                 onClick={handleRefresh}
                 variant="outline"
@@ -319,7 +334,7 @@ export default function LiveChart() {
           <Card className="mt-6 p-6 bg-[#12121a] border-white/10">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
+                <Camera className="h-5 w-5 text-primary" />
                 نتيجة التحليل
               </h2>
               <Button
