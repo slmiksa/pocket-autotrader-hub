@@ -363,6 +363,42 @@ export type Database = {
           },
         ]
       }
+      trading_goal_progress: {
+        Row: {
+          achieved_amount: number | null
+          completed_at: string | null
+          created_at: string
+          day_number: number
+          goal_id: string
+          id: string
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achieved_amount?: number | null
+          completed_at?: string | null
+          created_at?: string
+          day_number: number
+          goal_id: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achieved_amount?: number | null
+          completed_at?: string | null
+          created_at?: string
+          day_number?: number
+          goal_id?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       trading_goals: {
         Row: {
           created_at: string

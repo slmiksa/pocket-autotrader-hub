@@ -5,16 +5,34 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTradingGoals, NewTradingGoal } from '@/hooks/useTradingGoals';
 import { useDailyJournal } from '@/hooks/useDailyJournal';
-import { Target, TrendingUp, Calendar, Download, Plus, Clock } from 'lucide-react';
+import { useTradingGoalProgress } from '@/hooks/useTradingGoalProgress';
+import { Target, TrendingUp, Calendar, Download, Plus, Clock, Edit2, Trash2, Check, X } from 'lucide-react';
+import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
 export const ProfessionalTradingJournal = () => {
   const { activeGoal, createGoal, loading: goalsLoading } = useTradingGoals();
   const { getStats } = useDailyJournal();
+  const { 
+    progress, 
+    loading: progressLoading,
+    updateProgress, 
+    deleteProgress, 
+    clearAllProgress,
+    getProgressForDay,
+    getTotalAchieved,
+    getCompletedDays
+  } = useTradingGoalProgress(activeGoal?.id || null);
+  
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingDay, setEditingDay] = useState<number | null>(null);
+  const [editAmount, setEditAmount] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  
   const [newGoal, setNewGoal] = useState<NewTradingGoal>({
     initial_capital: 1000,
     target_amount: 4000,
@@ -61,11 +79,50 @@ export const ProfessionalTradingJournal = () => {
     }
   };
 
+  const dailyPlan = calculateDailyPlan();
+
+  const handleEditDay = (dayNumber: number) => {
+    const existingProgress = getProgressForDay(dayNumber);
+    setEditingDay(dayNumber);
+    setEditAmount(existingProgress?.achieved_amount.toString() || '');
+    setEditNotes(existingProgress?.notes || '');
+  };
+
+  const handleSaveProgress = async () => {
+    if (editingDay === null) return;
+    
+    const amount = parseFloat(editAmount);
+    if (isNaN(amount) || amount < 0) {
+      toast.error('الرجاء إدخال مبلغ صحيح');
+      return;
+    }
+
+    const success = await updateProgress(editingDay, amount, editNotes);
+    if (success) {
+      setEditingDay(null);
+      setEditAmount('');
+      setEditNotes('');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingDay(null);
+    setEditAmount('');
+    setEditNotes('');
+  };
+
+  const handleDeleteDay = async (dayNumber: number) => {
+    await deleteProgress(dayNumber);
+  };
+
+  const handleClearAll = async () => {
+    await clearAllProgress();
+  };
+
   // Export to Excel
   const exportToExcel = () => {
     if (!activeGoal) return;
     
-    const dailyPlan = calculateDailyPlan();
     const ws = XLSX.utils.json_to_sheet(
       dailyPlan.map(day => ({
         'اليوم': day.day,
@@ -93,8 +150,6 @@ export const ProfessionalTradingJournal = () => {
     
     XLSX.writeFile(wb, 'خطة_التداول.xlsx');
   };
-
-  const dailyPlan = calculateDailyPlan();
 
   // Market session times
   const marketSessions = [
@@ -302,6 +357,30 @@ export const ProfessionalTradingJournal = () => {
         </div>
       </Card>
 
+      {/* Progress Summary */}
+      {activeGoal && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="p-4">
+            <p className="text-sm text-muted-foreground mb-1">إجمالي المحقق</p>
+            <p className="text-2xl font-bold text-success">
+              {getTotalAchieved().toFixed(2)} ريال
+            </p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-sm text-muted-foreground mb-1">الأيام المكتملة</p>
+            <p className="text-2xl font-bold text-primary">
+              {getCompletedDays()} / {activeGoal.duration_days}
+            </p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-sm text-muted-foreground mb-1">المتبقي للهدف</p>
+            <p className="text-2xl font-bold text-foreground">
+              {(activeGoal.target_amount - activeGoal.initial_capital - getTotalAchieved()).toFixed(2)} ريال
+            </p>
+          </Card>
+        </div>
+      )}
+
       {/* Daily Plan Table */}
       {activeGoal && dailyPlan.length > 0 && (
         <Card className="p-6">
@@ -310,10 +389,34 @@ export const ProfessionalTradingJournal = () => {
               <Calendar className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-bold text-foreground">الجدول اليومي للوصول للهدف</h3>
             </div>
-            <Button variant="outline" className="gap-2" onClick={exportToExcel}>
-              <Download className="h-4 w-4" />
-              تحميل Excel
-            </Button>
+            <div className="flex gap-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="gap-2 text-destructive hover:text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                    مسح الكل
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      سيتم حذف جميع التقدم المسجل. هذا الإجراء لا يمكن التراجع عنه.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClearAll} className="bg-destructive hover:bg-destructive/90">
+                      مسح الكل
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <Button variant="outline" className="gap-2" onClick={exportToExcel}>
+                <Download className="h-4 w-4" />
+                تحميل Excel
+              </Button>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
@@ -323,20 +426,122 @@ export const ProfessionalTradingJournal = () => {
                   <TableHead className="text-right">اليوم</TableHead>
                   <TableHead className="text-right">رأس المال (بداية)</TableHead>
                   <TableHead className="text-right">الهدف اليومي</TableHead>
+                  <TableHead className="text-right">ما تم تحقيقه</TableHead>
                   <TableHead className="text-right">رأس المال (نهاية)</TableHead>
                   <TableHead className="text-right">تعويض الخسارة</TableHead>
+                  <TableHead className="text-right">إجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {dailyPlan.slice(0, 30).map((day) => (
-                  <TableRow key={day.day}>
-                    <TableCell className="font-medium">{day.day}</TableCell>
-                    <TableCell>{day.startCapital.toFixed(2)}</TableCell>
-                    <TableCell className="text-success font-bold">+{day.dailyTarget.toFixed(2)}</TableCell>
-                    <TableCell className="font-bold">{day.endCapital.toFixed(2)}</TableCell>
-                    <TableCell className="text-warning">{day.lossCompensation.toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
+                {dailyPlan.slice(0, 30).map((day) => {
+                  const dayProgress = getProgressForDay(day.day);
+                  const isEditing = editingDay === day.day;
+                  
+                  return (
+                    <TableRow key={day.day} className={dayProgress ? 'bg-success/5' : ''}>
+                      <TableCell className="font-medium">{day.day}</TableCell>
+                      <TableCell>{day.startCapital.toFixed(2)}</TableCell>
+                      <TableCell className="text-primary font-bold">+{day.dailyTarget.toFixed(2)}</TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <div className="space-y-1">
+                            <Input
+                              type="number"
+                              value={editAmount}
+                              onChange={(e) => setEditAmount(e.target.value)}
+                              placeholder="المبلغ"
+                              className="w-24"
+                              step="0.01"
+                            />
+                            <Input
+                              type="text"
+                              value={editNotes}
+                              onChange={(e) => setEditNotes(e.target.value)}
+                              placeholder="ملاحظات"
+                              className="w-full text-xs"
+                            />
+                          </div>
+                        ) : dayProgress ? (
+                          <div>
+                            <span className="text-success font-bold">
+                              +{dayProgress.achieved_amount.toFixed(2)}
+                            </span>
+                            {dayProgress.notes && (
+                              <p className="text-xs text-muted-foreground mt-1">{dayProgress.notes}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-bold">{day.endCapital.toFixed(2)}</TableCell>
+                      <TableCell className="text-warning">{day.lossCompensation.toFixed(2)}</TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <div className="flex gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-success hover:text-success hover:bg-success/10"
+                              onClick={handleSaveProgress}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={handleCancelEdit}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 hover:bg-primary/10"
+                              onClick={() => handleEditDay(day.day)}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            {dayProgress && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>حذف التقدم</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      هل تريد حذف التقدم المسجل لليوم {day.day}؟
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                      onClick={() => handleDeleteDay(day.day)}
+                                      className="bg-destructive hover:bg-destructive/90"
+                                    >
+                                      حذف
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
