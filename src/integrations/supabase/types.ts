@@ -119,6 +119,7 @@ export type Database = {
           image_analysis_enabled: boolean | null
           professional_signals_enabled: boolean | null
           subscription_expires_at: string | null
+          supply_demand_enabled: boolean | null
           updated_at: string
           user_id: string
         }
@@ -130,6 +131,7 @@ export type Database = {
           image_analysis_enabled?: boolean | null
           professional_signals_enabled?: boolean | null
           subscription_expires_at?: string | null
+          supply_demand_enabled?: boolean | null
           updated_at?: string
           user_id: string
         }
@@ -141,6 +143,7 @@ export type Database = {
           image_analysis_enabled?: boolean | null
           professional_signals_enabled?: boolean | null
           subscription_expires_at?: string | null
+          supply_demand_enabled?: boolean | null
           updated_at?: string
           user_id?: string
         }

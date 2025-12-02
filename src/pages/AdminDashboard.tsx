@@ -139,7 +139,7 @@ const AdminDashboard = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, email, subscription_expires_at, image_analysis_enabled, professional_signals_enabled, activated_code, created_at")
+        .select("user_id, email, subscription_expires_at, image_analysis_enabled, professional_signals_enabled, supply_demand_enabled, activated_code, created_at")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -273,6 +273,23 @@ const AdminDashboard = () => {
     } catch (error: any) {
       console.error("Error toggling professional signals:", error);
       toast.error("فشل تحديث حالة توصيات المحترفين");
+    }
+  };
+
+  const toggleSupplyDemand = async (userId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ supply_demand_enabled: !currentStatus })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast.success(`تم ${!currentStatus ? 'تفعيل' : 'تعطيل'} محلل العرض والطلب`);
+      loadUsers();
+    } catch (error: any) {
+      console.error("Error toggling supply demand analyzer:", error);
+      toast.error("فشل تحديث حالة محلل العرض والطلب");
     }
   };
 
@@ -637,7 +654,7 @@ const AdminDashboard = () => {
               <div className="text-center py-8 text-muted-foreground">لا يوجد مستخدمين</div>
             ) : (
               <div className="overflow-x-auto">
-                <Table>
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>البريد الإلكتروني</TableHead>
@@ -646,6 +663,7 @@ const AdminDashboard = () => {
                       <TableHead>تاريخ انتهاء الاشتراك</TableHead>
                       <TableHead>الكود المستخدم</TableHead>
                       <TableHead>تحليل الصورة</TableHead>
+                      <TableHead>محلل العرض والطلب</TableHead>
                       <TableHead>توصيات المحترفين</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -685,6 +703,16 @@ const AdminDashboard = () => {
                               className={user.image_analysis_enabled ? "bg-success hover:bg-success/90" : ""}
                             >
                               {user.image_analysis_enabled ? "مفعل" : "معطل"}
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant={user.supply_demand_enabled ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => toggleSupplyDemand(user.user_id, user.supply_demand_enabled)}
+                              className={user.supply_demand_enabled ? "bg-info hover:bg-info/90" : ""}
+                            >
+                              {user.supply_demand_enabled ? "مفعل" : "معطل"}
                             </Button>
                           </TableCell>
                           <TableCell>
