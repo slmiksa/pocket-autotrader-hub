@@ -363,6 +363,45 @@ export type Database = {
           },
         ]
       }
+      trading_goals: {
+        Row: {
+          created_at: string
+          duration_days: number
+          id: string
+          initial_capital: number
+          is_active: boolean | null
+          loss_compensation_rate: number | null
+          market_type: string
+          target_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_days: number
+          id?: string
+          initial_capital: number
+          is_active?: boolean | null
+          loss_compensation_rate?: number | null
+          market_type: string
+          target_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_days?: number
+          id?: string
+          initial_capital?: number
+          is_active?: boolean | null
+          loss_compensation_rate?: number | null
+          market_type?: string
+          target_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_daily_journal: {
         Row: {
           created_at: string
