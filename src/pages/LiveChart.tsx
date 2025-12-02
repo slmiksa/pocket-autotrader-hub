@@ -1,14 +1,20 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw, Sparkles, Loader2 } from "lucide-react";
+import html2canvas from "html2canvas";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function LiveChart() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const symbol = searchParams.get("symbol") || "bitcoin";
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   // Get TradingView symbol and display name
   const getSymbolInfo = () => {
@@ -141,6 +147,58 @@ export default function LiveChart() {
     window.location.reload();
   };
 
+  const handleAnalyzeChart = async () => {
+    if (!containerRef.current) {
+      toast.error("لم يتم تحميل الشارت بعد");
+      return;
+    }
+
+    setIsAnalyzing(true);
+    toast.info("جاري التقاط صورة الشارت...");
+
+    try {
+      // Wait a moment for TradingView to fully load
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Capture the chart as image
+      const canvas = await html2canvas(containerRef.current, {
+        backgroundColor: '#12121a',
+        scale: 2,
+        logging: false,
+        useCORS: true,
+      });
+
+      const imageBase64 = canvas.toDataURL('image/jpeg', 0.9);
+      
+      toast.info("جاري تحليل الشارت والرسم عليه...");
+
+      // Send to AI for analysis and drawing
+      const { data, error } = await supabase.functions.invoke('analyze-chart-with-drawing', {
+        body: {
+          image: imageBase64,
+          symbol: symbolInfo.displayName,
+          timeframe: 'يومي'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setAnalysisResult(data);
+        setShowAnalysis(true);
+        toast.success("تم التحليل والرسم بنجاح!");
+      } else {
+        throw new Error(data.error || 'فشل التحليل');
+      }
+
+    } catch (error: any) {
+      console.error('Error analyzing chart:', error);
+      toast.error(error.message || "حدث خطأ أثناء التحليل");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0f]" dir="rtl">
       {/* Header */}
@@ -162,15 +220,35 @@ export default function LiveChart() {
                 <p className="text-sm text-white/50">شارت حقيقي مباشر من TradingView</p>
               </div>
             </div>
-            <Button
-              onClick={handleRefresh}
-              variant="outline"
-              size="sm"
-              className="gap-2 border-white/20 text-white/70 hover:text-white hover:bg-white/10"
-            >
-              <RefreshCw className="h-4 w-4" />
-              تحديث
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleAnalyzeChart}
+                disabled={isAnalyzing}
+                className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                size="sm"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    جاري التحليل...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    تحليل الشارت
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handleRefresh}
+                variant="outline"
+                size="sm"
+                className="gap-2 border-white/20 text-white/70 hover:text-white hover:bg-white/10"
+              >
+                <RefreshCw className="h-4 w-4" />
+                تحديث
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -209,6 +287,140 @@ export default function LiveChart() {
             </div>
           </div>
         </Card>
+
+        {/* Analysis Results */}
+        {showAnalysis && analysisResult && (
+          <Card className="mt-6 p-6 bg-[#12121a] border-white/10">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                نتيجة التحليل
+              </h2>
+              <Button
+                onClick={() => setShowAnalysis(false)}
+                variant="ghost"
+                size="sm"
+                className="text-white/70 hover:text-white"
+              >
+                إغلاق
+              </Button>
+            </div>
+
+            {/* Annotated Chart Image */}
+            {analysisResult.annotatedImage && (
+              <div className="mb-6 rounded-lg overflow-hidden border border-white/10">
+                <img 
+                  src={analysisResult.annotatedImage} 
+                  alt="الشارت المحلل"
+                  className="w-full h-auto"
+                />
+              </div>
+            )}
+
+            {/* Analysis Details */}
+            {analysisResult.analysis && (
+              <div className="space-y-4">
+                {/* Current Price & Trend */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg bg-white/5">
+                    <p className="text-sm text-white/50 mb-1">السعر الحالي</p>
+                    <p className="text-2xl font-bold text-white">
+                      {analysisResult.analysis.currentPrice}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-white/5">
+                    <p className="text-sm text-white/50 mb-1">الاتجاه</p>
+                    <p className="text-2xl font-bold text-primary">
+                      {analysisResult.analysis.trend}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Recommendation */}
+                {analysisResult.analysis.recommendation && (
+                  <div className="p-6 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30">
+                    <h3 className="text-lg font-bold text-white mb-4">التوصية</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">العملية</p>
+                        <p className="text-lg font-bold text-primary">
+                          {analysisResult.analysis.recommendation.action}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">الدخول</p>
+                        <p className="text-lg font-bold text-white">
+                          {analysisResult.analysis.recommendation.entry}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">وقف الخسارة</p>
+                        <p className="text-lg font-bold text-destructive">
+                          {analysisResult.analysis.recommendation.stopLoss}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">الهدف</p>
+                        <p className="text-lg font-bold text-success">
+                          {analysisResult.analysis.recommendation.target1}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-white/10">
+                      <p className="text-sm text-white/70">
+                        <span className="font-semibold text-white">السبب: </span>
+                        {analysisResult.analysis.recommendation.reason}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Support & Resistance Levels */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Support Levels */}
+                  {analysisResult.analysis.supportLevels && analysisResult.analysis.supportLevels.length > 0 && (
+                    <div className="p-4 rounded-lg bg-white/5">
+                      <h4 className="text-sm font-semibold text-success mb-3">مستويات الدعم</h4>
+                      <div className="space-y-2">
+                        {analysisResult.analysis.supportLevels.map((level: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between text-sm">
+                            <span className="text-white/70">{level.price}</span>
+                            <span className="text-success text-xs">{level.strength}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Resistance Levels */}
+                  {analysisResult.analysis.resistanceLevels && analysisResult.analysis.resistanceLevels.length > 0 && (
+                    <div className="p-4 rounded-lg bg-white/5">
+                      <h4 className="text-sm font-semibold text-destructive mb-3">مستويات المقاومة</h4>
+                      <div className="space-y-2">
+                        {analysisResult.analysis.resistanceLevels.map((level: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between text-sm">
+                            <span className="text-white/70">{level.price}</span>
+                            <span className="text-destructive text-xs">{level.strength}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Detailed Analysis */}
+                {analysisResult.analysis.analysis && (
+                  <div className="p-4 rounded-lg bg-white/5">
+                    <h4 className="text-sm font-semibold text-white mb-2">تحليل مفصل</h4>
+                    <p className="text-sm text-white/70 leading-relaxed">
+                      {analysisResult.analysis.analysis}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        )}
       </main>
     </div>
   );
