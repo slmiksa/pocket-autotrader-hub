@@ -10,10 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   ArrowLeft, Star, TrendingUp, TrendingDown, Plus, Trash2, 
-  Calendar, Target, BookOpen, User, Loader2
+  Calendar, Target, BookOpen, User, Loader2, Image as ImageIcon
 } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useDailyJournal, NewJournalEntry } from '@/hooks/useDailyJournal';
+import { useSavedAnalyses } from '@/hooks/useSavedAnalyses';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -21,6 +22,8 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const { favorites, loading: favLoading, removeFavorite } = useFavorites();
   const { entries, loading: journalLoading, addEntry, deleteEntry, getStats, getTodayEntries } = useDailyJournal();
+  const { analyses, loading: analysesLoading, deleteAnalysis } = useSavedAnalyses();
+  const [selectedAnalysis, setSelectedAnalysis] = useState<any>(null);
   
   const [newEntry, setNewEntry] = useState<NewJournalEntry>({
     trade_date: new Date().toISOString().split('T')[0],
@@ -140,6 +143,10 @@ const Profile = () => {
               <Star className="h-4 w-4 ml-2" />
               المفضلة
             </TabsTrigger>
+            <TabsTrigger value="analyses" className="flex-1">
+              <ImageIcon className="h-4 w-4 ml-2" />
+              تحليلاتي
+            </TabsTrigger>
             <TabsTrigger value="journal" className="flex-1">
               <BookOpen className="h-4 w-4 ml-2" />
               دفتر التداول
@@ -201,6 +208,177 @@ const Profile = () => {
               )}
             </Card>
           </TabsContent>
+
+          {/* Analyses Tab */}
+          <TabsContent value="analyses" className="mt-4">
+            <Card className="p-4">
+              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <ImageIcon className="h-5 w-5 text-primary" />
+                تحليلاتي المحفوظة ({analyses.length})
+              </h3>
+              
+              {analysesLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : analyses.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                  <p>لا توجد تحليلات محفوظة</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => navigate('/markets')}
+                  >
+                    ابدأ التحليل
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {analyses.map((analysis) => {
+                    const analysisData = JSON.parse(analysis.analysis_text);
+                    return (
+                      <Card
+                        key={analysis.id}
+                        className="p-4 bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer"
+                        onClick={() => setSelectedAnalysis(analysis)}
+                      >
+                        {/* Analysis Image */}
+                        {analysis.annotated_image_url && (
+                          <div className="mb-3 rounded-lg overflow-hidden border border-border">
+                            <img 
+                              src={analysis.annotated_image_url} 
+                              alt={analysis.symbol}
+                              className="w-full h-48 object-cover"
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Analysis Info */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-bold text-foreground">{analysis.symbol}</h4>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteAnalysis(analysis.id);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 text-sm">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">
+                              {new Date(analysis.created_at).toLocaleDateString('ar-SA', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                          
+                          {analysisData.recommendation && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="font-medium text-primary">
+                                {analysisData.recommendation.action}
+                              </span>
+                              <span className="text-muted-foreground">
+                                @ {analysisData.recommendation.entry}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+          </TabsContent>
+
+          {/* Analysis Details Dialog */}
+          <Dialog open={!!selectedAnalysis} onOpenChange={() => setSelectedAnalysis(null)}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-xl">{selectedAnalysis?.symbol}</DialogTitle>
+              </DialogHeader>
+              
+              {selectedAnalysis && (
+                <div className="space-y-4">
+                  {/* Image */}
+                  {selectedAnalysis.annotated_image_url && (
+                    <div className="rounded-lg overflow-hidden border border-border">
+                      <img 
+                        src={selectedAnalysis.annotated_image_url} 
+                        alt={selectedAnalysis.symbol}
+                        className="w-full h-auto"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Analysis Details */}
+                  {(() => {
+                    const data = JSON.parse(selectedAnalysis.analysis_text);
+                    return (
+                      <div className="space-y-4">
+                        {/* Current Price & Trend */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <Card className="p-4">
+                            <p className="text-sm text-muted-foreground mb-1">السعر الحالي</p>
+                            <p className="text-xl font-bold text-foreground">{data.currentPrice}</p>
+                          </Card>
+                          <Card className="p-4">
+                            <p className="text-sm text-muted-foreground mb-1">الاتجاه</p>
+                            <p className="text-xl font-bold text-primary">{data.trend}</p>
+                          </Card>
+                        </div>
+                        
+                        {/* Recommendation */}
+                        {data.recommendation && (
+                          <Card className="p-4 bg-primary/10">
+                            <h4 className="font-bold text-foreground mb-3">التوصية</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">العملية</p>
+                                <p className="font-bold text-primary">{data.recommendation.action}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">الدخول</p>
+                                <p className="font-bold text-foreground">{data.recommendation.entry}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">وقف الخسارة</p>
+                                <p className="font-bold text-destructive">{data.recommendation.stopLoss}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">الهدف</p>
+                                <p className="font-bold text-success">{data.recommendation.target1}</p>
+                              </div>
+                            </div>
+                          </Card>
+                        )}
+                        
+                        {/* Analysis Text */}
+                        {data.analysis && (
+                          <Card className="p-4">
+                            <h4 className="font-bold text-foreground mb-2">التحليل المفصل</h4>
+                            <p className="text-sm text-muted-foreground leading-relaxed">{data.analysis}</p>
+                          </Card>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* Journal Tab */}
           <TabsContent value="journal" className="mt-4 space-y-4">

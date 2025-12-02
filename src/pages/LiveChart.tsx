@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Upload, Loader2, Info } from "lucide-react";
+import { ArrowLeft, RefreshCw, Upload, Loader2, Info, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useSavedAnalyses } from "@/hooks/useSavedAnalyses";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -32,6 +33,7 @@ export default function LiveChart() {
   const [selectedTimeframe, setSelectedTimeframe] = useState("D");
   const [selectedInterval, setSelectedInterval] = useState("يومي");
   const [showInstructions, setShowInstructions] = useState(false);
+  const { saveAnalysis } = useSavedAnalyses();
 
   // Get TradingView symbol and display name
   const getSymbolInfo = () => {
@@ -218,6 +220,18 @@ export default function LiveChart() {
       toast.error(error.message || "حدث خطأ أثناء التحليل");
       setIsAnalyzing(false);
     }
+  };
+
+  const handleSaveAnalysis = async () => {
+    if (!analysisResult || !analysisResult.analysis) {
+      toast.error('لا يوجد تحليل لحفظه');
+      return;
+    }
+
+    const analysisText = JSON.stringify(analysisResult.analysis);
+    const imageUrl = analysisResult.annotatedImage || '';
+    
+    await saveAnalysis(symbolInfo.displayName, analysisText, imageUrl);
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -500,6 +514,18 @@ export default function LiveChart() {
                     </p>
                   </div>
                 )}
+
+                {/* Save Analysis Button */}
+                <div className="flex justify-center mt-6 pt-6 border-t border-white/10">
+                  <Button
+                    onClick={handleSaveAnalysis}
+                    className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    size="lg"
+                  >
+                    <Save className="h-5 w-5" />
+                    هل تريد حفظ التحليل في قائمة تحليلاتي؟
+                  </Button>
+                </div>
               </div>
             )}
           </Card>
