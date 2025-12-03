@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowRight, Plus, Image as ImageIcon, Loader2, X, User } from "lucide-react";
+import { ArrowRight, Plus, Image as ImageIcon, Loader2, X, User, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -30,6 +30,7 @@ export default function Community() {
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   
   // Form state
   const [title, setTitle] = useState("");
@@ -156,6 +157,43 @@ export default function Community() {
   const openPost = (post: CommunityPost) => {
     setSelectedPost(post);
     setShowPostDialog(true);
+  };
+
+  const handleDeletePost = async () => {
+    if (!selectedPost || !user) return;
+    
+    if (selectedPost.user_id !== user.id) {
+      toast.error('لا يمكنك حذف مشاركة غيرك');
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      // Delete image from storage if exists
+      if (selectedPost.image_url) {
+        const imagePath = selectedPost.image_url.split('/community-images/')[1];
+        if (imagePath) {
+          await supabase.storage.from('community-images').remove([imagePath]);
+        }
+      }
+
+      const { error } = await supabase
+        .from('community_posts')
+        .delete()
+        .eq('id', selectedPost.id);
+
+      if (error) throw error;
+
+      toast.success('تم حذف المشاركة بنجاح');
+      setShowPostDialog(false);
+      setSelectedPost(null);
+      fetchPosts();
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast.error('حدث خطأ في حذف المشاركة');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -343,11 +381,29 @@ export default function Community() {
                 <p className="text-foreground whitespace-pre-wrap leading-relaxed">
                   {selectedPost.content}
                 </p>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground pt-4 border-t border-border">
-                  <User className="h-4 w-4" />
-                  <span>
-                    {format(new Date(selectedPost.created_at), 'dd MMMM yyyy - HH:mm', { locale: ar })}
-                  </span>
+                <div className="flex items-center justify-between pt-4 border-t border-border">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <User className="h-4 w-4" />
+                    <span>
+                      {format(new Date(selectedPost.created_at), 'dd MMMM yyyy - HH:mm', { locale: ar })}
+                    </span>
+                  </div>
+                  {user && selectedPost.user_id === user.id && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeletePost}
+                      disabled={deleting}
+                      className="gap-2"
+                    >
+                      {deleting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                      حذف
+                    </Button>
+                  )}
                 </div>
               </div>
             </>
