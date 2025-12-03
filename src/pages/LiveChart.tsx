@@ -67,67 +67,70 @@ export default function LiveChart() {
 
   // Get TradingView symbol and display name
   const getSymbolInfo = () => {
-    // If symbol already contains ":" it's a TradingView-ready symbol (e.g., TADAWUL:2010)
-    if (symbol.includes(':')) {
-      const parts = symbol.split(':');
-      const exchange = parts[0];
-      const ticker = parts[1];
-      
-      // Saudi market stock names map
-      const saudiStockNames: Record<string, string> = {
-        '2222': 'أرامكو السعودية',
-        '1211': 'معادن',
-        '2010': 'سابك',
-        '1010': 'الرياض',
-        '1180': 'الأهلي',
-        '1120': 'الراجحي',
-        '2380': 'بترورابغ',
-        '2310': 'سبكيم',
-        '2350': 'كيان',
-        '2330': 'المتقدمة',
-        '2250': 'المراعي',
-        '4030': 'البحري',
-        '4200': 'الدريس',
-        '4001': 'أسمنت الجنوب',
-        '3010': 'أسمنت العربية',
-        '3020': 'أسمنت اليمامة',
-        '3030': 'أسمنت السعودية',
-        '3040': 'أسمنت القصيم',
-        '3050': 'أسمنت الجنوبية',
-        '3060': 'أسمنت ينبع',
-        '3080': 'أسمنت الشرقية',
-        '3090': 'أسمنت تبوك',
-        '3091': 'أسمنت الجوف',
-        '3007': 'زجاج',
-        '2020': 'سافكو',
-        '2060': 'التصنيع',
-        '2070': 'الغاز',
-        '2090': 'الدوائية',
-        '2150': 'زين السعودية',
-        '7010': 'الاتصالات',
-        '7020': 'موبايلي',
-        '2001': 'كيمانول',
-        '2290': 'ينساب',
-        '2170': 'اللجين',
-        '2180': 'فيبكو',
-        '2200': 'أنابيب',
-        '2210': 'نماء للكيماويات',
-        '2220': 'معدنية',
-        '2230': 'الكيميائية',
-        '2240': 'الزامل',
-        '4003': 'إكسترا',
-        '4190': 'جرير',
-        '4002': 'المواساة',
-        '4004': 'دله الصحية',
-        '4005': 'رعاية',
-        '4007': 'الحمادي',
-      };
-      
+    // Saudi market stock names map
+    const saudiStockNames: Record<string, string> = {
+      '2222': 'أرامكو السعودية',
+      '1211': 'معادن',
+      '2010': 'سابك',
+      '1010': 'الرياض',
+      '1180': 'الأهلي',
+      '1120': 'الراجحي',
+      '2380': 'بترورابغ',
+      '2310': 'سبكيم',
+      '2350': 'كيان',
+      '2330': 'المتقدمة',
+      '2250': 'المراعي',
+      '4030': 'البحري',
+      '4200': 'الدريس',
+      '4001': 'أسمنت الجنوب',
+      '3010': 'أسمنت العربية',
+      '3020': 'أسمنت اليمامة',
+      '3030': 'أسمنت السعودية',
+      '3040': 'أسمنت القصيم',
+      '3050': 'أسمنت الجنوبية',
+      '3060': 'أسمنت ينبع',
+      '3080': 'أسمنت الشرقية',
+      '3090': 'أسمنت تبوك',
+      '3091': 'أسمنت الجوف',
+      '3007': 'زجاج',
+      '2020': 'سافكو',
+      '2060': 'التصنيع',
+      '2070': 'الغاز',
+      '2090': 'الدوائية',
+      '2150': 'زين السعودية',
+      '7010': 'الاتصالات',
+      '7020': 'موبايلي',
+      '2001': 'كيمانول',
+      '2290': 'ينساب',
+      '2170': 'اللجين',
+      '2180': 'فيبكو',
+      '2200': 'أنابيب',
+      '2210': 'نماء للكيماويات',
+      '2220': 'معدنية',
+      '2230': 'الكيميائية',
+      '2240': 'الزامل',
+      '4003': 'إكسترا',
+      '4190': 'جرير',
+      '4002': 'المواساة',
+      '4004': 'دله الصحية',
+      '4005': 'رعاية',
+      '4007': 'الحمادي',
+    };
+    
+    // If symbol contains "TADAWUL:" - Saudi market stock
+    if (symbol.includes('TADAWUL:')) {
+      const ticker = symbol.split(':')[1];
       const displayName = saudiStockNames[ticker] 
         ? `${saudiStockNames[ticker]} (${ticker})`
-        : `${exchange}:${ticker}`;
+        : `تداول (${ticker})`;
       
-      return { tvSymbol: symbol, displayName };
+      // TradingView uses TADAWUL:XXXX format for Saudi stocks
+      return { tvSymbol: `TADAWUL:${ticker}`, displayName };
+    }
+    
+    // For other symbols with ":" (like FX:EURUSD), use as-is
+    if (symbol.includes(':')) {
+      return { tvSymbol: symbol, displayName: symbol };
     }
 
     const symbolMap: Record<string, { tvSymbol: string; displayName: string }> = {
@@ -203,7 +206,7 @@ export default function LiveChart() {
     // Clear previous content
     containerRef.current.innerHTML = '';
 
-    // Create TradingView Advanced Chart Widget
+    // Use advanced chart widget for all symbols
     const script = document.createElement('script');
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
     script.type = 'text/javascript';
