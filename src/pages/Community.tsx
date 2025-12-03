@@ -4,8 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowRight, Plus, Image as ImageIcon, Loader2, X, User, Trash2, Edit2, Heart, MessageCircle, Send } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowRight, Plus, Image as ImageIcon, Loader2, X, User, Trash2, Edit2, Heart, MessageCircle, Send, Flag, Sparkles, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -44,6 +45,7 @@ export default function Community() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -59,6 +61,11 @@ export default function Community() {
   // Edit form state
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
+  
+  // Report state
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [submittingReport, setSubmittingReport] = useState(false);
   
   // Comments & Likes
   const [comments, setComments] = useState<Comment[]>([]);
@@ -88,11 +95,9 @@ export default function Community() {
       if (error) throw error;
       setPosts(data || []);
       
-      // Fetch likes and comments counts
       if (data && data.length > 0) {
         const postIds = data.map(p => p.id);
         
-        // Get likes counts
         const { data: likesData } = await supabase
           .from('community_likes')
           .select('post_id')
@@ -104,7 +109,6 @@ export default function Community() {
         });
         setPostLikeCounts(likeCounts);
         
-        // Get comments counts
         const { data: commentsData } = await supabase
           .from('community_comments')
           .select('post_id')
@@ -125,7 +129,6 @@ export default function Community() {
   };
 
   const fetchPostDetails = async (postId: string) => {
-    // Fetch comments
     const { data: commentsData } = await supabase
       .from('community_comments')
       .select('*')
@@ -134,7 +137,6 @@ export default function Community() {
     
     setComments(commentsData || []);
     
-    // Fetch likes
     const { data: likesData } = await supabase
       .from('community_likes')
       .select('*')
@@ -306,7 +308,6 @@ export default function Community() {
       toast.success('تم تحديث المشاركة بنجاح');
       setShowEditDialog(false);
       
-      // Update local state
       setSelectedPost({
         ...selectedPost,
         title: editTitle.trim(),
@@ -332,7 +333,6 @@ export default function Community() {
     
     try {
       if (existingLike) {
-        // Unlike
         await supabase
           .from('community_likes')
           .delete()
@@ -340,7 +340,6 @@ export default function Community() {
         
         setLikes(likes.filter(l => l.id !== existingLike.id));
       } else {
-        // Like
         const { data, error } = await supabase
           .from('community_likes')
           .insert({
@@ -404,6 +403,42 @@ export default function Community() {
     }
   };
 
+  const handleReportPost = async () => {
+    if (!user || !selectedPost) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      return;
+    }
+
+    if (!reportReason) {
+      toast.error('يرجى اختيار سبب البلاغ');
+      return;
+    }
+
+    setSubmittingReport(true);
+    try {
+      const { error } = await supabase
+        .from('community_reports')
+        .insert({
+          post_id: selectedPost.id,
+          reporter_id: user.id,
+          reason: reportReason,
+          details: reportDetails.trim() || null,
+        });
+
+      if (error) throw error;
+
+      toast.success('تم إرسال البلاغ بنجاح');
+      setShowReportDialog(false);
+      setReportReason("");
+      setReportDetails("");
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      toast.error('حدث خطأ في إرسال البلاغ');
+    } finally {
+      setSubmittingReport(false);
+    }
+  };
+
   const getUserDisplayName = (email: string | null) => {
     if (!email) return 'مستخدم';
     return email.split('@')[0];
@@ -412,20 +447,31 @@ export default function Community() {
   const isLiked = user && likes.some(l => l.user_id === user.id);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      </div>
+
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+      <div className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate('/')}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-slate-400 hover:text-white hover:bg-slate-800"
             >
               <ArrowRight className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-bold text-foreground">المجتمع</h1>
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-purple-400" />
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                مجتمع المتداولين
+              </h1>
+            </div>
             <Button
               size="icon"
               onClick={() => {
@@ -436,7 +482,7 @@ export default function Community() {
                 }
                 setShowCreateDialog(true);
               }}
-              className="bg-primary hover:bg-primary/90"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg shadow-purple-500/25"
             >
               <Plus className="h-5 w-5" />
             </Button>
@@ -445,18 +491,21 @@ export default function Community() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 relative z-10">
         {loading ? (
           <div className="flex justify-center items-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="relative">
+              <Loader2 className="h-10 w-10 animate-spin text-purple-500" />
+              <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-purple-500/20 animate-ping" />
+            </div>
           </div>
         ) : posts.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-              <ImageIcon className="h-10 w-10 text-muted-foreground" />
+            <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border border-purple-500/30">
+              <Sparkles className="h-12 w-12 text-purple-400" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد مشاركات بعد</h3>
-            <p className="text-muted-foreground mb-4">كن أول من يشارك في المجتمع</p>
+            <h3 className="text-xl font-bold text-white mb-2">لا توجد مشاركات بعد</h3>
+            <p className="text-slate-400 mb-6">كن أول من يشارك تجربته مع المجتمع</p>
             <Button
               onClick={() => {
                 if (!user) {
@@ -466,7 +515,7 @@ export default function Community() {
                 }
                 setShowCreateDialog(true);
               }}
-              className="gap-2"
+              className="gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             >
               <Plus className="h-4 w-4" />
               إضافة مشاركة
@@ -477,37 +526,45 @@ export default function Community() {
             {posts.map((post) => (
               <Card
                 key={post.id}
-                className="overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all group"
+                className="overflow-hidden cursor-pointer group bg-slate-900/50 border-slate-800/50 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300"
                 onClick={() => openPost(post)}
               >
-                <div className="aspect-square relative bg-muted">
+                <div className="aspect-square relative bg-slate-800">
                   {post.image_url ? (
                     <img
                       src={post.image_url}
                       alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/50 to-blue-900/50">
+                      <ImageIcon className="h-12 w-12 text-slate-600" />
                     </div>
                   )}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                    <h3 className="text-white font-semibold text-sm line-clamp-1">{post.title}</h3>
-                    <p className="text-white/70 text-xs">{getUserDisplayName(post.user_email)}</p>
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  {/* Bottom Info */}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/95 via-slate-950/80 to-transparent p-3">
+                    <h3 className="text-white font-semibold text-sm line-clamp-1 mb-1">{post.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                        <User className="h-3 w-3 text-white" />
+                      </div>
+                      <p className="text-slate-400 text-xs">{getUserDisplayName(post.user_email)}</p>
+                    </div>
                   </div>
                   {/* Stats overlay */}
                   <div className="absolute top-2 left-2 flex gap-2">
                     {(postLikeCounts[post.id] || 0) > 0 && (
-                      <div className="bg-black/60 rounded-full px-2 py-1 flex items-center gap-1">
-                        <Heart className="h-3 w-3 text-red-400" fill="currentColor" />
-                        <span className="text-white text-xs">{postLikeCounts[post.id]}</span>
+                      <div className="bg-slate-950/80 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1 border border-slate-700/50">
+                        <Heart className="h-3 w-3 text-pink-500" fill="currentColor" />
+                        <span className="text-white text-xs font-medium">{postLikeCounts[post.id]}</span>
                       </div>
                     )}
                     {(postCommentCounts[post.id] || 0) > 0 && (
-                      <div className="bg-black/60 rounded-full px-2 py-1 flex items-center gap-1">
+                      <div className="bg-slate-950/80 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1 border border-slate-700/50">
                         <MessageCircle className="h-3 w-3 text-blue-400" />
-                        <span className="text-white text-xs">{postCommentCounts[post.id]}</span>
+                        <span className="text-white text-xs font-medium">{postCommentCounts[post.id]}</span>
                       </div>
                     )}
                   </div>
@@ -520,9 +577,12 @@ export default function Community() {
 
       {/* Create Post Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg bg-slate-900 border-slate-800">
           <DialogHeader>
-            <DialogTitle>مشاركة جديدة</DialogTitle>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-400" />
+              مشاركة جديدة
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Input
@@ -530,6 +590,7 @@ export default function Community() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={100}
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-500"
             />
             <Textarea
               placeholder="اكتب محتوى مشاركتك هنا..."
@@ -537,14 +598,15 @@ export default function Community() {
               onChange={(e) => setContent(e.target.value)}
               rows={5}
               maxLength={2000}
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-500 resize-none"
             />
             <div>
               {imagePreview ? (
-                <div className="relative">
+                <div className="relative rounded-lg overflow-hidden">
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="w-full h-48 object-cover rounded-lg"
+                    className="w-full h-48 object-cover"
                   />
                   <Button
                     size="icon"
@@ -559,9 +621,9 @@ export default function Community() {
                   </Button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                  <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">اضغط لإضافة صورة</span>
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:bg-slate-800/50 hover:border-purple-500/50 transition-all">
+                  <ImageIcon className="h-8 w-8 text-slate-500 mb-2" />
+                  <span className="text-sm text-slate-500">اضغط لإضافة صورة</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -574,7 +636,7 @@ export default function Community() {
             <Button
               onClick={handleCreatePost}
               disabled={creating || uploading || !title.trim() || !content.trim()}
-              className="w-full"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             >
               {creating || uploading ? (
                 <>
@@ -591,9 +653,12 @@ export default function Community() {
 
       {/* Edit Post Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg bg-slate-900 border-slate-800">
           <DialogHeader>
-            <DialogTitle>تعديل المشاركة</DialogTitle>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Edit2 className="h-5 w-5 text-blue-400" />
+              تعديل المشاركة
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Input
@@ -601,6 +666,7 @@ export default function Community() {
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
               maxLength={100}
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-500"
             />
             <Textarea
               placeholder="اكتب محتوى مشاركتك هنا..."
@@ -608,11 +674,12 @@ export default function Community() {
               onChange={(e) => setEditContent(e.target.value)}
               rows={5}
               maxLength={2000}
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-500 resize-none"
             />
             <Button
               onClick={handleUpdatePost}
               disabled={updating || !editTitle.trim() || !editContent.trim()}
-              className="w-full"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             >
               {updating ? (
                 <>
@@ -627,76 +694,160 @@ export default function Community() {
         </DialogContent>
       </Dialog>
 
+      {/* Report Dialog */}
+      <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+        <DialogContent className="max-w-md bg-slate-900 border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Flag className="h-5 w-5 text-red-400" />
+              الإبلاغ عن المشاركة
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              سيتم مراجعة البلاغ من قبل الإدارة
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm text-slate-300">سبب البلاغ</label>
+              <Select value={reportReason} onValueChange={setReportReason}>
+                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                  <SelectValue placeholder="اختر السبب" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="spam">محتوى مزعج (سبام)</SelectItem>
+                  <SelectItem value="inappropriate">محتوى غير لائق</SelectItem>
+                  <SelectItem value="harassment">تحرش أو إساءة</SelectItem>
+                  <SelectItem value="misinformation">معلومات مضللة</SelectItem>
+                  <SelectItem value="scam">احتيال أو نصب</SelectItem>
+                  <SelectItem value="other">سبب آخر</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-slate-300">تفاصيل إضافية (اختياري)</label>
+              <Textarea
+                placeholder="اكتب تفاصيل إضافية..."
+                value={reportDetails}
+                onChange={(e) => setReportDetails(e.target.value)}
+                rows={3}
+                maxLength={500}
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-red-500 resize-none"
+              />
+            </div>
+            <Button
+              onClick={handleReportPost}
+              disabled={submittingReport || !reportReason}
+              className="w-full bg-red-600 hover:bg-red-700"
+            >
+              {submittingReport ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                  جاري الإرسال...
+                </>
+              ) : (
+                <>
+                  <Flag className="h-4 w-4 ml-2" />
+                  إرسال البلاغ
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* View Post Dialog */}
       <Dialog open={showPostDialog} onOpenChange={setShowPostDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-800">
           {selectedPost && (
             <div className="space-y-4">
               <DialogHeader>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                      <User className="h-5 w-5 text-primary" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                      <User className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{getUserDisplayName(selectedPost.user_email)}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-semibold text-white">{getUserDisplayName(selectedPost.user_email)}</p>
+                      <p className="text-xs text-slate-400">
                         {format(new Date(selectedPost.created_at), 'dd MMMM yyyy - HH:mm', { locale: ar })}
                       </p>
                     </div>
                   </div>
-                  {user && selectedPost.user_id === user.id && (
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="icon" onClick={openEditDialog}>
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
+                  <div className="flex gap-2">
+                    {user && selectedPost.user_id !== user.id && (
                       <Button
-                        variant="destructive"
+                        variant="ghost"
                         size="icon"
-                        onClick={handleDeletePost}
-                        disabled={deleting}
+                        onClick={() => setShowReportDialog(true)}
+                        className="text-slate-400 hover:text-red-400 hover:bg-red-500/10"
                       >
-                        {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        <Flag className="h-4 w-4" />
                       </Button>
-                    </div>
-                  )}
+                    )}
+                    {user && selectedPost.user_id === user.id && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={openEditDialog}
+                          className="text-slate-400 hover:text-blue-400 hover:bg-blue-500/10"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleDeletePost}
+                          disabled={deleting}
+                          className="text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                        >
+                          {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </DialogHeader>
               
-              <h2 className="text-xl font-bold text-foreground">{selectedPost.title}</h2>
+              <h2 className="text-xl font-bold text-white">{selectedPost.title}</h2>
               
               {selectedPost.image_url && (
-                <img
-                  src={selectedPost.image_url}
-                  alt={selectedPost.title}
-                  className="w-full max-h-96 object-contain rounded-lg bg-muted"
-                />
+                <div className="rounded-xl overflow-hidden">
+                  <img
+                    src={selectedPost.image_url}
+                    alt={selectedPost.title}
+                    className="w-full max-h-96 object-contain bg-slate-800"
+                  />
+                </div>
               )}
               
-              <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+              <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
                 {selectedPost.content}
               </p>
 
               {/* Like & Comment Actions */}
-              <div className="flex items-center gap-4 pt-4 border-t border-border">
+              <div className="flex items-center gap-4 pt-4 border-t border-slate-800">
                 <Button
                   variant={isLiked ? "default" : "outline"}
                   size="sm"
                   onClick={handleLike}
-                  className="gap-2"
+                  className={`gap-2 ${isLiked ? 'bg-pink-600 hover:bg-pink-700 border-pink-600' : 'border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-pink-400'}`}
                 >
                   <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
                   <span>{likes.length}</span>
                 </Button>
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2 text-slate-400">
                   <MessageCircle className="h-4 w-4" />
                   <span>{comments.length} تعليق</span>
                 </div>
               </div>
 
               {/* Comments Section */}
-              <div className="space-y-4 pt-4 border-t border-border">
-                <h4 className="font-semibold text-foreground">التعليقات</h4>
+              <div className="space-y-4 pt-4 border-t border-slate-800">
+                <h4 className="font-semibold text-white flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-blue-400" />
+                  التعليقات
+                </h4>
                 
                 {/* Add Comment */}
                 {user && (
@@ -706,12 +857,13 @@ export default function Community() {
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleAddComment()}
-                      className="flex-1"
+                      className="flex-1 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-500"
                     />
                     <Button
                       size="icon"
                       onClick={handleAddComment}
                       disabled={sendingComment || !newComment.trim()}
+                      className="bg-purple-600 hover:bg-purple-700"
                     >
                       {sendingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </Button>
@@ -721,16 +873,19 @@ export default function Community() {
                 {/* Comments List */}
                 <div className="space-y-3 max-h-60 overflow-y-auto">
                   {comments.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-4">لا توجد تعليقات بعد</p>
+                    <p className="text-center text-slate-500 py-4">لا توجد تعليقات بعد</p>
                   ) : (
                     comments.map((comment) => (
-                      <div key={comment.id} className="bg-muted/50 rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-1">
+                      <div key={comment.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
+                        <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm text-foreground">
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                              <User className="h-3 w-3 text-white" />
+                            </div>
+                            <span className="font-medium text-sm text-white">
                               {getUserDisplayName(comment.user_email)}
                             </span>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-slate-500">
                               {format(new Date(comment.created_at), 'dd/MM HH:mm', { locale: ar })}
                             </span>
                           </div>
@@ -738,14 +893,14 @@ export default function Community() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6"
+                              className="h-6 w-6 text-slate-500 hover:text-red-400"
                               onClick={() => handleDeleteComment(comment.id)}
                             >
                               <X className="h-3 w-3" />
                             </Button>
                           )}
                         </div>
-                        <p className="text-sm text-foreground">{comment.content}</p>
+                        <p className="text-sm text-slate-300">{comment.content}</p>
                       </div>
                     ))
                   )}
