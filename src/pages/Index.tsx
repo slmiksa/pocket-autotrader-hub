@@ -232,50 +232,50 @@ const Index = () => {
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[280px] bg-card">
+                <SheetContent side="right" className="w-[280px] bg-slate-950 border-slate-800">
                   <SheetHeader>
-                    <SheetTitle className="text-right">القائمة</SheetTitle>
+                    <SheetTitle className="text-right text-white">القائمة</SheetTitle>
                   </SheetHeader>
                   <div className="flex flex-col gap-3 mt-6">
                     {isSupported && (
                       <Button
                         onClick={() => { handleNotificationToggle(); setMobileMenuOpen(false); }}
                         variant={permission === 'granted' ? 'default' : 'outline'}
-                        className="w-full justify-start gap-2"
+                        className={`w-full justify-start gap-2 ${permission !== 'granted' ? 'bg-slate-900 border-slate-700 text-white hover:bg-slate-800' : ''}`}
                       >
                         {permission === 'granted' ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
                         <span>{permission === 'granted' ? 'الإشعارات مفعّلة' : 'تفعيل الإشعارات'}</span>
                       </Button>
                     )}
                     {imageAnalysisEnabled && (
-                      <Button onClick={() => { navigate('/image-analysis'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2">
+                      <Button onClick={() => { navigate('/image-analysis'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
                         <Image className="h-4 w-4" />
                         <span>تحليل الأسواق</span>
                       </Button>
                     )}
                     {professionalSignalsEnabled && (
-                      <Button onClick={() => { navigate('/professional-signals'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2">
+                      <Button onClick={() => { navigate('/professional-signals'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
                         <Shield className="h-4 w-4" />
                         <span>توصيات المحترفين</span>
                       </Button>
                     )}
-                    <Button onClick={() => { navigate('/supply-demand'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30">
-                      <TrendingUp className="h-4 w-4 text-primary" />
+                    <Button onClick={() => { navigate('/supply-demand'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-gradient-to-r from-purple-900/50 to-purple-900/30 border-purple-500/30 text-white hover:bg-purple-900/60">
+                      <TrendingUp className="h-4 w-4 text-purple-400" />
                       <span>محلل العرض والطلب</span>
                     </Button>
-                    <Button onClick={() => { navigate('/news'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2">
+                    <Button onClick={() => { navigate('/news'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
                       <Newspaper className="h-4 w-4" />
                       <span>الأخبار</span>
                     </Button>
-                    <Button onClick={() => { navigate('/community'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2">
+                    <Button onClick={() => { navigate('/community'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
                       <Users className="h-4 w-4" />
                       <span>المجتمع</span>
                     </Button>
-                    <Button onClick={() => { navigate('/profile'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-gradient-to-r from-yellow-500/10 to-yellow-500/5 border-yellow-500/30">
-                      <UserIcon className="h-4 w-4 text-yellow-400" />
+                    <Button onClick={() => { navigate('/profile'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-gradient-to-r from-amber-900/50 to-amber-900/30 border-amber-500/30 text-white hover:bg-amber-900/60">
+                      <UserIcon className="h-4 w-4 text-amber-400" />
                       <span>حسابي والمفضلة</span>
                     </Button>
-                    <Button onClick={() => { window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2">
+                    <Button onClick={() => { window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
                       <MessageCircle className="h-4 w-4" />
                       <span>دعم فني</span>
                     </Button>

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Plus, Image as ImageIcon, Loader2, X, User, Trash2, Edit2, Heart, MessageCircle, Send, Flag, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Plus, Image as ImageIcon, Loader2, X, User, Trash2, Edit2, Heart, MessageCircle, Send, Flag, Sparkles, Users, Share2, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -39,6 +39,7 @@ interface Like {
 
 export default function Community() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -51,6 +52,7 @@ export default function Community() {
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [copied, setCopied] = useState(false);
   
   // Form state
   const [title, setTitle] = useState("");
@@ -74,6 +76,17 @@ export default function Community() {
   const [sendingComment, setSendingComment] = useState(false);
   const [postLikeCounts, setPostLikeCounts] = useState<Record<string, number>>({});
   const [postCommentCounts, setPostCommentCounts] = useState<Record<string, number>>({});
+
+  // Handle direct post link
+  useEffect(() => {
+    const postId = searchParams.get('post');
+    if (postId && posts.length > 0) {
+      const post = posts.find(p => p.id === postId);
+      if (post) {
+        openPost(post);
+      }
+    }
+  }, [searchParams, posts]);
 
   useEffect(() => {
     fetchPosts();
@@ -436,6 +449,22 @@ export default function Community() {
       toast.error('حدث خطأ في إرسال البلاغ');
     } finally {
       setSubmittingReport(false);
+    }
+  };
+
+  const handleSharePost = async () => {
+    if (!selectedPost) return;
+    
+    const shareUrl = `${window.location.origin}/community?post=${selectedPost.id}`;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast.success('تم نسخ رابط المشاركة');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Error copying link:', error);
+      toast.error('فشل نسخ الرابط');
     }
   };
 
@@ -840,6 +869,15 @@ export default function Community() {
                   <MessageCircle className="h-4 w-4" />
                   <span>{comments.length} تعليق</span>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSharePost}
+                  className="gap-2 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-green-400 mr-auto"
+                >
+                  {copied ? <Check className="h-4 w-4 text-green-400" /> : <Share2 className="h-4 w-4" />}
+                  <span>{copied ? 'تم النسخ' : 'مشاركة'}</span>
+                </Button>
               </div>
 
               {/* Comments Section */}
