@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowRight, Plus, Image as ImageIcon, Loader2, X, User, Trash2 } from "lucide-react";
+import { ArrowRight, Plus, Image as ImageIcon, Loader2, X, User, Trash2, Edit2, Heart, MessageCircle, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -14,10 +14,26 @@ import { ar } from "date-fns/locale";
 interface CommunityPost {
   id: string;
   user_id: string;
+  user_email: string | null;
   title: string;
   content: string;
   image_url: string | null;
   created_at: string;
+}
+
+interface Comment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  user_email: string | null;
+  content: string;
+  created_at: string;
+}
+
+interface Like {
+  id: string;
+  post_id: string;
+  user_id: string;
 }
 
 export default function Community() {
@@ -27,16 +43,30 @@ export default function Community() {
   const [user, setUser] = useState<any>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showPostDialog, setShowPostDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [creating, setCreating] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [updating, setUpdating] = useState(false);
   
   // Form state
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  // Edit form state
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  
+  // Comments & Likes
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [likes, setLikes] = useState<Like[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [sendingComment, setSendingComment] = useState(false);
+  const [postLikeCounts, setPostLikeCounts] = useState<Record<string, number>>({});
+  const [postCommentCounts, setPostCommentCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchPosts();
@@ -57,12 +87,60 @@ export default function Community() {
 
       if (error) throw error;
       setPosts(data || []);
+      
+      // Fetch likes and comments counts
+      if (data && data.length > 0) {
+        const postIds = data.map(p => p.id);
+        
+        // Get likes counts
+        const { data: likesData } = await supabase
+          .from('community_likes')
+          .select('post_id')
+          .in('post_id', postIds);
+        
+        const likeCounts: Record<string, number> = {};
+        likesData?.forEach(l => {
+          likeCounts[l.post_id] = (likeCounts[l.post_id] || 0) + 1;
+        });
+        setPostLikeCounts(likeCounts);
+        
+        // Get comments counts
+        const { data: commentsData } = await supabase
+          .from('community_comments')
+          .select('post_id')
+          .in('post_id', postIds);
+        
+        const commentCounts: Record<string, number> = {};
+        commentsData?.forEach(c => {
+          commentCounts[c.post_id] = (commentCounts[c.post_id] || 0) + 1;
+        });
+        setPostCommentCounts(commentCounts);
+      }
     } catch (error) {
       console.error('Error fetching posts:', error);
       toast.error('حدث خطأ في تحميل المنشورات');
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchPostDetails = async (postId: string) => {
+    // Fetch comments
+    const { data: commentsData } = await supabase
+      .from('community_comments')
+      .select('*')
+      .eq('post_id', postId)
+      .order('created_at', { ascending: true });
+    
+    setComments(commentsData || []);
+    
+    // Fetch likes
+    const { data: likesData } = await supabase
+      .from('community_likes')
+      .select('*')
+      .eq('post_id', postId);
+    
+    setLikes(likesData || []);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,6 +206,7 @@ export default function Community() {
         .from('community_posts')
         .insert({
           user_id: user.id,
+          user_email: user.email,
           title: title.trim(),
           content: content.trim(),
           image_url: imageUrl,
@@ -154,9 +233,10 @@ export default function Community() {
     setImagePreview(null);
   };
 
-  const openPost = (post: CommunityPost) => {
+  const openPost = async (post: CommunityPost) => {
     setSelectedPost(post);
     setShowPostDialog(true);
+    await fetchPostDetails(post.id);
   };
 
   const handleDeletePost = async () => {
@@ -169,7 +249,6 @@ export default function Community() {
 
     setDeleting(true);
     try {
-      // Delete image from storage if exists
       if (selectedPost.image_url) {
         const imagePath = selectedPost.image_url.split('/community-images/')[1];
         if (imagePath) {
@@ -195,6 +274,142 @@ export default function Community() {
       setDeleting(false);
     }
   };
+
+  const openEditDialog = () => {
+    if (!selectedPost) return;
+    setEditTitle(selectedPost.title);
+    setEditContent(selectedPost.content);
+    setShowEditDialog(true);
+  };
+
+  const handleUpdatePost = async () => {
+    if (!selectedPost || !user) return;
+
+    if (!editTitle.trim() || !editContent.trim()) {
+      toast.error('يرجى إدخال العنوان والمحتوى');
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('community_posts')
+        .update({
+          title: editTitle.trim(),
+          content: editContent.trim(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', selectedPost.id);
+
+      if (error) throw error;
+
+      toast.success('تم تحديث المشاركة بنجاح');
+      setShowEditDialog(false);
+      
+      // Update local state
+      setSelectedPost({
+        ...selectedPost,
+        title: editTitle.trim(),
+        content: editContent.trim(),
+      });
+      
+      fetchPosts();
+    } catch (error) {
+      console.error('Error updating post:', error);
+      toast.error('حدث خطأ في تحديث المشاركة');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleLike = async () => {
+    if (!user || !selectedPost) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      return;
+    }
+
+    const existingLike = likes.find(l => l.user_id === user.id);
+    
+    try {
+      if (existingLike) {
+        // Unlike
+        await supabase
+          .from('community_likes')
+          .delete()
+          .eq('id', existingLike.id);
+        
+        setLikes(likes.filter(l => l.id !== existingLike.id));
+      } else {
+        // Like
+        const { data, error } = await supabase
+          .from('community_likes')
+          .insert({
+            post_id: selectedPost.id,
+            user_id: user.id,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        setLikes([...likes, data]);
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!user || !selectedPost) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      return;
+    }
+
+    if (!newComment.trim()) return;
+
+    setSendingComment(true);
+    try {
+      const { data, error } = await supabase
+        .from('community_comments')
+        .insert({
+          post_id: selectedPost.id,
+          user_id: user.id,
+          user_email: user.email,
+          content: newComment.trim(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setComments([...comments, data]);
+      setNewComment("");
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error('حدث خطأ في إضافة التعليق');
+    } finally {
+      setSendingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await supabase
+        .from('community_comments')
+        .delete()
+        .eq('id', commentId);
+      
+      setComments(comments.filter(c => c.id !== commentId));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
+
+  const getUserDisplayName = (email: string | null) => {
+    if (!email) return 'مستخدم';
+    return email.split('@')[0];
+  };
+
+  const isLiked = user && likes.some(l => l.user_id === user.id);
 
   return (
     <div className="min-h-screen bg-background">
@@ -278,7 +493,23 @@ export default function Community() {
                     </div>
                   )}
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-                    <h3 className="text-white font-semibold text-sm line-clamp-2">{post.title}</h3>
+                    <h3 className="text-white font-semibold text-sm line-clamp-1">{post.title}</h3>
+                    <p className="text-white/70 text-xs">{getUserDisplayName(post.user_email)}</p>
+                  </div>
+                  {/* Stats overlay */}
+                  <div className="absolute top-2 left-2 flex gap-2">
+                    {(postLikeCounts[post.id] || 0) > 0 && (
+                      <div className="bg-black/60 rounded-full px-2 py-1 flex items-center gap-1">
+                        <Heart className="h-3 w-3 text-red-400" fill="currentColor" />
+                        <span className="text-white text-xs">{postLikeCounts[post.id]}</span>
+                      </div>
+                    )}
+                    {(postCommentCounts[post.id] || 0) > 0 && (
+                      <div className="bg-black/60 rounded-full px-2 py-1 flex items-center gap-1">
+                        <MessageCircle className="h-3 w-3 text-blue-400" />
+                        <span className="text-white text-xs">{postCommentCounts[post.id]}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -294,23 +525,19 @@ export default function Community() {
             <DialogTitle>مشاركة جديدة</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Input
-                placeholder="العنوان"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                maxLength={100}
-              />
-            </div>
-            <div>
-              <Textarea
-                placeholder="اكتب محتوى مشاركتك هنا..."
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={5}
-                maxLength={2000}
-              />
-            </div>
+            <Input
+              placeholder="العنوان"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={100}
+            />
+            <Textarea
+              placeholder="اكتب محتوى مشاركتك هنا..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={5}
+              maxLength={2000}
+            />
             <div>
               {imagePreview ? (
                 <div className="relative">
@@ -362,51 +589,169 @@ export default function Community() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Post Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>تعديل المشاركة</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="العنوان"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              maxLength={100}
+            />
+            <Textarea
+              placeholder="اكتب محتوى مشاركتك هنا..."
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              rows={5}
+              maxLength={2000}
+            />
+            <Button
+              onClick={handleUpdatePost}
+              disabled={updating || !editTitle.trim() || !editContent.trim()}
+              className="w-full"
+            >
+              {updating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                  جاري التحديث...
+                </>
+              ) : (
+                'تحديث المشاركة'
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* View Post Dialog */}
       <Dialog open={showPostDialog} onOpenChange={setShowPostDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           {selectedPost && (
-            <>
+            <div className="space-y-4">
               <DialogHeader>
-                <DialogTitle className="text-right">{selectedPost.title}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                {selectedPost.image_url && (
-                  <img
-                    src={selectedPost.image_url}
-                    alt={selectedPost.title}
-                    className="w-full max-h-96 object-contain rounded-lg bg-muted"
-                  />
-                )}
-                <p className="text-foreground whitespace-pre-wrap leading-relaxed">
-                  {selectedPost.content}
-                </p>
-                <div className="flex items-center justify-between pt-4 border-t border-border">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <User className="h-4 w-4" />
-                    <span>
-                      {format(new Date(selectedPost.created_at), 'dd MMMM yyyy - HH:mm', { locale: ar })}
-                    </span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">{getUserDisplayName(selectedPost.user_email)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(selectedPost.created_at), 'dd MMMM yyyy - HH:mm', { locale: ar })}
+                      </p>
+                    </div>
                   </div>
                   {user && selectedPost.user_id === user.id && (
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="icon" onClick={openEditDialog}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={handleDeletePost}
+                        disabled={deleting}
+                      >
+                        {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </DialogHeader>
+              
+              <h2 className="text-xl font-bold text-foreground">{selectedPost.title}</h2>
+              
+              {selectedPost.image_url && (
+                <img
+                  src={selectedPost.image_url}
+                  alt={selectedPost.title}
+                  className="w-full max-h-96 object-contain rounded-lg bg-muted"
+                />
+              )}
+              
+              <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+                {selectedPost.content}
+              </p>
+
+              {/* Like & Comment Actions */}
+              <div className="flex items-center gap-4 pt-4 border-t border-border">
+                <Button
+                  variant={isLiked ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleLike}
+                  className="gap-2"
+                >
+                  <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+                  <span>{likes.length}</span>
+                </Button>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MessageCircle className="h-4 w-4" />
+                  <span>{comments.length} تعليق</span>
+                </div>
+              </div>
+
+              {/* Comments Section */}
+              <div className="space-y-4 pt-4 border-t border-border">
+                <h4 className="font-semibold text-foreground">التعليقات</h4>
+                
+                {/* Add Comment */}
+                {user && (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="اكتب تعليقاً..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleAddComment()}
+                      className="flex-1"
+                    />
                     <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleDeletePost}
-                      disabled={deleting}
-                      className="gap-2"
+                      size="icon"
+                      onClick={handleAddComment}
+                      disabled={sendingComment || !newComment.trim()}
                     >
-                      {deleting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                      حذف
+                      {sendingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </Button>
+                  </div>
+                )}
+
+                {/* Comments List */}
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {comments.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-4">لا توجد تعليقات بعد</p>
+                  ) : (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="bg-muted/50 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm text-foreground">
+                              {getUserDisplayName(comment.user_email)}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(comment.created_at), 'dd/MM HH:mm', { locale: ar })}
+                            </span>
+                          </div>
+                          {user && comment.user_id === user.id && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleDeleteComment(comment.id)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-sm text-foreground">{comment.content}</p>
+                      </div>
+                    ))
                   )}
                 </div>
               </div>
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>
