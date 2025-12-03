@@ -2,14 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
-import { TradingDashboard } from "@/components/trading/TradingDashboard";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { LivePriceCards } from "@/components/LivePriceCards";
+import { HomeContent } from "@/components/HomeContent";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper, Shield, Menu, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
+
 const Index = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -24,18 +25,22 @@ const Index = () => {
     isSupported,
     permission
   } = useNotifications();
+
   const checkSubscription = async (userId: string) => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from("profiles").select("subscription_expires_at, image_analysis_enabled, professional_signals_enabled").eq("user_id", userId).single();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("subscription_expires_at, image_analysis_enabled, professional_signals_enabled")
+        .eq("user_id", userId)
+        .single();
+
       if (error) {
         console.error("Error fetching profile:", error);
         setLoading(false);
         navigate("/subscription");
         return false;
       }
+
       if (data && data.subscription_expires_at) {
         const expiresAt = new Date(data.subscription_expires_at);
         const now = new Date();
@@ -43,14 +48,11 @@ const Index = () => {
           setSubscriptionExpiresAt(data.subscription_expires_at);
           setImageAnalysisEnabled(data.image_analysis_enabled || false);
           setProfessionalSignalsEnabled(data.professional_signals_enabled || false);
-          console.log("✅ Image analysis enabled:", data.image_analysis_enabled);
-          console.log("✅ Professional signals enabled:", data.professional_signals_enabled);
           setLoading(false);
           return true;
         }
       }
 
-      // No valid subscription
       setLoading(false);
       navigate("/subscription");
       return false;
@@ -61,6 +63,7 @@ const Index = () => {
       return false;
     }
   };
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -71,13 +74,9 @@ const Index = () => {
       toast.error("فشل تسجيل الخروج");
     }
   };
+
   useEffect(() => {
-    // Set up auth state listener
-    const {
-      data: {
-        subscription
-      }
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -90,12 +89,7 @@ const Index = () => {
       }
     });
 
-    // Check for existing session
-    supabase.auth.getSession().then(({
-      data: {
-        session
-      }
-    }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -105,8 +99,10 @@ const Index = () => {
         navigate("/auth");
       }
     });
+
     return () => subscription.unsubscribe();
   }, [navigate]);
+
   const handleNotificationToggle = async () => {
     const granted = await requestPermission(false);
     if (!granted && permission === 'denied') {
@@ -114,41 +110,42 @@ const Index = () => {
     }
   };
 
-  // Realtime subscription for profile changes
   useEffect(() => {
     if (!user?.id) return;
-    console.log("🔔 Setting up realtime subscription for profile changes");
     const channel = supabase.channel('profile-changes').on('postgres_changes', {
       event: 'UPDATE',
       schema: 'public',
       table: 'profiles',
       filter: `user_id=eq.${user.id}`
     }, payload => {
-      console.log("🔔 Profile updated:", payload);
       const newData = payload.new as any;
       if (newData.image_analysis_enabled !== undefined) {
         setImageAnalysisEnabled(newData.image_analysis_enabled);
-        console.log("✅ Image analysis updated to:", newData.image_analysis_enabled);
       }
       if (newData.professional_signals_enabled !== undefined) {
         setProfessionalSignalsEnabled(newData.professional_signals_enabled);
-        console.log("✅ Professional signals updated to:", newData.professional_signals_enabled);
       }
     }).subscribe();
+
     return () => {
-      console.log("🔕 Cleaning up realtime subscription");
       supabase.removeChannel(channel);
     };
   }, [user?.id]);
+
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background dark">
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background dark">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>;
+      </div>
+    );
   }
+
   if (!user || !session) {
     return null;
   }
-  return <div className="min-h-screen bg-background dark">
+
+  return (
+    <div className="min-h-screen bg-background dark">
       {/* Header */}
       <header className="border-b border-border bg-card sticky top-0 z-50">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
@@ -158,14 +155,11 @@ const Index = () => {
                 <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">هوامير التوصيات                   </h1>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  توصيات تداول مباشرة
-                </p>
+                <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">هوامير التوصيات</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">منصة التداول الذكي</p>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {/* Days Left Badge - Always Visible */}
               {subscriptionExpiresAt && (() => {
                 const expiresAt = new Date(subscriptionExpiresAt);
                 const now = new Date();
@@ -180,7 +174,7 @@ const Index = () => {
                 );
               })()}
 
-              {/* Desktop Menu - Hidden on Mobile */}
+              {/* Desktop Menu */}
               <div className="hidden lg:flex items-center gap-2">
                 {isSupported && (
                   <Button
@@ -205,12 +199,7 @@ const Index = () => {
                     <span>توصيات المحترفين</span>
                   </Button>
                 )}
-                <Button
-                  onClick={() => navigate('/supply-demand')}
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30 hover:bg-primary/20"
-                >
+                <Button onClick={() => navigate('/supply-demand')} variant="outline" size="sm" className="gap-1.5 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30 hover:bg-primary/20">
                   <TrendingUp className="h-4 w-4 text-primary" />
                   <span>محلل العرض والطلب</span>
                 </Button>
@@ -222,12 +211,7 @@ const Index = () => {
                   <UserIcon className="h-4 w-4" />
                   <span>حسابي</span>
                 </Button>
-                <Button
-                  onClick={() => window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank')}
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                >
+                <Button onClick={() => window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank')} variant="outline" size="sm" className="gap-1.5">
                   <MessageCircle className="h-4 w-4" />
                   <span>دعم فني</span>
                 </Button>
@@ -237,7 +221,7 @@ const Index = () => {
                 </Button>
               </div>
 
-              {/* Mobile Menu - Visible on Mobile Only */}
+              {/* Mobile Menu */}
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm" className="lg:hidden">
@@ -251,10 +235,7 @@ const Index = () => {
                   <div className="flex flex-col gap-3 mt-6">
                     {isSupported && (
                       <Button
-                        onClick={() => {
-                          handleNotificationToggle();
-                          setMobileMenuOpen(false);
-                        }}
+                        onClick={() => { handleNotificationToggle(); setMobileMenuOpen(false); }}
                         variant={permission === 'granted' ? 'default' : 'outline'}
                         className="w-full justify-start gap-2"
                       >
@@ -263,83 +244,34 @@ const Index = () => {
                       </Button>
                     )}
                     {imageAnalysisEnabled && (
-                      <Button
-                        onClick={() => {
-                          navigate('/image-analysis');
-                          setMobileMenuOpen(false);
-                        }}
-                        variant="outline"
-                        className="w-full justify-start gap-2"
-                      >
+                      <Button onClick={() => { navigate('/image-analysis'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2">
                         <Image className="h-4 w-4" />
                         <span>تحليل الأسواق</span>
                       </Button>
                     )}
                     {professionalSignalsEnabled && (
-                      <Button
-                        onClick={() => {
-                          navigate('/professional-signals');
-                          setMobileMenuOpen(false);
-                        }}
-                        variant="outline"
-                        className="w-full justify-start gap-2"
-                      >
+                      <Button onClick={() => { navigate('/professional-signals'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2">
                         <Shield className="h-4 w-4" />
                         <span>توصيات المحترفين</span>
                       </Button>
                     )}
-                    <Button
-                      onClick={() => {
-                        navigate('/supply-demand');
-                        setMobileMenuOpen(false);
-                      }}
-                      variant="outline"
-                      className="w-full justify-start gap-2 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30"
-                    >
+                    <Button onClick={() => { navigate('/supply-demand'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30">
                       <TrendingUp className="h-4 w-4 text-primary" />
                       <span>محلل العرض والطلب</span>
                     </Button>
-                    <Button
-                      onClick={() => {
-                        navigate('/news');
-                        setMobileMenuOpen(false);
-                      }}
-                      variant="outline"
-                      className="w-full justify-start gap-2"
-                    >
+                    <Button onClick={() => { navigate('/news'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2">
                       <Newspaper className="h-4 w-4" />
                       <span>الأخبار</span>
                     </Button>
-                    <Button
-                      onClick={() => {
-                        navigate('/profile');
-                        setMobileMenuOpen(false);
-                      }}
-                      variant="outline"
-                      className="w-full justify-start gap-2 bg-gradient-to-r from-yellow-500/10 to-yellow-500/5 border-yellow-500/30"
-                    >
+                    <Button onClick={() => { navigate('/profile'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-gradient-to-r from-yellow-500/10 to-yellow-500/5 border-yellow-500/30">
                       <UserIcon className="h-4 w-4 text-yellow-400" />
                       <span>حسابي والمفضلة</span>
                     </Button>
-                    <Button
-                      onClick={() => {
-                        window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank');
-                        setMobileMenuOpen(false);
-                      }}
-                      variant="outline"
-                      className="w-full justify-start gap-2"
-                    >
+                    <Button onClick={() => { window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2">
                       <MessageCircle className="h-4 w-4" />
                       <span>دعم فني</span>
                     </Button>
-                    <Button
-                      onClick={() => {
-                        handleLogout();
-                        setMobileMenuOpen(false);
-                      }}
-                      variant="ghost"
-                      className="w-full justify-start gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                    >
+                    <Button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} variant="ghost" className="w-full justify-start gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10">
                       <LogOut className="h-4 w-4" />
                       <span>تسجيل الخروج</span>
                     </Button>
@@ -359,7 +291,7 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <TradingDashboard />
+        <HomeContent />
       </main>
 
       {/* Footer */}
@@ -370,6 +302,8 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;

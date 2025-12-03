@@ -15,6 +15,7 @@ import LiveChart from "./pages/LiveChart";
 import SupplyDemandAnalyzer from "./pages/SupplyDemandAnalyzer";
 import Markets from "./pages/Markets";
 import Profile from "./pages/Profile";
+import BinaryOptions from "./pages/BinaryOptions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/supply-demand" element={<SupplyDemandAnalyzer />} />
           <Route path="/markets" element={<Markets />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/binary-options" element={<BinaryOptions />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
