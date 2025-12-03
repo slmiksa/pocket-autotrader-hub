@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ArrowLeft, TrendingUp, TrendingDown, Loader2, RefreshCw, Star, User, ChevronDown } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Loader2, RefreshCw, Star, User, BarChart3, Sparkles } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
 
 interface MarketItem {
@@ -209,57 +209,31 @@ const markets: MarketItem[] = [
   { name: 'Saudi Aramco', nameAr: 'أرامكو السعودية', symbol: 'TADAWUL:2222', category: 'السوق السعودي' },
   { name: 'Al Rajhi Bank', nameAr: 'مصرف الراجحي', symbol: 'TADAWUL:1120', category: 'السوق السعودي' },
   { name: 'SNB', nameAr: 'البنك الأهلي السعودي', symbol: 'TADAWUL:1180', category: 'السوق السعودي' },
-  { name: 'STC', nameAr: 'الاتصالات السعودية', symbol: 'TADAWUL:7010', category: 'السوق السعودي' },
   { name: 'SABIC', nameAr: 'سابك', symbol: 'TADAWUL:2010', category: 'السوق السعودي' },
-  { name: 'Riyad Bank', nameAr: 'بنك الرياض', symbol: 'TADAWUL:1010', category: 'السوق السعودي' },
-  { name: 'SAMBA', nameAr: 'سامبا', symbol: 'TADAWUL:1090', category: 'السوق السعودي' },
-  { name: 'Saudi Electricity', nameAr: 'الكهرباء السعودية', symbol: 'TADAWUL:5110', category: 'السوق السعودي' },
+  { name: 'STC', nameAr: 'الاتصالات السعودية', symbol: 'TADAWUL:7010', category: 'السوق السعودي' },
   { name: 'Maaden', nameAr: 'معادن', symbol: 'TADAWUL:1211', category: 'السوق السعودي' },
+  { name: 'ACWA Power', nameAr: 'أكوا باور', symbol: 'TADAWUL:2082', category: 'السوق السعودي' },
   { name: 'Alinma Bank', nameAr: 'مصرف الإنماء', symbol: 'TADAWUL:1150', category: 'السوق السعودي' },
-  { name: 'Bank AlBilad', nameAr: 'بنك البلاد', symbol: 'TADAWUL:1140', category: 'السوق السعودي' },
-  { name: 'Bank AlJazira', nameAr: 'بنك الجزيرة', symbol: 'TADAWUL:1020', category: 'السوق السعودي' },
-  { name: 'Saudi British Bank', nameAr: 'البنك السعودي البريطاني', symbol: 'TADAWUL:1060', category: 'السوق السعودي' },
-  { name: 'Arab National Bank', nameAr: 'البنك العربي الوطني', symbol: 'TADAWUL:1080', category: 'السوق السعودي' },
-  { name: 'Mobily', nameAr: 'موبايلي', symbol: 'TADAWUL:7020', category: 'السوق السعودي' },
-  { name: 'Zain KSA', nameAr: 'زين السعودية', symbol: 'TADAWUL:7030', category: 'السوق السعودي' },
+  { name: 'Riyad Bank', nameAr: 'بنك الرياض', symbol: 'TADAWUL:1010', category: 'السوق السعودي' },
+  { name: 'SABB', nameAr: 'البنك السعودي البريطاني', symbol: 'TADAWUL:1060', category: 'السوق السعودي' },
+  { name: 'Almarai', nameAr: 'المراعي', symbol: 'TADAWUL:2280', category: 'السوق السعودي' },
   { name: 'Jarir', nameAr: 'جرير', symbol: 'TADAWUL:4190', category: 'السوق السعودي' },
   { name: 'Extra', nameAr: 'إكسترا', symbol: 'TADAWUL:4003', category: 'السوق السعودي' },
-  { name: 'Almarai', nameAr: 'المراعي', symbol: 'TADAWUL:2280', category: 'السوق السعودي' },
-  { name: 'Savola', nameAr: 'صافولا', symbol: 'TADAWUL:2050', category: 'السوق السعودي' },
-  { name: 'Panda', nameAr: 'بنده', symbol: 'TADAWUL:4061', category: 'السوق السعودي' },
-  { name: 'Dar Al Arkan', nameAr: 'دار الأركان', symbol: 'TADAWUL:4300', category: 'السوق السعودي' },
-  { name: 'Emaar EC', nameAr: 'إعمار المدينة', symbol: 'TADAWUL:4220', category: 'السوق السعودي' },
+  { name: 'Nahdi Medical', nameAr: 'النهدي الطبية', symbol: 'TADAWUL:4164', category: 'السوق السعودي' },
+  { name: 'Dr Sulaiman Al Habib', nameAr: 'د.سليمان الحبيب', symbol: 'TADAWUL:4013', category: 'السوق السعودي' },
+  { name: 'Bupa Arabia', nameAr: 'بوبا العربية', symbol: 'TADAWUL:8210', category: 'السوق السعودي' },
+  { name: 'Tawuniya', nameAr: 'التعاونية', symbol: 'TADAWUL:8010', category: 'السوق السعودي' },
+  { name: 'Elm', nameAr: 'علم', symbol: 'TADAWUL:7203', category: 'السوق السعودي' },
   { name: 'Saudi Cement', nameAr: 'الأسمنت السعودي', symbol: 'TADAWUL:3010', category: 'السوق السعودي' },
   { name: 'Yanbu Cement', nameAr: 'أسمنت ينبع', symbol: 'TADAWUL:3060', category: 'السوق السعودي' },
-  { name: 'Southern Cement', nameAr: 'أسمنت الجنوبية', symbol: 'TADAWUL:3050', category: 'السوق السعودي' },
-  { name: 'Saudi Kayan', nameAr: 'كيان السعودية', symbol: 'TADAWUL:2350', category: 'السوق السعودي' },
-  { name: 'Petro Rabigh', nameAr: 'بترو رابغ', symbol: 'TADAWUL:2380', category: 'السوق السعودي' },
-  { name: 'Yansab', nameAr: 'ينساب', symbol: 'TADAWUL:2290', category: 'السوق السعودي' },
-  { name: 'SIPCHEM', nameAr: 'سبكيم', symbol: 'TADAWUL:2310', category: 'السوق السعودي' },
-  { name: 'Advanced Petrochemical', nameAr: 'المتقدمة للبتروكيماويات', symbol: 'TADAWUL:2330', category: 'السوق السعودي' },
-  { name: 'Saudi Steel', nameAr: 'الحديد السعودية', symbol: 'TADAWUL:1320', category: 'السوق السعودي' },
-  { name: 'ACE Arabia', nameAr: 'التعاونية', symbol: 'TADAWUL:8010', category: 'السوق السعودي' },
-  { name: 'Bupa Arabia', nameAr: 'بوبا العربية', symbol: 'TADAWUL:8210', category: 'السوق السعودي' },
-  { name: 'Tawuniya', nameAr: 'التعاونية للتأمين', symbol: 'TADAWUL:8010', category: 'السوق السعودي' },
-  { name: 'Saudi Re', nameAr: 'إعادة السعودية', symbol: 'TADAWUL:8200', category: 'السوق السعودي' },
-  { name: 'ACWA Power', nameAr: 'أكوا باور', symbol: 'TADAWUL:2082', category: 'السوق السعودي' },
-  { name: 'Saudi Ground Services', nameAr: 'الخدمات الأرضية', symbol: 'TADAWUL:4031', category: 'السوق السعودي' },
-  { name: 'SAUDIA Cargo', nameAr: 'سال للخدمات اللوجستية', symbol: 'TADAWUL:4032', category: 'السوق السعودي' },
-  { name: 'Elm Company', nameAr: 'علم', symbol: 'TADAWUL:7203', category: 'السوق السعودي' },
-  { name: 'Nahdi Medical', nameAr: 'صيدليات النهدي', symbol: 'TADAWUL:4164', category: 'السوق السعودي' },
-  { name: 'Dr. Sulaiman Al-Habib', nameAr: 'سليمان الحبيب', symbol: 'TADAWUL:4013', category: 'السوق السعودي' },
-  { name: 'Mouwasat', nameAr: 'المواساة', symbol: 'TADAWUL:4002', category: 'السوق السعودي' },
-  { name: 'Dallah Healthcare', nameAr: 'دله الصحية', symbol: 'TADAWUL:4004', category: 'السوق السعودي' },
-  { name: 'National Industrialization', nameAr: 'التصنيع الوطنية', symbol: 'TADAWUL:2060', category: 'السوق السعودي' },
-  { name: 'TASI Index', nameAr: 'مؤشر تاسي', symbol: 'TADAWUL:TASI', category: 'السوق السعودي' },
 ];
 
 const categories = ['فوركس', 'عملات رقمية', 'سلع', 'مؤشرات', 'أسهم', 'السوق السعودي'];
 
-const categoryIcons: Record<string, string> = {
+const categoryIcons: { [key: string]: string } = {
   'فوركس': '💱',
   'عملات رقمية': '₿',
-  'سلع': '🛢️',
+  'سلع': '🥇',
   'مؤشرات': '📊',
   'أسهم': '📈',
   'السوق السعودي': '🇸🇦',
@@ -267,38 +241,35 @@ const categoryIcons: Record<string, string> = {
 
 const Markets = () => {
   const navigate = useNavigate();
-  const [prices, setPrices] = useState<Record<string, PriceData>>({});
+  const [prices, setPrices] = useState<{ [key: string]: PriceData }>({});
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
 
   const fetchPrices = async () => {
     try {
-      const cryptoSymbols = markets
-        .filter(m => m.binanceSymbol)
-        .map(m => m.binanceSymbol);
+      setLoading(true);
       
-      const responses = await Promise.all(
-        cryptoSymbols.map(symbol =>
-          fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`)
-            .then(res => res.json())
-            .catch(() => null)
-        )
+      const cryptoMarkets = markets.filter((m) => m.binanceSymbol);
+      const symbols = cryptoMarkets.map((m) => `"${m.binanceSymbol}"`).join(',');
+      
+      const response = await fetch(
+        `https://api.binance.com/api/v3/ticker/24hr?symbols=[${symbols}]`
       );
-
-      const newPrices: Record<string, PriceData> = {};
       
-      responses.forEach((data, index) => {
-        if (data && data.lastPrice) {
-          const market = markets.find(m => m.binanceSymbol === cryptoSymbols[index]);
-          if (market) {
-            const change = parseFloat(data.priceChangePercent);
-            newPrices[market.symbol] = {
-              price: parseFloat(data.lastPrice),
-              change24h: change,
-              isPositive: change >= 0
-            };
-          }
+      const data = await response.json();
+      
+      const newPrices: { [key: string]: PriceData } = {};
+      
+      data.forEach((ticker: any) => {
+        const market = cryptoMarkets.find((m) => m.binanceSymbol === ticker.symbol);
+        if (market) {
+          const change = parseFloat(ticker.priceChangePercent);
+          newPrices[market.symbol] = {
+            price: parseFloat(ticker.lastPrice),
+            change24h: change,
+            isPositive: change >= 0,
+          };
         }
       });
 
@@ -337,26 +308,42 @@ const Markets = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden" dir="rtl">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-40 right-1/4 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl animate-pulse delay-500" />
+      </div>
+
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
+
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
+      <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate('/')}
-              className="text-muted-foreground hover:text-foreground hover:bg-secondary"
+              className="text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-xl"
             >
               <ArrowLeft className="h-5 w-5 rotate-180" />
             </Button>
-            <h1 className="text-xl font-bold text-foreground">جميع الأسواق</h1>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30">
+                <BarChart3 className="h-5 w-5 text-amber-400" />
+              </div>
+              <h1 className="text-xl font-bold text-white">جميع الأسواق</h1>
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate('/profile')}
-                className="text-muted-foreground hover:text-foreground hover:bg-secondary"
+                className="text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-xl"
               >
                 <User className="h-5 w-5" />
               </Button>
@@ -364,14 +351,14 @@ const Markets = () => {
                 variant="ghost"
                 size="icon"
                 onClick={fetchPrices}
-                className="text-muted-foreground hover:text-foreground hover:bg-secondary"
+                className="text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-xl"
               >
                 <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
               </Button>
             </div>
           </div>
           {lastUpdate && (
-            <p className="text-center text-xs text-muted-foreground mt-2">
+            <p className="text-center text-xs text-slate-500 mt-2">
               آخر تحديث: {lastUpdate.toLocaleTimeString('ar-SA')}
             </p>
           )}
@@ -380,17 +367,17 @@ const Markets = () => {
 
       {/* Favorites Quick Access */}
       {favorites.length > 0 && (
-        <div className="container mx-auto px-4 py-4 border-b border-border">
+        <div className="container mx-auto px-4 py-4 border-b border-slate-700/50 relative z-10">
           <div className="flex items-center gap-3 mb-3">
-            <Star className="h-5 w-5 text-warning fill-warning" />
-            <span className="text-foreground font-medium">المفضلة</span>
+            <Star className="h-5 w-5 text-amber-400 fill-amber-400" />
+            <span className="text-white font-medium">المفضلة</span>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {favorites.map((fav) => (
               <button
                 key={fav.id}
                 onClick={() => navigate(`/live-chart?symbol=${fav.symbol}`)}
-                className="flex-shrink-0 px-4 py-2 bg-warning/10 border border-warning/20 rounded-full text-warning text-sm hover:bg-warning/20 transition-colors"
+                className="flex-shrink-0 px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 text-sm hover:bg-amber-500/20 transition-all duration-300 hover:border-amber-400/50"
               >
                 {fav.symbol_name_ar}
               </button>
@@ -400,18 +387,22 @@ const Markets = () => {
       )}
 
       {/* Markets Accordion */}
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6 relative z-10">
         <Accordion type="multiple" defaultValue={['عملات رقمية']} className="space-y-4">
           {categories.map((category) => {
             const categoryMarkets = markets.filter((market) => market.category === category);
             
             return (
-              <AccordionItem key={category} value={category} className="bg-secondary/30 border border-border rounded-lg overflow-hidden">
-                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-secondary/50 transition-colors">
+              <AccordionItem 
+                key={category} 
+                value={category} 
+                className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-2xl overflow-hidden"
+              >
+                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-slate-700/30 transition-colors">
                   <div className="flex items-center gap-3 w-full">
                     <span className="text-2xl">{categoryIcons[category]}</span>
-                    <h2 className="text-lg font-bold text-foreground">{category}</h2>
-                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full mr-auto">
+                    <h2 className="text-lg font-bold text-white">{category}</h2>
+                    <span className="text-xs text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full mr-auto border border-slate-600/50">
                       {categoryMarkets.length} سوق
                     </span>
                   </div>
@@ -424,9 +415,9 @@ const Markets = () => {
                       const isMarketFavorite = isFavorite(market.symbol);
                       
                       return (
-                        <Card
+                        <div
                           key={market.symbol}
-                          className="group relative overflow-hidden bg-card border-border hover:border-primary/50 transition-all duration-300 cursor-pointer hover:bg-accent/50 hover:scale-[1.02]"
+                          className="group relative overflow-hidden bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-xl hover:border-amber-500/50 transition-all duration-300 cursor-pointer hover:bg-slate-700/40 hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(251,191,36,0.1)]"
                           onClick={() => navigate(`/live-chart?symbol=${market.symbol}`)}
                         >
                           <div className="p-4">
@@ -435,31 +426,31 @@ const Markets = () => {
                               onClick={(e) => handleFavoriteClick(e, market)}
                               className={`absolute top-2 left-2 p-1.5 rounded-full transition-all ${
                                 isMarketFavorite 
-                                  ? 'text-warning bg-warning/20' 
-                                  : 'text-muted-foreground hover:text-warning hover:bg-warning/10 opacity-0 group-hover:opacity-100'
+                                  ? 'text-amber-400 bg-amber-500/20' 
+                                  : 'text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 opacity-0 group-hover:opacity-100'
                               }`}
                             >
-                              <Star className={`h-4 w-4 ${isMarketFavorite ? 'fill-warning' : ''}`} />
+                              <Star className={`h-4 w-4 ${isMarketFavorite ? 'fill-amber-400' : ''}`} />
                             </button>
 
                             {/* Market Name */}
                             <div className="mb-3">
-                              <p className="font-bold text-foreground text-base group-hover:text-primary transition-colors">
+                              <p className="font-bold text-white text-base group-hover:text-amber-300 transition-colors">
                                 {market.nameAr}
                               </p>
-                              <p className="text-xs text-muted-foreground mt-0.5">{market.name}</p>
+                              <p className="text-xs text-slate-500 mt-0.5">{market.name}</p>
                             </div>
                             
                             {/* Price Section */}
                             {priceData ? (
                               <div className="space-y-2">
-                                <p className="text-lg font-bold text-foreground">
+                                <p className="text-lg font-bold text-white">
                                   ${formatPrice(priceData.price)}
                                 </p>
-                                <div className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+                                <div className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${
                                   priceData.isPositive 
-                                    ? 'bg-success/20 text-success' 
-                                    : 'bg-destructive/20 text-destructive'
+                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                                    : 'bg-red-500/20 text-red-400 border border-red-500/30'
                                 }`}>
                                   {priceData.isPositive ? (
                                     <TrendingUp className="h-3 w-3" />
@@ -473,7 +464,7 @@ const Markets = () => {
                                 </div>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-2 text-muted-foreground">
+                              <div className="flex items-center gap-2 text-slate-500">
                                 {loading && market.binanceSymbol ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
@@ -484,13 +475,13 @@ const Markets = () => {
                             
                             {/* Hover Arrow */}
                             <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <ArrowLeft className="h-5 w-5 text-primary rotate-180" />
+                              <ArrowLeft className="h-5 w-5 text-amber-400 rotate-180" />
                             </div>
                           </div>
                           
                           {/* Gradient Overlay on Hover */}
-                          <div className="absolute inset-0 bg-gradient-to-l from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                        </Card>
+                          <div className="absolute inset-0 bg-gradient-to-l from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                        </div>
                       );
                     })}
                   </div>
@@ -498,15 +489,17 @@ const Markets = () => {
               </AccordionItem>
             );
           })}
-
         </Accordion>
         
         {/* Footer Info */}
-        <div className="text-center py-8 border-t border-border mt-8">
-          <p className="text-muted-foreground text-sm">
-            الأسعار مباشرة من Binance • التحديث كل 10 ثوانٍ
-          </p>
-          <p className="text-muted-foreground text-xs mt-2">
+        <div className="text-center py-8 border-t border-slate-700/50 mt-8">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Sparkles className="h-4 w-4 text-amber-400" />
+            <p className="text-slate-400 text-sm">
+              الأسعار مباشرة من Binance • التحديث كل 10 ثوانٍ
+            </p>
+          </div>
+          <p className="text-slate-500 text-xs">
             اضغط على أي سوق لعرض الشارت المباشر من TradingView
           </p>
         </div>
