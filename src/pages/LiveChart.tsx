@@ -203,61 +203,56 @@ export default function LiveChart() {
   // Check if it's a Saudi stock
   const isSaudiStock = symbol.includes('TADAWUL:');
 
+  // Get TradingView URL for Saudi stocks
+  const getTradingViewUrl = () => {
+    if (isSaudiStock) {
+      const ticker = symbol.split(':')[1];
+      return `https://www.tradingview.com/chart/?symbol=TADAWUL%3A${ticker}`;
+    }
+    return `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(symbolInfo.tvSymbol)}`;
+  };
+
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || isSaudiStock) return;
 
     // Clear previous content
     containerRef.current.innerHTML = '';
 
-    if (isSaudiStock) {
-      // For Saudi stocks, use TradingView's widgetembed iframe
-      const ticker = symbol.split(':')[1];
-      const iframe = document.createElement('iframe');
-      iframe.src = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_widget&symbol=TADAWUL%3A${ticker}&interval=${selectedTimeframe}&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=RSI%40tv-basicstudies%2CMASimple%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FRiyadh&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=ar_AE&utm_source=&utm_medium=widget_new&utm_campaign=chart&utm_term=TADAWUL%3A${ticker}`;
-      iframe.style.width = '100%';
-      iframe.style.height = '100%';
-      iframe.style.border = 'none';
-      iframe.style.borderRadius = '8px';
-      iframe.allowFullscreen = true;
-      iframe.id = 'tradingview_widget';
-      containerRef.current.appendChild(iframe);
-    } else {
-      // For other symbols, use the advanced chart widget
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-      script.type = 'text/javascript';
-      script.async = true;
-      script.innerHTML = JSON.stringify({
-        autosize: true,
-        symbol: symbolInfo.tvSymbol,
-        interval: selectedTimeframe,
-        timezone: "Asia/Riyadh",
-        theme: "dark",
-        style: "1",
-        locale: "ar_AE",
-        enable_publishing: false,
-        allow_symbol_change: true,
-        calendar: false,
-        support_host: "https://www.tradingview.com",
-        hide_side_toolbar: false,
-        studies: ["RSI@tv-basicstudies", "MASimple@tv-basicstudies"],
-      });
+    // For non-Saudi symbols, use the advanced chart widget
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    script.type = 'text/javascript';
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      autosize: true,
+      symbol: symbolInfo.tvSymbol,
+      interval: selectedTimeframe,
+      timezone: "Asia/Riyadh",
+      theme: "dark",
+      style: "1",
+      locale: "ar_AE",
+      enable_publishing: false,
+      allow_symbol_change: true,
+      calendar: false,
+      support_host: "https://www.tradingview.com",
+      hide_side_toolbar: false,
+      studies: ["RSI@tv-basicstudies", "MASimple@tv-basicstudies"],
+    });
 
-      const widgetContainer = document.createElement('div');
-      widgetContainer.className = 'tradingview-widget-container';
-      widgetContainer.style.height = '100%';
-      widgetContainer.style.width = '100%';
+    const widgetContainer = document.createElement('div');
+    widgetContainer.className = 'tradingview-widget-container';
+    widgetContainer.style.height = '100%';
+    widgetContainer.style.width = '100%';
 
-      const widgetInner = document.createElement('div');
-      widgetInner.className = 'tradingview-widget-container__widget';
-      widgetInner.style.height = 'calc(100% - 32px)';
-      widgetInner.style.width = '100%';
+    const widgetInner = document.createElement('div');
+    widgetInner.className = 'tradingview-widget-container__widget';
+    widgetInner.style.height = 'calc(100% - 32px)';
+    widgetInner.style.width = '100%';
 
-      widgetContainer.appendChild(widgetInner);
-      widgetContainer.appendChild(script);
+    widgetContainer.appendChild(widgetInner);
+    widgetContainer.appendChild(script);
 
-      containerRef.current.appendChild(widgetContainer);
-    }
+    containerRef.current.appendChild(widgetContainer);
 
     return () => {
       if (containerRef.current) {
@@ -484,12 +479,45 @@ export default function LiveChart() {
             </p>
           </div>
           
-          {/* TradingView Chart Widget */}
-          <div 
-            ref={containerRef}
-            className="w-full rounded-lg overflow-hidden"
-            style={{ height: '600px' }}
-          />
+          {/* TradingView Chart Widget or Saudi Stock Notice */}
+          {isSaudiStock ? (
+            <div 
+              className="w-full rounded-lg overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] to-[#0f0f1a] border border-white/10"
+              style={{ height: '600px' }}
+            >
+              <div className="text-center p-8 max-w-lg">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/20 flex items-center justify-center">
+                  <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-3">{symbolInfo.displayName}</h3>
+                <p className="text-white/60 mb-6 leading-relaxed">
+                  شارتات السوق السعودي (تداول) متاحة فقط على موقع TradingView مباشرة.
+                  <br />
+                  اضغط على الزر أدناه لفتح الشارت في نافذة جديدة.
+                </p>
+                <Button
+                  onClick={() => window.open(getTradingViewUrl(), '_blank')}
+                  className="gap-2 bg-gradient-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90 text-white px-8 py-6 text-lg"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  فتح الشارت في TradingView
+                </Button>
+                <p className="text-white/40 text-sm mt-4">
+                  سيتم فتح الشارت في نافذة جديدة
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div 
+              ref={containerRef}
+              className="w-full rounded-lg overflow-hidden"
+              style={{ height: '600px' }}
+            />
+          )}
           
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-4 rounded-lg bg-white/5">
