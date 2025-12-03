@@ -200,54 +200,71 @@ export default function LiveChart() {
 
   const symbolInfo = getSymbolInfo();
 
+  // Check if it's a Saudi stock
+  const isSaudiStock = symbol.includes('TADAWUL:');
+
   useEffect(() => {
     if (!containerRef.current) return;
 
     // Clear previous content
     containerRef.current.innerHTML = '';
 
-    // Use advanced chart widget for all symbols
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-    script.type = 'text/javascript';
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: symbolInfo.tvSymbol,
-      interval: selectedTimeframe,
-      timezone: "Asia/Riyadh",
-      theme: "dark",
-      style: "1",
-      locale: "ar_AE",
-      enable_publishing: false,
-      allow_symbol_change: true,
-      calendar: false,
-      support_host: "https://www.tradingview.com",
-      hide_side_toolbar: false,
-      studies: ["RSI@tv-basicstudies", "MASimple@tv-basicstudies"],
-    });
+    if (isSaudiStock) {
+      // For Saudi stocks, use TradingView's widgetembed iframe
+      const ticker = symbol.split(':')[1];
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_widget&symbol=TADAWUL%3A${ticker}&interval=${selectedTimeframe}&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=RSI%40tv-basicstudies%2CMASimple%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FRiyadh&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=ar_AE&utm_source=&utm_medium=widget_new&utm_campaign=chart&utm_term=TADAWUL%3A${ticker}`;
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '8px';
+      iframe.allowFullscreen = true;
+      iframe.id = 'tradingview_widget';
+      containerRef.current.appendChild(iframe);
+    } else {
+      // For other symbols, use the advanced chart widget
+      const script = document.createElement('script');
+      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+      script.type = 'text/javascript';
+      script.async = true;
+      script.innerHTML = JSON.stringify({
+        autosize: true,
+        symbol: symbolInfo.tvSymbol,
+        interval: selectedTimeframe,
+        timezone: "Asia/Riyadh",
+        theme: "dark",
+        style: "1",
+        locale: "ar_AE",
+        enable_publishing: false,
+        allow_symbol_change: true,
+        calendar: false,
+        support_host: "https://www.tradingview.com",
+        hide_side_toolbar: false,
+        studies: ["RSI@tv-basicstudies", "MASimple@tv-basicstudies"],
+      });
 
-    const widgetContainer = document.createElement('div');
-    widgetContainer.className = 'tradingview-widget-container';
-    widgetContainer.style.height = '100%';
-    widgetContainer.style.width = '100%';
+      const widgetContainer = document.createElement('div');
+      widgetContainer.className = 'tradingview-widget-container';
+      widgetContainer.style.height = '100%';
+      widgetContainer.style.width = '100%';
 
-    const widgetInner = document.createElement('div');
-    widgetInner.className = 'tradingview-widget-container__widget';
-    widgetInner.style.height = 'calc(100% - 32px)';
-    widgetInner.style.width = '100%';
+      const widgetInner = document.createElement('div');
+      widgetInner.className = 'tradingview-widget-container__widget';
+      widgetInner.style.height = 'calc(100% - 32px)';
+      widgetInner.style.width = '100%';
 
-    widgetContainer.appendChild(widgetInner);
-    widgetContainer.appendChild(script);
+      widgetContainer.appendChild(widgetInner);
+      widgetContainer.appendChild(script);
 
-    containerRef.current.appendChild(widgetContainer);
+      containerRef.current.appendChild(widgetContainer);
+    }
 
     return () => {
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }
     };
-  }, [symbol, symbolInfo.tvSymbol, selectedTimeframe]);
+  }, [symbol, symbolInfo.tvSymbol, selectedTimeframe, isSaudiStock]);
 
   const handleRefresh = () => {
     if (containerRef.current) {
