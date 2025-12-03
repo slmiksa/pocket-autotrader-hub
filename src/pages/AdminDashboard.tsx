@@ -12,6 +12,7 @@ import { Shield, Plus, Trash2, Copy, Check, ArrowRight, LogOut, Loader2 } from "
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ProfessionalSignalsManager } from "@/components/admin/ProfessionalSignalsManager";
+import { ReportsManager } from "@/components/admin/ReportsManager";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -737,6 +738,9 @@ const AdminDashboard = () => {
 
         {/* Professional Signals Management */}
         <ProfessionalSignalsManager />
+
+        {/* Community Reports Management */}
+        <ReportsManager />
 
         {/* Admin Account Settings */}
         <Card>
