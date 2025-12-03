@@ -204,9 +204,57 @@ const markets: MarketItem[] = [
   { name: 'Electronic Arts', nameAr: 'إلكترونيك آرتس', symbol: 'ea', category: 'أسهم' },
   { name: 'Take-Two', nameAr: 'تيك تو', symbol: 'taketwo', category: 'أسهم' },
   { name: 'Activision', nameAr: 'أكتيفيجن', symbol: 'activision', category: 'أسهم' },
+  
+  // Saudi Market (Tadawul) - Major Saudi stocks
+  { name: 'Saudi Aramco', nameAr: 'أرامكو السعودية', symbol: 'TADAWUL:2222', category: 'السوق السعودي' },
+  { name: 'Al Rajhi Bank', nameAr: 'مصرف الراجحي', symbol: 'TADAWUL:1120', category: 'السوق السعودي' },
+  { name: 'SNB', nameAr: 'البنك الأهلي السعودي', symbol: 'TADAWUL:1180', category: 'السوق السعودي' },
+  { name: 'STC', nameAr: 'الاتصالات السعودية', symbol: 'TADAWUL:7010', category: 'السوق السعودي' },
+  { name: 'SABIC', nameAr: 'سابك', symbol: 'TADAWUL:2010', category: 'السوق السعودي' },
+  { name: 'Riyad Bank', nameAr: 'بنك الرياض', symbol: 'TADAWUL:1010', category: 'السوق السعودي' },
+  { name: 'SAMBA', nameAr: 'سامبا', symbol: 'TADAWUL:1090', category: 'السوق السعودي' },
+  { name: 'Saudi Electricity', nameAr: 'الكهرباء السعودية', symbol: 'TADAWUL:5110', category: 'السوق السعودي' },
+  { name: 'Maaden', nameAr: 'معادن', symbol: 'TADAWUL:1211', category: 'السوق السعودي' },
+  { name: 'Alinma Bank', nameAr: 'مصرف الإنماء', symbol: 'TADAWUL:1150', category: 'السوق السعودي' },
+  { name: 'Bank AlBilad', nameAr: 'بنك البلاد', symbol: 'TADAWUL:1140', category: 'السوق السعودي' },
+  { name: 'Bank AlJazira', nameAr: 'بنك الجزيرة', symbol: 'TADAWUL:1020', category: 'السوق السعودي' },
+  { name: 'Saudi British Bank', nameAr: 'البنك السعودي البريطاني', symbol: 'TADAWUL:1060', category: 'السوق السعودي' },
+  { name: 'Arab National Bank', nameAr: 'البنك العربي الوطني', symbol: 'TADAWUL:1080', category: 'السوق السعودي' },
+  { name: 'Mobily', nameAr: 'موبايلي', symbol: 'TADAWUL:7020', category: 'السوق السعودي' },
+  { name: 'Zain KSA', nameAr: 'زين السعودية', symbol: 'TADAWUL:7030', category: 'السوق السعودي' },
+  { name: 'Jarir', nameAr: 'جرير', symbol: 'TADAWUL:4190', category: 'السوق السعودي' },
+  { name: 'Extra', nameAr: 'إكسترا', symbol: 'TADAWUL:4003', category: 'السوق السعودي' },
+  { name: 'Almarai', nameAr: 'المراعي', symbol: 'TADAWUL:2280', category: 'السوق السعودي' },
+  { name: 'Savola', nameAr: 'صافولا', symbol: 'TADAWUL:2050', category: 'السوق السعودي' },
+  { name: 'Panda', nameAr: 'بنده', symbol: 'TADAWUL:4061', category: 'السوق السعودي' },
+  { name: 'Dar Al Arkan', nameAr: 'دار الأركان', symbol: 'TADAWUL:4300', category: 'السوق السعودي' },
+  { name: 'Emaar EC', nameAr: 'إعمار المدينة', symbol: 'TADAWUL:4220', category: 'السوق السعودي' },
+  { name: 'Saudi Cement', nameAr: 'الأسمنت السعودي', symbol: 'TADAWUL:3010', category: 'السوق السعودي' },
+  { name: 'Yanbu Cement', nameAr: 'أسمنت ينبع', symbol: 'TADAWUL:3060', category: 'السوق السعودي' },
+  { name: 'Southern Cement', nameAr: 'أسمنت الجنوبية', symbol: 'TADAWUL:3050', category: 'السوق السعودي' },
+  { name: 'Saudi Kayan', nameAr: 'كيان السعودية', symbol: 'TADAWUL:2350', category: 'السوق السعودي' },
+  { name: 'Petro Rabigh', nameAr: 'بترو رابغ', symbol: 'TADAWUL:2380', category: 'السوق السعودي' },
+  { name: 'Yansab', nameAr: 'ينساب', symbol: 'TADAWUL:2290', category: 'السوق السعودي' },
+  { name: 'SIPCHEM', nameAr: 'سبكيم', symbol: 'TADAWUL:2310', category: 'السوق السعودي' },
+  { name: 'Advanced Petrochemical', nameAr: 'المتقدمة للبتروكيماويات', symbol: 'TADAWUL:2330', category: 'السوق السعودي' },
+  { name: 'Saudi Steel', nameAr: 'الحديد السعودية', symbol: 'TADAWUL:1320', category: 'السوق السعودي' },
+  { name: 'ACE Arabia', nameAr: 'التعاونية', symbol: 'TADAWUL:8010', category: 'السوق السعودي' },
+  { name: 'Bupa Arabia', nameAr: 'بوبا العربية', symbol: 'TADAWUL:8210', category: 'السوق السعودي' },
+  { name: 'Tawuniya', nameAr: 'التعاونية للتأمين', symbol: 'TADAWUL:8010', category: 'السوق السعودي' },
+  { name: 'Saudi Re', nameAr: 'إعادة السعودية', symbol: 'TADAWUL:8200', category: 'السوق السعودي' },
+  { name: 'ACWA Power', nameAr: 'أكوا باور', symbol: 'TADAWUL:2082', category: 'السوق السعودي' },
+  { name: 'Saudi Ground Services', nameAr: 'الخدمات الأرضية', symbol: 'TADAWUL:4031', category: 'السوق السعودي' },
+  { name: 'SAUDIA Cargo', nameAr: 'سال للخدمات اللوجستية', symbol: 'TADAWUL:4032', category: 'السوق السعودي' },
+  { name: 'Elm Company', nameAr: 'علم', symbol: 'TADAWUL:7203', category: 'السوق السعودي' },
+  { name: 'Nahdi Medical', nameAr: 'صيدليات النهدي', symbol: 'TADAWUL:4164', category: 'السوق السعودي' },
+  { name: 'Dr. Sulaiman Al-Habib', nameAr: 'سليمان الحبيب', symbol: 'TADAWUL:4013', category: 'السوق السعودي' },
+  { name: 'Mouwasat', nameAr: 'المواساة', symbol: 'TADAWUL:4002', category: 'السوق السعودي' },
+  { name: 'Dallah Healthcare', nameAr: 'دله الصحية', symbol: 'TADAWUL:4004', category: 'السوق السعودي' },
+  { name: 'National Industrialization', nameAr: 'التصنيع الوطنية', symbol: 'TADAWUL:2060', category: 'السوق السعودي' },
+  { name: 'TASI Index', nameAr: 'مؤشر تاسي', symbol: 'TADAWUL:TASI', category: 'السوق السعودي' },
 ];
 
-const categories = ['فوركس', 'عملات رقمية', 'سلع', 'مؤشرات', 'أسهم'];
+const categories = ['فوركس', 'عملات رقمية', 'سلع', 'مؤشرات', 'أسهم', 'السوق السعودي'];
 
 const categoryIcons: Record<string, string> = {
   'فوركس': '💱',
@@ -214,6 +262,7 @@ const categoryIcons: Record<string, string> = {
   'سلع': '🛢️',
   'مؤشرات': '📊',
   'أسهم': '📈',
+  'السوق السعودي': '🇸🇦',
 };
 
 const Markets = () => {
