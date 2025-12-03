@@ -495,7 +495,7 @@ export default function LiveChart() {
                 <p className="text-white/60 mb-6 leading-relaxed">
                   شارتات السوق السعودي (تداول) متاحة فقط على موقع TradingView مباشرة.
                   <br />
-                  اضغط على الزر أدناه لفتح الشارت في نافذة جديدة.
+                  <span className="text-primary font-medium">للتحليل الذكي:</span> افتح الشارت من الزر أدناه، التقط صورة للشارت، ثم عد لهذه الصفحة واستخدم زر "تحليل الشارت" لتحليله بالذكاء الاصطناعي.
                 </p>
                 <Button
                   onClick={() => window.open(getTradingViewUrl(), '_blank')}
