@@ -7,7 +7,7 @@ import { LivePriceCards } from "@/components/LivePriceCards";
 import { HomeContent } from "@/components/HomeContent";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper, Shield, Menu, User as UserIcon } from "lucide-react";
+import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper, Shield, Menu, User as UserIcon, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
 
@@ -207,6 +207,10 @@ const Index = () => {
                   <Newspaper className="h-4 w-4" />
                   <span>الأخبار</span>
                 </Button>
+                <Button onClick={() => navigate('/community')} variant="outline" size="sm" className="gap-1.5">
+                  <Users className="h-4 w-4" />
+                  <span>المجتمع</span>
+                </Button>
                 <Button onClick={() => navigate('/profile')} variant="outline" size="sm" className="gap-1.5">
                   <UserIcon className="h-4 w-4" />
                   <span>حسابي</span>
@@ -262,6 +266,10 @@ const Index = () => {
                     <Button onClick={() => { navigate('/news'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2">
                       <Newspaper className="h-4 w-4" />
                       <span>الأخبار</span>
+                    </Button>
+                    <Button onClick={() => { navigate('/community'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2">
+                      <Users className="h-4 w-4" />
+                      <span>المجتمع</span>
                     </Button>
                     <Button onClick={() => { navigate('/profile'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-gradient-to-r from-yellow-500/10 to-yellow-500/5 border-yellow-500/30">
                       <UserIcon className="h-4 w-4 text-yellow-400" />
