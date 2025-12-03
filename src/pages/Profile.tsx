@@ -8,11 +8,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Star, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Target, BookOpen, User, Loader2, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Star, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Target, BookOpen, User, Loader2, Image as ImageIcon, Users } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useDailyJournal, NewJournalEntry } from '@/hooks/useDailyJournal';
 import { useSavedAnalyses } from '@/hooks/useSavedAnalyses';
 import { ProfessionalTradingJournal } from '@/components/trading/ProfessionalTradingJournal';
+import { toast } from 'sonner';
+
+interface CommunityPost {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  image_url: string | null;
+  created_at: string;
+}
+
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
@@ -36,6 +47,8 @@ const Profile = () => {
     deleteAnalysis
   } = useSavedAnalyses();
   const [selectedAnalysis, setSelectedAnalysis] = useState<any>(null);
+  const [myPosts, setMyPosts] = useState<CommunityPost[]>([]);
+  const [postsLoading, setPostsLoading] = useState(true);
   const [newEntry, setNewEntry] = useState<NewJournalEntry>({
     trade_date: new Date().toISOString().split('T')[0],
     symbol: '',
@@ -62,9 +75,54 @@ const Profile = () => {
       }
       setUser(user);
       setLoading(false);
+      
+      // Fetch user's posts
+      fetchMyPosts(user.id);
     };
     checkUser();
   }, [navigate]);
+
+  const fetchMyPosts = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('community_posts')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setMyPosts(data || []);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setPostsLoading(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    try {
+      const post = myPosts.find(p => p.id === postId);
+      if (post?.image_url) {
+        const imagePath = post.image_url.split('/community-images/')[1];
+        if (imagePath) {
+          await supabase.storage.from('community-images').remove([imagePath]);
+        }
+      }
+
+      const { error } = await supabase
+        .from('community_posts')
+        .delete()
+        .eq('id', postId);
+
+      if (error) throw error;
+      setMyPosts(myPosts.filter(p => p.id !== postId));
+      toast.success('تم حذف المشاركة');
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast.error('حدث خطأ في حذف المشاركة');
+    }
+  };
+
   const handleAddEntry = async () => {
     const success = await addEntry(newEntry);
     if (success) {
@@ -123,18 +181,22 @@ const Profile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="favorites" className="w-full">
-          <TabsList className="w-full">
+          <TabsList className="w-full grid grid-cols-4">
             <TabsTrigger value="favorites" className="flex-1">
-              <Star className="h-4 w-4 ml-2" />
-              المفضلة
+              <Star className="h-4 w-4 ml-1" />
+              <span className="hidden sm:inline">المفضلة</span>
+            </TabsTrigger>
+            <TabsTrigger value="posts" className="flex-1">
+              <Users className="h-4 w-4 ml-1" />
+              <span className="hidden sm:inline">منشوراتي</span>
             </TabsTrigger>
             <TabsTrigger value="analyses" className="flex-1">
-              <ImageIcon className="h-4 w-4 ml-2" />
-              تحليلاتي
+              <ImageIcon className="h-4 w-4 ml-1" />
+              <span className="hidden sm:inline">تحليلاتي</span>
             </TabsTrigger>
             <TabsTrigger value="journal" className="flex-1">
-              <BookOpen className="h-4 w-4 ml-2" />
-              حلل أهدافك
+              <BookOpen className="h-4 w-4 ml-1" />
+              <span className="hidden sm:inline">أهدافي</span>
             </TabsTrigger>
           </TabsList>
 
@@ -168,6 +230,77 @@ const Profile = () => {
                       </div>
                     </div>)}
                 </div>}
+            </Card>
+          </TabsContent>
+
+          {/* Posts Tab */}
+          <TabsContent value="posts" className="mt-4">
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  منشوراتي ({myPosts.length})
+                </h3>
+                <Button onClick={() => navigate('/community')} variant="outline" size="sm">
+                  <Plus className="h-4 w-4 ml-2" />
+                  إضافة منشور
+                </Button>
+              </div>
+              
+              {postsLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : myPosts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                  <p>لم تقم بنشر أي منشورات بعد</p>
+                  <Button variant="outline" className="mt-4" onClick={() => navigate('/community')}>
+                    انشر أول منشور
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {myPosts.map(post => (
+                    <Card 
+                      key={post.id} 
+                      className="overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all group"
+                      onClick={() => navigate('/community')}
+                    >
+                      <div className="aspect-square relative bg-muted">
+                        {post.image_url ? (
+                          <img
+                            src={post.image_url}
+                            alt={post.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+                          <h4 className="text-white font-semibold text-sm line-clamp-1">{post.title}</h4>
+                          <p className="text-white/60 text-xs">
+                            {new Date(post.created_at).toLocaleDateString('ar-SA')}
+                          </p>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 left-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePost(post.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </Card>
           </TabsContent>
 
