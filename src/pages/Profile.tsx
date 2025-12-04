@@ -8,11 +8,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Star, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Target, BookOpen, User, Loader2, Image as ImageIcon, Users, Sparkles, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Star, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Target, BookOpen, User, Loader2, Image as ImageIcon, Users, Sparkles, ChevronRight, Edit2, Camera } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useDailyJournal, NewJournalEntry } from '@/hooks/useDailyJournal';
 import { useSavedAnalyses } from '@/hooks/useSavedAnalyses';
 import { ProfessionalTradingJournal } from '@/components/trading/ProfessionalTradingJournal';
+import { ProfileEditDialog } from '@/components/profile/ProfileEditDialog';
 import { toast } from 'sonner';
 
 interface CommunityPost {
@@ -24,10 +25,17 @@ interface CommunityPost {
   created_at: string;
 }
 
+interface UserProfile {
+  nickname: string | null;
+  avatar_url: string | null;
+}
+
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const {
     favorites,
     loading: favLoading,
@@ -71,11 +79,26 @@ const Profile = () => {
         return;
       }
       setUser(user);
+      await fetchProfile(user.id);
       setLoading(false);
       fetchMyPosts(user.id);
     };
     checkUser();
   }, [navigate]);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('nickname, avatar_url')
+        .eq('user_id', userId)
+        .single();
+      
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
   const fetchMyPosts = async (userId: string) => {
     try {
@@ -192,14 +215,37 @@ const Profile = () => {
             <div className="flex items-center gap-5">
               <div className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary to-blue-500 rounded-full blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
-                <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 border-2 border-primary/50 flex items-center justify-center backdrop-blur-sm">
-                  <User className="h-10 w-10 text-primary" />
+                <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-primary/30 to-primary/10 border-2 border-primary/50 flex items-center justify-center backdrop-blur-sm">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="h-10 w-10 text-primary" />
+                  )}
                 </div>
+                <button 
+                  onClick={() => setShowEditDialog(true)}
+                  className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center border-2 border-background shadow-lg hover:bg-primary/80 transition-colors"
+                >
+                  <Camera className="h-3.5 w-3.5 text-primary-foreground" />
+                </button>
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-bold text-foreground">{user?.email}</h2>
-                <p className="text-muted-foreground text-sm flex items-center gap-2 mt-1">
-                  <TrendingUp className="h-4 w-4 text-primary" />
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-foreground">
+                    {profile?.nickname || user?.email?.split('@')[0]}
+                  </h2>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-primary"
+                    onClick={() => setShowEditDialog(true)}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-muted-foreground text-sm">{user?.email}</p>
+                <p className="text-muted-foreground text-xs flex items-center gap-2 mt-1">
+                  <TrendingUp className="h-3 w-3 text-primary" />
                   متداول محترف
                 </p>
               </div>
@@ -555,6 +601,16 @@ const Profile = () => {
             <ProfessionalTradingJournal />
           </TabsContent>
         </Tabs>
+
+        {/* Profile Edit Dialog */}
+        <ProfileEditDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          userId={user?.id || ''}
+          currentNickname={profile?.nickname || null}
+          currentAvatarUrl={profile?.avatar_url || null}
+          onProfileUpdated={() => fetchProfile(user?.id)}
+        />
       </main>
     </div>
   );

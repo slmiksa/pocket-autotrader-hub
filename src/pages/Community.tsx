@@ -85,8 +85,9 @@ export default function Community() {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
   
-  // Nicknames cache
+  // Nicknames & Avatars cache
   const [userNicknames, setUserNicknames] = useState<Record<string, string>>({});
+  const [userAvatars, setUserAvatars] = useState<Record<string, string>>({});
 
   // Handle direct post link
   useEffect(() => {
@@ -123,19 +124,24 @@ export default function Community() {
         const postIds = data.map(p => p.id);
         const userIds = [...new Set(data.map(p => p.user_id))];
         
-        // Fetch nicknames for all users
+        // Fetch nicknames and avatars for all users
         const { data: profilesData } = await supabase
           .from('profiles')
-          .select('user_id, nickname')
+          .select('user_id, nickname, avatar_url')
           .in('user_id', userIds);
         
         const nicknames: Record<string, string> = {};
+        const avatars: Record<string, string> = {};
         profilesData?.forEach(p => {
           if (p.nickname) {
             nicknames[p.user_id] = p.nickname;
           }
+          if (p.avatar_url) {
+            avatars[p.user_id] = p.avatar_url;
+          }
         });
         setUserNicknames(nicknames);
+        setUserAvatars(avatars);
         
         const { data: likesData } = await supabase
           .from('community_likes')
@@ -622,8 +628,12 @@ export default function Community() {
                         openUserProfile(post.user_id, post.user_email);
                       }}
                     >
-                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                        <User className="h-3 w-3 text-white" />
+                      <div className="w-5 h-5 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                        {userAvatars[post.user_id] ? (
+                          <img src={userAvatars[post.user_id]} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="h-3 w-3 text-white" />
+                        )}
                       </div>
                       <p className="text-slate-400 text-xs">{getUserDisplayName(post.user_email, post.user_id)}</p>
                     </div>
@@ -841,8 +851,12 @@ export default function Community() {
                     className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={() => openUserProfile(selectedPost.user_id, selectedPost.user_email)}
                   >
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                      <User className="h-6 w-6 text-white" />
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                      {userAvatars[selectedPost.user_id] ? (
+                        <img src={userAvatars[selectedPost.user_id]} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="h-6 w-6 text-white" />
+                      )}
                     </div>
                     <div>
                       <p className="font-semibold text-white">{getUserDisplayName(selectedPost.user_email, selectedPost.user_id)}</p>
@@ -969,8 +983,12 @@ export default function Community() {
                             className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                             onClick={() => openUserProfile(comment.user_id, comment.user_email)}
                           >
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                              <User className="h-3 w-3 text-white" />
+                            <div className="w-6 h-6 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                              {userAvatars[comment.user_id] ? (
+                                <img src={userAvatars[comment.user_id]} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <User className="h-3 w-3 text-white" />
+                              )}
                             </div>
                             <span className="font-medium text-sm text-white">
                               {getUserDisplayName(comment.user_email, comment.user_id)}

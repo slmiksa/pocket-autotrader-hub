@@ -11,6 +11,7 @@ interface UserProfile {
   user_id: string;
   nickname: string | null;
   email: string | null;
+  avatar_url: string | null;
   created_at: string;
 }
 
@@ -47,11 +48,11 @@ export function UserProfileDialog({ open, onOpenChange, userId, userEmail, onPos
       // Fetch profile
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('user_id, nickname, email, created_at')
+        .select('user_id, nickname, email, avatar_url, created_at')
         .eq('user_id', userId)
         .single();
 
-      setProfile(profileData || { user_id: userId, nickname: null, email: userEmail, created_at: new Date().toISOString() });
+      setProfile(profileData || { user_id: userId, nickname: null, email: userEmail, avatar_url: null, created_at: new Date().toISOString() });
 
       // Fetch user posts
       const { data: postsData } = await supabase
@@ -116,8 +117,12 @@ export function UserProfileDialog({ open, onOpenChange, userId, userEmail, onPos
           <div className="space-y-6">
             {/* Profile Header */}
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center mb-4">
-                <User className="h-10 w-10 text-white" />
+              <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center mb-4">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="h-10 w-10 text-white" />
+                )}
               </div>
               <h3 className="text-xl font-bold text-white">{getDisplayName()}</h3>
               {profile?.created_at && (
