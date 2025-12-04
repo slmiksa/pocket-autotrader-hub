@@ -54,9 +54,10 @@ export const GlobalHeader = () => {
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Hide header only on admin routes
-  const hiddenRoutes = ["/admin", "/admin-login"];
+  // Hide header on these routes
+  const hiddenRoutes = ["/admin", "/admin-login", "/auth", "/subscription"];
   const shouldHide = hiddenRoutes.includes(location.pathname);
+  const [hasValidSubscription, setHasValidSubscription] = useState(false);
 
   useEffect(() => {
     if (shouldHide) return;
@@ -78,19 +79,28 @@ export const GlobalHeader = () => {
           const diffTime = expiresAt.getTime() - now.getTime();
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           setDaysRemaining(diffDays > 0 ? diffDays : 0);
+          setHasValidSubscription(diffDays > 0);
+        } else {
+          setHasValidSubscription(false);
         }
+      } else {
+        setHasValidSubscription(false);
       }
     };
     getUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user || null);
+      if (!session?.user) {
+        setHasValidSubscription(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, [shouldHide]);
 
-  if (shouldHide) return null;
+  // Hide if route is in hidden list OR if user doesn't have valid subscription
+  if (shouldHide || !user || !hasValidSubscription) return null;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
