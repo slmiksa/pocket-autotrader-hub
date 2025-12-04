@@ -7,22 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSavedAnalyses } from "@/hooks/useSavedAnalyses";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PriceAlertDialog } from "@/components/alerts/PriceAlertDialog";
-
 export default function LiveChart() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -38,27 +25,27 @@ export default function LiveChart() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
-  const { saveAnalysis } = useSavedAnalyses();
+  const {
+    saveAnalysis
+  } = useSavedAnalyses();
 
   // Check if chart analysis is enabled for the user
   useEffect(() => {
     const checkAccess = async () => {
       try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        
+        const {
+          data: {
+            user: authUser
+          }
+        } = await supabase.auth.getUser();
         if (!authUser) {
           setLoading(false);
           return;
         }
-        
         setUser(authUser);
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('image_analysis_enabled')
-          .eq('user_id', authUser.id)
-          .single();
-
+        const {
+          data: profile
+        } = await supabase.from('profiles').select('image_analysis_enabled').eq('user_id', authUser.id).single();
         setChartAnalysisEnabled(profile?.image_analysis_enabled || false);
       } catch (error) {
         console.error('Error checking access:', error);
@@ -66,7 +53,6 @@ export default function LiveChart() {
         setLoading(false);
       }
     };
-
     checkAccess();
   }, []);
 
@@ -119,90 +105,243 @@ export default function LiveChart() {
       '4002': 'المواساة',
       '4004': 'دله الصحية',
       '4005': 'رعاية',
-      '4007': 'الحمادي',
+      '4007': 'الحمادي'
     };
-    
+
     // If symbol contains "TADAWUL:" - Saudi market stock
     if (symbol.includes('TADAWUL:')) {
       const ticker = symbol.split(':')[1];
-      const displayName = saudiStockNames[ticker] 
-        ? `${saudiStockNames[ticker]} (${ticker})`
-        : `تداول (${ticker})`;
-      
+      const displayName = saudiStockNames[ticker] ? `${saudiStockNames[ticker]} (${ticker})` : `تداول (${ticker})`;
+
       // TradingView uses TADAWUL:XXXX format for Saudi stocks
-      return { tvSymbol: `TADAWUL:${ticker}`, displayName };
+      return {
+        tvSymbol: `TADAWUL:${ticker}`,
+        displayName
+      };
     }
-    
+
     // For other symbols with ":" (like FX:EURUSD), use as-is
     if (symbol.includes(':')) {
-      return { tvSymbol: symbol, displayName: symbol };
+      return {
+        tvSymbol: symbol,
+        displayName: symbol
+      };
     }
-
-    const symbolMap: Record<string, { tvSymbol: string; displayName: string }> = {
+    const symbolMap: Record<string, {
+      tvSymbol: string;
+      displayName: string;
+    }> = {
       // Forex
-      eurusd: { tvSymbol: "FX:EURUSD", displayName: "يورو/دولار (EUR/USD)" },
-      gbpusd: { tvSymbol: "FX:GBPUSD", displayName: "جنيه/دولار (GBP/USD)" },
-      usdjpy: { tvSymbol: "FX:USDJPY", displayName: "دولار/ين (USD/JPY)" },
-      usdchf: { tvSymbol: "FX:USDCHF", displayName: "دولار/فرنك (USD/CHF)" },
-      audusd: { tvSymbol: "FX:AUDUSD", displayName: "أسترالي/دولار (AUD/USD)" },
-      usdcad: { tvSymbol: "FX:USDCAD", displayName: "دولار/كندي (USD/CAD)" },
-      nzdusd: { tvSymbol: "FX:NZDUSD", displayName: "نيوزيلندي/دولار (NZD/USD)" },
-      eurgbp: { tvSymbol: "FX:EURGBP", displayName: "يورو/جنيه (EUR/GBP)" },
-      eurjpy: { tvSymbol: "FX:EURJPY", displayName: "يورو/ين (EUR/JPY)" },
-      gbpjpy: { tvSymbol: "FX:GBPJPY", displayName: "جنيه/ين (GBP/JPY)" },
-      
+      eurusd: {
+        tvSymbol: "FX:EURUSD",
+        displayName: "يورو/دولار (EUR/USD)"
+      },
+      gbpusd: {
+        tvSymbol: "FX:GBPUSD",
+        displayName: "جنيه/دولار (GBP/USD)"
+      },
+      usdjpy: {
+        tvSymbol: "FX:USDJPY",
+        displayName: "دولار/ين (USD/JPY)"
+      },
+      usdchf: {
+        tvSymbol: "FX:USDCHF",
+        displayName: "دولار/فرنك (USD/CHF)"
+      },
+      audusd: {
+        tvSymbol: "FX:AUDUSD",
+        displayName: "أسترالي/دولار (AUD/USD)"
+      },
+      usdcad: {
+        tvSymbol: "FX:USDCAD",
+        displayName: "دولار/كندي (USD/CAD)"
+      },
+      nzdusd: {
+        tvSymbol: "FX:NZDUSD",
+        displayName: "نيوزيلندي/دولار (NZD/USD)"
+      },
+      eurgbp: {
+        tvSymbol: "FX:EURGBP",
+        displayName: "يورو/جنيه (EUR/GBP)"
+      },
+      eurjpy: {
+        tvSymbol: "FX:EURJPY",
+        displayName: "يورو/ين (EUR/JPY)"
+      },
+      gbpjpy: {
+        tvSymbol: "FX:GBPJPY",
+        displayName: "جنيه/ين (GBP/JPY)"
+      },
       // Crypto
-      bitcoin: { tvSymbol: "BITSTAMP:BTCUSD", displayName: "بيتكوين (BTC/USD)" },
-      ethereum: { tvSymbol: "BITSTAMP:ETHUSD", displayName: "إيثريوم (ETH/USD)" },
-      bnb: { tvSymbol: "BINANCE:BNBUSDT", displayName: "بي إن بي (BNB/USD)" },
-      solana: { tvSymbol: "COINBASE:SOLUSD", displayName: "سولانا (SOL/USD)" },
-      xrp: { tvSymbol: "BITSTAMP:XRPUSD", displayName: "ريبل (XRP/USD)" },
-      cardano: { tvSymbol: "COINBASE:ADAUSD", displayName: "كاردانو (ADA/USD)" },
-      dogecoin: { tvSymbol: "BINANCE:DOGEUSDT", displayName: "دوجكوين (DOGE/USD)" },
-      litecoin: { tvSymbol: "COINBASE:LTCUSD", displayName: "لايتكوين (LTC/USD)" },
-      avalanche: { tvSymbol: "COINBASE:AVAXUSD", displayName: "أفالانش (AVAX/USD)" },
-      polkadot: { tvSymbol: "COINBASE:DOTUSD", displayName: "بولكادوت (DOT/USD)" },
-      chainlink: { tvSymbol: "COINBASE:LINKUSD", displayName: "تشين لينك (LINK/USD)" },
-      polygon: { tvSymbol: "COINBASE:MATICUSD", displayName: "بوليجون (MATIC/USD)" },
-      shiba: { tvSymbol: "BINANCE:SHIBUSDT", displayName: "شيبا إينو (SHIB/USD)" },
-      tron: { tvSymbol: "BINANCE:TRXUSDT", displayName: "ترون (TRX/USD)" },
-      uniswap: { tvSymbol: "COINBASE:UNIUSD", displayName: "يونيسواب (UNI/USD)" },
-      
+      bitcoin: {
+        tvSymbol: "BITSTAMP:BTCUSD",
+        displayName: "بيتكوين (BTC/USD)"
+      },
+      ethereum: {
+        tvSymbol: "BITSTAMP:ETHUSD",
+        displayName: "إيثريوم (ETH/USD)"
+      },
+      bnb: {
+        tvSymbol: "BINANCE:BNBUSDT",
+        displayName: "بي إن بي (BNB/USD)"
+      },
+      solana: {
+        tvSymbol: "COINBASE:SOLUSD",
+        displayName: "سولانا (SOL/USD)"
+      },
+      xrp: {
+        tvSymbol: "BITSTAMP:XRPUSD",
+        displayName: "ريبل (XRP/USD)"
+      },
+      cardano: {
+        tvSymbol: "COINBASE:ADAUSD",
+        displayName: "كاردانو (ADA/USD)"
+      },
+      dogecoin: {
+        tvSymbol: "BINANCE:DOGEUSDT",
+        displayName: "دوجكوين (DOGE/USD)"
+      },
+      litecoin: {
+        tvSymbol: "COINBASE:LTCUSD",
+        displayName: "لايتكوين (LTC/USD)"
+      },
+      avalanche: {
+        tvSymbol: "COINBASE:AVAXUSD",
+        displayName: "أفالانش (AVAX/USD)"
+      },
+      polkadot: {
+        tvSymbol: "COINBASE:DOTUSD",
+        displayName: "بولكادوت (DOT/USD)"
+      },
+      chainlink: {
+        tvSymbol: "COINBASE:LINKUSD",
+        displayName: "تشين لينك (LINK/USD)"
+      },
+      polygon: {
+        tvSymbol: "COINBASE:MATICUSD",
+        displayName: "بوليجون (MATIC/USD)"
+      },
+      shiba: {
+        tvSymbol: "BINANCE:SHIBUSDT",
+        displayName: "شيبا إينو (SHIB/USD)"
+      },
+      tron: {
+        tvSymbol: "BINANCE:TRXUSDT",
+        displayName: "ترون (TRX/USD)"
+      },
+      uniswap: {
+        tvSymbol: "COINBASE:UNIUSD",
+        displayName: "يونيسواب (UNI/USD)"
+      },
       // Commodities
-      gold: { tvSymbol: "OANDA:XAUUSD", displayName: "الذهب (XAU/USD)" },
-      silver: { tvSymbol: "OANDA:XAGUSD", displayName: "الفضة (XAG/USD)" },
-      oil: { tvSymbol: "TVC:USOIL", displayName: "النفط الخام (WTI)" },
-      naturalgas: { tvSymbol: "TVC:NATURALGAS", displayName: "الغاز الطبيعي" },
-      platinum: { tvSymbol: "TVC:PLATINUM", displayName: "البلاتين" },
-      copper: { tvSymbol: "TVC:COPPER", displayName: "النحاس" },
-      
+      gold: {
+        tvSymbol: "OANDA:XAUUSD",
+        displayName: "الذهب (XAU/USD)"
+      },
+      silver: {
+        tvSymbol: "OANDA:XAGUSD",
+        displayName: "الفضة (XAG/USD)"
+      },
+      oil: {
+        tvSymbol: "TVC:USOIL",
+        displayName: "النفط الخام (WTI)"
+      },
+      naturalgas: {
+        tvSymbol: "TVC:NATURALGAS",
+        displayName: "الغاز الطبيعي"
+      },
+      platinum: {
+        tvSymbol: "TVC:PLATINUM",
+        displayName: "البلاتين"
+      },
+      copper: {
+        tvSymbol: "TVC:COPPER",
+        displayName: "النحاس"
+      },
       // Indices
-      sp500: { tvSymbol: "FOREXCOM:SPXUSD", displayName: "إس آند بي 500 (S&P 500)" },
-      dowjones: { tvSymbol: "TVC:DJI", displayName: "داو جونز (Dow Jones)" },
-      nasdaq: { tvSymbol: "NASDAQ:NDX", displayName: "ناسداك (NASDAQ)" },
-      dax: { tvSymbol: "XETR:DAX", displayName: "داكس الألماني (DAX)" },
-      ftse100: { tvSymbol: "TVC:UKX", displayName: "فوتسي 100 (FTSE 100)" },
-      nikkei: { tvSymbol: "TVC:NI225", displayName: "نيكاي 225 (Nikkei)" },
-      cac40: { tvSymbol: "TVC:CAC40", displayName: "كاك 40 (CAC 40)" },
-      
+      sp500: {
+        tvSymbol: "FOREXCOM:SPXUSD",
+        displayName: "إس آند بي 500 (S&P 500)"
+      },
+      dowjones: {
+        tvSymbol: "TVC:DJI",
+        displayName: "داو جونز (Dow Jones)"
+      },
+      nasdaq: {
+        tvSymbol: "NASDAQ:NDX",
+        displayName: "ناسداك (NASDAQ)"
+      },
+      dax: {
+        tvSymbol: "XETR:DAX",
+        displayName: "داكس الألماني (DAX)"
+      },
+      ftse100: {
+        tvSymbol: "TVC:UKX",
+        displayName: "فوتسي 100 (FTSE 100)"
+      },
+      nikkei: {
+        tvSymbol: "TVC:NI225",
+        displayName: "نيكاي 225 (Nikkei)"
+      },
+      cac40: {
+        tvSymbol: "TVC:CAC40",
+        displayName: "كاك 40 (CAC 40)"
+      },
       // Stocks
-      apple: { tvSymbol: "NASDAQ:AAPL", displayName: "أبل (Apple)" },
-      tesla: { tvSymbol: "NASDAQ:TSLA", displayName: "تسلا (Tesla)" },
-      amazon: { tvSymbol: "NASDAQ:AMZN", displayName: "أمازون (Amazon)" },
-      google: { tvSymbol: "NASDAQ:GOOGL", displayName: "جوجل (Google)" },
-      microsoft: { tvSymbol: "NASDAQ:MSFT", displayName: "مايكروسوفت (Microsoft)" },
-      meta: { tvSymbol: "NASDAQ:META", displayName: "ميتا (Meta)" },
-      nvidia: { tvSymbol: "NASDAQ:NVDA", displayName: "إنفيديا (NVIDIA)" },
-      netflix: { tvSymbol: "NASDAQ:NFLX", displayName: "نتفليكس (Netflix)" },
-      amd: { tvSymbol: "NASDAQ:AMD", displayName: "إيه إم دي (AMD)" },
-      intel: { tvSymbol: "NASDAQ:INTC", displayName: "إنتل (Intel)" },
-      disney: { tvSymbol: "NYSE:DIS", displayName: "ديزني (Disney)" },
-      cocacola: { tvSymbol: "NYSE:KO", displayName: "كوكا كولا (Coca-Cola)" },
+      apple: {
+        tvSymbol: "NASDAQ:AAPL",
+        displayName: "أبل (Apple)"
+      },
+      tesla: {
+        tvSymbol: "NASDAQ:TSLA",
+        displayName: "تسلا (Tesla)"
+      },
+      amazon: {
+        tvSymbol: "NASDAQ:AMZN",
+        displayName: "أمازون (Amazon)"
+      },
+      google: {
+        tvSymbol: "NASDAQ:GOOGL",
+        displayName: "جوجل (Google)"
+      },
+      microsoft: {
+        tvSymbol: "NASDAQ:MSFT",
+        displayName: "مايكروسوفت (Microsoft)"
+      },
+      meta: {
+        tvSymbol: "NASDAQ:META",
+        displayName: "ميتا (Meta)"
+      },
+      nvidia: {
+        tvSymbol: "NASDAQ:NVDA",
+        displayName: "إنفيديا (NVIDIA)"
+      },
+      netflix: {
+        tvSymbol: "NASDAQ:NFLX",
+        displayName: "نتفليكس (Netflix)"
+      },
+      amd: {
+        tvSymbol: "NASDAQ:AMD",
+        displayName: "إيه إم دي (AMD)"
+      },
+      intel: {
+        tvSymbol: "NASDAQ:INTC",
+        displayName: "إنتل (Intel)"
+      },
+      disney: {
+        tvSymbol: "NYSE:DIS",
+        displayName: "ديزني (Disney)"
+      },
+      cocacola: {
+        tvSymbol: "NYSE:KO",
+        displayName: "كوكا كولا (Coca-Cola)"
+      }
     };
-
-    return symbolMap[symbol] || { tvSymbol: "BITSTAMP:BTCUSD", displayName: "بيتكوين (BTC/USD)" };
+    return symbolMap[symbol] || {
+      tvSymbol: "BITSTAMP:BTCUSD",
+      displayName: "بيتكوين (BTC/USD)"
+    };
   };
-
   const symbolInfo = getSymbolInfo();
 
   // Check if it's a Saudi stock
@@ -216,7 +355,6 @@ export default function LiveChart() {
     }
     return `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(symbolInfo.tvSymbol)}`;
   };
-
   useEffect(() => {
     if (!containerRef.current || isSaudiStock) return;
 
@@ -241,31 +379,25 @@ export default function LiveChart() {
       calendar: false,
       support_host: "https://www.tradingview.com",
       hide_side_toolbar: false,
-      studies: ["RSI@tv-basicstudies", "MASimple@tv-basicstudies"],
+      studies: ["RSI@tv-basicstudies", "MASimple@tv-basicstudies"]
     });
-
     const widgetContainer = document.createElement('div');
     widgetContainer.className = 'tradingview-widget-container';
     widgetContainer.style.height = '100%';
     widgetContainer.style.width = '100%';
-
     const widgetInner = document.createElement('div');
     widgetInner.className = 'tradingview-widget-container__widget';
     widgetInner.style.height = 'calc(100% - 32px)';
     widgetInner.style.width = '100%';
-
     widgetContainer.appendChild(widgetInner);
     widgetContainer.appendChild(script);
-
     containerRef.current.appendChild(widgetContainer);
-
     return () => {
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }
     };
   }, [symbol, symbolInfo.tvSymbol, selectedTimeframe, isSaudiStock]);
-
   const handleRefresh = () => {
     if (containerRef.current) {
       const currentContent = containerRef.current.innerHTML;
@@ -278,21 +410,17 @@ export default function LiveChart() {
     }
     window.location.reload();
   };
-
   const handleAnalyzeChart = async (imageFile?: File) => {
     if (!chartAnalysisEnabled) {
       toast.error("ميزة تحليل الشارت غير مفعلة لحسابك");
       return;
     }
-
     if (!imageFile) {
       setShowInstructions(true);
       return;
     }
-
     setIsAnalyzing(true);
     toast.info("جاري تحليل الشارت والرسم عليه...");
-
     try {
       // Convert image to base64
       const reader = new FileReader();
@@ -300,21 +428,22 @@ export default function LiveChart() {
         const base64Image = reader.result as string;
 
         // Send to AI for analysis and drawing
-        const { data, error } = await supabase.functions.invoke('analyze-chart-with-drawing', {
+        const {
+          data,
+          error
+        } = await supabase.functions.invoke('analyze-chart-with-drawing', {
           body: {
             image: base64Image,
             symbol: symbolInfo.displayName,
             timeframe: selectedInterval
           }
         });
-
         if (error) {
           console.error('Supabase function error:', error);
           toast.error("حدث خطأ أثناء الاتصال بالخادم");
           setIsAnalyzing(false);
           return;
         }
-
         if (data?.success) {
           setAnalysisResult(data);
           setShowAnalysis(true);
@@ -322,36 +451,28 @@ export default function LiveChart() {
         } else {
           toast.error(data?.error || 'فشل التحليل');
         }
-        
         setIsAnalyzing(false);
       };
-
       reader.onerror = () => {
         toast.error("فشل قراءة الصورة");
         setIsAnalyzing(false);
       };
-
       reader.readAsDataURL(imageFile);
-
     } catch (error: any) {
       console.error('Error analyzing chart:', error);
       toast.error(error.message || "حدث خطأ أثناء التحليل");
       setIsAnalyzing(false);
     }
   };
-
   const handleSaveAnalysis = async () => {
     if (!analysisResult || !analysisResult.analysis) {
       toast.error('لا يوجد تحليل لحفظه');
       return;
     }
-
     const analysisText = JSON.stringify(analysisResult.analysis);
     const imageUrl = analysisResult.annotatedImage || '';
-    
     await saveAnalysis(symbolInfo.displayName, analysisText, imageUrl);
   };
-
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -362,21 +483,14 @@ export default function LiveChart() {
       }
     }
   };
-
-  return (
-    <div className="min-h-screen bg-[#0a0a0f]" dir="rtl">
+  return <div className="min-h-screen bg-[#0a0a0f]" dir="rtl">
       {/* Header - Mobile Optimized */}
       <header className="border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur sticky top-0 z-50">
         <div className="container mx-auto px-3 sm:px-4 py-3">
           {/* Top Row: Back button and Symbol */}
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-              <Button
-                onClick={() => navigate(-1)}
-                variant="ghost"
-                size="icon"
-                className="text-white/70 hover:text-white hover:bg-white/10 flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9"
-              >
+              <Button onClick={() => navigate(-1)} variant="ghost" size="icon" className="text-white/70 hover:text-white hover:bg-white/10 flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="min-w-0 flex-1">
@@ -386,33 +500,26 @@ export default function LiveChart() {
             </div>
             
             {/* Alert Button */}
-            {user && (
-              <Button
-                onClick={() => setAlertDialogOpen(true)}
-                variant="outline"
-                size="sm"
-                className="gap-1.5 border-orange-500/30 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/50 text-xs sm:text-sm h-8 flex-shrink-0"
-              >
+            {user && <Button onClick={() => setAlertDialogOpen(true)} variant="outline" size="sm" className="gap-1.5 border-orange-500/30 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/50 text-xs sm:text-sm h-8 flex-shrink-0">
                 <Bell className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">تنبيه سعري</span>
-              </Button>
-            )}
+              </Button>}
             
             {/* Timeframe Selector */}
-            <Select value={selectedTimeframe} onValueChange={(val) => {
-              setSelectedTimeframe(val);
-              const intervalMap: Record<string, string> = {
-                "1": "دقيقة",
-                "5": "5 دقائق",
-                "15": "15 دقيقة",
-                "30": "30 دقيقة",
-                "60": "ساعة",
-                "240": "4 ساعات",
-                "D": "يومي",
-                "W": "أسبوعي",
-              };
-              setSelectedInterval(intervalMap[val] || "يومي");
-            }}>
+            <Select value={selectedTimeframe} onValueChange={val => {
+            setSelectedTimeframe(val);
+            const intervalMap: Record<string, string> = {
+              "1": "دقيقة",
+              "5": "5 دقائق",
+              "15": "15 دقيقة",
+              "30": "30 دقيقة",
+              "60": "ساعة",
+              "240": "4 ساعات",
+              "D": "يومي",
+              "W": "أسبوعي"
+            };
+            setSelectedInterval(intervalMap[val] || "يومي");
+          }}>
               <SelectTrigger className="w-[90px] sm:w-[120px] bg-slate-800/50 border-slate-700 text-white text-xs sm:text-sm h-8 sm:h-9">
                 <SelectValue />
               </SelectTrigger>
@@ -430,61 +537,32 @@ export default function LiveChart() {
           </div>
           
           {/* Bottom Row: Action Buttons */}
-          {chartAnalysisEnabled && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              <Button
-                onClick={() => setShowInstructions(true)}
-                variant="outline"
-                size="sm"
-                className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 text-xs sm:text-sm h-8 flex-shrink-0"
-              >
+          {chartAnalysisEnabled && <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <Button onClick={() => setShowInstructions(true)} variant="outline" size="sm" className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 text-xs sm:text-sm h-8 flex-shrink-0">
                 <Info className="h-3.5 w-3.5" />
                 <span className="hidden xs:inline">كيفية التحليل</span>
                 <span className="xs:hidden">تعليمات</span>
               </Button>
               
-              <Button
-                type="button"
-                disabled={isAnalyzing || !chartAnalysisEnabled}
-                className="gap-1.5 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-xs sm:text-sm h-8 flex-shrink-0"
-                size="sm"
-                onClick={() => document.getElementById('chart-upload')?.click()}
-              >
-                {isAnalyzing ? (
-                  <>
+              <Button type="button" disabled={isAnalyzing || !chartAnalysisEnabled} className="gap-1.5 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-xs sm:text-sm h-8 flex-shrink-0" size="sm" onClick={() => document.getElementById('chart-upload')?.click()}>
+                {isAnalyzing ? <>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     <span className="hidden xs:inline">جاري التحليل...</span>
                     <span className="xs:hidden">تحليل...</span>
-                  </>
-                ) : (
-                  <>
+                  </> : <>
                     <Upload className="h-3.5 w-3.5" />
                     <span className="hidden xs:inline">رفع صورة الشارت</span>
                     <span className="xs:hidden">رفع صورة</span>
-                  </>
-                )}
+                  </>}
               </Button>
-              <Input
-                id="chart-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileSelect}
-                disabled={isAnalyzing || !chartAnalysisEnabled}
-              />
+              <Input id="chart-upload" type="file" accept="image/*" className="hidden" onChange={handleFileSelect} disabled={isAnalyzing || !chartAnalysisEnabled} />
               
-              <Button
-                onClick={handleRefresh}
-                variant="outline"
-                size="sm"
-                className="gap-1.5 border-white/20 text-white/70 hover:text-white hover:bg-white/10 text-xs sm:text-sm h-8 flex-shrink-0"
-              >
+              <Button onClick={handleRefresh} variant="outline" size="sm" className="gap-1.5 border-white/20 text-white/70 hover:text-white hover:bg-white/10 text-xs sm:text-sm h-8 flex-shrink-0">
                 <RefreshCw className="h-3.5 w-3.5" />
                 <span className="hidden xs:inline">تحديث</span>
                 <span className="xs:hidden">⟳</span>
               </Button>
-            </div>
-          )}
+            </div>}
         </div>
       </header>
 
@@ -501,11 +579,9 @@ export default function LiveChart() {
           </div>
           
           {/* TradingView Chart Widget or Saudi Stock Notice */}
-          {isSaudiStock ? (
-            <div 
-              className="w-full rounded-lg overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] to-[#0f0f1a] border border-white/10"
-              style={{ height: '600px' }}
-            >
+          {isSaudiStock ? <div className="w-full rounded-lg overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] to-[#0f0f1a] border border-white/10" style={{
+          height: '600px'
+        }}>
               <div className="text-center p-8 max-w-lg">
                 <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/20 flex items-center justify-center">
                   <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -518,10 +594,7 @@ export default function LiveChart() {
                   <br />
                   <span className="text-primary font-medium">للتحليل الذكي:</span> افتح الشارت من الزر أدناه، التقط صورة للشارت، ثم عد لهذه الصفحة واستخدم زر "تحليل الشارت" لتحليله بالذكاء الاصطناعي.
                 </p>
-                <Button
-                  onClick={() => window.open(getTradingViewUrl(), '_blank')}
-                  className="gap-2 bg-gradient-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90 text-white px-8 py-6 text-lg"
-                >
+                <Button onClick={() => window.open(getTradingViewUrl(), '_blank')} className="gap-2 bg-gradient-to-r from-primary to-emerald-500 hover:from-primary/90 hover:to-emerald-500/90 text-white px-8 py-6 text-lg">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
@@ -531,63 +604,32 @@ export default function LiveChart() {
                   سيتم فتح الشارت في نافذة جديدة
                 </p>
               </div>
-            </div>
-          ) : (
-            <div 
-              ref={containerRef}
-              className="w-full rounded-lg overflow-hidden"
-              style={{ height: '600px' }}
-            />
-          )}
+            </div> : <div ref={containerRef} className="w-full rounded-lg overflow-hidden" style={{
+          height: '600px'
+        }} />}
           
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 rounded-lg bg-white/5">
-              <p className="text-sm text-white/50 mb-1">المصدر</p>
-              <p className="text-lg font-bold text-white">TradingView</p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-white/5">
-              <p className="text-sm text-white/50 mb-1">نوع البيانات</p>
-              <p className="text-lg font-bold text-emerald-400">حقيقية ومباشرة</p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-white/5">
-              <p className="text-sm text-white/50 mb-1">التحديث</p>
-              <p className="text-lg font-bold text-white">لحظي</p>
-            </div>
-          </div>
+          
         </Card>
 
         {/* Analysis Results */}
-        {showAnalysis && analysisResult && (
-          <Card className="mt-6 p-6 bg-[#12121a] border-white/10">
+        {showAnalysis && analysisResult && <Card className="mt-6 p-6 bg-[#12121a] border-white/10">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Upload className="h-5 w-5 text-primary" />
                 نتيجة التحليل
               </h2>
-              <Button
-                onClick={() => setShowAnalysis(false)}
-                variant="ghost"
-                size="sm"
-                className="text-white/70 hover:text-white"
-              >
+              <Button onClick={() => setShowAnalysis(false)} variant="ghost" size="sm" className="text-white/70 hover:text-white">
                 إغلاق
               </Button>
             </div>
 
             {/* Annotated Chart Image */}
-            {analysisResult.annotatedImage && (
-              <div className="mb-6 rounded-lg overflow-hidden border border-white/10">
-                <img 
-                  src={analysisResult.annotatedImage} 
-                  alt="الشارت المحلل"
-                  className="w-full h-auto"
-                />
-              </div>
-            )}
+            {analysisResult.annotatedImage && <div className="mb-6 rounded-lg overflow-hidden border border-white/10">
+                <img src={analysisResult.annotatedImage} alt="الشارت المحلل" className="w-full h-auto" />
+              </div>}
 
             {/* Analysis Details */}
-            {analysisResult.analysis && (
-              <div className="space-y-4">
+            {analysisResult.analysis && <div className="space-y-4">
                 {/* Current Price & Trend */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 rounded-lg bg-white/5">
@@ -605,8 +647,7 @@ export default function LiveChart() {
                 </div>
 
                 {/* Recommendation */}
-                {analysisResult.analysis.recommendation && (
-                  <div className="p-6 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30">
+                {analysisResult.analysis.recommendation && <div className="p-6 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30">
                     <h3 className="text-lg font-bold text-white mb-4">التوصية</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
@@ -640,67 +681,50 @@ export default function LiveChart() {
                         {analysisResult.analysis.recommendation.reason}
                       </p>
                     </div>
-                  </div>
-                )}
+                  </div>}
 
                 {/* Support & Resistance Levels */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Support Levels */}
-                  {analysisResult.analysis.supportLevels && analysisResult.analysis.supportLevels.length > 0 && (
-                    <div className="p-4 rounded-lg bg-white/5">
+                  {analysisResult.analysis.supportLevels && analysisResult.analysis.supportLevels.length > 0 && <div className="p-4 rounded-lg bg-white/5">
                       <h4 className="text-sm font-semibold text-success mb-3">مستويات الدعم</h4>
                       <div className="space-y-2">
-                        {analysisResult.analysis.supportLevels.map((level: any, idx: number) => (
-                          <div key={idx} className="flex items-center justify-between text-sm">
+                        {analysisResult.analysis.supportLevels.map((level: any, idx: number) => <div key={idx} className="flex items-center justify-between text-sm">
                             <span className="text-white/70">{level.price}</span>
                             <span className="text-success text-xs">{level.strength}</span>
-                          </div>
-                        ))}
+                          </div>)}
                       </div>
-                    </div>
-                  )}
+                    </div>}
 
                   {/* Resistance Levels */}
-                  {analysisResult.analysis.resistanceLevels && analysisResult.analysis.resistanceLevels.length > 0 && (
-                    <div className="p-4 rounded-lg bg-white/5">
+                  {analysisResult.analysis.resistanceLevels && analysisResult.analysis.resistanceLevels.length > 0 && <div className="p-4 rounded-lg bg-white/5">
                       <h4 className="text-sm font-semibold text-destructive mb-3">مستويات المقاومة</h4>
                       <div className="space-y-2">
-                        {analysisResult.analysis.resistanceLevels.map((level: any, idx: number) => (
-                          <div key={idx} className="flex items-center justify-between text-sm">
+                        {analysisResult.analysis.resistanceLevels.map((level: any, idx: number) => <div key={idx} className="flex items-center justify-between text-sm">
                             <span className="text-white/70">{level.price}</span>
                             <span className="text-destructive text-xs">{level.strength}</span>
-                          </div>
-                        ))}
+                          </div>)}
                       </div>
-                    </div>
-                  )}
+                    </div>}
                 </div>
 
                 {/* Detailed Analysis */}
-                {analysisResult.analysis.analysis && (
-                  <div className="p-4 rounded-lg bg-white/5">
+                {analysisResult.analysis.analysis && <div className="p-4 rounded-lg bg-white/5">
                     <h4 className="text-sm font-semibold text-white mb-2">تحليل مفصل</h4>
                     <p className="text-sm text-white/70 leading-relaxed">
                       {analysisResult.analysis.analysis}
                     </p>
-                  </div>
-                )}
+                  </div>}
 
                 {/* Save Analysis Button */}
                 <div className="flex justify-center mt-6 pt-6 border-t border-white/10">
-                  <Button
-                    onClick={handleSaveAnalysis}
-                    className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                    size="lg"
-                  >
+                  <Button onClick={handleSaveAnalysis} className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70" size="lg">
                     <Save className="h-5 w-5" />
                     هل تريد حفظ التحليل في قائمة تحليلاتي؟
                   </Button>
                 </div>
-              </div>
-            )}
-          </Card>
-        )}
+              </div>}
+          </Card>}
 
         {/* Instructions Dialog */}
         <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
@@ -755,13 +779,10 @@ export default function LiveChart() {
                 </p>
               </div>
 
-              <Button
-                onClick={() => {
-                  setShowInstructions(false);
-                  document.getElementById('chart-upload')?.click();
-                }}
-                className="w-full bg-gradient-to-r from-primary to-primary/80"
-              >
+              <Button onClick={() => {
+              setShowInstructions(false);
+              document.getElementById('chart-upload')?.click();
+            }} className="w-full bg-gradient-to-r from-primary to-primary/80">
                 <Upload className="h-4 w-4 ml-2" />
                 رفع صورة الشارت الآن
               </Button>
@@ -770,21 +791,12 @@ export default function LiveChart() {
         </Dialog>
 
         {/* Price Alert Dialog */}
-        <PriceAlertDialog
-          open={alertDialogOpen}
-          onOpenChange={setAlertDialogOpen}
-          market={{
-            name: symbolInfo.displayName.split(' (')[0],
-            nameAr: symbolInfo.displayName.split(' (')[0],
-            symbol: symbol,
-            category: symbol.includes('TADAWUL') ? 'السوق السعودي' : 
-                     ['bitcoin', 'ethereum', 'bnb', 'solana', 'xrp', 'cardano', 'dogecoin'].includes(symbol) ? 'عملات رقمية' :
-                     ['gold', 'silver', 'oil', 'naturalgas'].includes(symbol) ? 'سلع' :
-                     ['sp500', 'dowjones', 'nasdaq', 'dax'].includes(symbol) ? 'مؤشرات' :
-                     ['eurusd', 'gbpusd', 'usdjpy'].includes(symbol) ? 'فوركس' : 'أسهم'
-          }}
-        />
+        <PriceAlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen} market={{
+        name: symbolInfo.displayName.split(' (')[0],
+        nameAr: symbolInfo.displayName.split(' (')[0],
+        symbol: symbol,
+        category: symbol.includes('TADAWUL') ? 'السوق السعودي' : ['bitcoin', 'ethereum', 'bnb', 'solana', 'xrp', 'cardano', 'dogecoin'].includes(symbol) ? 'عملات رقمية' : ['gold', 'silver', 'oil', 'naturalgas'].includes(symbol) ? 'سلع' : ['sp500', 'dowjones', 'nasdaq', 'dax'].includes(symbol) ? 'مؤشرات' : ['eurusd', 'gbpusd', 'usdjpy'].includes(symbol) ? 'فوركس' : 'أسهم'
+      }} />
       </main>
-    </div>
-  );
+    </div>;
 }
