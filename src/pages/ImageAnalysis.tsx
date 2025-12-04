@@ -868,16 +868,16 @@ const ImageAnalysis = () => {
                   <SelectValue placeholder="اختر فترة الشمعة" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="1m">1 دقيقة</SelectItem>
-                  <SelectItem value="5m">5 دقائق</SelectItem>
-                  <SelectItem value="15m">15 دقيقة</SelectItem>
-                  <SelectItem value="30m">30 دقيقة</SelectItem>
-                  <SelectItem value="1h">1 ساعة</SelectItem>
-                  <SelectItem value="3h">3 ساعات</SelectItem>
-                  <SelectItem value="4h">4 ساعات</SelectItem>
-                  <SelectItem value="1d">يوم واحد</SelectItem>
-                  <SelectItem value="1w">أسبوع واحد</SelectItem>
-                  <SelectItem value="1M">شهر واحد</SelectItem>
+                  <SelectItem value="1m" className="text-white hover:bg-slate-700 focus:bg-slate-700">1 دقيقة</SelectItem>
+                  <SelectItem value="5m" className="text-white hover:bg-slate-700 focus:bg-slate-700">5 دقائق</SelectItem>
+                  <SelectItem value="15m" className="text-white hover:bg-slate-700 focus:bg-slate-700">15 دقيقة</SelectItem>
+                  <SelectItem value="30m" className="text-white hover:bg-slate-700 focus:bg-slate-700">30 دقيقة</SelectItem>
+                  <SelectItem value="1h" className="text-white hover:bg-slate-700 focus:bg-slate-700">1 ساعة</SelectItem>
+                  <SelectItem value="3h" className="text-white hover:bg-slate-700 focus:bg-slate-700">3 ساعات</SelectItem>
+                  <SelectItem value="4h" className="text-white hover:bg-slate-700 focus:bg-slate-700">4 ساعات</SelectItem>
+                  <SelectItem value="1d" className="text-white hover:bg-slate-700 focus:bg-slate-700">يوم واحد</SelectItem>
+                  <SelectItem value="1w" className="text-white hover:bg-slate-700 focus:bg-slate-700">أسبوع واحد</SelectItem>
+                  <SelectItem value="1M" className="text-white hover:bg-slate-700 focus:bg-slate-700">شهر واحد</SelectItem>
                 </SelectContent>
               </Select>
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 mt-2">
@@ -1294,14 +1294,14 @@ const ImageAnalysis = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>فترة الشمعة</Label>
+              <Label className="text-slate-300">فترة الشمعة</Label>
               <Select value={metalTimeframe} onValueChange={setMetalTimeframe}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-slate-800 border-slate-700">
                   {TIMEFRAMES.map((tf) => (
-                    <SelectItem key={tf.value} value={tf.value}>
+                    <SelectItem key={tf.value} value={tf.value} className="text-white hover:bg-slate-700 focus:bg-slate-700">
                       {tf.label}
                     </SelectItem>
                   ))}
