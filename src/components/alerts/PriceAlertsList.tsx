@@ -12,22 +12,22 @@ export const PriceAlertsList = () => {
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="h-6 w-6 animate-spin text-[hsl(215,20%,65%)]" />
       </div>
     );
   }
 
   if (alerts.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="text-center py-12 text-[hsl(215,20%,65%)]">
         <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-orange-500/10 flex items-center justify-center">
           <Bell className="h-10 w-10 text-orange-500/40" />
         </div>
-        <p className="text-lg font-medium">لا توجد تنبيهات سعرية</p>
+        <p className="text-lg font-medium text-[hsl(210,40%,98%)]">لا توجد تنبيهات سعرية</p>
         <p className="text-sm mt-1">أضف تنبيهات من صفحة الأسواق</p>
         <Button 
           variant="outline" 
-          className="mt-4 border-orange-500/30 hover:bg-orange-500/10" 
+          className="mt-4 border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400" 
           onClick={() => navigate('/markets')}
         >
           <Bell className="h-4 w-4 ml-2" />
@@ -46,8 +46,8 @@ export const PriceAlertsList = () => {
       {/* Active Alerts */}
       {activeAlerts.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-            <Bell className="h-4 w-4 text-primary" />
+          <h4 className="text-sm font-medium text-[hsl(215,20%,65%)] mb-3 flex items-center gap-2">
+            <Bell className="h-4 w-4 text-orange-400" />
             تنبيهات نشطة ({activeAlerts.length})
           </h4>
           <div className="space-y-3">
@@ -66,7 +66,7 @@ export const PriceAlertsList = () => {
       {/* Triggered Alerts */}
       {triggeredAlerts.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+          <h4 className="text-sm font-medium text-[hsl(215,20%,65%)] mb-3 flex items-center gap-2">
             <Check className="h-4 w-4 text-emerald-500" />
             تنبيهات تم تفعيلها ({triggeredAlerts.length})
           </h4>
@@ -87,8 +87,8 @@ export const PriceAlertsList = () => {
       {/* Inactive Alerts */}
       {inactiveAlerts.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-            <BellOff className="h-4 w-4 text-muted-foreground" />
+          <h4 className="text-sm font-medium text-[hsl(215,20%,65%)] mb-3 flex items-center gap-2">
+            <BellOff className="h-4 w-4 text-[hsl(215,20%,50%)]" />
             تنبيهات متوقفة ({inactiveAlerts.length})
           </h4>
           <div className="space-y-3">
@@ -130,7 +130,7 @@ const AlertCard = ({ alert, onDelete, onToggle, triggered }: AlertCardProps) => 
 
   return (
     <Card 
-      className={`p-4 border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 transition-all cursor-pointer ${
+      className={`p-4 border-[hsl(217,33%,17%)] bg-[hsl(217,33%,12%)] hover:border-orange-500/30 transition-all cursor-pointer ${
         triggered ? 'border-emerald-500/30 bg-emerald-500/5' : ''
       } ${!alert.is_active && !triggered ? 'opacity-60' : ''}`}
       onClick={() => navigate(`/live-chart?symbol=${alert.symbol}`)}
@@ -138,17 +138,17 @@ const AlertCard = ({ alert, onDelete, onToggle, triggered }: AlertCardProps) => 
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <p className="font-semibold text-foreground">{alert.symbol_name_ar}</p>
+            <p className="font-semibold text-[hsl(210,40%,98%)]">{alert.symbol_name_ar}</p>
             {triggered && (
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs">
                 تم تفعيله
               </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">{alert.symbol_name_en}</p>
+          <p className="text-xs text-[hsl(215,20%,50%)]">{alert.symbol_name_en}</p>
           
           <div className="flex items-center gap-2 mt-2">
-            <span className={`flex items-center gap-1 text-sm ${
+            <span className={`flex items-center gap-1 text-sm font-medium ${
               alert.condition === 'above' ? 'text-emerald-400' : 'text-red-400'
             }`}>
               {alert.condition === 'above' ? (
@@ -158,23 +158,24 @@ const AlertCard = ({ alert, onDelete, onToggle, triggered }: AlertCardProps) => 
               )}
               {alert.condition === 'above' ? 'فوق' : 'تحت'} {alert.target_price}
             </span>
-            <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+            <span className="text-xs text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
               {alert.category}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
           {!triggered && (
             <Switch
               checked={alert.is_active}
               onCheckedChange={(checked) => onToggle(alert.id, checked)}
+              className="data-[state=checked]:bg-primary"
             />
           )}
           <Button 
             variant="ghost" 
             size="icon" 
-            className="text-destructive/60 hover:text-destructive hover:bg-destructive/10"
+            className="text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
             onClick={() => onDelete(alert.id)}
           >
             <Trash2 className="h-4 w-4" />
