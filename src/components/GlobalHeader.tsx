@@ -18,6 +18,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { NotificationsDropdown } from "./notifications/NotificationsDropdown";
+import { initAudioContext } from "@/utils/soundNotification";
 
 // Navigation items for mobile sidebar
 const navItems = [
@@ -175,6 +177,11 @@ export const GlobalHeader = () => {
 
         {/* Left Actions */}
         <div className="flex items-center gap-2">
+          {/* Notifications Bell - Always visible */}
+          <div onClick={() => initAudioContext()}>
+            <NotificationsDropdown />
+          </div>
+
           {user ? (
             <Button
               variant="ghost"
