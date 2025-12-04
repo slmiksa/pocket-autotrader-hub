@@ -80,8 +80,8 @@ export const AnalysisResult = ({
                   <ArrowDown className="h-6 w-6 text-red-500" />
                 </div>}
               <div>
-                <p className="text-sm text-muted-foreground">الاتجاه</p>
-                <p className="text-2xl font-bold">{data.direction}</p>
+                <p className="text-sm text-primary-foreground">الاتجاه</p>
+                <p className="text-2xl font-bold text-primary-foreground">{data.direction}</p>
               </div>
             </div>
             {data.confidence && <Badge variant={data.confidence.includes('قوية') ? 'default' : 'secondary'} className="text-lg px-4 py-2">
@@ -100,7 +100,7 @@ export const AnalysisResult = ({
                   <DollarSign className="h-5 w-5 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">نقطة الدخول</p>
+                  <p className="text-xs text-primary-foreground">نقطة الدخول</p>
                   <p className="text-lg font-bold bg-transparent text-primary-foreground">{data.entryPoint}</p>
                 </div>
               </div>
@@ -114,8 +114,8 @@ export const AnalysisResult = ({
                   <Shield className="h-5 w-5 text-red-500" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">وقف الخسارة</p>
-                  <p className="text-lg font-bold text-foreground">{data.stopLoss}</p>
+                  <p className="text-xs text-primary-foreground">وقف الخسارة</p>
+                  <p className="text-lg font-bold text-primary-foreground">{data.stopLoss}</p>
                 </div>
               </div>
             </CardContent>
@@ -128,8 +128,8 @@ export const AnalysisResult = ({
                   <Target className="h-5 w-5 text-green-500" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">جني الأرباح</p>
-                  <p className="text-lg font-bold text-foreground">{data.takeProfit}</p>
+                  <p className="text-xs text-primary-foreground">جني الأرباح</p>
+                  <p className="text-lg font-bold text-primary-foreground">{data.takeProfit}</p>
                 </div>
               </div>
             </CardContent>
@@ -144,8 +144,8 @@ export const AnalysisResult = ({
                 <TrendingUp className="h-5 w-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">السعر الحالي</p>
-                <p className="text-lg font-bold text-foreground">{data.currentPrice}</p>
+                <p className="text-xs text-primary-foreground">السعر الحالي</p>
+                <p className="text-lg font-bold text-primary-foreground">{data.currentPrice}</p>
               </div>
             </div>
           </CardContent>
@@ -182,11 +182,11 @@ export const AnalysisResult = ({
       {/* Advice */}
       {data.advice && <Card className="border-primary/30 bg-primary/5">
           <CardContent className="pt-6">
-            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-primary-foreground">
               💡 النصائح والتوجيهات
             </h3>
             <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl">
-              <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap text-primary-foreground">
                 {data.advice}
               </p>
             </div>
@@ -199,8 +199,8 @@ export const AnalysisResult = ({
           <div className="flex items-start gap-3">
             <div className="text-2xl">⚠️</div>
             <div className="space-y-1 text-sm">
-              <p className="font-semibold text-foreground">تحذير هام:</p>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="font-semibold text-primary-foreground">تحذير هام:</p>
+              <p className="leading-relaxed text-primary-foreground">
                 التداول في الأسواق المالية يحمل مخاطر عالية. تأكد من فهم التحليل جيداً قبل الدخول في أي صفقة وحدد المبلغ المناسب لك. لا تستثمر أكثر مما يمكنك تحمل خسارته.
               </p>
             </div>
