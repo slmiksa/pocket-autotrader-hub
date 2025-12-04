@@ -1048,8 +1048,8 @@ export const SmartSupport = () => {
                 <p className="text-sm text-slate-400">
                   اختر القسم المناسب لسؤالك:
                 </p>
-                <Button variant="ghost" size="icon" onClick={handleClose} className="h-8 w-8 text-slate-400 hover:text-white hover:bg-slate-800">
-                  <X className="h-5 w-5" />
+                <Button variant="ghost" size="sm" onClick={handleClose} className="text-slate-400 hover:text-white hover:bg-slate-800">
+                  عودة
                 </Button>
               </div>
               {supportData.map(section => <button key={section.id} onClick={() => setSelectedSection(section)} className="w-full flex items-center justify-between p-4 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 transition-colors text-white">
