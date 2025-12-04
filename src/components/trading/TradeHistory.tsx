@@ -3,15 +3,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, CheckCircle2, XCircle, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TrendingUp, TrendingDown, CheckCircle2, XCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSignals } from "@/hooks/useSignals";
 import { useUserTradeResults } from "@/hooks/useUserTradeResults";
-import { format, isSameDay, startOfDay, addDays, subDays } from "date-fns";
+import { format, isSameDay, addDays, subDays } from "date-fns";
 import { ar } from "date-fns/locale";
+import { toast } from "sonner";
 
 export const TradeHistory = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const { signals, loading } = useSignals();
   const { userResults, loading: loadingResults, getStats } = useUserTradeResults();
 
@@ -60,6 +64,44 @@ export const TradeHistory = () => {
 
   const isToday = isSameDay(selectedDate, new Date());
 
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      setCalendarOpen(false);
+    }
+  };
+
+  const exportResults = () => {
+    if (myTrades.length === 0) {
+      toast.error('لا توجد صفقات للتصدير في هذا اليوم');
+      return;
+    }
+
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    let csvContent = "الأصل,الاتجاه,الإطار الزمني,الوقت,النتيجة\n";
+    
+    myTrades.forEach(trade => {
+      if (trade) {
+        csvContent += `${trade.asset},${trade.direction},${trade.timeframe},${format(new Date(trade.received_at), 'HH:mm')},${trade.userResult === 'win' ? 'ربح' : 'خسارة'}\n`;
+      }
+    });
+
+    // Add summary
+    csvContent += `\nالملخص\n`;
+    csvContent += `إجمالي الصفقات,${dayStats.total}\n`;
+    csvContent += `الصفقات الناجحة,${dayStats.wins}\n`;
+    csvContent += `الصفقات الخاسرة,${dayStats.losses}\n`;
+    csvContent += `نسبة النجاح,${dayStats.winRate}%\n`;
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `نتائج-الصفقات-${dateStr}.csv`;
+    link.click();
+    
+    toast.success('تم تصدير النتائج بنجاح');
+  };
+
   return (
     <Card>
       <CardHeader className="space-y-4">
@@ -68,24 +110,46 @@ export const TradeHistory = () => {
             <CardTitle>قائمة صفقاتي</CardTitle>
             <CardDescription>الصفقات التي سجلت نتائجها</CardDescription>
           </div>
-          {!isToday && (
-            <Button variant="outline" size="sm" onClick={goToToday}>
-              اليوم
+          <div className="flex gap-2">
+            {!isToday && (
+              <Button variant="outline" size="sm" onClick={goToToday}>
+                اليوم
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={exportResults}>
+              <Download className="h-4 w-4 ml-1" />
+              تصدير
             </Button>
-          )}
+          </div>
         </div>
 
-        {/* Date Navigator */}
+        {/* Date Navigator with Calendar */}
         <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-muted/50 border">
           <Button variant="ghost" size="icon" onClick={goToPreviousDay}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <div className="flex items-center gap-2 min-w-[180px] justify-center">
-            <Calendar className="h-4 w-4 text-primary" />
-            <span className="font-semibold text-foreground">
-              {format(selectedDate, 'EEEE dd MMMM yyyy', { locale: ar })}
-            </span>
-          </div>
+          
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" className="min-w-[200px] justify-center gap-2">
+                <CalendarIcon className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-foreground">
+                  {format(selectedDate, 'EEEE dd MMMM yyyy', { locale: ar })}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="center">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateSelect}
+                disabled={(date) => date > new Date()}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+          
           <Button 
             variant="ghost" 
             size="icon" 
