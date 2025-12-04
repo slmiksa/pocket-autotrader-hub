@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNotifications } from './useNotifications';
+import { playCallNotificationSound, playPutNotificationSound } from '@/utils/soundNotification';
 
 export interface Signal {
   id: string;
@@ -21,6 +22,20 @@ export const useSignals = () => {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [loading, setLoading] = useState(true);
   const { sendNotification, permission } = useNotifications();
+  const processedSignalIds = useRef<Set<string>>(new Set());
+
+  // Play sound for new signal (works without notification permission)
+  const playSignalSound = (direction: string) => {
+    try {
+      if (direction === 'CALL') {
+        playCallNotificationSound();
+      } else {
+        playPutNotificationSound();
+      }
+    } catch (error) {
+      console.error('Error playing signal sound:', error);
+    }
+  };
 
   // Expose a refetch to allow manual refresh when polling detects new data
   const fetchSignals = async () => {
@@ -67,16 +82,29 @@ export const useSignals = () => {
                 return prev;
               }
               
-              // Send notification for new signal
-              if (permission === 'granted') {
+              // Only play sound if we haven't processed this signal before
+              if (!processedSignalIds.current.has(newSignal.id)) {
+                processedSignalIds.current.add(newSignal.id);
+                
+                // Always play sound for new signals (no permission needed)
+                playSignalSound(newSignal.direction);
+                
+                // Show toast notification
                 const directionText = newSignal.direction === 'CALL' ? '📈 شراء' : '📉 بيع';
-                const soundType = newSignal.direction === 'CALL' ? 'call' : 'put';
-                sendNotification('🔔 توصية جديدة', {
-                  body: `${newSignal.asset} - ${directionText}\nالفترة: ${newSignal.timeframe}`,
-                  tag: newSignal.id,
-                  requireInteraction: false,
-                  soundType: soundType,
+                toast.success(`🔔 توصية جديدة: ${newSignal.asset} - ${directionText}`, {
+                  duration: 5000,
                 });
+                
+                // Send browser notification if permission granted
+                if (permission === 'granted') {
+                  const soundType = newSignal.direction === 'CALL' ? 'call' : 'put';
+                  sendNotification('🔔 توصية جديدة', {
+                    body: `${newSignal.asset} - ${directionText}\nالفترة: ${newSignal.timeframe}`,
+                    tag: newSignal.id,
+                    requireInteraction: false,
+                    soundType: soundType,
+                  });
+                }
               }
               
               return [newSignal, ...prev.slice(0, 19)]; // Keep max 20
