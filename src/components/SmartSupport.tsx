@@ -1045,12 +1045,12 @@ export const SmartSupport = () => {
         <ScrollArea className="h-[calc(100vh-80px)]">
           {!selectedSection && !selectedQuestion && <div className="p-4 space-y-2">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-slate-400">
-                  اختر القسم المناسب لسؤالك:
-                </p>
                 <Button variant="ghost" size="sm" onClick={handleClose} className="bg-muted-foreground text-popover">
                   عودة
                 </Button>
+                <p className="text-sm text-slate-400">
+                  اختر القسم المناسب لسؤالك:
+                </p>
               </div>
               {supportData.map(section => <button key={section.id} onClick={() => setSelectedSection(section)} className="w-full flex items-center justify-between p-4 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 transition-colors text-white">
                   <div className="flex items-center gap-3">
