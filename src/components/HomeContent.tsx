@@ -1,43 +1,82 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, BarChart3, Newspaper, Target, Shield, Zap, LineChart, ArrowUpRight, CheckCircle2, Star, Users, Award } from "lucide-react";
+import { TrendingUp, BarChart3, Newspaper, Target, Shield, Zap, LineChart, ArrowUpRight, CheckCircle2, Star, Users, Award, Sparkles } from "lucide-react";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+import { useRef } from "react";
+
 export const HomeContent = () => {
   const navigate = useNavigate();
+  const plugin = useRef(
+    Autoplay({ delay: 3000, stopOnInteraction: true })
+  );
+
   const features = [{
     icon: Target,
     title: "توصيات الخيارات الثنائية",
     description: "توصيات تداول مباشرة مع نسبة نجاح عالية",
     path: "/binary-options",
-    color: "text-success",
-    bgColor: "bg-success/10",
-    borderColor: "border-success/30"
+    gradient: "from-emerald-500/20 to-emerald-600/5",
+    iconBg: "bg-emerald-500/20",
+    iconColor: "text-emerald-400",
+    borderColor: "border-emerald-500/30"
   }, {
     icon: BarChart3,
     title: "محلل العرض والطلب",
     description: "تحليل مناطق العرض والطلب بالذكاء الاصطناعي",
     path: "/supply-demand",
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-    borderColor: "border-primary/30"
+    gradient: "from-blue-500/20 to-blue-600/5",
+    iconBg: "bg-blue-500/20",
+    iconColor: "text-blue-400",
+    borderColor: "border-blue-500/30"
   }, {
     icon: LineChart,
     title: "الأسواق المالية",
     description: "أسعار حية للأسهم والعملات والعملات الرقمية",
     path: "/markets",
-    color: "text-warning",
-    bgColor: "bg-warning/10",
-    borderColor: "border-warning/30"
+    gradient: "from-amber-500/20 to-amber-600/5",
+    iconBg: "bg-amber-500/20",
+    iconColor: "text-amber-400",
+    borderColor: "border-amber-500/30"
   }, {
     icon: Newspaper,
     title: "أخبار الأسواق",
     description: "آخر الأخبار المالية والاقتصادية المؤثرة",
     path: "/news",
-    color: "text-info",
-    bgColor: "bg-blue-500/10",
-    borderColor: "border-blue-500/30"
+    gradient: "from-purple-500/20 to-purple-600/5",
+    iconBg: "bg-purple-500/20",
+    iconColor: "text-purple-400",
+    borderColor: "border-purple-500/30"
   }];
+
+  const heroSlides = [
+    {
+      title: "منصة التوصيات الذكية",
+      subtitle: "احصل على توصيات تداول احترافية بالذكاء الاصطناعي",
+      icon: Sparkles,
+      gradient: "from-primary/30 via-primary/10 to-transparent",
+      action: () => navigate("/binary-options"),
+      buttonText: "ابدأ التداول"
+    },
+    {
+      title: "تحليل العرض والطلب",
+      subtitle: "اكتشف مناطق الدعم والمقاومة القوية بدقة عالية",
+      icon: BarChart3,
+      gradient: "from-blue-500/30 via-blue-500/10 to-transparent",
+      action: () => navigate("/supply-demand"),
+      buttonText: "حلل الآن"
+    },
+    {
+      title: "أخبار الأسواق المباشرة",
+      subtitle: "تابع أحدث الأخبار المؤثرة على تداولاتك",
+      icon: Newspaper,
+      gradient: "from-purple-500/30 via-purple-500/10 to-transparent",
+      action: () => navigate("/news"),
+      buttonText: "تصفح الأخبار"
+    }
+  ];
+
   const platformFeatures = [{
     icon: Zap,
     title: "توصيات فورية",
@@ -55,106 +94,222 @@ export const HomeContent = () => {
     title: "دعم متواصل",
     description: "فريق دعم فني على مدار الساعة"
   }];
-  const tradingTips = ["إدارة رأس المال هي مفتاح النجاح - لا تخاطر بأكثر من 1-2% من رأس مالك في صفقة واحدة", "التزم بالتوصيات واتبع الخطة - لا تدخل صفقات عشوائية", "راقب الأخبار الاقتصادية قبل التداول - الأحداث الكبرى تؤثر على السوق", "تعلم من الخسائر وحلل أخطاءك - كل خسارة هي درس للمستقبل"];
-  return <div className="space-y-8">
-      {/* Hero Section - About Platform */}
-      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-success/5 overflow-hidden">
-        
-      </Card>
+
+  const tradingTips = [
+    "إدارة رأس المال هي مفتاح النجاح - لا تخاطر بأكثر من 1-2% من رأس مالك في صفقة واحدة",
+    "التزم بالتوصيات واتبع الخطة - لا تدخل صفقات عشوائية",
+    "راقب الأخبار الاقتصادية قبل التداول - الأحداث الكبرى تؤثر على السوق",
+    "تعلم من الخسائر وحلل أخطاءك - كل خسارة هي درس للمستقبل"
+  ];
+
+  return (
+    <div className="space-y-8">
+      {/* Hero Slider */}
+      <div className="relative">
+        <Carousel
+          plugins={[plugin.current]}
+          className="w-full"
+          opts={{
+            align: "start",
+            loop: true,
+            direction: "rtl"
+          }}
+        >
+          <CarouselContent>
+            {heroSlides.map((slide, index) => (
+              <CarouselItem key={index}>
+                <Card className={`relative overflow-hidden border-0 bg-gradient-to-br ${slide.gradient} backdrop-blur-xl`}>
+                  {/* Animated Background Elements */}
+                  <div className="absolute inset-0 overflow-hidden">
+                    <div className="absolute top-10 right-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+                    <div className="absolute bottom-10 left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl" />
+                  </div>
+                  
+                  <CardContent className="relative z-10 p-8 md:p-12">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                      <div className="text-center md:text-right space-y-4 flex-1">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 border border-primary/30 backdrop-blur-sm">
+                          <slide.icon className="h-5 w-5 text-primary" />
+                          <span className="text-sm font-medium text-primary">منصة احترافية</span>
+                        </div>
+                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
+                          {slide.title}
+                        </h1>
+                        <p className="text-lg text-muted-foreground max-w-xl">
+                          {slide.subtitle}
+                        </p>
+                        <Button 
+                          size="lg" 
+                          className="mt-4 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25"
+                          onClick={slide.action}
+                        >
+                          {slide.buttonText}
+                          <ArrowUpRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      {/* Decorative Icon */}
+                      <div className="hidden md:flex items-center justify-center">
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse" />
+                          <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/30 flex items-center justify-center backdrop-blur-sm">
+                            <slide.icon className="h-16 w-16 text-primary" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          
+          {/* Custom Navigation */}
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <CarouselPrevious className="relative inset-auto translate-y-0 bg-card/50 border-border/50 hover:bg-card backdrop-blur-sm" />
+            <CarouselNext className="relative inset-auto translate-y-0 bg-card/50 border-border/50 hover:bg-card backdrop-blur-sm" />
+          </div>
+        </Carousel>
+      </div>
 
       {/* Quick Access Features */}
       <div>
-        <h3 className="text-xl font-bold text-foreground mb-4">الخدمات الرئيسية</h3>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-px flex-1 bg-gradient-to-l from-border to-transparent" />
+          <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <Star className="h-5 w-5 text-amber-400" />
+            الخدمات الرئيسية
+          </h3>
+          <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
+        </div>
+        
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map(feature => <Card key={feature.path} className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${feature.borderColor} ${feature.bgColor}`} onClick={() => navigate(feature.path)}>
-              <CardContent className="p-4">
+          {features.map((feature) => (
+            <Card 
+              key={feature.path} 
+              className={`group cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/10 bg-gradient-to-br ${feature.gradient} border ${feature.borderColor} backdrop-blur-sm overflow-hidden`}
+              onClick={() => navigate(feature.path)}
+            >
+              {/* Hover Glow Effect */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
+              </div>
+              
+              <CardContent className="relative p-5">
                 <div className="flex items-start justify-between">
-                  <div className={`rounded-lg ${feature.bgColor} p-2`}>
-                    <feature.icon className={`h-5 w-5 ${feature.color}`} />
+                  <div className={`rounded-xl ${feature.iconBg} p-3 ring-1 ring-white/10`}>
+                    <feature.icon className={`h-6 w-6 ${feature.iconColor}`} />
                   </div>
-                  <ArrowUpRight className={`h-4 w-4 ${feature.color}`} />
+                  <ArrowUpRight className={`h-5 w-5 ${feature.iconColor} opacity-50 group-hover:opacity-100 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300`} />
                 </div>
-                <h4 className="font-semibold text-foreground mt-3">{feature.title}</h4>
-                <p className="text-xs text-muted-foreground mt-1">{feature.description}</p>
+                <h4 className="font-bold text-foreground mt-4 text-lg">{feature.title}</h4>
+                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{feature.description}</p>
               </CardContent>
-            </Card>)}
+            </Card>
+          ))}
         </div>
       </div>
 
       {/* Platform Features */}
-      <Card>
-        <CardHeader>
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-blue-500/5" />
+        <CardHeader className="relative">
           <CardTitle className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-primary" />
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Award className="h-5 w-5 text-primary" />
+            </div>
             مميزات المنصة
           </CardTitle>
           <CardDescription>
             لماذا نحن الخيار الأفضل للمتداولين
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {platformFeatures.map((feature, index) => <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                <div className="rounded-full bg-primary/10 p-2">
-                  <feature.icon className="h-4 w-4 text-primary" />
+            {platformFeatures.map((feature, index) => (
+              <div 
+                key={index} 
+                className="group flex items-start gap-4 p-4 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all duration-300"
+              >
+                <div className="rounded-full bg-primary/10 p-3 group-hover:bg-primary/20 transition-colors">
+                  <feature.icon className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground text-sm">{feature.title}</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">{feature.description}</p>
+                  <h4 className="font-semibold text-foreground">{feature.title}</h4>
+                  <p className="text-sm text-muted-foreground mt-1">{feature.description}</p>
                 </div>
-              </div>)}
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
 
       {/* Trading Tips */}
-      <Card className="border-warning/30">
-        <CardHeader>
+      <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-card to-card overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <CardHeader className="relative">
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-warning" />
+            <div className="p-2 rounded-lg bg-amber-500/20">
+              <TrendingUp className="h-5 w-5 text-amber-400" />
+            </div>
             نصائح التداول الذهبية
           </CardTitle>
           <CardDescription>
             اتبع هذه النصائح لتحسين نتائج تداولك
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative">
           <div className="grid gap-3 sm:grid-cols-2">
-            {tradingTips.map((tip, index) => <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-warning/5 border border-warning/20">
-                <CheckCircle2 className="h-5 w-5 text-warning shrink-0 mt-0.5" />
-                <p className="text-sm text-foreground">{tip}</p>
-              </div>)}
+            {tradingTips.map((tip, index) => (
+              <div 
+                key={index} 
+                className="flex items-start gap-3 p-4 rounded-xl bg-background/50 border border-amber-500/20 hover:border-amber-500/40 transition-colors"
+              >
+                <div className="rounded-full bg-amber-500/20 p-2 shrink-0">
+                  <CheckCircle2 className="h-4 w-4 text-amber-400" />
+                </div>
+                <p className="text-sm text-foreground leading-relaxed">{tip}</p>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
 
       {/* Quick Links */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate("/news")}>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="rounded-lg bg-blue-500/10 p-3">
-              <Newspaper className="h-6 w-6 text-blue-400" />
+        <Card 
+          className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300" 
+          onClick={() => navigate("/news")}
+        >
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="rounded-xl bg-blue-500/20 p-4 group-hover:bg-blue-500/30 transition-colors">
+              <Newspaper className="h-7 w-7 text-blue-400" />
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-foreground">آخر الأخبار</h4>
-              <p className="text-xs text-muted-foreground">تابع أحدث الأخبار المالية المؤثرة على الأسواق</p>
+              <h4 className="font-bold text-foreground text-lg">آخر الأخبار</h4>
+              <p className="text-sm text-muted-foreground mt-1">تابع أحدث الأخبار المالية المؤثرة على الأسواق</p>
             </div>
-            <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
+            <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-blue-400 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate("/live-chart")}>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="rounded-lg bg-primary/10 p-3">
-              <LineChart className="h-6 w-6 text-primary" />
+        <Card 
+          className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:bg-primary/5 transition-all duration-300" 
+          onClick={() => navigate("/live-chart")}
+        >
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="rounded-xl bg-primary/20 p-4 group-hover:bg-primary/30 transition-colors">
+              <LineChart className="h-7 w-7 text-primary" />
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-foreground">الشارت المباشر</h4>
-              <p className="text-xs text-muted-foreground">تحليل الشارتات مع أدوات TradingView</p>
+              <h4 className="font-bold text-foreground text-lg">الشارت المباشر</h4>
+              <p className="text-sm text-muted-foreground mt-1">تحليل الشارتات مع أدوات TradingView</p>
             </div>
-            <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
+            <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
           </CardContent>
         </Card>
       </div>
-    </div>;
+    </div>
+  );
 };
