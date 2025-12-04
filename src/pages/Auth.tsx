@@ -58,10 +58,8 @@ const Auth = () => {
         }).eq('user_id', data.user.id);
       }
       if (data.session) {
-        toast.success("تم إنشاء الحساب بنجاح!");
         navigate("/");
       } else {
-        toast.success("تم إنشاء الحساب بنجاح!");
         setEmail("");
         setPassword("");
         setNickname("");
@@ -89,7 +87,6 @@ const Auth = () => {
       });
       if (error) throw error;
       if (data.session) {
-        toast.success("تم تسجيل الدخول بنجاح!");
         navigate("/");
       }
     } catch (error: any) {
