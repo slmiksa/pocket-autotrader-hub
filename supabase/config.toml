@@ -41,3 +41,9 @@ verify_jwt = false
 
 [functions.analyze-chart-with-drawing]
 verify_jwt = false
+
+[functions.generate-pattern-image]
+verify_jwt = false
+
+[functions.check-price-alerts]
+verify_jwt = false

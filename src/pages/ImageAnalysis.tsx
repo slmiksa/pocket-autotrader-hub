@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, Loader2, MessageCircle, Lock, TrendingUp, Target, Activity, ArrowUp, ArrowDown, Shield, DollarSign, Image as ImageIcon, Search } from "lucide-react";
 import { AnalysisResult } from "@/components/AnalysisResult";
+import { PatternImageDisplay } from "@/components/PatternImageDisplay";
 
 const FOREX_PAIRS = [
   // Major Pairs
@@ -390,6 +391,8 @@ const ImageAnalysis = () => {
   const [cryptoAnalysisType, setCryptoAnalysisType] = useState<string>("trading");
   const [selectedMetal, setSelectedMetal] = useState<string>("");
   const [metalTimeframe, setMetalTimeframe] = useState<string>("1h");
+  const [patternImage, setPatternImage] = useState<string>("");
+  const [generatingPattern, setGeneratingPattern] = useState(false);
   
   // Search states
   const [forexSearch, setForexSearch] = useState<string>("");
@@ -522,6 +525,88 @@ const ImageAnalysis = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  // Helper function to generate pattern image
+  const generatePatternImage = async (analysisData: any, symbol: string) => {
+    setGeneratingPattern(true);
+    try {
+      // Detect pattern from analysis
+      let pattern = 'خط اتجاه';
+      let direction = 'صعود';
+      
+      if (typeof analysisData === 'object') {
+        // Extract direction
+        const dirText = analysisData.direction?.toLowerCase() || '';
+        if (dirText.includes('بيع') || dirText.includes('put') || dirText.includes('هبوط') || dirText.includes('هابط')) {
+          direction = 'هبوط';
+        } else {
+          direction = 'صعود';
+        }
+        
+        // Try to detect pattern from analysis text
+        const analysisText = JSON.stringify(analysisData).toLowerCase();
+        if (analysisText.includes('مثلث صاعد') || analysisText.includes('ascending triangle')) {
+          pattern = 'مثلث صاعد';
+        } else if (analysisText.includes('مثلث هابط') || analysisText.includes('descending triangle')) {
+          pattern = 'مثلث هابط';
+        } else if (analysisText.includes('مثلث') || analysisText.includes('triangle')) {
+          pattern = 'مثلث متماثل';
+        } else if (analysisText.includes('قناة صاعدة') || analysisText.includes('ascending channel')) {
+          pattern = 'قناة صاعدة';
+        } else if (analysisText.includes('قناة هابطة') || analysisText.includes('descending channel')) {
+          pattern = 'قناة هابطة';
+        } else if (analysisText.includes('قناة') || analysisText.includes('channel')) {
+          pattern = direction === 'صعود' ? 'قناة صاعدة' : 'قناة هابطة';
+        } else if (analysisText.includes('راية') || analysisText.includes('flag')) {
+          pattern = direction === 'صعود' ? 'راية صاعدة' : 'راية هابطة';
+        } else if (analysisText.includes('رأس وكتفين مقلوب') || analysisText.includes('inverse head')) {
+          pattern = 'رأس وكتفين مقلوب';
+        } else if (analysisText.includes('رأس وكتفين') || analysisText.includes('head and shoulders')) {
+          pattern = 'رأس وكتفين';
+        } else if (analysisText.includes('قمة مزدوجة') || analysisText.includes('double top')) {
+          pattern = 'قمة مزدوجة';
+        } else if (analysisText.includes('قاع مزدوج') || analysisText.includes('double bottom')) {
+          pattern = 'قاع مزدوج';
+        } else if (analysisText.includes('وتد') || analysisText.includes('wedge')) {
+          pattern = direction === 'صعود' ? 'وتد صاعد' : 'وتد هابط';
+        } else if (analysisText.includes('دعم') && analysisText.includes('مقاومة')) {
+          pattern = 'دعم ومقاومة';
+        } else if (analysisText.includes('اختراق') || analysisText.includes('breakout')) {
+          pattern = 'اختراق';
+        } else if (analysisText.includes('ارتداد') || analysisText.includes('bounce')) {
+          pattern = 'ارتداد';
+        }
+      } else if (typeof analysisData === 'string') {
+        const analysisText = analysisData.toLowerCase();
+        if (analysisText.includes('put') || analysisText.includes('بيع') || analysisText.includes('هبوط')) {
+          direction = 'هبوط';
+        }
+        // Same pattern detection for string
+        if (analysisText.includes('مثلث')) pattern = 'مثلث متماثل';
+        else if (analysisText.includes('قناة')) pattern = direction === 'صعود' ? 'قناة صاعدة' : 'قناة هابطة';
+        else if (analysisText.includes('راية')) pattern = direction === 'صعود' ? 'راية صاعدة' : 'راية هابطة';
+        else if (analysisText.includes('دعم') && analysisText.includes('مقاومة')) pattern = 'دعم ومقاومة';
+      }
+
+      const { data, error } = await supabase.functions.invoke('generate-pattern-image', {
+        body: { pattern, direction, symbol }
+      });
+
+      if (error) {
+        console.error('Pattern image generation error:', error);
+        return;
+      }
+
+      if (data?.patternImage) {
+        setPatternImage(data.patternImage);
+      }
+    } catch (error) {
+      console.error('Error generating pattern image:', error);
+    } finally {
+      setGeneratingPattern(false);
+    }
+  };
+
   const handleAnalyzeForex = async () => {
     if (!selectedForexPair) {
       toast.error("الرجاء اختيار زوج العملات");
@@ -530,6 +615,7 @@ const ImageAnalysis = () => {
 
     setAnalyzing(true);
     setAnalysis("");
+    setPatternImage("");
 
     try {
       const { data, error } = await supabase.functions.invoke('analyze-symbol', {
@@ -545,6 +631,8 @@ const ImageAnalysis = () => {
       if (data?.analysis) {
         setAnalysis(data.analysis);
         toast.success("تم التحليل بنجاح");
+        // Generate pattern image
+        generatePatternImage(data.analysis, selectedForexPair);
       }
     } catch (error) {
       console.error('Analysis error:', error);
@@ -562,6 +650,7 @@ const ImageAnalysis = () => {
 
     setAnalyzing(true);
     setAnalysis("");
+    setPatternImage("");
 
     try {
       const { data, error } = await supabase.functions.invoke('analyze-symbol', {
@@ -578,6 +667,8 @@ const ImageAnalysis = () => {
       if (data?.analysis) {
         setAnalysis(data.analysis);
         toast.success("تم التحليل بنجاح");
+        // Generate pattern image
+        generatePatternImage(data.analysis, selectedStock);
       }
     } catch (error) {
       console.error('Analysis error:', error);
@@ -595,6 +686,7 @@ const ImageAnalysis = () => {
 
     setAnalyzing(true);
     setAnalysis("");
+    setPatternImage("");
 
     try {
       const { data, error } = await supabase.functions.invoke('analyze-symbol', {
@@ -611,6 +703,8 @@ const ImageAnalysis = () => {
       if (data?.analysis) {
         setAnalysis(data.analysis);
         toast.success("تم التحليل بنجاح");
+        // Generate pattern image
+        generatePatternImage(data.analysis, selectedCrypto);
       }
     } catch (error) {
       console.error('Analysis error:', error);
@@ -628,6 +722,7 @@ const ImageAnalysis = () => {
 
     setAnalyzing(true);
     setAnalysis("");
+    setPatternImage("");
 
     try {
       const selectedMetalData = METALS.find(m => m.value === selectedMetal);
@@ -649,6 +744,8 @@ const ImageAnalysis = () => {
       if (data?.analysis) {
         setAnalysis(data.analysis);
         toast.success("تم التحليل بنجاح");
+        // Generate pattern image
+        generatePatternImage(data.analysis, symbolToUse);
       }
     } catch (error) {
       console.error('Analysis error:', error);
@@ -665,6 +762,7 @@ const ImageAnalysis = () => {
     }
     setAnalyzing(true);
     setAnalysis("");
+    setPatternImage("");
     try {
       // Convert image to base64
       const reader = new FileReader();
@@ -683,6 +781,8 @@ const ImageAnalysis = () => {
         if (error) throw error;
         setAnalysis(data.analysis);
         toast.success("تم تحليل الصورة بنجاح");
+        // Generate pattern image for image analysis
+        generatePatternImage(data.analysis, 'الشارت');
       };
       reader.readAsDataURL(image);
     } catch (error: any) {
@@ -945,9 +1045,12 @@ const ImageAnalysis = () => {
             </Button>
 
             {analysis && (
-              <div className="space-y-2">
-                <Label>نتيجة التحليل</Label>
-                <AnalysisResult analysis={analysis} />
+              <div className="space-y-4">
+                <PatternImageDisplay patternImage={patternImage} isLoading={generatingPattern} />
+                <div className="space-y-2">
+                  <Label>نتيجة التحليل</Label>
+                  <AnalysisResult analysis={analysis} />
+                </div>
               </div>
             )}
           </CardContent>
@@ -1033,9 +1136,12 @@ const ImageAnalysis = () => {
             </Button>
 
             {analysis && (
-              <div className="space-y-2">
-                <Label>نتيجة التحليل</Label>
-                <AnalysisResult analysis={analysis} />
+              <div className="space-y-4">
+                <PatternImageDisplay patternImage={patternImage} isLoading={generatingPattern} />
+                <div className="space-y-2">
+                  <Label>نتيجة التحليل</Label>
+                  <AnalysisResult analysis={analysis} />
+                </div>
               </div>
             )}
           </CardContent>
@@ -1136,9 +1242,12 @@ const ImageAnalysis = () => {
             </Button>
 
             {analysis && (
-              <div className="space-y-2">
-                <Label>نتيجة التحليل</Label>
-                <AnalysisResult analysis={analysis} />
+              <div className="space-y-4">
+                <PatternImageDisplay patternImage={patternImage} isLoading={generatingPattern} />
+                <div className="space-y-2">
+                  <Label>نتيجة التحليل</Label>
+                  <AnalysisResult analysis={analysis} />
+                </div>
               </div>
             )}
           </CardContent>
@@ -1239,9 +1348,12 @@ const ImageAnalysis = () => {
             </Button>
 
             {analysis && (
-              <div className="space-y-2">
-                <Label>نتيجة التحليل</Label>
-                <AnalysisResult analysis={analysis} />
+              <div className="space-y-4">
+                <PatternImageDisplay patternImage={patternImage} isLoading={generatingPattern} />
+                <div className="space-y-2">
+                  <Label>نتيجة التحليل</Label>
+                  <AnalysisResult analysis={analysis} />
+                </div>
               </div>
             )}
           </CardContent>
@@ -1332,9 +1444,12 @@ const ImageAnalysis = () => {
             </Button>
 
             {analysis && (
-              <div className="space-y-2">
-                <Label>نتيجة التحليل</Label>
-                <AnalysisResult analysis={analysis} />
+              <div className="space-y-4">
+                <PatternImageDisplay patternImage={patternImage} isLoading={generatingPattern} />
+                <div className="space-y-2">
+                  <Label>نتيجة التحليل</Label>
+                  <AnalysisResult analysis={analysis} />
+                </div>
               </div>
             )}
           </CardContent>
