@@ -19,6 +19,7 @@ import BinaryOptions from "./pages/BinaryOptions";
 import Community from "./pages/Community";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
+import { SmartSupport } from "./components/SmartSupport";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <SmartSupport />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
