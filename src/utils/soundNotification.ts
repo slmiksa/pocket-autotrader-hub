@@ -16,7 +16,7 @@ export const initAudioContext = () => {
 };
 
 // Play a beep using oscillator (works on desktop)
-const playBeep = (frequency: number, duration: number, startTime: number, ctx: AudioContext) => {
+const playBeep = (frequency: number, duration: number, startTime: number, ctx: AudioContext, volume: number = 0.5) => {
   const oscillator = ctx.createOscillator();
   const gainNode = ctx.createGain();
   
@@ -24,27 +24,51 @@ const playBeep = (frequency: number, duration: number, startTime: number, ctx: A
   gainNode.connect(ctx.destination);
   
   oscillator.frequency.value = frequency;
-  oscillator.type = 'sine';
+  oscillator.type = 'square'; // square wave is louder and more attention-grabbing
   
   gainNode.gain.setValueAtTime(0, startTime);
-  gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.01);
+  gainNode.gain.linearRampToValueAtTime(volume, startTime + 0.01);
   gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
   
   oscillator.start(startTime);
   oscillator.stop(startTime + duration);
 };
 
-// Fallback using HTML5 Audio for mobile
-const playMobileBeep = () => {
+// Create alert tone using AudioContext for mobile
+const playAlertTone = () => {
   try {
-    // Create a simple beep using data URI (base64 encoded short beep)
-    const beepDataUri = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2BgH2CfXpycH99g4KJiYqMjYuNjY2NjYuLiomIhoWEg4KCgIB/f39/gIGCg4SFhoeIiYqLjIyNjY2MjIuKiYiHhoWEg4KBgH9/fn5+f4CCg4WGh4iJiouMjI2NjYyMi4qJiIeGhYSDgoF/fn59fX5+gIGChIWGh4iKi4yMjY2NjYyLioqJh4aFhIOCgX9+fX19fn+AgYOEhYaHiYqLjIyNjY2MjIuKiYiHhoWDgoGAf359fX1+f4CCg4SFhoiJiouMjI2NjYyMi4qJiIeGhYOCgYB/fn19fX5/gIGDhIWGiImKi4yMjY2NjIyLiomIh4aFg4KBgH9+fX19fn+AgYOEhYaHiYqLjIyNjY2MjIuKiYiHhoWDgoGAf359fX1+f4CCg4SFhoiJiouMjI2NjYyMi4qJiIeGhYOCgYB/fn19fX5/gIGDhIWGiImKi4yMjY2NjIyLiomIh4aFg4KBgH9+fX19fn+AgYOEhYaHiYqLjIyNjY2MjIuKiYiHhoWEgoGAf359fX1+f4CCg4SFhoiJiouMjI2NjYyMi4qJiIeGhYSDgoGAf359fX1+f4CCg4SFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoGAf359fX1+f4CBg4SFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoGAf35+fX5+f4CBg4SFhoeIiouMjI2NjYyMi4qJiIeGhYSDgoGAf35+fX5+gICCg4SFhoeIiouMjI2NjYyMi4qJiIeGhYSDgoGAgH9+fn5+f4CCg4SFhoeIiouMjI2NjYyMi4qJiIeGhYSDgoGAgH9+fn5/f4CCg4SFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoGAgH9+fn5/gICCg4SFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoGAgH9/fn5/gICCg4SFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoKAgH9/fn9/gICCg4SFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoKBgH9/f39/gICCg4SFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoKBgH9/f39/gICCg4SFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoKBgIB/f39/gICCg4SFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoKBgIB/f39/gICCg4SFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoKBgICAf39/gICBg4SFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoKBgICAf4CAgICBg4SFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoKBgICAf4CAgICBgoSFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoKBgICAgICAgICBgoSFhoeJiouMjI2NjYyMi4qJiIeGhYSDgoKBgICAgICAgICBgoSFhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKBgICAgICAgIGBgoSFhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKBgYCAgICAgIGBgoSFhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKBgYCAgICAgIGBgoSFhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKBgYGAgICAgIGBgoOFhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKBgYGAgYCAgIGBgoOFhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKBgYGAgYCBgIGBgoOFhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKBgYGBgYCBgIGBgoOFhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKBgYGBgYGBgYGBgoOFhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKBgYGBgYGBgYGBgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKBgYGBgYGBgYGBgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgYGBgYGBgYGBgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgYGBgYGBgYGCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgYGBgYGBgYGCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgYGBgYGBgYGCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgYGBgYGBgYGCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgoGBgYGBgYGCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgoGBgYGBgYKCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgoGBgYGBgYKCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgoGBgYGBgYKCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgoGBgYGCgoKCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgoKBgYGCgoKCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgoKBgYKCgoKCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgoKCgYKCgoKCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgoKCgoKCgoKCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgoKCgoKCgoKCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSDgoKCgoKCgoKCgoKCgoOEhoeIiouMjI2NjYyMi4qJiIeGhYSEgoKCgoKCgoKCgoKCgoOEhoeIiouM';
+    const ctx = initAudioContext();
     
-    const audio = new Audio(beepDataUri);
-    audio.volume = 0.5;
-    audio.play().catch(e => console.log('Mobile audio play failed:', e));
+    // 3 loud beeps with increasing urgency
+    const beeps = [
+      { freq: 880, time: 0, duration: 0.3 },
+      { freq: 988, time: 0.35, duration: 0.3 },
+      { freq: 1047, time: 0.7, duration: 0.4 },
+    ];
+    
+    beeps.forEach(({ freq, time, duration }) => {
+      const startTime = ctx.currentTime + time;
+      
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      oscillator.frequency.value = freq;
+      oscillator.type = 'square';
+      
+      // Louder volume
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.7, startTime + 0.02);
+      gainNode.gain.setValueAtTime(0.7, startTime + duration - 0.05);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration);
+    });
   } catch (error) {
-    console.error('Mobile beep error:', error);
+    console.error('Alert tone error:', error);
   }
 };
 
@@ -132,29 +156,19 @@ export const playPutNotificationSound = () => {
   }
 };
 
-// Generic notification sound (neutral) with vibration
+// Generic notification sound (neutral) with vibration - LOUD and LONG
 export const playNotificationSound = () => {
   try {
-    // Vibrate device first
-    vibrateDevice([200, 100, 200]);
+    // Strong vibration pattern: long-short-long-short-long
+    vibrateDevice([400, 100, 400, 100, 600]);
     
-    // Try mobile-friendly audio first (works better on iOS/Android)
-    playMobileBeep();
+    // Play loud alert tone
+    playAlertTone();
     
-    // Also try AudioContext if initialized
-    if (audioInitialized && audioContext) {
-      const ctx = audioContext;
-      
-      // Single pleasant beep for general notifications
-      const frequency = 800; // Hz
-      const duration = 0.2; // seconds
-      
-      playBeep(frequency, duration, ctx.currentTime, ctx);
-    }
   } catch (error) {
     console.error('Error playing notification sound:', error);
-    // Fallback to mobile beep
-    playMobileBeep();
+    // Fallback - try again
+    playAlertTone();
   }
 };
 
