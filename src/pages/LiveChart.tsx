@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Upload, Loader2, Info, Save } from "lucide-react";
+import { ArrowLeft, RefreshCw, Upload, Loader2, Info, Save, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSavedAnalyses } from "@/hooks/useSavedAnalyses";
@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PriceAlertDialog } from "@/components/alerts/PriceAlertDialog";
 
 export default function LiveChart() {
   const navigate = useNavigate();
@@ -35,23 +36,27 @@ export default function LiveChart() {
   const [showInstructions, setShowInstructions] = useState(false);
   const [chartAnalysisEnabled, setChartAnalysisEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const { saveAnalysis } = useSavedAnalyses();
 
   // Check if chart analysis is enabled for the user
   useEffect(() => {
     const checkAccess = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user: authUser } } = await supabase.auth.getUser();
         
-        if (!user) {
+        if (!authUser) {
           setLoading(false);
           return;
         }
+        
+        setUser(authUser);
 
         const { data: profile } = await supabase
           .from('profiles')
           .select('image_analysis_enabled')
-          .eq('user_id', user.id)
+          .eq('user_id', authUser.id)
           .single();
 
         setChartAnalysisEnabled(profile?.image_analysis_enabled || false);
@@ -379,6 +384,19 @@ export default function LiveChart() {
                 <p className="text-xs text-white/50 hidden sm:block">شارت حقيقي مباشر من TradingView</p>
               </div>
             </div>
+            
+            {/* Alert Button */}
+            {user && (
+              <Button
+                onClick={() => setAlertDialogOpen(true)}
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-orange-500/30 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/50 text-xs sm:text-sm h-8 flex-shrink-0"
+              >
+                <Bell className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">تنبيه سعري</span>
+              </Button>
+            )}
             
             {/* Timeframe Selector */}
             <Select value={selectedTimeframe} onValueChange={(val) => {
@@ -750,6 +768,22 @@ export default function LiveChart() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Price Alert Dialog */}
+        <PriceAlertDialog
+          open={alertDialogOpen}
+          onOpenChange={setAlertDialogOpen}
+          market={{
+            name: symbolInfo.displayName.split(' (')[0],
+            nameAr: symbolInfo.displayName.split(' (')[0],
+            symbol: symbol,
+            category: symbol.includes('TADAWUL') ? 'السوق السعودي' : 
+                     ['bitcoin', 'ethereum', 'bnb', 'solana', 'xrp', 'cardano', 'dogecoin'].includes(symbol) ? 'عملات رقمية' :
+                     ['gold', 'silver', 'oil', 'naturalgas'].includes(symbol) ? 'سلع' :
+                     ['sp500', 'dowjones', 'nasdaq', 'dax'].includes(symbol) ? 'مؤشرات' :
+                     ['eurusd', 'gbpusd', 'usdjpy'].includes(symbol) ? 'فوركس' : 'أسهم'
+          }}
+        />
       </main>
     </div>
   );
