@@ -7,9 +7,13 @@ export const TradingAdvice = () => {
       {/* Success Rate Banner */}
       <Card className="border-success/50 bg-success/5">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-success">نظام توصيات مباشرة لبوكيت أوبشن (خيارات ثنائية)<Target className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-success">
+            <Target className="h-5 w-5" />
             نسبة نجاح التوصيات
           </CardTitle>
+          <p className="text-xs text-red-500 font-medium mt-2 animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]">
+            ⚠️ يجب تحويل المنطقة الزمنية على UTC-3
+          </p>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
