@@ -71,10 +71,11 @@ const TIMEFRAMES = [
 ];
 
 const US_STOCKS = [
-  // Technology
+  // Technology - Major
   { value: "AAPL", label: "Apple Inc. (AAPL)" },
   { value: "MSFT", label: "Microsoft Corporation (MSFT)" },
   { value: "GOOGL", label: "Alphabet Inc. (GOOGL)" },
+  { value: "GOOG", label: "Alphabet Inc. Class C (GOOG)" },
   { value: "AMZN", label: "Amazon.com Inc. (AMZN)" },
   { value: "META", label: "Meta Platforms Inc. (META)" },
   { value: "NVDA", label: "NVIDIA Corporation (NVDA)" },
@@ -87,6 +88,36 @@ const US_STOCKS = [
   { value: "INTC", label: "Intel Corporation (INTC)" },
   { value: "AMD", label: "Advanced Micro Devices (AMD)" },
   { value: "QCOM", label: "QUALCOMM Inc. (QCOM)" },
+  { value: "AVGO", label: "Broadcom Inc. (AVGO)" },
+  { value: "TXN", label: "Texas Instruments Inc. (TXN)" },
+  { value: "NOW", label: "ServiceNow Inc. (NOW)" },
+  { value: "PANW", label: "Palo Alto Networks (PANW)" },
+  { value: "SNOW", label: "Snowflake Inc. (SNOW)" },
+  { value: "UBER", label: "Uber Technologies (UBER)" },
+  { value: "SHOP", label: "Shopify Inc. (SHOP)" },
+  { value: "SQ", label: "Block Inc. (SQ)" },
+  { value: "PYPL", label: "PayPal Holdings (PYPL)" },
+  { value: "IBM", label: "IBM Corporation (IBM)" },
+  { value: "AMAT", label: "Applied Materials (AMAT)" },
+  { value: "MU", label: "Micron Technology (MU)" },
+  { value: "LRCX", label: "Lam Research (LRCX)" },
+  { value: "KLAC", label: "KLA Corporation (KLAC)" },
+  { value: "MRVL", label: "Marvell Technology (MRVL)" },
+  { value: "ADI", label: "Analog Devices (ADI)" },
+  { value: "SNPS", label: "Synopsys Inc. (SNPS)" },
+  { value: "CDNS", label: "Cadence Design (CDNS)" },
+  { value: "CRWD", label: "CrowdStrike Holdings (CRWD)" },
+  { value: "ZS", label: "Zscaler Inc. (ZS)" },
+  { value: "DDOG", label: "Datadog Inc. (DDOG)" },
+  { value: "PLTR", label: "Palantir Technologies (PLTR)" },
+  { value: "NET", label: "Cloudflare Inc. (NET)" },
+  { value: "COIN", label: "Coinbase Global (COIN)" },
+  { value: "HOOD", label: "Robinhood Markets (HOOD)" },
+  { value: "RBLX", label: "Roblox Corporation (RBLX)" },
+  { value: "U", label: "Unity Software (U)" },
+  { value: "TTWO", label: "Take-Two Interactive (TTWO)" },
+  { value: "EA", label: "Electronic Arts (EA)" },
+  { value: "ATVI", label: "Activision Blizzard (ATVI)" },
   
   // Finance
   { value: "JPM", label: "JPMorgan Chase & Co. (JPM)" },
@@ -98,6 +129,22 @@ const US_STOCKS = [
   { value: "MA", label: "Mastercard Inc. (MA)" },
   { value: "AXP", label: "American Express Co. (AXP)" },
   { value: "BLK", label: "BlackRock Inc. (BLK)" },
+  { value: "C", label: "Citigroup Inc. (C)" },
+  { value: "SCHW", label: "Charles Schwab (SCHW)" },
+  { value: "USB", label: "U.S. Bancorp (USB)" },
+  { value: "PNC", label: "PNC Financial (PNC)" },
+  { value: "TFC", label: "Truist Financial (TFC)" },
+  { value: "COF", label: "Capital One Financial (COF)" },
+  { value: "AIG", label: "American International (AIG)" },
+  { value: "MET", label: "MetLife Inc. (MET)" },
+  { value: "PRU", label: "Prudential Financial (PRU)" },
+  { value: "CB", label: "Chubb Limited (CB)" },
+  { value: "MMC", label: "Marsh & McLennan (MMC)" },
+  { value: "AON", label: "Aon plc (AON)" },
+  { value: "SPGI", label: "S&P Global Inc. (SPGI)" },
+  { value: "MCO", label: "Moody's Corporation (MCO)" },
+  { value: "ICE", label: "Intercontinental Exchange (ICE)" },
+  { value: "CME", label: "CME Group Inc. (CME)" },
   
   // Healthcare
   { value: "JNJ", label: "Johnson & Johnson (JNJ)" },
@@ -108,6 +155,25 @@ const US_STOCKS = [
   { value: "MRK", label: "Merck & Co. Inc. (MRK)" },
   { value: "LLY", label: "Eli Lilly and Co. (LLY)" },
   { value: "ABT", label: "Abbott Laboratories (ABT)" },
+  { value: "DHR", label: "Danaher Corporation (DHR)" },
+  { value: "BMY", label: "Bristol-Myers Squibb (BMY)" },
+  { value: "AMGN", label: "Amgen Inc. (AMGN)" },
+  { value: "GILD", label: "Gilead Sciences (GILD)" },
+  { value: "REGN", label: "Regeneron Pharmaceuticals (REGN)" },
+  { value: "VRTX", label: "Vertex Pharmaceuticals (VRTX)" },
+  { value: "ISRG", label: "Intuitive Surgical (ISRG)" },
+  { value: "MDT", label: "Medtronic plc (MDT)" },
+  { value: "SYK", label: "Stryker Corporation (SYK)" },
+  { value: "BSX", label: "Boston Scientific (BSX)" },
+  { value: "EW", label: "Edwards Lifesciences (EW)" },
+  { value: "ZBH", label: "Zimmer Biomet (ZBH)" },
+  { value: "CVS", label: "CVS Health Corp. (CVS)" },
+  { value: "CI", label: "Cigna Group (CI)" },
+  { value: "ELV", label: "Elevance Health (ELV)" },
+  { value: "HCA", label: "HCA Healthcare (HCA)" },
+  { value: "HUM", label: "Humana Inc. (HUM)" },
+  { value: "MRNA", label: "Moderna Inc. (MRNA)" },
+  { value: "BIIB", label: "Biogen Inc. (BIIB)" },
   
   // Consumer
   { value: "WMT", label: "Walmart Inc. (WMT)" },
@@ -121,12 +187,67 @@ const US_STOCKS = [
   { value: "TGT", label: "Target Corp. (TGT)" },
   { value: "HD", label: "Home Depot Inc. (HD)" },
   { value: "LOW", label: "Lowe's Companies Inc. (LOW)" },
+  { value: "TJX", label: "TJX Companies (TJX)" },
+  { value: "ROST", label: "Ross Stores (ROST)" },
+  { value: "DG", label: "Dollar General (DG)" },
+  { value: "DLTR", label: "Dollar Tree (DLTR)" },
+  { value: "YUM", label: "Yum! Brands (YUM)" },
+  { value: "CMG", label: "Chipotle Mexican Grill (CMG)" },
+  { value: "DPZ", label: "Domino's Pizza (DPZ)" },
+  { value: "DARDEN", label: "Darden Restaurants (DRI)" },
+  { value: "MAR", label: "Marriott International (MAR)" },
+  { value: "HLT", label: "Hilton Worldwide (HLT)" },
+  { value: "BKNG", label: "Booking Holdings (BKNG)" },
+  { value: "ABNB", label: "Airbnb Inc. (ABNB)" },
+  { value: "LVS", label: "Las Vegas Sands (LVS)" },
+  { value: "WYNN", label: "Wynn Resorts (WYNN)" },
+  { value: "MGM", label: "MGM Resorts (MGM)" },
+  { value: "LULU", label: "Lululemon Athletica (LULU)" },
+  { value: "GPS", label: "Gap Inc. (GPS)" },
+  { value: "ANF", label: "Abercrombie & Fitch (ANF)" },
+  { value: "RL", label: "Ralph Lauren (RL)" },
+  { value: "TPR", label: "Tapestry Inc. (TPR)" },
+  { value: "VFC", label: "VF Corporation (VFC)" },
+  { value: "EL", label: "Estee Lauder (EL)" },
+  { value: "ULTA", label: "Ulta Beauty (ULTA)" },
+  { value: "CL", label: "Colgate-Palmolive (CL)" },
+  { value: "KMB", label: "Kimberly-Clark (KMB)" },
+  { value: "GIS", label: "General Mills (GIS)" },
+  { value: "K", label: "Kellogg Company (K)" },
+  { value: "HSY", label: "Hershey Company (HSY)" },
+  { value: "MDLZ", label: "Mondelez International (MDLZ)" },
+  { value: "KHC", label: "Kraft Heinz (KHC)" },
+  { value: "STZ", label: "Constellation Brands (STZ)" },
+  { value: "BUD", label: "Anheuser-Busch InBev (BUD)" },
+  { value: "DEO", label: "Diageo plc (DEO)" },
+  { value: "PM", label: "Philip Morris International (PM)" },
+  { value: "MO", label: "Altria Group (MO)" },
   
   // Energy
   { value: "XOM", label: "Exxon Mobil Corp. (XOM)" },
   { value: "CVX", label: "Chevron Corp. (CVX)" },
   { value: "COP", label: "ConocoPhillips (COP)" },
   { value: "SLB", label: "Schlumberger NV (SLB)" },
+  { value: "EOG", label: "EOG Resources (EOG)" },
+  { value: "PXD", label: "Pioneer Natural Resources (PXD)" },
+  { value: "DVN", label: "Devon Energy (DVN)" },
+  { value: "OXY", label: "Occidental Petroleum (OXY)" },
+  { value: "MPC", label: "Marathon Petroleum (MPC)" },
+  { value: "VLO", label: "Valero Energy (VLO)" },
+  { value: "PSX", label: "Phillips 66 (PSX)" },
+  { value: "HAL", label: "Halliburton Company (HAL)" },
+  { value: "BKR", label: "Baker Hughes (BKR)" },
+  { value: "KMI", label: "Kinder Morgan (KMI)" },
+  { value: "WMB", label: "Williams Companies (WMB)" },
+  { value: "OKE", label: "ONEOK Inc. (OKE)" },
+  { value: "ENPH", label: "Enphase Energy (ENPH)" },
+  { value: "FSLR", label: "First Solar (FSLR)" },
+  { value: "NEE", label: "NextEra Energy (NEE)" },
+  { value: "DUK", label: "Duke Energy (DUK)" },
+  { value: "SO", label: "Southern Company (SO)" },
+  { value: "D", label: "Dominion Energy (D)" },
+  { value: "AEP", label: "American Electric Power (AEP)" },
+  { value: "XEL", label: "Xcel Energy (XEL)" },
   
   // Industrial
   { value: "BA", label: "Boeing Co. (BA)" },
@@ -135,12 +256,65 @@ const US_STOCKS = [
   { value: "MMM", label: "3M Co. (MMM)" },
   { value: "UPS", label: "United Parcel Service (UPS)" },
   { value: "HON", label: "Honeywell International (HON)" },
+  { value: "RTX", label: "RTX Corporation (RTX)" },
+  { value: "LMT", label: "Lockheed Martin (LMT)" },
+  { value: "NOC", label: "Northrop Grumman (NOC)" },
+  { value: "GD", label: "General Dynamics (GD)" },
+  { value: "LHX", label: "L3Harris Technologies (LHX)" },
+  { value: "DE", label: "Deere & Company (DE)" },
+  { value: "EMR", label: "Emerson Electric (EMR)" },
+  { value: "ETN", label: "Eaton Corporation (ETN)" },
+  { value: "ITW", label: "Illinois Tool Works (ITW)" },
+  { value: "PH", label: "Parker-Hannifin (PH)" },
+  { value: "ROK", label: "Rockwell Automation (ROK)" },
+  { value: "CMI", label: "Cummins Inc. (CMI)" },
+  { value: "PCAR", label: "PACCAR Inc. (PCAR)" },
+  { value: "NSC", label: "Norfolk Southern (NSC)" },
+  { value: "UNP", label: "Union Pacific (UNP)" },
+  { value: "CSX", label: "CSX Corporation (CSX)" },
+  { value: "FDX", label: "FedEx Corporation (FDX)" },
+  { value: "DAL", label: "Delta Air Lines (DAL)" },
+  { value: "UAL", label: "United Airlines (UAL)" },
+  { value: "AAL", label: "American Airlines (AAL)" },
+  { value: "LUV", label: "Southwest Airlines (LUV)" },
+  { value: "WM", label: "Waste Management (WM)" },
+  { value: "RSG", label: "Republic Services (RSG)" },
   
   // Telecom & Media
   { value: "T", label: "AT&T Inc. (T)" },
   { value: "VZ", label: "Verizon Communications (VZ)" },
   { value: "DIS", label: "Walt Disney Co. (DIS)" },
   { value: "CMCSA", label: "Comcast Corp. (CMCSA)" },
+  { value: "TMUS", label: "T-Mobile US (TMUS)" },
+  { value: "CHTR", label: "Charter Communications (CHTR)" },
+  { value: "WBD", label: "Warner Bros. Discovery (WBD)" },
+  { value: "PARA", label: "Paramount Global (PARA)" },
+  { value: "FOX", label: "Fox Corporation (FOX)" },
+  { value: "NWSA", label: "News Corp (NWSA)" },
+  
+  // Real Estate
+  { value: "AMT", label: "American Tower (AMT)" },
+  { value: "PLD", label: "Prologis Inc. (PLD)" },
+  { value: "CCI", label: "Crown Castle (CCI)" },
+  { value: "EQIX", label: "Equinix Inc. (EQIX)" },
+  { value: "PSA", label: "Public Storage (PSA)" },
+  { value: "SPG", label: "Simon Property Group (SPG)" },
+  { value: "O", label: "Realty Income (O)" },
+  { value: "WELL", label: "Welltower Inc. (WELL)" },
+  { value: "AVB", label: "AvalonBay Communities (AVB)" },
+  { value: "EQR", label: "Equity Residential (EQR)" },
+  
+  // Materials
+  { value: "LIN", label: "Linde plc (LIN)" },
+  { value: "APD", label: "Air Products (APD)" },
+  { value: "SHW", label: "Sherwin-Williams (SHW)" },
+  { value: "ECL", label: "Ecolab Inc. (ECL)" },
+  { value: "FCX", label: "Freeport-McMoRan (FCX)" },
+  { value: "NEM", label: "Newmont Corporation (NEM)" },
+  { value: "NUE", label: "Nucor Corporation (NUE)" },
+  { value: "STLD", label: "Steel Dynamics (STLD)" },
+  { value: "DOW", label: "Dow Inc. (DOW)" },
+  { value: "DD", label: "DuPont de Nemours (DD)" },
 ];
 
 const ANALYSIS_TYPES = [
@@ -519,56 +693,69 @@ const ImageAnalysis = () => {
     }
   };
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse" />
+          <Loader2 className="h-12 w-12 animate-spin text-primary relative" />
+        </div>
+      </div>
+    );
   }
+  
   if (!hasAccess) {
-    return <div className="min-h-screen bg-background p-4">
-        <div className="max-w-2xl mx-auto">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4">
+        {/* Animated Background */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 right-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-20 left-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        </div>
+        
+        <div className="max-w-2xl mx-auto relative">
+          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 text-slate-400 hover:text-white hover:bg-slate-800">
             <ArrowLeft className="ml-2 h-4 w-4" />
             رجوع
           </Button>
 
-          <Card className="border-amber-500">
+          <Card className="border-amber-500/50 bg-slate-900/80 backdrop-blur-xl">
             <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/20 border border-amber-500/30">
                 <Lock className="h-8 w-8 text-amber-500" />
               </div>
-              <CardTitle className="text-2xl">ميزة غير متاحة</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-2xl text-white">ميزة غير متاحة</CardTitle>
+              <CardDescription className="text-slate-400">
                 اشتراكك الحالي لا يسمح بالوصول إلى ميزة تحليل الصور
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="bg-muted rounded-lg p-6 space-y-4">
-                <h3 className="font-semibold text-lg">للحصول على هذه الميزة:</h3>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
+              <div className="bg-slate-800/50 rounded-xl p-6 space-y-4 border border-slate-700/50">
+                <h3 className="font-semibold text-lg text-white">للحصول على هذه الميزة:</h3>
+                <ul className="space-y-3 text-sm">
+                  <li className="flex items-center gap-3 text-slate-300">
+                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                     <span>تحليل الشارت من الصور مباشرة</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
+                  <li className="flex items-center gap-3 text-slate-300">
+                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse delay-100" />
                     <span>توصيات CALL أو PUT دقيقة</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
+                  <li className="flex items-center gap-3 text-slate-300">
+                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse delay-200" />
                     <span>تحديد أفضل وقت للدخول</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
+                  <li className="flex items-center gap-3 text-slate-300">
+                    <div className="h-2 w-2 rounded-full bg-primary animate-pulse delay-300" />
                     <span>تحليل فني شامل</span>
                   </li>
                 </ul>
               </div>
 
               <div className="text-center space-y-4">
-                <p className="text-muted-foreground">
+                <p className="text-slate-400">
                   تواصل معنا لترقية باقتك والحصول على هذه الميزة المتقدمة
                 </p>
-                <Button onClick={openWhatsApp} className="w-full gap-2" size="lg">
+                <Button onClick={openWhatsApp} className="w-full gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black" size="lg">
                   <MessageCircle className="h-5 w-5" />
                   تواصل معنا لترقية الباقة
                 </Button>
@@ -576,48 +763,58 @@ const ImageAnalysis = () => {
             </CardContent>
           </Card>
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen bg-background p-4">
-      <div className="max-w-4xl mx-auto">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 left-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-3xl" />
+      </div>
+      
+      <div className="max-w-4xl mx-auto relative">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 text-slate-400 hover:text-white hover:bg-slate-800">
           <ArrowLeft className="ml-2 h-4 w-4" />
           رجوع
         </Button>
 
         <Tabs defaultValue="image" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6 bg-card border border-border p-1.5 h-auto">
+          <TabsList className="grid w-full grid-cols-5 mb-6 bg-slate-900/80 backdrop-blur-xl border border-slate-800 p-1.5 h-auto rounded-xl">
             <TabsTrigger 
               value="image" 
-              className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground hover:bg-muted/50 transition-colors"
+              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
             >
               <ImageIcon className="h-4 w-4" />
               تحليل صورة
             </TabsTrigger>
             <TabsTrigger 
               value="forex" 
-              className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground hover:bg-muted/50 transition-colors"
+              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
             >
               <Activity className="h-4 w-4" />
               الفوريكس
             </TabsTrigger>
             <TabsTrigger 
               value="stocks" 
-              className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground hover:bg-muted/50 transition-colors"
+              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
             >
               <TrendingUp className="h-4 w-4" />
               الأسهم
             </TabsTrigger>
             <TabsTrigger 
               value="crypto" 
-              className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground hover:bg-muted/50 transition-colors"
+              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
             >
               <DollarSign className="h-4 w-4" />
               العملات
             </TabsTrigger>
             <TabsTrigger 
               value="metals" 
-              className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:text-muted-foreground hover:bg-muted/50 transition-colors"
+              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
             >
               <span className="text-lg">🥇</span>
               المعادن
@@ -625,20 +822,20 @@ const ImageAnalysis = () => {
           </TabsList>
 
           <TabsContent value="image">
-            <Card>
+            <Card className="bg-slate-900/80 backdrop-blur-xl border-slate-800">
               <CardHeader>
-                <CardTitle className="text-2xl">تحليل الشارت بالصورة (MT5 / TradingView / Pocket Option)</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-2xl text-white">تحليل الشارت بالصورة (MT5 / TradingView / Pocket Option)</CardTitle>
+                <CardDescription className="text-slate-400">
                   اختر نوع التحليل المطلوب ثم قم برفع صورة الشارت من أي منصة
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Analysis Type Selection */}
                 <div className="space-y-2">
-                  <Label>نوع التحليل</Label>
+                  <Label className="text-slate-300">نوع التحليل</Label>
                   <Tabs value={analysisType} onValueChange={(v) => setAnalysisType(v as "recommendation" | "support-resistance")} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="recommendation" className="gap-2">
+                    <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 border border-slate-700">
+                      <TabsTrigger value="recommendation" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                         <TrendingUp className="h-4 w-4" />
                         <span>توصية مباشرة</span>
                       </TabsTrigger>
@@ -650,26 +847,26 @@ const ImageAnalysis = () => {
                   </Tabs>
               
               {analysisType === "recommendation" ? (
-                <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mt-2">
-                  <p className="text-sm text-foreground">
-                    <span className="font-semibold">التوصية المباشرة:</span> ستحصل على توصية CALL أو PUT محددة مع وقت الدخول المثالي
+                <div className="bg-primary/10 border border-primary/30 rounded-xl p-3 mt-2">
+                  <p className="text-sm text-white">
+                    <span className="font-semibold text-primary">التوصية المباشرة:</span> ستحصل على توصية CALL أو PUT محددة مع وقت الدخول المثالي
                   </p>
                 </div>
               ) : (
-                <div className="bg-accent/10 border border-accent/30 rounded-lg p-3 mt-2">
-                  <p className="text-sm text-foreground">
-                    <span className="font-semibold">الدعوم والارتدادات:</span> ستحصل على أرقام دقيقة لمستويات الدعم والمقاومة لتدخل بنفسك عند ارتداد السعر
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 mt-2">
+                  <p className="text-sm text-white">
+                    <span className="font-semibold text-blue-400">الدعوم والارتدادات:</span> ستحصل على أرقام دقيقة لمستويات الدعم والمقاومة لتدخل بنفسك عند ارتداد السعر
                   </p>
                 </div>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="timeframe">فترة الشمعة</Label>
+              <Label htmlFor="timeframe" className="text-slate-300">فترة الشمعة</Label>
               <Select value={timeframe} onValueChange={setTimeframe}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
                   <SelectValue placeholder="اختر فترة الشمعة" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-slate-800 border-slate-700">
                   <SelectItem value="1m">1 دقيقة</SelectItem>
                   <SelectItem value="5m">5 دقائق</SelectItem>
                   <SelectItem value="15m">15 دقيقة</SelectItem>
@@ -682,45 +879,45 @@ const ImageAnalysis = () => {
                   <SelectItem value="1M">شهر واحد</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mt-2">
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 mt-2">
                 <div className="flex items-start gap-2">
                   <div className="text-lg">💡</div>
-                  <p className="text-sm text-foreground">
-                    <span className="font-semibold">توصية:</span> يُنصح باختيار فترة الشمعة 5 دقائق ومدة الصفقة 5 دقائق للحصول على أفضل النتائج
+                  <p className="text-sm text-slate-200">
+                    <span className="font-semibold text-amber-400">توصية:</span> يُنصح باختيار فترة الشمعة 5 دقائق ومدة الصفقة 5 دقائق للحصول على أفضل النتائج
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="image">صورة الشارت</Label>
+              <Label htmlFor="image" className="text-slate-300">صورة الشارت</Label>
               <div 
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  isDragging ? 'border-primary bg-primary/5' : 'border-border'
+                className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+                  isDragging ? 'border-primary bg-primary/10 scale-[1.02]' : 'border-slate-700 bg-slate-800/30 hover:border-slate-600 hover:bg-slate-800/50'
                 }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
                 <div className="space-y-4">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Upload className="h-6 w-6 text-primary" />
+                  <div className="mx-auto w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
+                    <Upload className="h-7 w-7 text-primary" />
                   </div>
                   <div className="space-y-2">
-                    <p className="text-sm font-medium">اسحب وأفلت الصورة هنا</p>
-                    <p className="text-xs text-muted-foreground">أو انقر لاختيار ملف</p>
+                    <p className="text-sm font-medium text-white">اسحب وأفلت الصورة هنا</p>
+                    <p className="text-xs text-slate-400">أو انقر لاختيار ملف</p>
                   </div>
                   <Input 
                     id="image" 
                     type="file" 
                     accept="image/*" 
                     onChange={handleImageChange} 
-                    className="cursor-pointer max-w-xs mx-auto" 
+                    className="cursor-pointer max-w-xs mx-auto bg-slate-800/50 border-slate-700 text-white" 
                   />
                 </div>
               </div>
-              <div className="bg-primary/10 border border-primary/30 rounded-lg p-3">
-                <p className="text-xs text-foreground">
+              <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-3">
+                <p className="text-xs text-slate-300">
                   💡 <span className="font-semibold">نصيحة:</span> يمكنك لصق الصورة مباشرة من الحافظة باستخدام Ctrl+V أو Cmd+V
                 </p>
               </div>
@@ -752,24 +949,24 @@ const ImageAnalysis = () => {
 
 
       <TabsContent value="forex">
-        <Card>
+        <Card className="bg-slate-900/80 backdrop-blur-xl border-slate-800">
           <CardHeader>
-            <CardTitle className="text-2xl">تحليل الفوريكس</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl text-white">تحليل الفوريكس</CardTitle>
+            <CardDescription className="text-slate-400">
               اختر زوج العملات والإطار الزمني للحصول على تحليل شامل
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label>بحث في الفوريكس</Label>
+              <Label className="text-slate-300">بحث في الفوريكس</Label>
               <div className="relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   type="text"
                   placeholder="ابحث عن زوج العملات..."
                   value={forexSearch}
                   onChange={(e) => setForexSearch(e.target.value)}
-                  className="pr-10"
+                  className="pr-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
                 />
               </div>
             </div>
@@ -839,35 +1036,35 @@ const ImageAnalysis = () => {
       </TabsContent>
 
       <TabsContent value="stocks">
-        <Card>
+        <Card className="bg-slate-900/80 backdrop-blur-xl border-slate-800">
           <CardHeader>
-            <CardTitle className="text-2xl">تحليل الأسهم الأمريكية</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl text-white">تحليل الأسهم الأمريكية</CardTitle>
+            <CardDescription className="text-slate-400">
               اختر السهم والإطار الزمني ونوع التحليل للحصول على تحليل شامل
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label>بحث في الأسهم</Label>
+              <Label className="text-slate-300">بحث في الأسهم</Label>
               <div className="relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   type="text"
                   placeholder="ابحث عن السهم..."
                   value={stockSearch}
                   onChange={(e) => setStockSearch(e.target.value)}
-                  className="pr-10"
+                  className="pr-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label>اختر سهم</Label>
+              <Label className="text-slate-300">اختر سهم</Label>
               <Select value={selectedStock} onValueChange={setSelectedStock}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
                   <SelectValue placeholder="اختر سهم" />
                 </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
+                <SelectContent className="max-h-[300px] bg-slate-800 border-slate-700">
                   {filteredStocks.length > 0 ? (
                     filteredStocks.map((stock) => (
                       <SelectItem key={stock.value} value={stock.value}>
@@ -875,7 +1072,7 @@ const ImageAnalysis = () => {
                       </SelectItem>
                     ))
                   ) : (
-                    <div className="p-2 text-center text-sm text-muted-foreground">
+                    <div className="p-2 text-center text-sm text-slate-400">
                       لا توجد نتائج
                     </div>
                   )}
@@ -942,35 +1139,35 @@ const ImageAnalysis = () => {
       </TabsContent>
 
       <TabsContent value="crypto">
-        <Card>
+        <Card className="bg-slate-900/80 backdrop-blur-xl border-slate-800">
           <CardHeader>
-            <CardTitle className="text-2xl">تحليل العملات الرقمية</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl text-white">تحليل العملات الرقمية</CardTitle>
+            <CardDescription className="text-slate-400">
               اختر العملة الرقمية والإطار الزمني ونوع التحليل للحصول على تحليل شامل
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label>بحث في العملات الرقمية</Label>
+              <Label className="text-slate-300">بحث في العملات الرقمية</Label>
               <div className="relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   type="text"
                   placeholder="ابحث عن العملة الرقمية..."
                   value={cryptoSearch}
                   onChange={(e) => setCryptoSearch(e.target.value)}
-                  className="pr-10"
+                  className="pr-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label>اختر عملة رقمية</Label>
+              <Label className="text-slate-300">اختر عملة رقمية</Label>
               <Select value={selectedCrypto} onValueChange={setSelectedCrypto}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
                   <SelectValue placeholder="اختر عملة رقمية" />
                 </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
+                <SelectContent className="max-h-[300px] bg-slate-800 border-slate-700">
                   {filteredCrypto.length > 0 ? (
                     filteredCrypto.map((crypto) => (
                       <SelectItem key={crypto.value} value={crypto.value}>
@@ -978,7 +1175,7 @@ const ImageAnalysis = () => {
                       </SelectItem>
                     ))
                   ) : (
-                    <div className="p-2 text-center text-sm text-muted-foreground">
+                    <div className="p-2 text-center text-sm text-slate-400">
                       لا توجد نتائج
                     </div>
                   )}
@@ -1045,38 +1242,38 @@ const ImageAnalysis = () => {
       </TabsContent>
 
       <TabsContent value="metals">
-        <Card>
+        <Card className="bg-slate-900/80 backdrop-blur-xl border-slate-800">
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-2">
+            <CardTitle className="text-2xl flex items-center gap-2 text-white">
               <span className="text-3xl">🥇</span>
               تحليل المعادن
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-400">
               اختر المعدن وفترة الشمعة للحصول على تحليل مفصل
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label>بحث في المعادن</Label>
+              <Label className="text-slate-300">بحث في المعادن</Label>
               <div className="relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   type="text"
                   placeholder="ابحث عن المعدن..."
                   value={metalSearch}
                   onChange={(e) => setMetalSearch(e.target.value)}
-                  className="pr-10"
+                  className="pr-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label>اختر المعدن</Label>
+              <Label className="text-slate-300">اختر المعدن</Label>
               <Select value={selectedMetal} onValueChange={setSelectedMetal}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
                   <SelectValue placeholder="اختر المعدن" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-slate-800 border-slate-700">
                   {filteredMetals.length > 0 ? (
                     filteredMetals.map((metal) => (
                       <SelectItem key={metal.value} value={metal.value}>
@@ -1087,7 +1284,7 @@ const ImageAnalysis = () => {
                       </SelectItem>
                     ))
                   ) : (
-                    <div className="p-2 text-center text-sm text-muted-foreground">
+                    <div className="p-2 text-center text-sm text-slate-400">
                       لا توجد نتائج
                     </div>
                   )}
@@ -1147,6 +1344,8 @@ const ImageAnalysis = () => {
         </div>
       )}
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default ImageAnalysis;
