@@ -20,6 +20,22 @@ import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navItems = [
+  { label: "تفعيل الإشعارات", icon: Bell, path: null, action: "notifications", color: "default" },
+  { label: "اختيار صوت التنبيه", icon: Bell, path: null, action: "sound", color: "default" },
+  { label: "تحليل الأسواق", icon: Image, path: "/image-analysis", color: "default" },
+  { label: "توصيات المحترفين", icon: Target, path: "/professional-signals", color: "default" },
+  { label: "محلل العرض والطلب", icon: TrendingUp, path: "/supply-demand", color: "purple" },
+  { label: "الأسواق", icon: BarChart3, path: "/markets", color: "default" },
+  { label: "الخيارات الثنائية", icon: Binary, path: "/binary-options", color: "default" },
+  { label: "الأخبار", icon: Newspaper, path: "/news", color: "default" },
+  { label: "المجتمع", icon: Users, path: "/community", color: "default" },
+  { label: "حسابي والمفضلة", icon: User, path: "/profile", color: "amber" },
+  { label: "دعم فني", icon: Target, path: null, action: "support", color: "default" },
+  { label: "تحميل كتطبيق", icon: Menu, path: "/install", color: "green" },
+];
+
+// Header navigation items (fewer items)
+const headerNavItems = [
   { label: "تفعيل الإشعارات", icon: Bell, path: null, action: "notifications" },
   { label: "تحليل الأسواق", icon: Image, path: "/image-analysis" },
   { label: "توصيات المحترفين", icon: Target, path: "/professional-signals" },
@@ -81,8 +97,8 @@ export const GlobalHeader = () => {
     navigate("/auth");
   };
 
-  const handleNavClick = (item: typeof navItems[0]) => {
-    if (item.action === "notifications") {
+  const handleNavClick = (item: any) => {
+    if (item.action === "notifications" || item.action === "sound" || item.action === "support") {
       return;
     }
     if (item.path) {
@@ -94,6 +110,23 @@ export const GlobalHeader = () => {
   const isActive = (path: string | null) => {
     if (!path) return false;
     return location.pathname === path;
+  };
+
+  const getItemColor = (color: string, isItemActive: boolean) => {
+    if (isItemActive) {
+      switch (color) {
+        case "purple": return "bg-purple-600 text-white border-purple-500";
+        case "amber": return "bg-amber-600 text-white border-amber-500";
+        case "green": return "bg-green-600 text-white border-green-500";
+        default: return "bg-white/10 text-white border-white/20";
+      }
+    }
+    switch (color) {
+      case "purple": return "bg-purple-600/20 text-purple-300 border-purple-500/30 hover:bg-purple-600/30";
+      case "amber": return "bg-amber-600/20 text-amber-300 border-amber-500/30 hover:bg-amber-600/30";
+      case "green": return "bg-green-600/20 text-green-300 border-green-500/30 hover:bg-green-600/30";
+      default: return "bg-[#252b3b] text-white/70 border-white/10 hover:bg-[#2d3548] hover:text-white";
+    }
   };
 
   return (
@@ -113,7 +146,7 @@ export const GlobalHeader = () => {
 
         {/* Desktop Navigation - Center */}
         <nav className="hidden lg:flex items-center gap-0.5 flex-1 justify-center" dir="rtl">
-          {navItems.map((item) => (
+          {headerNavItems.map((item) => (
             <Button
               key={item.label}
               variant="ghost"
@@ -161,32 +194,41 @@ export const GlobalHeader = () => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="bg-[#1a1f2e] border-white/10 w-72 p-0">
-              <div className="flex flex-col mt-12 px-2">
-                {navItems.map((item) => (
-                  <Button
-                    key={item.label}
-                    variant="ghost"
-                    onClick={() => handleNavClick(item)}
-                    className={cn(
-                      "justify-start text-white/60 hover:text-white hover:bg-white/5 gap-3 h-11 rounded-lg font-normal",
-                      isActive(item.path) && "bg-white/10 text-white"
-                    )}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </Button>
-                ))}
+            <SheetContent side="right" className="bg-[#0f1219] border-white/10 w-[280px] p-0">
+              <div className="flex flex-col h-full">
+                {/* Header */}
+                <div className="text-center py-6 border-b border-white/10">
+                  <h2 className="text-white text-lg font-semibold">القائمة</h2>
+                </div>
                 
+                {/* Menu Items */}
+                <div className="flex flex-col gap-2 p-4 flex-1 overflow-auto" dir="rtl">
+                  {navItems.map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => handleNavClick(item)}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-full border transition-all text-sm font-medium",
+                        getItemColor(item.color, isActive(item.path))
+                      )}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Footer - Logout */}
                 {user && (
-                  <Button
-                    variant="ghost"
-                    onClick={handleLogout}
-                    className="justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-3 h-11 mt-4 rounded-lg font-normal"
-                  >
-                    <LogOut className="h-5 w-5" />
-                    خروج
-                  </Button>
+                  <div className="p-4 border-t border-white/10">
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center justify-center gap-2 w-full text-red-400 hover:text-red-300 py-3 text-sm"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      تسجيل الخروج
+                    </button>
+                  </div>
                 )}
               </div>
             </SheetContent>
