@@ -39,9 +39,11 @@ export const GlobalHeader = () => {
 
   // Hide header on these routes
   const hiddenRoutes = ["/auth", "/admin", "/admin-login"];
-  if (hiddenRoutes.includes(location.pathname)) return null;
+  const shouldHide = hiddenRoutes.includes(location.pathname);
 
   useEffect(() => {
+    if (shouldHide) return;
+    
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
@@ -69,7 +71,10 @@ export const GlobalHeader = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [shouldHide]);
+
+  // Early return AFTER all hooks
+  if (shouldHide) return null;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
