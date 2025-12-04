@@ -239,6 +239,48 @@ export type Database = {
         }
         Relationships: []
       }
+      price_alerts: {
+        Row: {
+          category: string
+          condition: string
+          created_at: string
+          id: string
+          is_active: boolean
+          symbol: string
+          symbol_name_ar: string
+          symbol_name_en: string
+          target_price: number
+          triggered_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          condition?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          symbol: string
+          symbol_name_ar: string
+          symbol_name_en: string
+          target_price: number
+          triggered_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          condition?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          symbol?: string
+          symbol_name_ar?: string
+          symbol_name_en?: string
+          target_price?: number
+          triggered_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       professional_signals: {
         Row: {
           analysis: string | null

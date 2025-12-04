@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ArrowLeft, TrendingUp, TrendingDown, Loader2, RefreshCw, Star, User, BarChart3, Sparkles } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Loader2, RefreshCw, Star, User, BarChart3, Sparkles, Bell } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
+import { PriceAlertDialog } from '@/components/alerts/PriceAlertDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MarketItem {
   name: string;
@@ -244,7 +246,15 @@ const Markets = () => {
   const [prices, setPrices] = useState<{ [key: string]: PriceData }>({});
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [selectedMarket, setSelectedMarket] = useState<MarketItem | null>(null);
   const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
+
+  // Check user auth
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
+  }, []);
 
   const fetchPrices = async () => {
     try {
@@ -421,17 +431,34 @@ const Markets = () => {
                           onClick={() => navigate(`/live-chart?symbol=${market.symbol}`)}
                         >
                           <div className="p-4">
-                            {/* Favorite Button */}
-                            <button
-                              onClick={(e) => handleFavoriteClick(e, market)}
-                              className={`absolute top-2 left-2 p-1.5 rounded-full transition-all ${
-                                isMarketFavorite 
-                                  ? 'text-amber-400 bg-amber-500/20' 
-                                  : 'text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 opacity-0 group-hover:opacity-100'
-                              }`}
-                            >
-                              <Star className={`h-4 w-4 ${isMarketFavorite ? 'fill-amber-400' : ''}`} />
-                            </button>
+                            {/* Action Buttons */}
+                            <div className="absolute top-2 left-2 flex gap-1">
+                              {/* Alert Button */}
+                              {user && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedMarket(market);
+                                    setAlertDialogOpen(true);
+                                  }}
+                                  className="p-1.5 rounded-full transition-all text-slate-500 hover:text-orange-400 hover:bg-orange-500/10 opacity-0 group-hover:opacity-100"
+                                  title="إضافة تنبيه سعري"
+                                >
+                                  <Bell className="h-4 w-4" />
+                                </button>
+                              )}
+                              {/* Favorite Button */}
+                              <button
+                                onClick={(e) => handleFavoriteClick(e, market)}
+                                className={`p-1.5 rounded-full transition-all ${
+                                  isMarketFavorite 
+                                    ? 'text-amber-400 bg-amber-500/20' 
+                                    : 'text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 opacity-0 group-hover:opacity-100'
+                                }`}
+                              >
+                                <Star className={`h-4 w-4 ${isMarketFavorite ? 'fill-amber-400' : ''}`} />
+                              </button>
+                            </div>
 
                             {/* Market Name */}
                             <div className="mb-3">
@@ -504,6 +531,16 @@ const Markets = () => {
           </p>
         </div>
       </main>
+
+      {/* Price Alert Dialog */}
+      {selectedMarket && (
+        <PriceAlertDialog
+          open={alertDialogOpen}
+          onOpenChange={setAlertDialogOpen}
+          market={selectedMarket}
+          currentPrice={prices[selectedMarket.symbol]?.price}
+        />
+      )}
     </div>
   );
 };
