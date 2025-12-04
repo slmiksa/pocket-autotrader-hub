@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Key, Shield, MessageCircle, Calendar, CheckCircle2, XCircle, LogOut, Loader2, BarChart3, LineChart, Sparkles, Crown, Zap, Star } from "lucide-react";
+import { TrendingUp, Key, Shield, MessageCircle, CheckCircle2, XCircle, LogOut, Loader2, BarChart3, LineChart, Sparkles, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -278,109 +278,8 @@ const SubscriptionCheck = () => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* 1 Day Package */}
-          <Card className="bg-slate-900/60 border-slate-800/50 backdrop-blur-xl hover:border-slate-700 transition-all duration-300 hover:shadow-xl hover:shadow-slate-900/50 group">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <Badge variant="outline" className="border-slate-700 text-slate-400">
-                  <Zap className="h-3 w-3 ml-1" />
-                  تجربة
-                </Badge>
-              </div>
-              <CardTitle className="text-xl text-white mt-3">يوم واحد</CardTitle>
-              <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-4xl font-bold text-white">25</span>
-                <span className="text-slate-400">ريال</span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-center gap-3 text-slate-300">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                  <span>توصيات تداول مباشرة</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-300">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                  <span>سجل خاص لإحصاء صفقاتك</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-300">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                  <span>دعم فني</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* 1 Month Package */}
-          <Card className="bg-slate-900/60 border-slate-800/50 backdrop-blur-xl hover:border-slate-700 transition-all duration-300 hover:shadow-xl hover:shadow-slate-900/50 group">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <Badge variant="outline" className="border-slate-700 text-slate-400">
-                  <Calendar className="h-3 w-3 ml-1" />
-                  شهري
-                </Badge>
-              </div>
-              <CardTitle className="text-xl text-white mt-3">شهر واحد</CardTitle>
-              <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-4xl font-bold text-white">200</span>
-                <span className="text-slate-400">ريال</span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-center gap-3 text-slate-300">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                  <span>توصيات تداول مباشرة</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-300">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                  <span>سجل خاص لإحصاء صفقاتك</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-300">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                  <span>دعم فني</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* 2 Months Package - Popular */}
-          <Card className="bg-slate-900/60 border-primary/50 backdrop-blur-xl relative overflow-hidden group hover:border-primary transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
-            <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-primary to-blue-500"></div>
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <Badge className="bg-primary/20 text-primary border-0">
-                  <Star className="h-3 w-3 ml-1" />
-                  الأكثر شعبية
-                </Badge>
-              </div>
-              <CardTitle className="text-xl text-white mt-3">شهرين</CardTitle>
-              <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-4xl font-bold text-white">390</span>
-                <span className="text-slate-400">ريال</span>
-              </div>
-              <p className="text-sm text-emerald-400 mt-1">وفر 10 ريال</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-center gap-3 text-slate-300">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                  <span>توصيات تداول مباشرة</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-300">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                  <span>سجل خاص لإحصاء صفقاتك</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-300">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                  <span>دعم فني</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* Premium Package - 450 SAR */}
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* VIP 1 Day Package - 25 SAR */}
           <Card className="bg-gradient-to-b from-amber-950/40 to-slate-900/80 border-amber-500/50 backdrop-blur-xl relative overflow-hidden group hover:border-amber-400 transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/20">
             <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-500 to-yellow-500"></div>
             <div className="absolute -top-20 -right-20 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl"></div>
@@ -391,9 +290,111 @@ const SubscriptionCheck = () => {
                   باقة VIP
                 </Badge>
               </div>
-              <CardTitle className="text-xl text-white mt-3">شهرين + تحليل متقدم</CardTitle>
+              <CardTitle className="text-xl text-white mt-3">يوم واحد</CardTitle>
               <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-4xl font-bold bg-gradient-to-r from-amber-400 to-yellow-400 bg-clip-text text-transparent">450</span>
+                <span className="text-4xl font-bold bg-gradient-to-r from-amber-400 to-yellow-400 bg-clip-text text-transparent">25</span>
+                <span className="text-slate-400">ريال</span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5 relative">
+              {/* Basic Features */}
+              <div className="space-y-3">
+                <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">الميزات الأساسية</p>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-3 text-slate-300">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                    <span>توصيات تداول مباشرة</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-slate-300">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                    <span>سجل خاص لإحصاء صفقاتك</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-slate-300">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                    <span>دعم فني</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Supply & Demand Analyzer */}
+              <div className="space-y-3 pt-3 border-t border-amber-500/20">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-amber-400" />
+                  <p className="text-xs text-amber-400 uppercase tracking-wider font-semibold">محلل العرض والطلب</p>
+                </div>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-3 text-amber-200/90">
+                    <Sparkles className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                    <span>تحديد مناطق العرض والطلب</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-amber-200/90">
+                    <Sparkles className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                    <span>إعداد صفقات مقترحة آلياً</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-amber-200/90">
+                    <Sparkles className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                    <span>تحليل قوة المناطق</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Chart Analysis */}
+              <div className="space-y-3 pt-3 border-t border-amber-500/20">
+                <div className="flex items-center gap-2">
+                  <LineChart className="h-4 w-4 text-amber-400" />
+                  <p className="text-xs text-amber-400 uppercase tracking-wider font-semibold">تحليل الشارت المباشر</p>
+                </div>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-3 text-amber-200/90">
+                    <Sparkles className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                    <span>شارت TradingView مباشر</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-amber-200/90">
+                    <Sparkles className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                    <span>تحليل بالذكاء الاصطناعي</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-amber-200/90">
+                    <Sparkles className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                    <span>توصيات CALL/PUT من الشارت</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Supported Markets */}
+              <div className="space-y-3 pt-3 border-t border-amber-500/20">
+                <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">الأسواق المدعومة</p>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className="border-amber-500/30 text-amber-300 text-xs">الفوركس</Badge>
+                  <Badge variant="outline" className="border-amber-500/30 text-amber-300 text-xs">الأسهم</Badge>
+                  <Badge variant="outline" className="border-amber-500/30 text-amber-300 text-xs">العملات الرقمية</Badge>
+                  <Badge variant="outline" className="border-amber-500/30 text-amber-300 text-xs">المعادن</Badge>
+                </div>
+              </div>
+
+              {/* Pro Signals */}
+              <div className="bg-amber-500/10 rounded-xl p-3 mt-2">
+                <div className="flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-amber-400" />
+                  <span className="text-amber-300 text-sm font-semibold">+ توصيات المحترفين الحصرية</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* VIP 1 Month Package - 200 SAR */}
+          <Card className="bg-gradient-to-b from-amber-950/40 to-slate-900/80 border-amber-500/50 backdrop-blur-xl relative overflow-hidden group hover:border-amber-400 transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/20">
+            <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-500 to-yellow-500"></div>
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl"></div>
+            <CardHeader className="pb-4 relative">
+              <div className="flex items-center justify-between">
+                <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 shadow-lg shadow-amber-500/20">
+                  <Crown className="h-3 w-3 ml-1" />
+                  باقة VIP
+                </Badge>
+              </div>
+              <CardTitle className="text-xl text-white mt-3">شهر واحد</CardTitle>
+              <div className="flex items-baseline gap-2 mt-2">
+                <span className="text-4xl font-bold bg-gradient-to-r from-amber-400 to-yellow-400 bg-clip-text text-transparent">200</span>
                 <span className="text-slate-400">ريال</span>
               </div>
             </CardHeader>
