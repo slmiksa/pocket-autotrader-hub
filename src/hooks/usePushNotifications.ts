@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// VAPID public key - this should match the one in your edge function
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
-
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding)
@@ -18,6 +15,23 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
     outputArray[i] = rawData.charCodeAt(i);
   }
   return outputArray.buffer as ArrayBuffer;
+}
+
+// Cache the VAPID key
+let cachedVapidKey: string | null = null;
+
+async function getVapidPublicKey(): Promise<string> {
+  if (cachedVapidKey) return cachedVapidKey;
+  
+  try {
+    const { data, error } = await supabase.functions.invoke('get-vapid-key');
+    if (error) throw error;
+    cachedVapidKey = data.publicKey;
+    return cachedVapidKey;
+  } catch (error) {
+    console.error('Failed to get VAPID key:', error);
+    throw new Error('فشل في الحصول على مفتاح الإشعارات');
+  }
 }
 
 export const usePushNotifications = () => {
@@ -79,6 +93,9 @@ export const usePushNotifications = () => {
         return false;
       }
 
+      // Get VAPID key from server
+      const vapidKey = await getVapidPublicKey();
+
       // Register service worker
       await registerServiceWorker();
       const registration = await navigator.serviceWorker.ready;
@@ -90,7 +107,7 @@ export const usePushNotifications = () => {
         // Create new subscription
         const options: PushSubscriptionOptionsInit = {
           userVisibleOnly: true,
-          applicationServerKey: VAPID_PUBLIC_KEY ? urlBase64ToUint8Array(VAPID_PUBLIC_KEY) : undefined,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey),
         };
 
         subscription = await registration.pushManager.subscribe(options);
