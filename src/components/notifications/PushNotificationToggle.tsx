@@ -1,10 +1,14 @@
-import { Bell, BellOff, TestTube, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, BellOff, TestTube, Loader2, Server } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const PushNotificationToggle = () => {
+  const [isTestingServer, setIsTestingServer] = useState(false);
   const {
     isSupported,
     isSubscribed,
@@ -14,6 +18,36 @@ export const PushNotificationToggle = () => {
     unsubscribe,
     testNotification,
   } = usePushNotifications();
+
+  const testServerNotification = async () => {
+    setIsTestingServer(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('يرجى تسجيل الدخول أولاً');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('test-push-notification', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success(data.message || 'تم إرسال الإشعار من الخادم');
+      } else {
+        toast.error(data.message || 'فشل إرسال الإشعار');
+      }
+    } catch (error: any) {
+      console.error('Server test error:', error);
+      toast.error(error.message || 'حدث خطأ في إرسال الإشعار من الخادم');
+    } finally {
+      setIsTestingServer(false);
+    }
+  };
 
   if (!isSupported) {
     return (
@@ -66,15 +100,31 @@ export const PushNotificationToggle = () => {
 
         <div className="flex items-center gap-2">
           {isSubscribed && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={testNotification}
-              className="gap-1"
-            >
-              <TestTube className="h-4 w-4" />
-              <span className="hidden sm:inline">اختبار</span>
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={testNotification}
+                className="gap-1"
+                title="اختبار محلي"
+              >
+                <TestTube className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={testServerNotification}
+                disabled={isTestingServer}
+                className="gap-1"
+                title="اختبار من الخادم"
+              >
+                {isTestingServer ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Server className="h-4 w-4" />
+                )}
+              </Button>
+            </>
           )}
           
           {isLoading ? (
