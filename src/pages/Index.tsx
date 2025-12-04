@@ -7,6 +7,7 @@ import { LivePriceCards } from "@/components/LivePriceCards";
 import { HomeContent } from "@/components/HomeContent";
 import { Loader2 } from "lucide-react";
 import { initAudioContext } from "@/utils/soundNotification";
+import { PageBackground } from "@/components/PageBackground";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -107,7 +108,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background dark">
+    <PageBackground>
       {/* Announcement Banner */}
       <AnnouncementBanner />
 
@@ -120,14 +121,14 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card mt-8 sm:mt-12">
+      <footer className="border-t border-border bg-card/50 backdrop-blur-sm mt-8 sm:mt-12">
         <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
           <div className="text-center text-xs sm:text-sm text-muted-foreground">
             
           </div>
         </div>
       </footer>
-    </div>
+    </PageBackground>
   );
 };
 

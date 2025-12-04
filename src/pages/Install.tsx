@@ -17,6 +17,7 @@ import {
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { PageBackground } from '@/components/PageBackground';
 
 export default function Install() {
   const navigate = useNavigate();
@@ -59,8 +60,8 @@ export default function Install() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" dir="rtl">
-      {/* Header */}
+    <PageBackground>
+      <div dir="rtl">
       <header className="border-b border-white/10 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
@@ -271,6 +272,7 @@ export default function Install() {
           التطبيق مجاني ولا يحتاج متجر التطبيقات
         </p>
       </div>
-    </div>
+      </div>
+    </PageBackground>
   );
 }
