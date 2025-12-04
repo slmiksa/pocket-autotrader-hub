@@ -7,7 +7,7 @@ import { LivePriceCards } from "@/components/LivePriceCards";
 import { HomeContent } from "@/components/HomeContent";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper, Shield, Menu, User as UserIcon, Users } from "lucide-react";
+import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper, Shield, Menu, User as UserIcon, Users, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
 
@@ -203,6 +203,10 @@ const Index = () => {
                   <TrendingUp className="h-4 w-4 text-primary" />
                   <span>محلل العرض والطلب</span>
                 </Button>
+                <Button onClick={() => navigate('/markets')} variant="outline" size="sm" className="gap-1.5">
+                  <BarChart3 className="h-4 w-4" />
+                  <span>الأسواق</span>
+                </Button>
                 <Button onClick={() => navigate('/news')} variant="outline" size="sm" className="gap-1.5">
                   <Newspaper className="h-4 w-4" />
                   <span>الأخبار</span>
@@ -262,6 +266,10 @@ const Index = () => {
                     <Button onClick={() => { navigate('/supply-demand'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-gradient-to-r from-purple-900/50 to-purple-900/30 border-purple-500/30 text-white hover:bg-purple-900/60">
                       <TrendingUp className="h-4 w-4 text-purple-400" />
                       <span>محلل العرض والطلب</span>
+                    </Button>
+                    <Button onClick={() => { navigate('/markets'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
+                      <BarChart3 className="h-4 w-4" />
+                      <span>الأسواق</span>
                     </Button>
                     <Button onClick={() => { navigate('/news'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
                       <Newspaper className="h-4 w-4" />
