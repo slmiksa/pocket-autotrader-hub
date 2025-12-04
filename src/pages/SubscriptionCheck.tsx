@@ -45,7 +45,6 @@ const SubscriptionCheck = () => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      toast.success("تم تسجيل الخروج بنجاح");
       navigate("/auth");
     } catch (error: any) {
       console.error("Error logging out:", error);
