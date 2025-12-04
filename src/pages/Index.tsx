@@ -5,7 +5,6 @@ import type { User, Session } from "@supabase/supabase-js";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { LivePriceCards } from "@/components/LivePriceCards";
 import { HomeContent } from "@/components/HomeContent";
-import { GlobalHeader } from "@/components/GlobalHeader";
 import { Loader2 } from "lucide-react";
 import { initAudioContext } from "@/utils/soundNotification";
 
@@ -109,9 +108,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background dark">
-      {/* Header */}
-      <GlobalHeader />
-
       {/* Announcement Banner */}
       <AnnouncementBanner />
 
