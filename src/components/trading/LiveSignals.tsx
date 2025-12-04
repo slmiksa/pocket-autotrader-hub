@@ -163,7 +163,7 @@ export const LiveSignals = ({
                       {signal.entry_time && <span className="text-primary font-medium">
                           ⏰ الدخول: {signal.entry_time}
                         </span>}
-                      <span>المبلغ: ${signal.amount}</span>
+                      
                     </div>
                   </div>
                 </div>
