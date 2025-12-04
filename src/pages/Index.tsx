@@ -7,9 +7,10 @@ import { LivePriceCards } from "@/components/LivePriceCards";
 import { HomeContent } from "@/components/HomeContent";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper, Shield, Menu, User as UserIcon, Users, BarChart3 } from "lucide-react";
+import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper, Shield, Menu, User as UserIcon, Users, BarChart3, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
+import { InstallAppButton } from "@/components/InstallAppButton";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -287,6 +288,14 @@ const Index = () => {
                       <MessageCircle className="h-4 w-4" />
                       <span>دعم فني</span>
                     </Button>
+                    
+                    {/* Install App Button */}
+                    <InstallAppButton 
+                      variant="outline" 
+                      fullWidth 
+                      className="justify-start bg-gradient-to-r from-emerald-900/50 to-emerald-900/30 border-emerald-500/30 text-white hover:bg-emerald-900/60"
+                    />
+                    
                     <Button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} variant="ghost" className="w-full justify-start gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10">
                       <LogOut className="h-4 w-4" />
                       <span>تسجيل الخروج</span>
