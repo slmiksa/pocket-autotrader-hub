@@ -17,6 +17,7 @@ import Markets from "./pages/Markets";
 import Profile from "./pages/Profile";
 import BinaryOptions from "./pages/BinaryOptions";
 import Community from "./pages/Community";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/binary-options" element={<BinaryOptions />} />
           <Route path="/community" element={<Community />} />
+          <Route path="/install" element={<Install />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

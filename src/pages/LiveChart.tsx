@@ -360,110 +360,113 @@ export default function LiveChart() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]" dir="rtl">
-      {/* Header */}
+      {/* Header - Mobile Optimized */}
       <header className="border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+        <div className="container mx-auto px-3 sm:px-4 py-3">
+          {/* Top Row: Back button and Symbol */}
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
               <Button
                 onClick={() => navigate(-1)}
                 variant="ghost"
-                size="sm"
-                className="gap-2 text-white/70 hover:text-white hover:bg-white/10"
+                size="icon"
+                className="text-white/70 hover:text-white hover:bg-white/10 flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9"
               >
                 <ArrowLeft className="h-4 w-4" />
-                رجوع
               </Button>
-              <div>
-                <h1 className="text-xl font-bold text-white">{symbolInfo.displayName}</h1>
-                <p className="text-sm text-white/50">شارت حقيقي مباشر من TradingView</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-base sm:text-xl font-bold text-white truncate">{symbolInfo.displayName}</h1>
+                <p className="text-xs text-white/50 hidden sm:block">شارت حقيقي مباشر من TradingView</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Select value={selectedTimeframe} onValueChange={(val) => {
-                setSelectedTimeframe(val);
-                const intervalMap: Record<string, string> = {
-                  "1": "دقيقة",
-                  "5": "5 دقائق",
-                  "15": "15 دقيقة",
-                  "30": "30 دقيقة",
-                  "60": "ساعة",
-                  "240": "4 ساعات",
-                  "D": "يومي",
-                  "W": "أسبوعي",
-                };
-                setSelectedInterval(intervalMap[val] || "يومي");
-              }}>
-                <SelectTrigger className="w-[120px] bg-background/50 border-white/20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 دقيقة</SelectItem>
-                  <SelectItem value="5">5 دقائق</SelectItem>
-                  <SelectItem value="15">15 دقيقة</SelectItem>
-                  <SelectItem value="30">30 دقيقة</SelectItem>
-                  <SelectItem value="60">ساعة</SelectItem>
-                  <SelectItem value="240">4 ساعات</SelectItem>
-                  <SelectItem value="D">يومي</SelectItem>
-                  <SelectItem value="W">أسبوعي</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {chartAnalysisEnabled && (
-                <>
-                  <Button
-                    onClick={() => setShowInstructions(true)}
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
-                  >
-                    <Info className="h-4 w-4" />
-                    كيفية التحليل
-                  </Button>
-                  
-                  <label htmlFor="chart-upload">
-                    <Button
-                      type="button"
-                      disabled={isAnalyzing || !chartAnalysisEnabled}
-                      className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                      size="sm"
-                      onClick={() => document.getElementById('chart-upload')?.click()}
-                    >
-                      {isAnalyzing ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          جاري التحليل...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4" />
-                          رفع صورة الشارت
-                        </>
-                      )}
-                    </Button>
-                  </label>
-                  <Input
-                    id="chart-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFileSelect}
-                    disabled={isAnalyzing || !chartAnalysisEnabled}
-                  />
-                </>
-              )}
+            
+            {/* Timeframe Selector */}
+            <Select value={selectedTimeframe} onValueChange={(val) => {
+              setSelectedTimeframe(val);
+              const intervalMap: Record<string, string> = {
+                "1": "دقيقة",
+                "5": "5 دقائق",
+                "15": "15 دقيقة",
+                "30": "30 دقيقة",
+                "60": "ساعة",
+                "240": "4 ساعات",
+                "D": "يومي",
+                "W": "أسبوعي",
+              };
+              setSelectedInterval(intervalMap[val] || "يومي");
+            }}>
+              <SelectTrigger className="w-[90px] sm:w-[120px] bg-slate-800/50 border-slate-700 text-white text-xs sm:text-sm h-8 sm:h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectItem value="1" className="text-white">1 دقيقة</SelectItem>
+                <SelectItem value="5" className="text-white">5 دقائق</SelectItem>
+                <SelectItem value="15" className="text-white">15 دقيقة</SelectItem>
+                <SelectItem value="30" className="text-white">30 دقيقة</SelectItem>
+                <SelectItem value="60" className="text-white">ساعة</SelectItem>
+                <SelectItem value="240" className="text-white">4 ساعات</SelectItem>
+                <SelectItem value="D" className="text-white">يومي</SelectItem>
+                <SelectItem value="W" className="text-white">أسبوعي</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {/* Bottom Row: Action Buttons */}
+          {chartAnalysisEnabled && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <Button
+                onClick={() => setShowInstructions(true)}
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 text-xs sm:text-sm h-8 flex-shrink-0"
+              >
+                <Info className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">كيفية التحليل</span>
+                <span className="xs:hidden">تعليمات</span>
+              </Button>
+              
+              <Button
+                type="button"
+                disabled={isAnalyzing || !chartAnalysisEnabled}
+                className="gap-1.5 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-xs sm:text-sm h-8 flex-shrink-0"
+                size="sm"
+                onClick={() => document.getElementById('chart-upload')?.click()}
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span className="hidden xs:inline">جاري التحليل...</span>
+                    <span className="xs:hidden">تحليل...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-3.5 w-3.5" />
+                    <span className="hidden xs:inline">رفع صورة الشارت</span>
+                    <span className="xs:hidden">رفع صورة</span>
+                  </>
+                )}
+              </Button>
+              <Input
+                id="chart-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
+                disabled={isAnalyzing || !chartAnalysisEnabled}
+              />
               
               <Button
                 onClick={handleRefresh}
                 variant="outline"
                 size="sm"
-                className="gap-2 border-white/20 text-white/70 hover:text-white hover:bg-white/10"
+                className="gap-1.5 border-white/20 text-white/70 hover:text-white hover:bg-white/10 text-xs sm:text-sm h-8 flex-shrink-0"
               >
-                <RefreshCw className="h-4 w-4" />
-                تحديث
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">تحديث</span>
+                <span className="xs:hidden">⟳</span>
               </Button>
             </div>
-          </div>
+          )}
         </div>
       </header>
 
