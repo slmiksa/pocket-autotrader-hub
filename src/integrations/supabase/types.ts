@@ -300,6 +300,7 @@ export type Database = {
           email: string | null
           id: string
           image_analysis_enabled: boolean | null
+          nickname: string | null
           professional_signals_enabled: boolean | null
           subscription_expires_at: string | null
           supply_demand_enabled: boolean | null
@@ -312,6 +313,7 @@ export type Database = {
           email?: string | null
           id?: string
           image_analysis_enabled?: boolean | null
+          nickname?: string | null
           professional_signals_enabled?: boolean | null
           subscription_expires_at?: string | null
           supply_demand_enabled?: boolean | null
@@ -324,6 +326,7 @@ export type Database = {
           email?: string | null
           id?: string
           image_analysis_enabled?: boolean | null
+          nickname?: string | null
           professional_signals_enabled?: boolean | null
           subscription_expires_at?: string | null
           supply_demand_enabled?: boolean | null

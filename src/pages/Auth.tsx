@@ -6,13 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, Mail, Lock } from "lucide-react";
+import { TrendingUp, Mail, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+
 const Auth = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [nickname, setNickname] = useState("");
   const [loading, setLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   useEffect(() => {
@@ -34,6 +36,10 @@ const Auth = () => {
       toast.error("يرجى إدخال البريد الإلكتروني وكلمة المرور");
       return;
     }
+    if (!nickname.trim()) {
+      toast.error("يرجى إدخال اسم المستخدم (النك نيم)");
+      return;
+    }
     setLoading(true);
     try {
       const {
@@ -48,6 +54,14 @@ const Auth = () => {
       });
       if (error) throw error;
       
+      // Update profile with nickname
+      if (data.user) {
+        await supabase
+          .from('profiles')
+          .update({ nickname: nickname.trim() })
+          .eq('user_id', data.user.id);
+      }
+      
       if (data.session) {
         toast.success("تم إنشاء الحساب بنجاح!");
         navigate("/");
@@ -55,6 +69,7 @@ const Auth = () => {
         toast.success("تم إنشاء الحساب بنجاح!");
         setEmail("");
         setPassword("");
+        setNickname("");
       }
     } catch (error: any) {
       console.error("Error signing up:", error);
@@ -133,11 +148,26 @@ const Auth = () => {
 
             <TabsContent value="signup" className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="nickname-signup" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  اسم المستخدم (النك نيم)
+                </Label>
+                <Input 
+                  id="nickname-signup" 
+                  type="text" 
+                  value={nickname} 
+                  onChange={e => setNickname(e.target.value)} 
+                  placeholder="اسمك الذي سيظهر للآخرين" 
+                  maxLength={30}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="email-signup" className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
                   البريد الإلكتروني
                 </Label>
-                <Input id="email-signup" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" onKeyPress={e => e.key === "Enter" && handleSignUp()} />
+                <Input id="email-signup" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" />
               </div>
 
               <div className="space-y-2">

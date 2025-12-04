@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { UserProfileDialog } from "@/components/community/UserProfileDialog";
 
 interface CommunityPost {
   id: string;
@@ -20,6 +21,7 @@ interface CommunityPost {
   content: string;
   image_url: string | null;
   created_at: string;
+  user_nickname?: string | null;
 }
 
 interface Comment {
@@ -29,6 +31,7 @@ interface Comment {
   user_email: string | null;
   content: string;
   created_at: string;
+  user_nickname?: string | null;
 }
 
 interface Like {
@@ -76,6 +79,14 @@ export default function Community() {
   const [sendingComment, setSendingComment] = useState(false);
   const [postLikeCounts, setPostLikeCounts] = useState<Record<string, number>>({});
   const [postCommentCounts, setPostCommentCounts] = useState<Record<string, number>>({});
+  
+  // User profile dialog
+  const [showUserProfile, setShowUserProfile] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
+  
+  // Nicknames cache
+  const [userNicknames, setUserNicknames] = useState<Record<string, string>>({});
 
   // Handle direct post link
   useEffect(() => {
@@ -110,6 +121,21 @@ export default function Community() {
       
       if (data && data.length > 0) {
         const postIds = data.map(p => p.id);
+        const userIds = [...new Set(data.map(p => p.user_id))];
+        
+        // Fetch nicknames for all users
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, nickname')
+          .in('user_id', userIds);
+        
+        const nicknames: Record<string, string> = {};
+        profilesData?.forEach(p => {
+          if (p.nickname) {
+            nicknames[p.user_id] = p.nickname;
+          }
+        });
+        setUserNicknames(nicknames);
         
         const { data: likesData } = await supabase
           .from('community_likes')
@@ -468,9 +494,23 @@ export default function Community() {
     }
   };
 
-  const getUserDisplayName = (email: string | null) => {
+  const getUserDisplayName = (email: string | null, userId?: string) => {
+    if (userId && userNicknames[userId]) return userNicknames[userId];
     if (!email) return 'مستخدم';
     return email.split('@')[0];
+  };
+
+  const openUserProfile = (userId: string, email: string | null) => {
+    setSelectedUserId(userId);
+    setSelectedUserEmail(email);
+    setShowUserProfile(true);
+  };
+
+  const handlePostFromProfile = (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    if (post) {
+      openPost(post);
+    }
   };
 
   const isLiked = user && likes.some(l => l.user_id === user.id);
@@ -575,11 +615,17 @@ export default function Community() {
                   {/* Bottom Info */}
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/95 via-slate-950/80 to-transparent p-3">
                     <h3 className="text-white font-semibold text-sm line-clamp-1 mb-1">{post.title}</h3>
-                    <div className="flex items-center gap-2">
+                    <div 
+                      className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openUserProfile(post.user_id, post.user_email);
+                      }}
+                    >
                       <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
                         <User className="h-3 w-3 text-white" />
                       </div>
-                      <p className="text-slate-400 text-xs">{getUserDisplayName(post.user_email)}</p>
+                      <p className="text-slate-400 text-xs">{getUserDisplayName(post.user_email, post.user_id)}</p>
                     </div>
                   </div>
                   {/* Stats overlay */}
@@ -791,12 +837,15 @@ export default function Community() {
             <div className="space-y-4">
               <DialogHeader>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div 
+                    className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => openUserProfile(selectedPost.user_id, selectedPost.user_email)}
+                  >
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
                       <User className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <p className="font-semibold text-white">{getUserDisplayName(selectedPost.user_email)}</p>
+                      <p className="font-semibold text-white">{getUserDisplayName(selectedPost.user_email, selectedPost.user_id)}</p>
                       <p className="text-xs text-slate-400">
                         {format(new Date(selectedPost.created_at), 'dd MMMM yyyy - HH:mm', { locale: ar })}
                       </p>
@@ -916,12 +965,15 @@ export default function Community() {
                     comments.map((comment) => (
                       <div key={comment.id} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
                         <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
+                          <div 
+                            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => openUserProfile(comment.user_id, comment.user_email)}
+                          >
                             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
                               <User className="h-3 w-3 text-white" />
                             </div>
                             <span className="font-medium text-sm text-white">
-                              {getUserDisplayName(comment.user_email)}
+                              {getUserDisplayName(comment.user_email, comment.user_id)}
                             </span>
                             <span className="text-xs text-slate-500">
                               {format(new Date(comment.created_at), 'dd/MM HH:mm', { locale: ar })}
@@ -948,6 +1000,14 @@ export default function Community() {
           )}
         </DialogContent>
       </Dialog>
+      {/* User Profile Dialog */}
+      <UserProfileDialog
+        open={showUserProfile}
+        onOpenChange={setShowUserProfile}
+        userId={selectedUserId}
+        userEmail={selectedUserEmail}
+        onPostClick={handlePostFromProfile}
+      />
     </div>
   );
 }
