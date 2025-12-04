@@ -139,19 +139,20 @@ export const HomeContent = () => {
 
   return (
     <div className="space-y-8">
-      {/* Hero Slider */}
-      <div className="relative">
-        <Carousel
-          plugins={[plugin.current]}
-          className="w-full"
-          opts={{
-            align: "start",
-            loop: true,
-            direction: "rtl"
-          }}
-        >
-          <CarouselContent>
-            {(heroSlides.length > 0 ? heroSlides : []).map((slide, index) => {
+      {/* Hero Slider - Only show if there are active slides */}
+      {heroSlides.length > 0 && (
+        <div className="relative">
+          <Carousel
+            plugins={[plugin.current]}
+            className="w-full"
+            opts={{
+              align: "start",
+              loop: true,
+              direction: "rtl"
+            }}
+          >
+            <CarouselContent>
+              {heroSlides.map((slide, index) => {
               const SlideIcon = iconMap[slide.button_link] || Sparkles;
               const bgImage = slide.image_url || defaultImages[index % defaultImages.length];
               const gradient = gradientMap[slide.gradient_color] || gradientMap.primary;
@@ -207,43 +208,6 @@ export const HomeContent = () => {
                 </CarouselItem>
               );
             })}
-            
-            {/* Fallback if no slides from DB */}
-            {heroSlides.length === 0 && !loading && (
-              <CarouselItem>
-                <Card className="relative overflow-hidden border-0 min-h-[300px] md:min-h-[350px]">
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${heroTrading1})` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-l from-primary/40 via-primary/20 to-transparent" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/70 to-transparent" />
-                  
-                  <CardContent className="relative z-10 p-8 md:p-12 h-full flex items-center">
-                    <div className="text-center md:text-right space-y-4">
-                      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-background/30 border border-white/20 backdrop-blur-sm">
-                        <Sparkles className="h-5 w-5 text-primary" />
-                        <span className="text-sm font-medium text-foreground">منصة احترافية</span>
-                      </div>
-                      <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground drop-shadow-lg">
-                        منصة التوصيات الذكية
-                      </h1>
-                      <p className="text-lg text-foreground/90 max-w-xl drop-shadow">
-                        احصل على توصيات تداول احترافية بالذكاء الاصطناعي
-                      </p>
-                      <Button 
-                        size="lg" 
-                        className="mt-4 gap-2"
-                        onClick={() => navigate("/binary-options")}
-                      >
-                        ابدأ التداول
-                        <ArrowUpRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </CarouselItem>
-            )}
           </CarouselContent>
           
           {/* Custom Navigation */}
@@ -252,7 +216,8 @@ export const HomeContent = () => {
             <CarouselNext className="relative inset-auto translate-y-0 bg-card/50 border-border/50 hover:bg-card backdrop-blur-sm" />
           </div>
         </Carousel>
-      </div>
+        </div>
+      )}
 
       {/* Quick Access Features */}
       <div>
