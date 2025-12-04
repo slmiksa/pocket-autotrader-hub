@@ -26,10 +26,9 @@ const navItems = [
   { label: "توصيات المحترفين", icon: Target, path: "/professional-signals", color: "default" },
   { label: "محلل العرض والطلب", icon: TrendingUp, path: "/supply-demand", color: "purple" },
   { label: "الأسواق", icon: BarChart3, path: "/markets", color: "default" },
-  { label: "الخيارات الثنائية", icon: Binary, path: "/binary-options", color: "default" },
   { label: "الأخبار", icon: Newspaper, path: "/news", color: "default" },
   { label: "المجتمع", icon: Users, path: "/community", color: "default" },
-  { label: "حسابي والمفضلة", icon: User, path: "/profile", color: "amber" },
+  { label: "حسابي والمفضلة", icon: User, path: "/profile", color: "purple" },
   { label: "دعم فني", icon: Target, path: null, action: "support", color: "default" },
   { label: "تحميل كتطبيق", icon: Menu, path: "/install", color: "green" },
 ];
