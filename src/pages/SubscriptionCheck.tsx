@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Key, Shield, MessageCircle, CheckCircle2, XCircle, LogOut, Loader2, BarChart3, LineChart, Sparkles, Crown, Star } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-
 const SubscriptionCheck = () => {
   const navigate = useNavigate();
   const [subscriptionCode, setSubscriptionCode] = useState("");
@@ -19,14 +18,12 @@ const SubscriptionCheck = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
-
   const checkUserSubscription = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("subscription_expires_at")
-        .eq("user_id", userId)
-        .single();
+      const {
+        data,
+        error
+      } = await supabase.from("profiles").select("subscription_expires_at").eq("user_id", userId).single();
       if (error) throw error;
       if (data && data.subscription_expires_at) {
         const expiresAt = new Date(data.subscription_expires_at);
@@ -45,7 +42,6 @@ const SubscriptionCheck = () => {
       return false;
     }
   };
-
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -56,14 +52,12 @@ const SubscriptionCheck = () => {
       toast.error("فشل تسجيل الخروج");
     }
   };
-
   const openWhatsApp = () => {
     const phoneNumber = "966575594911";
     const message = "مرحباً، أريد الاشتراك في PocketOption Auto Trader";
     const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
-
   const handleActivateCode = async () => {
     if (!user) {
       toast.error("يجب تسجيل الدخول أولاً");
@@ -75,35 +69,30 @@ const SubscriptionCheck = () => {
     }
     setLoading(true);
     try {
-      const { data: codeData, error: codeError } = await supabase
-        .from("subscription_codes")
-        .select("*")
-        .eq("code", subscriptionCode.toUpperCase())
-        .eq("is_active", true)
-        .single();
-
+      const {
+        data: codeData,
+        error: codeError
+      } = await supabase.from("subscription_codes").select("*").eq("code", subscriptionCode.toUpperCase()).eq("is_active", true).single();
       if (codeError || !codeData) {
         toast.error("كود الاشتراك غير صحيح أو منتهي الصلاحية");
         setLoading(false);
         return;
       }
-
       if (codeData.expires_at && new Date(codeData.expires_at) < new Date()) {
         toast.error("هذا الكود منتهي الصلاحية");
         setLoading(false);
         return;
       }
-
       if (codeData.max_uses && codeData.current_uses >= codeData.max_uses) {
         toast.error("تم استخدام هذا الكود بالكامل");
         setLoading(false);
         return;
       }
-
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + codeData.duration_days);
-
-      const { error: profileError } = await supabase.from("profiles").upsert({
+      const {
+        error: profileError
+      } = await supabase.from("profiles").upsert({
         user_id: user.id,
         email: user.email,
         subscription_expires_at: expiresAt.toISOString(),
@@ -112,22 +101,17 @@ const SubscriptionCheck = () => {
       }, {
         onConflict: "user_id"
       });
-
       if (profileError) {
         console.error("Profile error:", profileError);
         throw profileError;
       }
-
-      await supabase
-        .from("subscription_codes")
-        .update({ current_uses: (codeData.current_uses || 0) + 1 })
-        .eq("id", codeData.id);
-
+      await supabase.from("subscription_codes").update({
+        current_uses: (codeData.current_uses || 0) + 1
+      }).eq("id", codeData.id);
       toast.success("تم تفعيل الاشتراك بنجاح! انتظر جاري تحويلك إلى صفحة التوصيات...");
       setHasActiveSubscription(true);
       setSubscriptionExpiresAt(expiresAt.toISOString());
       setSubscriptionCode("");
-
       setTimeout(() => {
         navigate("/");
       }, 1200);
@@ -138,9 +122,12 @@ const SubscriptionCheck = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: {
+        subscription
+      }
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -156,8 +143,11 @@ const SubscriptionCheck = () => {
         setLoading(false);
       }
     });
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -171,32 +161,23 @@ const SubscriptionCheck = () => {
         setLoading(false);
       }
     });
-
     return () => subscription.unsubscribe();
   }, [navigate]);
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+    return <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="text-center space-y-4">
           <Loader2 className="h-10 w-10 animate-spin text-amber-500 mx-auto" />
           <p className="text-slate-400">جاري التحقق...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (hasActiveSubscription && user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+    return <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <Loader2 className="h-10 w-10 animate-spin text-amber-500" />
-      </div>
-    );
+      </div>;
   }
-
   if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
+    return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl"></div>
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
@@ -210,11 +191,7 @@ const SubscriptionCheck = () => {
             <CardDescription className="text-slate-400">يرجى تسجيل الدخول للمتابعة</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button 
-              onClick={() => navigate("/auth")} 
-              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0" 
-              size="lg"
-            >
+            <Button onClick={() => navigate("/auth")} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0" size="lg">
               تسجيل الدخول / التسجيل
             </Button>
             <Button onClick={() => navigate("/admin-login")} variant="outline" className="w-full border-slate-700 text-slate-300 hover:bg-slate-800">
@@ -223,12 +200,9 @@ const SubscriptionCheck = () => {
             </Button>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-6">
+  return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-6">
       {/* Background Effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-3xl"></div>
@@ -240,7 +214,7 @@ const SubscriptionCheck = () => {
         {/* Header */}
         <div className="flex items-center justify-between bg-slate-900/60 backdrop-blur-xl rounded-2xl p-4 border border-slate-800/50">
           <div className="flex items-center gap-4">
-            <div className="rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 p-3 shadow-lg shadow-amber-500/20">
+            <div className="rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 p-3 shadow-lg shadow-amber-500/20 bg-transparent border-none">
               <TrendingUp className="h-7 w-7 text-white" />
             </div>
             <div>
@@ -257,13 +231,13 @@ const SubscriptionCheck = () => {
         {/* Subscription Status */}
         <Card className="bg-gradient-to-r from-red-950/40 to-red-900/20 border-red-500/30 backdrop-blur-xl">
           <CardContent className="py-5">
-            <div className="flex items-center gap-4">
+            <div className="items-center gap-4 flex flex-row">
               <div className="rounded-full bg-red-500/20 p-3">
                 <XCircle className="h-6 w-6 text-red-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-white">الاشتراك غير نشط</h3>
-                <p className="text-sm text-slate-400">
+                <h3 className="font-semibold text-destructive">الاشتراك غير نشط</h3>
+                <p className="text-sm my-[3px] px-[11px] bg-secondary-foreground text-primary-foreground">
                   يجب تفعيل الاشتراك للوصول إلى جميع المميزات
                 </p>
               </div>
@@ -496,11 +470,7 @@ const SubscriptionCheck = () => {
                 <p className="font-semibold text-white text-lg">للحصول على كود الاشتراك</p>
                 <p className="text-sm text-slate-400">تواصل معنا عبر الواتساب للحصول على الكود</p>
               </div>
-              <Button 
-                onClick={openWhatsApp} 
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20" 
-                size="lg"
-              >
+              <Button onClick={openWhatsApp} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20" size="lg">
                 <MessageCircle className="h-5 w-5" />
                 تواصل على الواتساب
               </Button>
@@ -522,36 +492,17 @@ const SubscriptionCheck = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="code" className="text-slate-300">كود الاشتراك</Label>
-              <Input 
-                id="code" 
-                value={subscriptionCode} 
-                onChange={e => setSubscriptionCode(e.target.value.toUpperCase())} 
-                onKeyPress={e => e.key === "Enter" && handleActivateCode()} 
-                placeholder="XXXX-XXXX-XXXX" 
-                className="font-mono text-center text-lg bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" 
-                maxLength={14} 
-              />
+              <Input id="code" value={subscriptionCode} onChange={e => setSubscriptionCode(e.target.value.toUpperCase())} onKeyPress={e => e.key === "Enter" && handleActivateCode()} placeholder="XXXX-XXXX-XXXX" className="font-mono text-center text-lg bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" maxLength={14} />
             </div>
-            <Button 
-              onClick={handleActivateCode} 
-              disabled={loading || !subscriptionCode.trim()} 
-              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0" 
-              size="lg"
-            >
-              {loading ? (
-                <>
+            <Button onClick={handleActivateCode} disabled={loading || !subscriptionCode.trim()} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0" size="lg">
+              {loading ? <>
                   <Loader2 className="h-4 w-4 ml-2 animate-spin" />
                   جاري التفعيل...
-                </>
-              ) : (
-                "تفعيل الاشتراك"
-              )}
+                </> : "تفعيل الاشتراك"}
             </Button>
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default SubscriptionCheck;
