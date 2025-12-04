@@ -141,10 +141,10 @@ export const LivePriceCards = () => {
       <div className="flex justify-center">
         <button
           onClick={() => navigate('/markets')}
-          className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-1 transition-colors"
+          className="group inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary font-medium text-sm transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/20"
         >
-          عرض جميع الأسواق
-          <TrendingUp className="h-4 w-4" />
+          <TrendingUp className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" />
+          <span>عرض جميع الأسواق</span>
         </button>
       </div>
     </div>
