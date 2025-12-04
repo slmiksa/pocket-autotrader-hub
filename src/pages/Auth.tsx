@@ -6,10 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, Mail, Lock, User, Download } from "lucide-react";
+import { TrendingUp, Mail, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { InstallAppButton } from "@/components/InstallAppButton";
+
 const Auth = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -17,19 +18,17 @@ const Auth = () => {
   const [nickname, setNickname] = useState("");
   const [loading, setLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+
   useEffect(() => {
     const checkUser = async () => {
-      const {
-        data: {
-          session
-        }
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         navigate("/");
       }
     };
     checkUser();
   }, [navigate]);
+
   const handleSignUp = async () => {
     if (!email || !password) {
       toast.error("يرجى إدخال البريد الإلكتروني وكلمة المرور");
@@ -41,10 +40,7 @@ const Auth = () => {
     }
     setLoading(true);
     try {
-      const {
-        data,
-        error
-      } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -71,6 +67,7 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
   const handleSignIn = async () => {
     if (!email || !password) {
       toast.error("يرجى إدخال البريد الإلكتروني وكلمة المرور");
@@ -78,10 +75,7 @@ const Auth = () => {
     }
     setLoading(true);
     try {
-      const {
-        data,
-        error
-      } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
@@ -96,15 +90,27 @@ const Auth = () => {
       setLoading(false);
     }
   };
-  return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <AnnouncementBanner />
-      <div className="flex items-center justify-center p-4 min-h-[calc(100vh-56px)]">
+      <div className="flex flex-col items-center justify-center p-4 min-h-[calc(100vh-56px)]">
+        {/* Welcome Message */}
+        <div className="text-center mb-6 max-w-md">
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">
+            مرحباً بك عميلنا الجديد
+          </h1>
+          <p className="text-slate-400 text-sm md:text-base leading-relaxed">
+            نتشرف بانضمامك إلى أفضل منصة ذكاء اصطناعي في الشرق الأوسط متخصصة في الأسهم والتوصيات
+          </p>
+        </div>
+
         <Card className="w-full max-w-md bg-slate-900/80 border-slate-800 backdrop-blur-xl">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg shadow-amber-500/20">
               <TrendingUp className="h-8 w-8 text-white" />
             </div>
-            <CardTitle className="text-2xl text-white"> توصيات الهوامير</CardTitle>
+            <CardTitle className="text-2xl text-white">توصيات الهوامير</CardTitle>
             <CardDescription className="text-slate-400">
               {isLogin ? "تسجيل الدخول للوصول إلى حسابك" : "إنشاء حساب جديد"}
             </CardDescription>
@@ -112,8 +118,12 @@ const Auth = () => {
           <CardContent>
             <Tabs value={isLogin ? "login" : "signup"} onValueChange={v => setIsLogin(v === "login")}>
               <TabsList className="grid w-full grid-cols-2 mb-4 bg-slate-800">
-                <TabsTrigger value="login" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">تسجيل الدخول</TabsTrigger>
-                <TabsTrigger value="signup" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">إنشاء حساب</TabsTrigger>
+                <TabsTrigger value="login" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+                  تسجيل الدخول
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+                  إنشاء حساب
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="login" className="space-y-4">
@@ -122,7 +132,15 @@ const Auth = () => {
                     <Mail className="h-4 w-4" />
                     البريد الإلكتروني
                   </Label>
-                  <Input id="email-login" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" onKeyPress={e => e.key === "Enter" && handleSignIn()} className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" />
+                  <Input
+                    id="email-login"
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    onKeyPress={e => e.key === "Enter" && handleSignIn()}
+                    className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -130,10 +148,23 @@ const Auth = () => {
                     <Lock className="h-4 w-4" />
                     كلمة المرور
                   </Label>
-                  <Input id="password-login" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" onKeyPress={e => e.key === "Enter" && handleSignIn()} className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" />
+                  <Input
+                    id="password-login"
+                    type="password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    onKeyPress={e => e.key === "Enter" && handleSignIn()}
+                    className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
+                  />
                 </div>
 
-                <Button onClick={handleSignIn} disabled={loading} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white" size="lg">
+                <Button
+                  onClick={handleSignIn}
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
+                  size="lg"
+                >
                   تسجيل الدخول
                 </Button>
               </TabsContent>
@@ -144,7 +175,15 @@ const Auth = () => {
                     <User className="h-4 w-4" />
                     اسم المستخدم (النك نيم)
                   </Label>
-                  <Input id="nickname-signup" type="text" value={nickname} onChange={e => setNickname(e.target.value)} placeholder="اسمك الذي سيظهر للآخرين" maxLength={30} className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" />
+                  <Input
+                    id="nickname-signup"
+                    type="text"
+                    value={nickname}
+                    onChange={e => setNickname(e.target.value)}
+                    placeholder="اسمك الذي سيظهر للآخرين"
+                    maxLength={30}
+                    className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -152,7 +191,14 @@ const Auth = () => {
                     <Mail className="h-4 w-4" />
                     البريد الإلكتروني
                   </Label>
-                  <Input id="email-signup" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" />
+                  <Input
+                    id="email-signup"
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -160,10 +206,23 @@ const Auth = () => {
                     <Lock className="h-4 w-4" />
                     كلمة المرور
                   </Label>
-                  <Input id="password-signup" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" onKeyPress={e => e.key === "Enter" && handleSignUp()} className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500" />
+                  <Input
+                    id="password-signup"
+                    type="password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    onKeyPress={e => e.key === "Enter" && handleSignUp()}
+                    className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
+                  />
                 </div>
 
-                <Button onClick={handleSignUp} disabled={loading} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white" size="lg">
+                <Button
+                  onClick={handleSignUp}
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
+                  size="lg"
+                >
                   إنشاء حساب
                 </Button>
               </TabsContent>
@@ -171,11 +230,17 @@ const Auth = () => {
 
             {/* Install App Button */}
             <div className="mt-6 pt-4 border-t border-slate-800">
-              <InstallAppButton variant="outline" fullWidth className="bg-slate-800/50 border-slate-700 text-white hover:bg-slate-700" />
+              <InstallAppButton
+                variant="outline"
+                fullWidth
+                className="bg-slate-800/50 border-slate-700 text-white hover:bg-slate-700"
+              />
             </div>
           </CardContent>
         </Card>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Auth;
