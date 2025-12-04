@@ -468,7 +468,7 @@ const SubscriptionCheck = () => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-center sm:text-right">
                 <p className="font-semibold text-white text-lg">للحصول على كود الاشتراك</p>
-                <p className="text-sm text-slate-400">تواصل معنا عبر الواتساب للحصول على الكود</p>
+                <p className="text-sm text-primary-foreground bg-secondary-foreground">تواصل معنا عبر الواتساب للحصول على الكود</p>
               </div>
               <Button onClick={openWhatsApp} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20" size="lg">
                 <MessageCircle className="h-5 w-5" />
