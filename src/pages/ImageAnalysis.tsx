@@ -783,40 +783,41 @@ const ImageAnalysis = () => {
         </Button>
 
         <Tabs defaultValue="image" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6 bg-slate-900/80 backdrop-blur-xl border border-slate-800 p-1.5 h-auto rounded-xl">
+          <TabsList className="grid w-full grid-cols-5 mb-6 bg-slate-900/80 backdrop-blur-xl border border-slate-800 p-1 sm:p-1.5 h-auto rounded-xl gap-1 sm:gap-2">
             <TabsTrigger 
               value="image" 
-              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
+              className="gap-1 sm:gap-2 rounded-lg text-[10px] sm:text-sm px-1 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
             >
-              <ImageIcon className="h-4 w-4" />
-              تحليل صورة
+              <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">تحليل صورة</span>
+              <span className="sm:hidden">صورة</span>
             </TabsTrigger>
             <TabsTrigger 
               value="forex" 
-              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
+              className="gap-1 sm:gap-2 rounded-lg text-[10px] sm:text-sm px-1 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
             >
-              <Activity className="h-4 w-4" />
+              <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
               الفوريكس
             </TabsTrigger>
             <TabsTrigger 
               value="stocks" 
-              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
+              className="gap-1 sm:gap-2 rounded-lg text-[10px] sm:text-sm px-1 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
             >
-              <TrendingUp className="h-4 w-4" />
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
               الأسهم
             </TabsTrigger>
             <TabsTrigger 
               value="crypto" 
-              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
+              className="gap-1 sm:gap-2 rounded-lg text-[10px] sm:text-sm px-1 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
             >
-              <DollarSign className="h-4 w-4" />
+              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
               العملات
             </TabsTrigger>
             <TabsTrigger 
               value="metals" 
-              className="gap-2 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
+              className="gap-1 sm:gap-2 rounded-lg text-[10px] sm:text-sm px-1 sm:px-3 py-1.5 sm:py-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 data-[state=inactive]:text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all"
             >
-              <span className="text-lg">🥇</span>
+              <span className="text-sm sm:text-lg">🥇</span>
               المعادن
             </TabsTrigger>
           </TabsList>
@@ -974,18 +975,18 @@ const ImageAnalysis = () => {
             <div className="space-y-2">
               <Label>اختر زوج العملات</Label>
               <Select value={selectedForexPair} onValueChange={setSelectedForexPair}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
                   <SelectValue placeholder="اختر زوج العملات" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-slate-800 border-slate-700 text-white">
                   {filteredForexPairs.length > 0 ? (
                     filteredForexPairs.map((pair) => (
-                      <SelectItem key={pair.value} value={pair.value}>
+                      <SelectItem key={pair.value} value={pair.value} className="text-white hover:bg-slate-700 focus:bg-slate-700 focus:text-white">
                         {pair.label}
                       </SelectItem>
                     ))
                   ) : (
-                    <div className="p-2 text-center text-sm text-muted-foreground">
+                    <div className="p-2 text-center text-sm text-slate-400">
                       لا توجد نتائج
                     </div>
                   )}
@@ -1067,7 +1068,7 @@ const ImageAnalysis = () => {
                 <SelectContent className="max-h-[300px] bg-slate-800 border-slate-700">
                   {filteredStocks.length > 0 ? (
                     filteredStocks.map((stock) => (
-                      <SelectItem key={stock.value} value={stock.value}>
+                      <SelectItem key={stock.value} value={stock.value} className="text-white hover:bg-slate-700 focus:bg-slate-700 focus:text-white">
                         {stock.label}
                       </SelectItem>
                     ))
@@ -1167,10 +1168,10 @@ const ImageAnalysis = () => {
                 <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
                   <SelectValue placeholder="اختر عملة رقمية" />
                 </SelectTrigger>
-                <SelectContent className="max-h-[300px] bg-slate-800 border-slate-700">
+                <SelectContent className="max-h-[300px] bg-slate-800 border-slate-700 text-white">
                   {filteredCrypto.length > 0 ? (
                     filteredCrypto.map((crypto) => (
-                      <SelectItem key={crypto.value} value={crypto.value}>
+                      <SelectItem key={crypto.value} value={crypto.value} className="text-white hover:bg-slate-700 focus:bg-slate-700 focus:text-white">
                         {crypto.label}
                       </SelectItem>
                     ))
@@ -1273,10 +1274,10 @@ const ImageAnalysis = () => {
                 <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
                   <SelectValue placeholder="اختر المعدن" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectContent className="bg-slate-800 border-slate-700 text-white">
                   {filteredMetals.length > 0 ? (
                     filteredMetals.map((metal) => (
-                      <SelectItem key={metal.value} value={metal.value}>
+                      <SelectItem key={metal.value} value={metal.value} className="text-white hover:bg-slate-700 focus:bg-slate-700 focus:text-white">
                         <span className="flex items-center gap-2">
                           <span>{metal.icon}</span>
                           {metal.label}
