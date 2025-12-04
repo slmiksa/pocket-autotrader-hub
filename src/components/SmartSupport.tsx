@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { HelpCircle, ChevronRight, ChevronLeft, MessageCircleQuestion } from "lucide-react";
+import { HelpCircle, ChevronRight, ChevronLeft, MessageCircleQuestion, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
 
@@ -1100,8 +1100,8 @@ export const SmartSupport = () => {
           <MessageCircleQuestion className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-full sm:max-w-md p-0 pt-[env(safe-area-inset-top)]">
-        <SheetHeader className="p-4 border-b bg-primary text-primary-foreground mt-2">
+      <SheetContent side="left" className="w-full sm:max-w-md p-0 pt-[env(safe-area-inset-top)] bg-slate-900 border-slate-700">
+        <SheetHeader className="p-4 border-b border-slate-700 bg-primary text-primary-foreground mt-2">
           <div className="flex items-center gap-2">
             {(selectedSection || selectedQuestion) && (
               <Button variant="ghost" size="icon" onClick={handleBack} className="text-primary-foreground hover:bg-primary-foreground/20">
@@ -1122,20 +1122,30 @@ export const SmartSupport = () => {
         <ScrollArea className="h-[calc(100vh-80px)]">
           {!selectedSection && !selectedQuestion && (
             <div className="p-4 space-y-2">
-              <p className="text-sm text-muted-foreground mb-4">
-                اختر القسم المناسب لسؤالك:
-              </p>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-slate-400">
+                  اختر القسم المناسب لسؤالك:
+                </p>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleClose}
+                  className="h-8 w-8 text-slate-400 hover:text-white hover:bg-slate-800"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
               {supportData.map((section) => (
                 <button
                   key={section.id}
                   onClick={() => setSelectedSection(section)}
-                  className="w-full flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
+                  className="w-full flex items-center justify-between p-4 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 transition-colors text-white"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{section.icon}</span>
                     <span className="font-medium">{section.title}</span>
                   </div>
-                  <ChevronLeft className="h-5 w-5 text-muted-foreground" />
+                  <ChevronLeft className="h-5 w-5 text-slate-400" />
                 </button>
               ))}
             </div>
@@ -1143,17 +1153,17 @@ export const SmartSupport = () => {
 
           {selectedSection && !selectedQuestion && (
             <div className="p-4 space-y-2">
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm text-slate-400 mb-4">
                 اختر سؤالك:
               </p>
               {selectedSection.questions.map((question) => (
                 <button
                   key={question.id}
                   onClick={() => setSelectedQuestion(question)}
-                  className="w-full flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent transition-colors text-right"
+                  className="w-full flex items-center justify-between p-4 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 transition-colors text-right text-white"
                 >
                   <span className="font-medium text-sm">{question.question}</span>
-                  <ChevronLeft className="h-5 w-5 text-muted-foreground shrink-0 mr-2" />
+                  <ChevronLeft className="h-5 w-5 text-slate-400 shrink-0 mr-2" />
                 </button>
               ))}
             </div>
@@ -1161,11 +1171,11 @@ export const SmartSupport = () => {
 
           {selectedQuestion && (
             <div className="p-4">
-              <div className="mb-4 p-3 rounded-lg bg-primary/10 border border-primary/20">
+              <div className="mb-4 p-3 rounded-lg bg-primary/20 border border-primary/30">
                 <h3 className="font-semibold text-primary">{selectedQuestion.question}</h3>
               </div>
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <div className="whitespace-pre-wrap text-sm leading-relaxed">
+              <div className="prose prose-sm max-w-none">
+                <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-300">
                   {selectedQuestion.answer}
                 </div>
               </div>
