@@ -141,10 +141,21 @@ export const LivePriceCards = () => {
       <div className="flex justify-center">
         <button
           onClick={() => navigate('/markets')}
-          className="group inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary font-medium text-sm transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/20"
+          className="group relative inline-flex items-center gap-3 px-8 py-3 rounded-full bg-gradient-to-r from-primary/20 to-blue-500/20 hover:from-primary/30 hover:to-blue-500/30 border border-primary/40 hover:border-primary/60 text-primary font-semibold text-sm transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-primary/25 overflow-hidden"
         >
-          <TrendingUp className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" />
-          <span>عرض جميع الأسواق</span>
+          {/* Animated background glow */}
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+          
+          {/* Left icon with animation */}
+          <div className="relative flex items-center justify-center">
+            <TrendingUp className="h-5 w-5 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12" />
+            <div className="absolute inset-0 bg-primary/20 rounded-full scale-0 group-hover:scale-150 opacity-0 group-hover:opacity-100 transition-all duration-500" />
+          </div>
+          
+          <span className="relative">عرض جميع الأسواق</span>
+          
+          {/* Right arrow icon */}
+          <LineChart className="h-4 w-4 transition-all duration-300 group-hover:translate-x-1 group-hover:scale-110" />
         </button>
       </div>
     </div>
