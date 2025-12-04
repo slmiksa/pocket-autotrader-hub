@@ -243,8 +243,13 @@ export const HomeContent = () => {
               
               <CardContent className="relative p-5">
                 <div className="flex items-start justify-between">
-                  <div className={`rounded-xl ${feature.iconBg} p-3 ring-1 ring-white/10`}>
-                    <feature.icon className={`h-6 w-6 ${feature.iconColor}`} />
+                  <div className="flex items-center gap-2">
+                    <div className={`rounded-xl ${feature.iconBg} p-3 ring-1 ring-white/10`}>
+                      <feature.icon className={`h-6 w-6 ${feature.iconColor}`} />
+                    </div>
+                    {feature.path === "/binary-options" && (
+                      <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md">Pocket Option</span>
+                    )}
                   </div>
                   <ArrowUpRight className={`h-5 w-5 ${feature.iconColor} opacity-50 group-hover:opacity-100 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300`} />
                 </div>
