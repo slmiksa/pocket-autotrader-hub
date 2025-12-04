@@ -169,9 +169,9 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background dark">
+    <div className="min-h-screen bg-background dark pt-[calc(env(safe-area-inset-top)+60px)] sm:pt-[calc(env(safe-area-inset-top)+68px)]">
       {/* Header */}
-      <header className="border-b border-border bg-card sticky top-0 z-50">
+      <header className="border-b border-border bg-card fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)]">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
