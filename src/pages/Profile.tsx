@@ -3,12 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Star, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Target, BookOpen, User, Loader2, Image as ImageIcon, Users, Sparkles, ChevronRight, Edit2, Camera, Bell } from 'lucide-react';
+import { ArrowLeft, Star, TrendingUp, Plus, Trash2, Calendar, BookOpen, User, Loader2, Image as ImageIcon, Users, Sparkles, ChevronRight, Edit2, Camera, Bell } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useDailyJournal, NewJournalEntry } from '@/hooks/useDailyJournal';
 import { useSavedAnalyses } from '@/hooks/useSavedAnalyses';
@@ -166,9 +163,9 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 flex items-center justify-center">
+      <div className="min-h-screen bg-[hsl(222,47%,8%)] flex items-center justify-center">
         <div className="relative">
-          <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse" />
+          <div className="absolute inset-0 bg-primary/30 rounded-full blur-2xl animate-pulse" />
           <Loader2 className="h-12 w-12 animate-spin text-primary relative" />
         </div>
       </div>
@@ -176,27 +173,27 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5" dir="rtl">
-      {/* Animated Background */}
+    <div className="min-h-screen bg-[hsl(222,47%,6%)]" dir="rtl">
+      {/* Animated Background Gradients */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/3 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-primary/10 via-primary/5 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 left-0 w-72 h-72 bg-purple-600/5 rounded-full blur-3xl" />
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
+      <header className="sticky top-0 z-50 bg-[hsl(222,47%,8%)]/80 backdrop-blur-xl border-b border-[hsl(217,33%,17%)]">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={() => navigate('/')} 
-              className="text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all duration-300"
+              className="text-[hsl(215,20%,65%)] hover:text-[hsl(210,40%,98%)] hover:bg-[hsl(217,33%,17%)] transition-all duration-300"
             >
               <ArrowLeft className="h-5 w-5 rotate-180" />
             </Button>
-            <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <h1 className="text-xl font-bold text-[hsl(210,40%,98%)] flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
               الملف الشخصي
             </h1>
@@ -207,16 +204,16 @@ const Profile = () => {
 
       <main className="container mx-auto px-4 py-6 space-y-6 relative">
         {/* User Info Card */}
-        <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card via-card to-primary/5 backdrop-blur-sm">
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+        <Card className="relative overflow-hidden border-[hsl(217,33%,17%)] bg-gradient-to-br from-[hsl(224,47%,11%)] via-[hsl(224,47%,9%)] to-[hsl(224,47%,9%)]">
+          {/* Decorative gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-blue-600/5" />
           
           <div className="relative p-6">
             <div className="flex items-center gap-5">
               <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary to-blue-500 rounded-full blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
-                <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-primary/30 to-primary/10 border-2 border-primary/50 flex items-center justify-center backdrop-blur-sm">
+                {/* Glow effect */}
+                <div className="absolute -inset-1 bg-gradient-to-br from-primary/50 to-blue-500/50 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
+                <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[hsl(217,33%,20%)] to-[hsl(217,33%,15%)] border-2 border-primary/30 flex items-center justify-center">
                   {profile?.avatar_url ? (
                     <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
@@ -225,27 +222,27 @@ const Profile = () => {
                 </div>
                 <button 
                   onClick={() => setShowEditDialog(true)}
-                  className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center border-2 border-background shadow-lg hover:bg-primary/80 transition-colors"
+                  className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center border-2 border-[hsl(224,47%,9%)] shadow-lg hover:bg-primary/80 transition-colors"
                 >
                   <Camera className="h-3.5 w-3.5 text-primary-foreground" />
                 </button>
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-foreground">
+                  <h2 className="text-xl font-bold text-[hsl(210,40%,98%)]">
                     {profile?.nickname || user?.email?.split('@')[0]}
                   </h2>
                   <Button 
                     variant="ghost" 
                     size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-primary"
+                    className="h-7 w-7 text-[hsl(215,20%,65%)] hover:text-primary hover:bg-primary/10"
                     onClick={() => setShowEditDialog(true)}
                   >
                     <Edit2 className="h-4 w-4" />
                   </Button>
                 </div>
-                <p className="text-muted-foreground text-sm">{user?.email}</p>
-                <p className="text-muted-foreground text-xs flex items-center gap-2 mt-1">
+                <p className="text-[hsl(215,20%,65%)] text-sm">{user?.email}</p>
+                <p className="text-[hsl(215,20%,50%)] text-xs flex items-center gap-2 mt-1">
                   <TrendingUp className="h-3 w-3 text-primary" />
                   متداول محترف
                 </p>
@@ -253,7 +250,7 @@ const Profile = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-all"
+                className="border-[hsl(217,33%,20%)] bg-[hsl(217,33%,15%)]/50 text-[hsl(210,40%,98%)] hover:bg-[hsl(217,33%,20%)] hover:border-primary/30 transition-all"
                 onClick={() => navigate('/community')}
               >
                 <Users className="h-4 w-4 ml-2" />
@@ -262,18 +259,18 @@ const Profile = () => {
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-3 gap-4 mt-6">
-              <div className="text-center p-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-colors">
+            <div className="grid grid-cols-3 gap-3 mt-6">
+              <div className="text-center p-4 rounded-xl bg-[hsl(217,33%,12%)] border border-[hsl(217,33%,17%)] hover:border-primary/30 transition-all duration-300 group">
                 <p className="text-2xl font-bold text-primary">{favorites.length}</p>
-                <p className="text-xs text-muted-foreground">المفضلة</p>
+                <p className="text-xs text-[hsl(215,20%,65%)] mt-1">المفضلة</p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-background/50 border border-border/50 hover:border-emerald-500/30 transition-colors">
+              <div className="text-center p-4 rounded-xl bg-[hsl(217,33%,12%)] border border-[hsl(217,33%,17%)] hover:border-emerald-500/30 transition-all duration-300 group">
                 <p className="text-2xl font-bold text-emerald-400">{analyses.length}</p>
-                <p className="text-xs text-muted-foreground">التحليلات</p>
+                <p className="text-xs text-[hsl(215,20%,65%)] mt-1">التحليلات</p>
               </div>
-              <div className="text-center p-3 rounded-xl bg-background/50 border border-border/50 hover:border-blue-500/30 transition-colors">
+              <div className="text-center p-4 rounded-xl bg-[hsl(217,33%,12%)] border border-[hsl(217,33%,17%)] hover:border-blue-500/30 transition-all duration-300 group">
                 <p className="text-2xl font-bold text-blue-400">{myPosts.length}</p>
-                <p className="text-xs text-muted-foreground">المنشورات</p>
+                <p className="text-xs text-[hsl(215,20%,65%)] mt-1">المنشورات</p>
               </div>
             </div>
           </div>
@@ -281,38 +278,38 @@ const Profile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="favorites" className="w-full">
-          <TabsList className="w-full grid grid-cols-5 bg-card/50 border border-border/50 backdrop-blur-sm p-1 rounded-xl">
+          <TabsList className="w-full grid grid-cols-5 bg-[hsl(224,47%,9%)] border border-[hsl(217,33%,17%)] p-1.5 rounded-xl h-auto">
             <TabsTrigger 
               value="favorites" 
-              className="flex-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary rounded-lg transition-all"
+              className="flex-1 py-2.5 data-[state=active]:bg-primary/20 data-[state=active]:text-primary text-[hsl(215,20%,65%)] rounded-lg transition-all"
             >
               <Star className="h-4 w-4 ml-1" />
               <span className="hidden sm:inline">المفضلة</span>
             </TabsTrigger>
             <TabsTrigger 
               value="alerts" 
-              className="flex-1 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400 rounded-lg transition-all"
+              className="flex-1 py-2.5 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400 text-[hsl(215,20%,65%)] rounded-lg transition-all"
             >
               <Bell className="h-4 w-4 ml-1" />
               <span className="hidden sm:inline">التنبيهات</span>
             </TabsTrigger>
             <TabsTrigger 
               value="posts" 
-              className="flex-1 data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-400 rounded-lg transition-all"
+              className="flex-1 py-2.5 data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-400 text-[hsl(215,20%,65%)] rounded-lg transition-all"
             >
               <Users className="h-4 w-4 ml-1" />
               <span className="hidden sm:inline">منشوراتي</span>
             </TabsTrigger>
             <TabsTrigger 
               value="analyses" 
-              className="flex-1 data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 rounded-lg transition-all"
+              className="flex-1 py-2.5 data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 text-[hsl(215,20%,65%)] rounded-lg transition-all"
             >
               <ImageIcon className="h-4 w-4 ml-1" />
               <span className="hidden sm:inline">تحليلاتي</span>
             </TabsTrigger>
             <TabsTrigger 
               value="journal" 
-              className="flex-1 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-400 rounded-lg transition-all"
+              className="flex-1 py-2.5 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-400 text-[hsl(215,20%,65%)] rounded-lg transition-all"
             >
               <BookOpen className="h-4 w-4 ml-1" />
               <span className="hidden sm:inline">أهدافي</span>
@@ -321,8 +318,8 @@ const Profile = () => {
 
           {/* Favorites Tab */}
           <TabsContent value="favorites" className="mt-4">
-            <Card className="p-5 border-border/50 bg-card/50 backdrop-blur-sm">
-              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+            <Card className="p-5 border-[hsl(217,33%,17%)] bg-[hsl(224,47%,9%)]">
+              <h3 className="text-lg font-bold text-[hsl(210,40%,98%)] mb-4 flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-amber-500/20">
                   <Star className="h-5 w-5 text-amber-400" />
                 </div>
@@ -331,36 +328,36 @@ const Profile = () => {
               
               {favLoading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-6 w-6 animate-spin text-[hsl(215,20%,65%)]" />
                 </div>
               ) : favorites.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="text-center py-12 text-[hsl(215,20%,65%)]">
                   <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-amber-500/10 flex items-center justify-center">
                     <Star className="h-10 w-10 text-amber-500/40" />
                   </div>
-                  <p className="text-lg font-medium">لا توجد أسواق في المفضلة</p>
+                  <p className="text-lg font-medium text-[hsl(210,40%,98%)]">لا توجد أسواق في المفضلة</p>
                   <p className="text-sm mt-1">أضف أسواقك المفضلة للوصول السريع</p>
-                  <Button variant="outline" className="mt-4 border-amber-500/30 hover:bg-amber-500/10" onClick={() => navigate('/markets')}>
+                  <Button variant="outline" className="mt-4 border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400" onClick={() => navigate('/markets')}>
                     <TrendingUp className="h-4 w-4 ml-2" />
                     تصفح الأسواق
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="space-y-2">
                   {favorites.map(fav => (
                     <div 
                       key={fav.id} 
-                      className="group p-4 bg-gradient-to-br from-background/80 to-background/40 rounded-xl border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer"
+                      className="group p-4 bg-[hsl(217,33%,12%)] rounded-xl border border-[hsl(217,33%,17%)] hover:border-primary/30 transition-all duration-300 cursor-pointer"
                       onClick={() => navigate(`/live-chart?symbol=${fav.symbol}`)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{fav.symbol_name_ar}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{fav.symbol_name_en}</p>
-                          <span className="inline-block text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full mt-2">{fav.category}</span>
+                          <p className="font-semibold text-[hsl(210,40%,98%)] group-hover:text-primary transition-colors">{fav.symbol_name_ar}</p>
+                          <p className="text-xs text-[hsl(215,20%,50%)] mt-0.5">{fav.symbol_name_en}</p>
+                          <span className="inline-block text-xs text-primary bg-primary/10 px-2.5 py-1 rounded-full mt-2">{fav.category}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                          <ChevronRight className="h-4 w-4 text-[hsl(215,20%,50%)] group-hover:text-primary group-hover:-translate-x-1 transition-all" />
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -380,15 +377,15 @@ const Profile = () => {
 
           {/* Alerts Tab */}
           <TabsContent value="alerts" className="mt-4">
-            <Card className="p-5 border-border/50 bg-card/50 backdrop-blur-sm">
+            <Card className="p-5 border-[hsl(217,33%,17%)] bg-[hsl(224,47%,9%)]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <h3 className="text-lg font-bold text-[hsl(210,40%,98%)] flex items-center gap-2">
                   <div className="p-2 rounded-lg bg-orange-500/20">
                     <Bell className="h-5 w-5 text-orange-400" />
                   </div>
                   التنبيهات السعرية
                 </h3>
-                <Button onClick={() => navigate('/markets')} variant="outline" size="sm" className="border-orange-500/30 hover:bg-orange-500/10">
+                <Button onClick={() => navigate('/markets')} variant="outline" size="sm" className="border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400">
                   <Plus className="h-4 w-4 ml-2" />
                   إضافة تنبيه
                 </Button>
@@ -399,15 +396,15 @@ const Profile = () => {
 
           {/* Posts Tab */}
           <TabsContent value="posts" className="mt-4">
-            <Card className="p-5 border-border/50 bg-card/50 backdrop-blur-sm">
+            <Card className="p-5 border-[hsl(217,33%,17%)] bg-[hsl(224,47%,9%)]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <h3 className="text-lg font-bold text-[hsl(210,40%,98%)] flex items-center gap-2">
                   <div className="p-2 rounded-lg bg-blue-500/20">
                     <Users className="h-5 w-5 text-blue-400" />
                   </div>
                   منشوراتي ({myPosts.length})
                 </h3>
-                <Button onClick={() => navigate('/community')} variant="outline" size="sm" className="border-blue-500/30 hover:bg-blue-500/10">
+                <Button onClick={() => navigate('/community')} variant="outline" size="sm" className="border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400">
                   <Plus className="h-4 w-4 ml-2" />
                   إضافة منشور
                 </Button>
@@ -415,16 +412,16 @@ const Profile = () => {
               
               {postsLoading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-6 w-6 animate-spin text-[hsl(215,20%,65%)]" />
                 </div>
               ) : myPosts.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="text-center py-12 text-[hsl(215,20%,65%)]">
                   <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center">
                     <Users className="h-10 w-10 text-blue-500/40" />
                   </div>
-                  <p className="text-lg font-medium">لم تقم بنشر أي منشورات بعد</p>
+                  <p className="text-lg font-medium text-[hsl(210,40%,98%)]">لم تقم بنشر أي منشورات بعد</p>
                   <p className="text-sm mt-1">شارك تحليلاتك مع المجتمع</p>
-                  <Button variant="outline" className="mt-4 border-blue-500/30 hover:bg-blue-500/10" onClick={() => navigate('/community')}>
+                  <Button variant="outline" className="mt-4 border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400" onClick={() => navigate('/community')}>
                     <Plus className="h-4 w-4 ml-2" />
                     انشر أول منشور
                   </Button>
@@ -434,10 +431,10 @@ const Profile = () => {
                   {myPosts.map(post => (
                     <Card 
                       key={post.id} 
-                      className="overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500/50 transition-all group border-border/50"
+                      className="overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500/50 transition-all group border-[hsl(217,33%,17%)] bg-[hsl(217,33%,12%)]"
                       onClick={() => navigate('/community')}
                     >
-                      <div className="aspect-square relative bg-muted">
+                      <div className="aspect-square relative">
                         {post.image_url ? (
                           <img
                             src={post.image_url}
@@ -446,12 +443,12 @@ const Profile = () => {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500/10 to-purple-500/10">
-                            <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                            <ImageIcon className="h-12 w-12 text-[hsl(215,20%,50%)]" />
                           </div>
                         )}
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4">
-                          <h4 className="text-white font-semibold text-sm line-clamp-1">{post.title}</h4>
-                          <p className="text-white/60 text-xs mt-1">
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[hsl(222,47%,6%)]/95 via-[hsl(222,47%,6%)]/70 to-transparent p-4">
+                          <h4 className="text-[hsl(210,40%,98%)] font-semibold text-sm line-clamp-1">{post.title}</h4>
+                          <p className="text-[hsl(215,20%,50%)] text-xs mt-1">
                             {new Date(post.created_at).toLocaleDateString('ar-SA')}
                           </p>
                         </div>
@@ -473,8 +470,8 @@ const Profile = () => {
 
           {/* Analyses Tab */}
           <TabsContent value="analyses" className="mt-4">
-            <Card className="p-5 border-border/50 bg-card/50 backdrop-blur-sm">
-              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+            <Card className="p-5 border-[hsl(217,33%,17%)] bg-[hsl(224,47%,9%)]">
+              <h3 className="text-lg font-bold text-[hsl(210,40%,98%)] mb-4 flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-emerald-500/20">
                   <ImageIcon className="h-5 w-5 text-emerald-400" />
                 </div>
@@ -483,16 +480,16 @@ const Profile = () => {
               
               {analysesLoading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-6 w-6 animate-spin text-[hsl(215,20%,65%)]" />
                 </div>
               ) : analyses.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="text-center py-12 text-[hsl(215,20%,65%)]">
                   <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-emerald-500/10 flex items-center justify-center">
                     <ImageIcon className="h-10 w-10 text-emerald-500/40" />
                   </div>
-                  <p className="text-lg font-medium">لا توجد تحليلات محفوظة</p>
+                  <p className="text-lg font-medium text-[hsl(210,40%,98%)]">لا توجد تحليلات محفوظة</p>
                   <p className="text-sm mt-1">احفظ تحليلاتك للرجوع إليها لاحقاً</p>
-                  <Button variant="outline" className="mt-4 border-emerald-500/30 hover:bg-emerald-500/10" onClick={() => navigate('/markets')}>
+                  <Button variant="outline" className="mt-4 border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400" onClick={() => navigate('/markets')}>
                     <TrendingUp className="h-4 w-4 ml-2" />
                     ابدأ التحليل
                   </Button>
@@ -504,18 +501,18 @@ const Profile = () => {
                     return (
                       <Card 
                         key={analysis.id} 
-                        className="p-4 bg-gradient-to-br from-background/80 to-background/40 border-border/50 hover:border-emerald-500/30 transition-all cursor-pointer group" 
+                        className="p-4 bg-[hsl(217,33%,12%)] border-[hsl(217,33%,17%)] hover:border-emerald-500/30 transition-all cursor-pointer group" 
                         onClick={() => setSelectedAnalysis(analysis)}
                       >
                         {analysis.annotated_image_url && (
-                          <div className="mb-3 rounded-lg overflow-hidden border border-border/50 group-hover:border-emerald-500/30 transition-colors">
+                          <div className="mb-3 rounded-lg overflow-hidden border border-[hsl(217,33%,17%)] group-hover:border-emerald-500/30 transition-colors">
                             <img src={analysis.annotated_image_url} alt={analysis.symbol} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" />
                           </div>
                         )}
                         
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <h4 className="font-bold text-foreground group-hover:text-emerald-400 transition-colors">{analysis.symbol}</h4>
+                            <h4 className="font-bold text-[hsl(210,40%,98%)] group-hover:text-emerald-400 transition-colors">{analysis.symbol}</h4>
                             <Button 
                               variant="ghost" 
                               size="icon" 
@@ -527,8 +524,8 @@ const Profile = () => {
                           </div>
                           
                           <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">
+                            <Calendar className="h-4 w-4 text-[hsl(215,20%,50%)]" />
+                            <span className="text-[hsl(215,20%,65%)]">
                               {new Date(analysis.created_at).toLocaleDateString('ar-SA', {
                                 year: 'numeric',
                                 month: 'long',
@@ -542,7 +539,7 @@ const Profile = () => {
                               <span className="font-medium text-emerald-400">
                                 {analysisData.recommendation.action}
                               </span>
-                              <span className="text-muted-foreground">
+                              <span className="text-[hsl(215,20%,65%)]">
                                 @ {analysisData.recommendation.entry}
                               </span>
                             </div>
@@ -558,9 +555,9 @@ const Profile = () => {
 
           {/* Analysis Details Dialog */}
           <Dialog open={!!selectedAnalysis} onOpenChange={() => setSelectedAnalysis(null)}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-xl border-border/50">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-[hsl(224,47%,9%)] backdrop-blur-xl border-[hsl(217,33%,17%)]">
               <DialogHeader>
-                <DialogTitle className="text-xl flex items-center gap-2">
+                <DialogTitle className="text-xl flex items-center gap-2 text-[hsl(210,40%,98%)]">
                   <ImageIcon className="h-5 w-5 text-emerald-400" />
                   {selectedAnalysis?.symbol}
                 </DialogTitle>
@@ -569,7 +566,7 @@ const Profile = () => {
               {selectedAnalysis && (
                 <div className="space-y-4">
                   {selectedAnalysis.annotated_image_url && (
-                    <div className="rounded-xl overflow-hidden border border-border/50">
+                    <div className="rounded-xl overflow-hidden border border-[hsl(217,33%,17%)]">
                       <img src={selectedAnalysis.annotated_image_url} alt={selectedAnalysis.symbol} className="w-full h-auto" />
                     </div>
                   )}
@@ -579,12 +576,12 @@ const Profile = () => {
                     return (
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                          <Card className="p-4 bg-background/50 border-border/50">
-                            <p className="text-sm text-muted-foreground mb-1">السعر الحالي</p>
-                            <p className="text-xl font-bold text-foreground">{data.currentPrice}</p>
+                          <Card className="p-4 bg-[hsl(217,33%,12%)] border-[hsl(217,33%,17%)]">
+                            <p className="text-sm text-[hsl(215,20%,65%)] mb-1">السعر الحالي</p>
+                            <p className="text-xl font-bold text-[hsl(210,40%,98%)]">{data.currentPrice}</p>
                           </Card>
-                          <Card className="p-4 bg-background/50 border-border/50">
-                            <p className="text-sm text-muted-foreground mb-1">الاتجاه</p>
+                          <Card className="p-4 bg-[hsl(217,33%,12%)] border-[hsl(217,33%,17%)]">
+                            <p className="text-sm text-[hsl(215,20%,65%)] mb-1">الاتجاه</p>
                             <p className="text-xl font-bold text-primary">{data.trend}</p>
                           </Card>
                         </div>
@@ -594,15 +591,15 @@ const Profile = () => {
                             <h4 className="font-bold text-emerald-400 mb-3">التوصية</h4>
                             <div className="grid grid-cols-3 gap-4 text-sm">
                               <div>
-                                <p className="text-muted-foreground">الإجراء</p>
-                                <p className="font-bold text-foreground">{data.recommendation.action}</p>
+                                <p className="text-[hsl(215,20%,65%)]">الإجراء</p>
+                                <p className="font-bold text-[hsl(210,40%,98%)]">{data.recommendation.action}</p>
                               </div>
                               <div>
-                                <p className="text-muted-foreground">الدخول</p>
-                                <p className="font-bold text-foreground">{data.recommendation.entry}</p>
+                                <p className="text-[hsl(215,20%,65%)]">الدخول</p>
+                                <p className="font-bold text-[hsl(210,40%,98%)]">{data.recommendation.entry}</p>
                               </div>
                               <div>
-                                <p className="text-muted-foreground">الهدف</p>
+                                <p className="text-[hsl(215,20%,65%)]">الهدف</p>
                                 <p className="font-bold text-emerald-400">{data.recommendation.takeProfit}</p>
                               </div>
                             </div>
@@ -610,9 +607,9 @@ const Profile = () => {
                         )}
                         
                         {data.analysis && (
-                          <Card className="p-4 bg-background/50 border-border/50">
-                            <h4 className="font-bold text-foreground mb-2">التحليل</h4>
-                            <p className="text-muted-foreground text-sm leading-relaxed">{data.analysis}</p>
+                          <Card className="p-4 bg-[hsl(217,33%,12%)] border-[hsl(217,33%,17%)]">
+                            <h4 className="font-bold text-[hsl(210,40%,98%)] mb-2">التحليل</h4>
+                            <p className="text-[hsl(215,20%,65%)] text-sm leading-relaxed">{data.analysis}</p>
                           </Card>
                         )}
                       </div>
