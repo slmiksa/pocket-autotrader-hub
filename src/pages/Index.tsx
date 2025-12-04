@@ -107,7 +107,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-background dark">
       {/* Announcement Banner */}
       <AnnouncementBanner />
 
@@ -120,9 +120,9 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 bg-slate-900/50 mt-8 sm:mt-12">
+      <footer className="border-t border-border bg-card mt-8 sm:mt-12">
         <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
-          <div className="text-center text-xs sm:text-sm text-slate-500">
+          <div className="text-center text-xs sm:text-sm text-muted-foreground">
             
           </div>
         </div>
