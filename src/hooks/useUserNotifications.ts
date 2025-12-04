@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { playNotificationSound } from '@/utils/soundNotification';
 
 export interface UserNotification {
   id: string;
@@ -17,6 +18,29 @@ export const useUserNotifications = () => {
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const requestBrowserNotificationPermission = useCallback(async () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+  }, []);
+
+  const sendBrowserNotification = useCallback((title: string, body: string) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const notification = new Notification(title, {
+        body,
+        icon: '/favicon.png',
+        tag: 'price-alert',
+        requireInteraction: true,
+      });
+      
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+    }
+  }, []);
 
   const fetchNotifications = async () => {
     try {
@@ -26,6 +50,8 @@ export const useUserNotifications = () => {
         setLoading(false);
         return;
       }
+
+      setUserId(user.id);
 
       const { data, error } = await supabase
         .from('user_notifications')
@@ -126,10 +152,11 @@ export const useUserNotifications = () => {
 
   useEffect(() => {
     fetchNotifications();
+    requestBrowserNotificationPermission();
 
     // Set up real-time subscription
     const channel = supabase
-      .channel('user-notifications')
+      .channel('user-notifications-realtime')
       .on(
         'postgres_changes',
         {
@@ -139,13 +166,24 @@ export const useUserNotifications = () => {
         },
         (payload) => {
           const newNotification = payload.new as UserNotification;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
           
-          // Show toast for new notification
-          toast.info(newNotification.title, {
-            description: newNotification.body,
-          });
+          // Only process if it's for the current user
+          if (userId && newNotification.user_id === userId) {
+            setNotifications(prev => [newNotification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            
+            // Play sound
+            playNotificationSound();
+            
+            // Show toast notification
+            toast.info(newNotification.title, {
+              description: newNotification.body,
+              duration: 10000,
+            });
+            
+            // Send browser notification
+            sendBrowserNotification(newNotification.title, newNotification.body);
+          }
         }
       )
       .subscribe();
@@ -153,7 +191,7 @@ export const useUserNotifications = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [userId, requestBrowserNotificationPermission, sendBrowserNotification]);
 
   return {
     notifications,
