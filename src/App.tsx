@@ -20,6 +20,7 @@ import Community from "./pages/Community";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 import { SmartSupport } from "./components/SmartSupport";
+import { GlobalHeader } from "./components/GlobalHeader";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <GlobalHeader />
         <SmartSupport />
         <Routes>
           <Route path="/" element={<Index />} />
