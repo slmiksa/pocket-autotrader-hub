@@ -564,10 +564,10 @@ const SupplyDemandAnalyzer = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0e1a]">
         <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">جاري التحميل...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto"></div>
+          <p className="text-white/50">جاري التحميل...</p>
         </div>
       </div>
     );
@@ -576,38 +576,38 @@ const SupplyDemandAnalyzer = () => {
   // Access denied state
   if (!hasAccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4">
+      <div className="min-h-screen bg-[#0a0e1a] p-4">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Header */}
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="hover:bg-primary/10">
+          <div className="flex items-center gap-4 py-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="hover:bg-white/5 text-white/70">
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <div className="text-right flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-white">
                 محلل العرض والطلب
               </h1>
-              <p className="text-muted-foreground">Supply & Demand + Price Action Analysis</p>
+              <p className="text-white/50 text-sm">Supply & Demand + Price Action Analysis</p>
             </div>
           </div>
 
           {/* Access Denied Card */}
-          <Card className="p-8 text-center space-y-6 border-muted-foreground/20">
+          <Card className="p-8 text-center space-y-6 bg-[#111827] border border-white/10 rounded-xl">
             <div className="flex justify-center">
-              <div className="rounded-full bg-muted/20 p-4">
-                <Info className="w-12 h-12 text-muted-foreground" />
+              <div className="rounded-full bg-white/5 p-4">
+                <Info className="w-12 h-12 text-white/40" />
               </div>
             </div>
             
             <div className="space-y-3">
-              <h2 className="text-2xl font-bold text-foreground">الميزة غير مفعلة</h2>
-              <p className="text-muted-foreground max-w-md mx-auto">
+              <h2 className="text-2xl font-bold text-white">الميزة غير مفعلة</h2>
+              <p className="text-white/50 max-w-md mx-auto">
                 محلل العرض والطلب غير متاح حالياً لحسابك. يرجى التواصل مع الإدارة لتفعيل هذه الميزة.
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button onClick={() => navigate("/")} variant="outline" size="lg">
+              <Button onClick={() => navigate("/")} variant="outline" size="lg" className="border-white/10 text-white hover:bg-white/5">
                 <ArrowLeft className="w-4 h-4 ml-2" />
                 العودة للرئيسية
               </Button>
@@ -625,29 +625,29 @@ const SupplyDemandAnalyzer = () => {
     );
   }
   
-  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4">
+  return <div className="min-h-screen bg-[#0a0e1a] p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="hover:bg-primary/10">
+        <div className="flex items-center gap-4 py-2">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="hover:bg-white/5 text-white/70">
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          <div className="text-right flex-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-white">
               محلل العرض والطلب
             </h1>
-            <p className="text-muted-foreground">Supply & Demand + Price Action Analysis</p>
+            <p className="text-white/50 text-sm">Supply & Demand + Price Action Analysis</p>
           </div>
         </div>
 
         {/* Input Panel with Tabs */}
         <Tabs value={analysisMode} onValueChange={(v) => setAnalysisMode(v as "auto" | "image")} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="image" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-2 mb-4 bg-[#111827] border border-white/10 p-1 rounded-xl">
+            <TabsTrigger value="image" className="flex items-center gap-2 data-[state=active]:bg-[#1e293b] data-[state=active]:text-white text-white/60 rounded-lg">
               <Image className="w-4 h-4" />
               تحليل بالصورة
             </TabsTrigger>
-            <TabsTrigger value="auto" className="flex items-center gap-2">
+            <TabsTrigger value="auto" className="flex items-center gap-2 data-[state=active]:bg-[#1e293b] data-[state=active]:text-white text-white/60 rounded-lg">
               <Activity className="w-4 h-4" />
               تحليل تلقائي
             </TabsTrigger>
@@ -656,36 +656,36 @@ const SupplyDemandAnalyzer = () => {
           {/* Image Analysis Tab */}
           <TabsContent value="image" className="space-y-4">
             {/* Screenshot Tips */}
-            <Card className="p-4 border-blue-500/20 bg-blue-500/5">
+            <Card className="p-4 bg-[#111827] border border-cyan-500/20 rounded-xl">
               <div className="flex items-start gap-3">
-                <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                <Info className="w-5 h-5 text-cyan-400 mt-0.5 flex-shrink-0" />
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-blue-400">نصائح لالتقاط صورة مثالية</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                    <li>📊 استخدم شارت نظيف بدون مؤشرات كثيرة</li>
-                    <li>🔍 تأكد من وضوح الأسعار على المحور الأيمن</li>
-                    <li>📏 أظهر ما لا يقل عن 50-100 شمعة</li>
-                    <li>🖼️ التقط الشاشة كاملة للرسم البياني</li>
-                    <li>⏰ تأكد من ظهور الإطار الزمني في الصورة</li>
-                    <li>💡 يفضل استخدام خلفية داكنة للوضوح</li>
+                  <h4 className="font-semibold text-cyan-400">نصائح لالتقاط صورة مثالية</h4>
+                  <ul className="text-sm text-white/60 space-y-1">
+                    <li className="flex items-center gap-2">📊 استخدم شارت نظيف بدون مؤشرات كثيرة</li>
+                    <li className="flex items-center gap-2">🔍 تأكد من وضوح الأسعار على المحور الأيمن</li>
+                    <li className="flex items-center gap-2">📏 أظهر ما لا يقل عن 50-100 شمعة</li>
+                    <li className="flex items-center gap-2">🖼️ التقط الشاشة كاملة للرسم البياني</li>
+                    <li className="flex items-center gap-2">⏰ تأكد من ظهور الإطار الزمني في الصورة</li>
+                    <li className="flex items-center gap-2">💡 يفضل استخدام خلفية داكنة للوضوح</li>
                   </ul>
                 </div>
               </div>
             </Card>
 
             {/* Image Upload Section */}
-            <Card className="p-6 border-primary/20 bg-card/50 backdrop-blur">
-              <div className="space-y-4">
+            <Card className="p-6 bg-[#111827] border border-white/10 rounded-xl">
+              <div className="space-y-5">
                 {/* Settings Row */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <Label>نوع السوق</Label>
+                    <Label className="text-white/70 text-sm">نوع السوق</Label>
                     <Select value={market} onValueChange={setMarket}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-[#1e293b] border-white/10 text-white hover:bg-[#1e293b]/80">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        {marketOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
+                      <SelectContent className="bg-[#1e293b] border-white/10">
+                        {marketOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-white/10">
                           {opt.label}
                         </SelectItem>)}
                       </SelectContent>
@@ -693,13 +693,13 @@ const SupplyDemandAnalyzer = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>رمز السوق</Label>
+                    <Label className="text-white/70 text-sm">رمز السوق</Label>
                     <Select value={symbol} onValueChange={setSymbol}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-[#1e293b] border-white/10 text-white hover:bg-[#1e293b]/80">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
-                        {getSymbolsForMarket().map(sym => <SelectItem key={sym.value} value={sym.value}>
+                      <SelectContent className="max-h-[300px] bg-[#1e293b] border-white/10">
+                        {getSymbolsForMarket().map(sym => <SelectItem key={sym.value} value={sym.value} className="text-white hover:bg-white/10">
                           {sym.label}
                         </SelectItem>)}
                       </SelectContent>
@@ -707,13 +707,13 @@ const SupplyDemandAnalyzer = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>الإطار الزمني</Label>
+                    <Label className="text-white/70 text-sm">الإطار الزمني</Label>
                     <Select value={timeframe} onValueChange={setTimeframe}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-[#1e293b] border-white/10 text-white hover:bg-[#1e293b]/80">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        {timeframeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
+                      <SelectContent className="bg-[#1e293b] border-white/10">
+                        {timeframeOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-white/10">
                           {opt.label}
                         </SelectItem>)}
                       </SelectContent>
@@ -721,13 +721,13 @@ const SupplyDemandAnalyzer = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>مسافة المناطق</Label>
+                    <Label className="text-white/70 text-sm">مسافة المناطق</Label>
                     <Select value={zoneDistance} onValueChange={setZoneDistance}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-[#1e293b] border-white/10 text-white hover:bg-[#1e293b]/80">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        {zoneDistanceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
+                      <SelectContent className="bg-[#1e293b] border-white/10">
+                        {zoneDistanceOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-white/10">
                           {opt.label}
                         </SelectItem>)}
                       </SelectContent>
@@ -748,23 +748,23 @@ const SupplyDemandAnalyzer = () => {
                   {!uploadedImage ? (
                     <div
                       onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed border-primary/30 rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all"
+                      className="border-2 border-dashed border-cyan-500/30 rounded-xl p-8 text-center cursor-pointer hover:border-cyan-500/50 hover:bg-cyan-500/5 transition-all bg-[#0f172a]"
                     >
-                      <Camera className="w-12 h-12 mx-auto text-primary/50 mb-4" />
-                      <p className="text-lg font-medium">اضغط لرفع صورة الرسم البياني</p>
-                      <p className="text-sm text-muted-foreground mt-2">PNG, JPG, WEBP - حد أقصى 10 ميجابايت</p>
+                      <Camera className="w-12 h-12 mx-auto text-cyan-500/60 mb-4" />
+                      <p className="text-lg font-medium text-white">اضغط لرفع صورة الرسم البياني</p>
+                      <p className="text-sm text-white/50 mt-2">PNG, JPG, WEBP - حد أقصى 10 ميجابايت</p>
                     </div>
                   ) : (
-                    <div className="relative">
+                    <div className="relative rounded-xl overflow-hidden bg-[#0f172a]">
                       <img
                         src={uploadedImage}
                         alt="Uploaded chart"
-                        className="w-full max-h-[400px] object-contain rounded-xl border border-primary/20"
+                        className="w-full max-h-[400px] object-contain"
                       />
                       <Button
                         variant="destructive"
                         size="icon"
-                        className="absolute top-2 right-2"
+                        className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500"
                         onClick={clearImage}
                       >
                         <X className="w-4 h-4" />
@@ -777,17 +777,17 @@ const SupplyDemandAnalyzer = () => {
                 <Button
                   onClick={handleImageAnalysis}
                   disabled={isAnalyzing || !uploadedImage}
-                  className="w-full bg-primary hover:bg-primary/90"
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-6 rounded-xl shadow-lg shadow-cyan-500/20"
                   size="lg"
                 >
                   {isAnalyzing ? (
                     <>
-                      <Activity className="w-4 h-4 mr-2 animate-spin" />
+                      <Activity className="w-5 h-5 mr-2 animate-spin" />
                       جاري تحليل الصورة...
                     </>
                   ) : (
                     <>
-                      <Target className="w-4 h-4 mr-2" />
+                      <Target className="w-5 h-5 mr-2" />
                       تحليل مناطق العرض والطلب
                     </>
                   )}
@@ -798,16 +798,16 @@ const SupplyDemandAnalyzer = () => {
 
           {/* Auto Analysis Tab */}
           <TabsContent value="auto">
-            <Card className="p-6 border-primary/20 bg-card/50 backdrop-blur">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <Card className="p-6 bg-[#111827] border border-white/10 rounded-xl">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 items-end">
                 <div className="space-y-2">
-                  <Label>نوع السوق</Label>
+                  <Label className="text-white/70 text-sm">نوع السوق</Label>
                   <Select value={market} onValueChange={setMarket}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-[#1e293b] border-white/10 text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      {marketOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
+                    <SelectContent className="bg-[#1e293b] border-white/10">
+                      {marketOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-white/10">
                         {opt.label}
                       </SelectItem>)}
                     </SelectContent>
@@ -815,13 +815,13 @@ const SupplyDemandAnalyzer = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>رمز السوق</Label>
+                  <Label className="text-white/70 text-sm">رمز السوق</Label>
                   <Select value={symbol} onValueChange={setSymbol}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-[#1e293b] border-white/10 text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      {getSymbolsForMarket().map(sym => <SelectItem key={sym.value} value={sym.value}>
+                    <SelectContent className="max-h-[300px] bg-[#1e293b] border-white/10">
+                      {getSymbolsForMarket().map(sym => <SelectItem key={sym.value} value={sym.value} className="text-white hover:bg-white/10">
                         {sym.label}
                       </SelectItem>)}
                     </SelectContent>
@@ -829,13 +829,13 @@ const SupplyDemandAnalyzer = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>الإطار الزمني</Label>
+                  <Label className="text-white/70 text-sm">الإطار الزمني</Label>
                   <Select value={timeframe} onValueChange={setTimeframe}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-[#1e293b] border-white/10 text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      {timeframeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
+                    <SelectContent className="bg-[#1e293b] border-white/10">
+                      {timeframeOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-white/10">
                         {opt.label}
                       </SelectItem>)}
                     </SelectContent>
@@ -843,20 +843,25 @@ const SupplyDemandAnalyzer = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>مسافة المناطق</Label>
+                  <Label className="text-white/70 text-sm">مسافة المناطق</Label>
                   <Select value={zoneDistance} onValueChange={setZoneDistance}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-[#1e293b] border-white/10 text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      {zoneDistanceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
+                    <SelectContent className="bg-[#1e293b] border-white/10">
+                      {zoneDistanceOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-white/10">
                         {opt.label}
                       </SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <Button onClick={handleStartAnalysis} disabled={isAnalyzing} className="bg-primary hover:bg-primary/90" size="lg">
+                <Button 
+                  onClick={handleStartAnalysis} 
+                  disabled={isAnalyzing} 
+                  className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold col-span-2 md:col-span-1" 
+                  size="lg"
+                >
                   {isAnalyzing ? "جاري التحليل..." : "بدء التحليل"}
                 </Button>
               </div>
@@ -868,95 +873,95 @@ const SupplyDemandAnalyzer = () => {
         {analysisComplete && <>
             {/* Image Analysis Text */}
             {imageAnalysis && analysisMode === "image" && (
-              <Card className="p-6 border-primary/20 bg-gradient-to-br from-card/80 to-blue-500/5">
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Info className="w-5 h-5 text-blue-400" />
+              <Card className="p-6 bg-[#111827] border border-cyan-500/20 rounded-xl">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-white">
+                  <Info className="w-5 h-5 text-cyan-400" />
                   تحليل الذكاء الاصطناعي
                 </h3>
-                <p className="text-muted-foreground whitespace-pre-line leading-relaxed">{imageAnalysis}</p>
+                <p className="text-white/70 whitespace-pre-line leading-relaxed">{imageAnalysis}</p>
               </Card>
             )}
 
             {/* Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card className="p-4 border-primary/20">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="p-4 bg-[#111827] border border-white/10 rounded-xl">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">الاتجاه</p>
-                    <p className="text-lg font-bold">{trend || "غير محدد"}</p>
+                    <p className="text-sm text-white/50">الاتجاه</p>
+                    <p className="text-lg font-bold text-white">{trend || "غير محدد"}</p>
                   </div>
                   {getTrendIcon()}
                 </div>
               </Card>
 
-              <Card className="p-4 border-primary/20">
+              <Card className="p-4 bg-[#111827] border border-white/10 rounded-xl">
                 <div>
-                  <p className="text-sm text-muted-foreground">السعر الحالي</p>
-                  <p className="text-lg font-bold text-primary">{currentPrice > 0 ? currentPrice.toFixed(5) : "---"}</p>
+                  <p className="text-sm text-white/50">السعر الحالي</p>
+                  <p className="text-lg font-bold text-cyan-400">{currentPrice > 0 ? currentPrice.toFixed(5) : "---"}</p>
                 </div>
               </Card>
 
-              <Card className="p-4 border-primary/20">
+              <Card className="p-4 bg-[#111827] border border-white/10 rounded-xl">
                 <div className="flex justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">مناطق العرض</p>
+                    <p className="text-sm text-white/50">مناطق العرض</p>
                     <p className="text-lg font-bold text-red-400">{supplyZones.length}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">مناطق الطلب</p>
+                    <p className="text-sm text-white/50">مناطق الطلب</p>
                     <p className="text-lg font-bold text-green-400">{demandZones.length}</p>
                   </div>
                 </div>
               </Card>
 
-              <Card className="p-4 border-primary/20">
+              <Card className="p-4 bg-[#111827] border border-white/10 rounded-xl">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">حالة الإشارة</p>
+                    <p className="text-sm text-white/50">حالة الإشارة</p>
                     <Badge className={getSignalStatusColor()}>
                       {signalStatus}
                     </Badge>
                   </div>
-                  <Target className="w-5 h-5 text-primary" />
+                  <Target className="w-5 h-5 text-cyan-400" />
                 </div>
               </Card>
             </div>
 
             {/* Trade Setup */}
-            {tradeSetup && <Card className="p-6 border-primary/20 bg-gradient-to-br from-card/80 to-primary/5">
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Target className="w-5 h-5 text-primary" />
+            {tradeSetup && <Card className="p-6 bg-[#111827] border border-cyan-500/20 rounded-xl">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-white">
+                  <Target className="w-5 h-5 text-cyan-400" />
                   إعداد الصفقة المقترح
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 bg-background/50 rounded-lg">
-                      <span className="text-muted-foreground">نوع الصفقة</span>
+                    <div className="flex justify-between items-center p-3 bg-[#0f172a] rounded-lg">
+                      <span className="text-white/60">نوع الصفقة</span>
                       <Badge className={tradeSetup.type === "BUY" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>
                         {tradeSetup.type === "BUY" ? "شراء" : "بيع"}
                       </Badge>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-background/50 rounded-lg">
-                      <span className="text-muted-foreground">نقطة الدخول</span>
-                      <span className="font-bold">{tradeSetup.entry.toFixed(5)}</span>
+                    <div className="flex justify-between items-center p-3 bg-[#0f172a] rounded-lg">
+                      <span className="text-white/60">نقطة الدخول</span>
+                      <span className="font-bold text-white">{tradeSetup.entry.toFixed(5)}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-background/50 rounded-lg">
-                      <span className="text-muted-foreground">وقف الخسارة</span>
+                    <div className="flex justify-between items-center p-3 bg-[#0f172a] rounded-lg">
+                      <span className="text-white/60">وقف الخسارة</span>
                       <span className="font-bold text-red-400">{tradeSetup.stopLoss.toFixed(5)}</span>
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 bg-background/50 rounded-lg">
-                      <span className="text-muted-foreground">الهدف الأول</span>
+                    <div className="flex justify-between items-center p-3 bg-[#0f172a] rounded-lg">
+                      <span className="text-white/60">الهدف الأول</span>
                       <span className="font-bold text-green-400">{tradeSetup.takeProfit1.toFixed(5)}</span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-background/50 rounded-lg">
-                      <span className="text-muted-foreground">الهدف الثاني</span>
+                    <div className="flex justify-between items-center p-3 bg-[#0f172a] rounded-lg">
+                      <span className="text-white/60">الهدف الثاني</span>
                       <span className="font-bold text-green-400">{tradeSetup.takeProfit2.toFixed(5)}</span>
                     </div>
-                    <div className="p-3 bg-primary/10 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">السبب</p>
-                      <p className="text-sm">{tradeSetup.reason}</p>
+                    <div className="p-3 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
+                      <p className="text-sm text-white/50 mb-1">السبب</p>
+                      <p className="text-sm text-white/80">{tradeSetup.reason}</p>
                     </div>
                   </div>
                 </div>
@@ -965,24 +970,24 @@ const SupplyDemandAnalyzer = () => {
             {/* Zones Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Supply Zones */}
-              <Card className="p-6 border-red-500/20">
+              <Card className="p-6 bg-[#111827] border border-red-500/20 rounded-xl">
                 <h3 className="text-xl font-bold mb-4 text-red-400">مناطق العرض (البيع)</h3>
                 <div className="space-y-3">
-                  {supplyZones.length === 0 ? <p className="text-muted-foreground text-center py-4">لم يتم العثور على مناطق عرض</p> : supplyZones.map((zone, idx) => <div key={idx} className="p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                  {supplyZones.length === 0 ? <p className="text-white/50 text-center py-4">لم يتم العثور على مناطق عرض</p> : supplyZones.map((zone, idx) => <div key={idx} className="p-3 bg-red-500/10 rounded-lg border border-red-500/20">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">منطقة {idx + 1}</span>
+                          <span className="text-sm text-white/60">منطقة {idx + 1}</span>
                           <Badge className="bg-red-500/20 text-red-400">
                             قوة: {zone.strength_score.toFixed(1)}
                           </Badge>
                         </div>
                         <div className="mt-2 space-y-1 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">الحد العلوي</span>
-                            <span className="font-mono">{zone.upper_price.toFixed(5)}</span>
+                            <span className="text-white/50">الحد العلوي</span>
+                            <span className="font-mono text-white">{zone.upper_price.toFixed(5)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">الحد السفلي</span>
-                            <span className="font-mono">{zone.lower_price.toFixed(5)}</span>
+                            <span className="text-white/50">الحد السفلي</span>
+                            <span className="font-mono text-white">{zone.lower_price.toFixed(5)}</span>
                           </div>
                         </div>
                       </div>)}
@@ -990,41 +995,38 @@ const SupplyDemandAnalyzer = () => {
               </Card>
 
               {/* Demand Zones */}
-              <Card className="p-6 border-green-500/20">
+              <Card className="p-6 bg-[#111827] border border-green-500/20 rounded-xl">
                 <h3 className="text-xl font-bold mb-4 text-green-400">مناطق الطلب (الشراء)</h3>
                 <div className="space-y-3">
-                  {demandZones.length === 0 ? <p className="text-muted-foreground text-center py-4">لم يتم العثور على مناطق طلب</p> : demandZones.map((zone, idx) => <div key={idx} className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                  {demandZones.length === 0 ? <p className="text-white/50 text-center py-4">لم يتم العثور على مناطق طلب</p> : demandZones.map((zone, idx) => <div key={idx} className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">منطقة {idx + 1}</span>
+                          <span className="text-sm text-white/60">منطقة {idx + 1}</span>
                           <Badge className="bg-green-500/20 text-green-400">
                             قوة: {zone.strength_score.toFixed(1)}
                           </Badge>
                         </div>
                         <div className="mt-2 space-y-1 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">الحد العلوي</span>
-                            <span className="font-mono">{zone.upper_price.toFixed(5)}</span>
+                            <span className="text-white/50">الحد العلوي</span>
+                            <span className="font-mono text-white">{zone.upper_price.toFixed(5)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">الحد السفلي</span>
-                            <span className="font-mono">{zone.lower_price.toFixed(5)}</span>
+                            <span className="text-white/50">الحد السفلي</span>
+                            <span className="font-mono text-white">{zone.lower_price.toFixed(5)}</span>
                           </div>
                         </div>
                       </div>)}
                 </div>
               </Card>
             </div>
-
-            {/* Chart Section */}
-            
           </>}
 
         {/* Initial State */}
-        {!analysisComplete && !isAnalyzing && <Card className="p-12 border-primary/20 bg-card/50 backdrop-blur">
+        {!analysisComplete && !isAnalyzing && <Card className="p-12 bg-[#111827] border border-white/10 rounded-xl">
             <div className="text-center space-y-4">
-              <Activity className="w-16 h-16 mx-auto text-primary opacity-50" />
-              <h3 className="text-2xl font-bold">ابدأ التحليل الآن</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
+              <Activity className="w-16 h-16 mx-auto text-cyan-500/50" />
+              <h3 className="text-2xl font-bold text-white">ابدأ التحليل الآن</h3>
+              <p className="text-white/50 max-w-md mx-auto">
                 اختر نوع السوق والرمز والإطار الزمني، ثم اضغط على "بدء التحليل" لاكتشاف مناطق العرض والطلب تلقائياً
               </p>
             </div>
