@@ -202,10 +202,10 @@ export const usePriceAlertChecker = () => {
       Notification.requestPermission();
     }
 
-    // Start checking every 5 seconds
+    // Start checking every 1 second for instant alerts
     intervalRef.current = setInterval(() => {
       checkAlerts();
-    }, 5000);
+    }, 1000);
 
     // Initial check
     checkAlerts();
