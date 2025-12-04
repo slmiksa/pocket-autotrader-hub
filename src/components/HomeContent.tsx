@@ -4,13 +4,75 @@ import { useNavigate } from "react-router-dom";
 import { TrendingUp, BarChart3, Newspaper, Target, Shield, Zap, LineChart, ArrowUpRight, CheckCircle2, Star, Users, Award, Sparkles } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+// Import trading images
+import heroTrading1 from "@/assets/hero-trading-1.jpg";
+import heroTrading2 from "@/assets/hero-trading-2.jpg";
+import heroTrading3 from "@/assets/hero-trading-3.jpg";
+
+interface HeroSlide {
+  id: string;
+  title: string;
+  subtitle: string;
+  button_text: string;
+  button_link: string;
+  image_url: string | null;
+  gradient_color: string;
+  is_active: boolean;
+  display_order: number;
+}
+
+const defaultImages = [heroTrading1, heroTrading2, heroTrading3];
+
+const gradientMap: Record<string, string> = {
+  primary: "from-primary/40 via-primary/20 to-transparent",
+  blue: "from-blue-500/40 via-blue-500/20 to-transparent",
+  purple: "from-purple-500/40 via-purple-500/20 to-transparent",
+  emerald: "from-emerald-500/40 via-emerald-500/20 to-transparent",
+  amber: "from-amber-500/40 via-amber-500/20 to-transparent",
+  red: "from-red-500/40 via-red-500/20 to-transparent",
+};
+
+const iconMap: Record<string, any> = {
+  "/binary-options": Target,
+  "/supply-demand": BarChart3,
+  "/news": Newspaper,
+  "/markets": LineChart,
+  "/live-chart": LineChart,
+  "/professional-signals": Star,
+};
 
 export const HomeContent = () => {
   const navigate = useNavigate();
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
+  const [loading, setLoading] = useState(true);
+  
   const plugin = useRef(
-    Autoplay({ delay: 3000, stopOnInteraction: true })
+    Autoplay({ delay: 4000, stopOnInteraction: true })
   );
+
+  useEffect(() => {
+    fetchSlides();
+  }, []);
+
+  const fetchSlides = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("hero_slides")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (error) throw error;
+      setHeroSlides(data || []);
+    } catch (error) {
+      console.error("Error fetching slides:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const features = [{
     icon: Target,
@@ -49,33 +111,6 @@ export const HomeContent = () => {
     iconColor: "text-purple-400",
     borderColor: "border-purple-500/30"
   }];
-
-  const heroSlides = [
-    {
-      title: "منصة التوصيات الذكية",
-      subtitle: "احصل على توصيات تداول احترافية بالذكاء الاصطناعي",
-      icon: Sparkles,
-      gradient: "from-primary/30 via-primary/10 to-transparent",
-      action: () => navigate("/binary-options"),
-      buttonText: "ابدأ التداول"
-    },
-    {
-      title: "تحليل العرض والطلب",
-      subtitle: "اكتشف مناطق الدعم والمقاومة القوية بدقة عالية",
-      icon: BarChart3,
-      gradient: "from-blue-500/30 via-blue-500/10 to-transparent",
-      action: () => navigate("/supply-demand"),
-      buttonText: "حلل الآن"
-    },
-    {
-      title: "أخبار الأسواق المباشرة",
-      subtitle: "تابع أحدث الأخبار المؤثرة على تداولاتك",
-      icon: Newspaper,
-      gradient: "from-purple-500/30 via-purple-500/10 to-transparent",
-      action: () => navigate("/news"),
-      buttonText: "تصفح الأخبار"
-    }
-  ];
 
   const platformFeatures = [{
     icon: Zap,
@@ -116,53 +151,99 @@ export const HomeContent = () => {
           }}
         >
           <CarouselContent>
-            {heroSlides.map((slide, index) => (
-              <CarouselItem key={index}>
-                <Card className={`relative overflow-hidden border-0 bg-gradient-to-br ${slide.gradient} backdrop-blur-xl`}>
-                  {/* Animated Background Elements */}
-                  <div className="absolute inset-0 overflow-hidden">
-                    <div className="absolute top-10 right-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-                    <div className="absolute bottom-10 left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl" />
-                  </div>
-                  
-                  <CardContent className="relative z-10 p-8 md:p-12">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                      <div className="text-center md:text-right space-y-4 flex-1">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 border border-primary/30 backdrop-blur-sm">
-                          <slide.icon className="h-5 w-5 text-primary" />
-                          <span className="text-sm font-medium text-primary">منصة احترافية</span>
+            {(heroSlides.length > 0 ? heroSlides : []).map((slide, index) => {
+              const SlideIcon = iconMap[slide.button_link] || Sparkles;
+              const bgImage = slide.image_url || defaultImages[index % defaultImages.length];
+              const gradient = gradientMap[slide.gradient_color] || gradientMap.primary;
+              
+              return (
+                <CarouselItem key={slide.id}>
+                  <Card className="relative overflow-hidden border-0 min-h-[300px] md:min-h-[350px]">
+                    {/* Background Image */}
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${bgImage})` }}
+                    />
+                    
+                    {/* Gradient Overlay */}
+                    <div className={`absolute inset-0 bg-gradient-to-l ${gradient}`} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/70 to-transparent" />
+                    
+                    <CardContent className="relative z-10 p-8 md:p-12 h-full flex items-center">
+                      <div className="flex flex-col md:flex-row items-center justify-between gap-6 w-full">
+                        <div className="text-center md:text-right space-y-4 flex-1">
+                          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-background/30 border border-white/20 backdrop-blur-sm">
+                            <SlideIcon className="h-5 w-5 text-primary" />
+                            <span className="text-sm font-medium text-foreground">منصة احترافية</span>
+                          </div>
+                          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground drop-shadow-lg">
+                            {slide.title}
+                          </h1>
+                          <p className="text-lg text-foreground/90 max-w-xl drop-shadow">
+                            {slide.subtitle}
+                          </p>
+                          <Button 
+                            size="lg" 
+                            className="mt-4 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25"
+                            onClick={() => navigate(slide.button_link)}
+                          >
+                            {slide.button_text}
+                            <ArrowUpRight className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
-                          {slide.title}
-                        </h1>
-                        <p className="text-lg text-muted-foreground max-w-xl">
-                          {slide.subtitle}
-                        </p>
-                        <Button 
-                          size="lg" 
-                          className="mt-4 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25"
-                          onClick={slide.action}
-                        >
-                          {slide.buttonText}
-                          <ArrowUpRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      
-                      {/* Decorative Icon */}
-                      <div className="hidden md:flex items-center justify-center">
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse" />
-                          <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/30 flex items-center justify-center backdrop-blur-sm">
-                            <slide.icon className="h-16 w-16 text-primary" />
+                        
+                        {/* Decorative Icon */}
+                        <div className="hidden md:flex items-center justify-center">
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-primary/30 rounded-full blur-2xl animate-pulse" />
+                            <div className="relative w-28 h-28 rounded-full bg-background/30 border border-white/20 flex items-center justify-center backdrop-blur-sm">
+                              <SlideIcon className="h-14 w-14 text-primary" />
+                            </div>
                           </div>
                         </div>
                       </div>
+                    </CardContent>
+                  </Card>
+                </CarouselItem>
+              );
+            })}
+            
+            {/* Fallback if no slides from DB */}
+            {heroSlides.length === 0 && !loading && (
+              <CarouselItem>
+                <Card className="relative overflow-hidden border-0 min-h-[300px] md:min-h-[350px]">
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${heroTrading1})` }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-l from-primary/40 via-primary/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/70 to-transparent" />
+                  
+                  <CardContent className="relative z-10 p-8 md:p-12 h-full flex items-center">
+                    <div className="text-center md:text-right space-y-4">
+                      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-background/30 border border-white/20 backdrop-blur-sm">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        <span className="text-sm font-medium text-foreground">منصة احترافية</span>
+                      </div>
+                      <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground drop-shadow-lg">
+                        منصة التوصيات الذكية
+                      </h1>
+                      <p className="text-lg text-foreground/90 max-w-xl drop-shadow">
+                        احصل على توصيات تداول احترافية بالذكاء الاصطناعي
+                      </p>
+                      <Button 
+                        size="lg" 
+                        className="mt-4 gap-2"
+                        onClick={() => navigate("/binary-options")}
+                      >
+                        ابدأ التداول
+                        <ArrowUpRight className="h-4 w-4" />
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               </CarouselItem>
-            ))}
+            )}
           </CarouselContent>
           
           {/* Custom Navigation */}
@@ -191,7 +272,6 @@ export const HomeContent = () => {
               className={`group cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/10 bg-gradient-to-br ${feature.gradient} border ${feature.borderColor} backdrop-blur-sm overflow-hidden`}
               onClick={() => navigate(feature.path)}
             >
-              {/* Hover Glow Effect */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
               </div>

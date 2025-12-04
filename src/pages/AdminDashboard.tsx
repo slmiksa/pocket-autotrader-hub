@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ProfessionalSignalsManager } from "@/components/admin/ProfessionalSignalsManager";
 import { ReportsManager } from "@/components/admin/ReportsManager";
+import { HeroSlidesManager } from "@/components/admin/HeroSlidesManager";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -735,6 +736,9 @@ const AdminDashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Hero Slides Management */}
+        <HeroSlidesManager />
 
         {/* Professional Signals Management */}
         <ProfessionalSignalsManager />
