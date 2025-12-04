@@ -705,7 +705,10 @@ const ImageAnalysis = () => {
   
   if (!hasAccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4">
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
+        {/* Safe Area Background */}
+        <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-slate-950 z-[60]" />
+        
         {/* Animated Background */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 right-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
@@ -768,7 +771,10 @@ const ImageAnalysis = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
+      {/* Safe Area Background */}
+      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-slate-950 z-[60]" />
+      
       {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />

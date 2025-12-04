@@ -483,7 +483,10 @@ export default function LiveChart() {
       }
     }
   };
-  return <div className="min-h-screen bg-[#0a0a0f]" dir="rtl">
+  return <div className="min-h-screen bg-[#0a0a0f] pt-[env(safe-area-inset-top)]" dir="rtl">
+      {/* Safe Area Background */}
+      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-[#0a0a0f] z-[60]" />
+      
       {/* Header - Mobile Optimized */}
       <header className="border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur sticky top-0 z-50">
         <div className="container mx-auto px-3 sm:px-4 py-3">

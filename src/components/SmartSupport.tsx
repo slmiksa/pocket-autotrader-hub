@@ -1100,8 +1100,8 @@ export const SmartSupport = () => {
           <MessageCircleQuestion className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-full sm:max-w-md p-0">
-        <SheetHeader className="p-4 border-b bg-primary text-primary-foreground">
+      <SheetContent side="left" className="w-full sm:max-w-md p-0 pt-[env(safe-area-inset-top)]">
+        <SheetHeader className="p-4 border-b bg-primary text-primary-foreground mt-2">
           <div className="flex items-center gap-2">
             {(selectedSection || selectedQuestion) && (
               <Button variant="ghost" size="icon" onClick={handleBack} className="text-primary-foreground hover:bg-primary-foreground/20">

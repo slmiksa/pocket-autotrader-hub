@@ -576,7 +576,8 @@ const SupplyDemandAnalyzer = () => {
   // Access denied state
   if (!hasAccess) {
     return (
-      <div className="min-h-screen bg-[#0a0e1a] p-4">
+      <div className="min-h-screen bg-[#0a0e1a] p-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
+        <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-[#0a0e1a] z-[60]" />
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center gap-4 py-2">
@@ -625,7 +626,8 @@ const SupplyDemandAnalyzer = () => {
     );
   }
   
-  return <div className="min-h-screen bg-[#0a0e1a] p-4">
+  return <div className="min-h-screen bg-[#0a0e1a] p-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
+      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-[#0a0e1a] z-[60]" />
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4 py-2">
