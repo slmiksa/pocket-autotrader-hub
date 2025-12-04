@@ -10,6 +10,7 @@ import { TrendingUp, Mail, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { InstallAppButton } from "@/components/InstallAppButton";
+import authBackground from "@/assets/auth-background.jpg";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -92,8 +93,20 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <AnnouncementBanner />
+    <div 
+      className="min-h-screen relative"
+      style={{
+        backgroundImage: `url(${authBackground})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Overlay for better readability */}
+      <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px]" />
+      
+      <div className="relative z-10">
+        <AnnouncementBanner />
       <div className="flex flex-col items-center justify-center p-4 min-h-[calc(100vh-56px)]">
         {/* Welcome Message */}
         <div className="text-center mb-6 max-w-md">
@@ -238,6 +251,7 @@ const Auth = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );
