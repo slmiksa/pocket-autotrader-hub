@@ -13,6 +13,7 @@ import { ProfessionalTradingJournal } from '@/components/trading/ProfessionalTra
 import { ProfileEditDialog } from '@/components/profile/ProfileEditDialog';
 import { PriceAlertsList } from '@/components/alerts/PriceAlertsList';
 import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown';
+import { PushNotificationToggle } from '@/components/notifications/PushNotificationToggle';
 import { toast } from 'sonner';
 
 interface CommunityPost {
@@ -394,6 +395,12 @@ const Profile = () => {
                   إضافة تنبيه
                 </Button>
               </div>
+              
+              {/* Push Notification Toggle */}
+              <div className="mb-4">
+                <PushNotificationToggle />
+              </div>
+              
               <PriceAlertsList />
             </Card>
           </TabsContent>
