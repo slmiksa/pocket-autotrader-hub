@@ -95,12 +95,15 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    /* Smooth scrolling for all scrollable elements */
+    scroll-behavior: smooth;
   }
 
   html {
     /* Prevent pull-to-refresh and overscroll */
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
 
   body {
@@ -110,12 +113,57 @@ All colors MUST be HSL.
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     touch-action: pan-x pan-y;
+    /* Smooth font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   /* Prevent text selection on buttons/interactive elements for app feel */
   button, a, [role="button"] {
     -webkit-user-select: none;
     user-select: none;
+  }
+
+  /* Smooth scrolling for scrollable containers */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Custom scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* Hide scrollbar on mobile for cleaner look */
+  @media (max-width: 768px) {
+    ::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      display: none;
+    }
+    
+    * {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
   }
 
   /* Safe area insets for notched devices and WebView */
