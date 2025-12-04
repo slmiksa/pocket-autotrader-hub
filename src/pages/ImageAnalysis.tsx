@@ -786,33 +786,53 @@ const ImageAnalysis = () => {
     setAnalyzing(true);
     setAnalysis("");
     setPatternImage("");
+    setGeneratingPattern(true);
+    
     try {
       // Convert image to base64
       const reader = new FileReader();
       reader.onloadend = async () => {
-        const base64Image = reader.result as string;
-        const {
-          data,
-          error
-        } = await supabase.functions.invoke('analyze-chart-image', {
-          body: {
-            image: base64Image,
-            timeframe: timeframe,
-            analysisType: analysisType
+        try {
+          const base64Image = reader.result as string;
+          
+          // Use analyze-chart-with-drawing to draw patterns on the uploaded image
+          const { data, error } = await supabase.functions.invoke('analyze-chart-with-drawing', {
+            body: {
+              image: base64Image,
+              symbol: 'الشارت',
+              timeframe: timeframe
+            }
+          });
+          
+          if (error) throw error;
+          
+          if (data?.success) {
+            // Set the analysis from structured data
+            setAnalysis(data.analysis);
+            
+            // Set the annotated image (drawn on the original image)
+            if (data.annotatedImage) {
+              setPatternImage(data.annotatedImage);
+            }
+            
+            toast.success("تم تحليل الصورة ورسم النمط بنجاح");
+          } else {
+            throw new Error(data?.error || "فشل في التحليل");
           }
-        });
-        if (error) throw error;
-        setAnalysis(data.analysis);
-        toast.success("تم تحليل الصورة بنجاح");
-        // Generate pattern image for image analysis
-        generatePatternImage(data.analysis, 'الشارت');
+        } catch (innerError: any) {
+          console.error('Analysis error:', innerError);
+          toast.error(innerError.message || "حدث خطأ أثناء تحليل الصورة");
+        } finally {
+          setAnalyzing(false);
+          setGeneratingPattern(false);
+        }
       };
       reader.readAsDataURL(image);
     } catch (error: any) {
       console.error('Analysis error:', error);
       toast.error(error.message || "حدث خطأ أثناء تحليل الصورة");
-    } finally {
       setAnalyzing(false);
+      setGeneratingPattern(false);
     }
   };
   if (loading) {
