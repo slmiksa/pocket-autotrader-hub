@@ -532,61 +532,84 @@ const ImageAnalysis = () => {
     try {
       // Detect pattern from analysis
       let pattern = 'خط اتجاه';
-      let direction = 'صعود';
+      let direction = 'صعود'; // Default to up
       
-      if (typeof analysisData === 'object') {
-        // Extract direction
-        const dirText = analysisData.direction?.toLowerCase() || '';
-        if (dirText.includes('بيع') || dirText.includes('put') || dirText.includes('هبوط') || dirText.includes('هابط')) {
-          direction = 'هبوط';
-        } else {
-          direction = 'صعود';
-        }
-        
-        // Try to detect pattern from analysis text
-        const analysisText = JSON.stringify(analysisData).toLowerCase();
-        if (analysisText.includes('مثلث صاعد') || analysisText.includes('ascending triangle')) {
-          pattern = 'مثلث صاعد';
-        } else if (analysisText.includes('مثلث هابط') || analysisText.includes('descending triangle')) {
-          pattern = 'مثلث هابط';
-        } else if (analysisText.includes('مثلث') || analysisText.includes('triangle')) {
-          pattern = 'مثلث متماثل';
-        } else if (analysisText.includes('قناة صاعدة') || analysisText.includes('ascending channel')) {
-          pattern = 'قناة صاعدة';
-        } else if (analysisText.includes('قناة هابطة') || analysisText.includes('descending channel')) {
-          pattern = 'قناة هابطة';
-        } else if (analysisText.includes('قناة') || analysisText.includes('channel')) {
-          pattern = direction === 'صعود' ? 'قناة صاعدة' : 'قناة هابطة';
-        } else if (analysisText.includes('راية') || analysisText.includes('flag')) {
-          pattern = direction === 'صعود' ? 'راية صاعدة' : 'راية هابطة';
-        } else if (analysisText.includes('رأس وكتفين مقلوب') || analysisText.includes('inverse head')) {
-          pattern = 'رأس وكتفين مقلوب';
-        } else if (analysisText.includes('رأس وكتفين') || analysisText.includes('head and shoulders')) {
-          pattern = 'رأس وكتفين';
-        } else if (analysisText.includes('قمة مزدوجة') || analysisText.includes('double top')) {
-          pattern = 'قمة مزدوجة';
-        } else if (analysisText.includes('قاع مزدوج') || analysisText.includes('double bottom')) {
-          pattern = 'قاع مزدوج';
-        } else if (analysisText.includes('وتد') || analysisText.includes('wedge')) {
-          pattern = direction === 'صعود' ? 'وتد صاعد' : 'وتد هابط';
-        } else if (analysisText.includes('دعم') && analysisText.includes('مقاومة')) {
-          pattern = 'دعم ومقاومة';
-        } else if (analysisText.includes('اختراق') || analysisText.includes('breakout')) {
-          pattern = 'اختراق';
-        } else if (analysisText.includes('ارتداد') || analysisText.includes('bounce')) {
-          pattern = 'ارتداد';
-        }
-      } else if (typeof analysisData === 'string') {
-        const analysisText = analysisData.toLowerCase();
-        if (analysisText.includes('put') || analysisText.includes('بيع') || analysisText.includes('هبوط')) {
-          direction = 'هبوط';
-        }
-        // Same pattern detection for string
-        if (analysisText.includes('مثلث')) pattern = 'مثلث متماثل';
-        else if (analysisText.includes('قناة')) pattern = direction === 'صعود' ? 'قناة صاعدة' : 'قناة هابطة';
-        else if (analysisText.includes('راية')) pattern = direction === 'صعود' ? 'راية صاعدة' : 'راية هابطة';
-        else if (analysisText.includes('دعم') && analysisText.includes('مقاومة')) pattern = 'دعم ومقاومة';
+      // Convert to string for analysis
+      const analysisText = typeof analysisData === 'string' 
+        ? analysisData.toLowerCase() 
+        : JSON.stringify(analysisData).toLowerCase();
+      
+      console.log('Analyzing for direction detection:', analysisText.substring(0, 500));
+      
+      // Count bullish vs bearish signals for better accuracy
+      let bullishScore = 0;
+      let bearishScore = 0;
+      
+      // Check for bullish signals (CALL, buy, up)
+      if (analysisText.includes('call')) bullishScore += 3;
+      if (analysisText.includes('شراء')) bullishScore += 3;
+      if (analysisText.includes('صاعد')) bullishScore += 2;
+      if (analysisText.includes('صعود')) bullishScore += 2;
+      if (analysisText.includes('ارتفاع')) bullishScore += 1;
+      if (analysisText.includes('اختراق لأعلى') || analysisText.includes('اختراق صعودي')) bullishScore += 2;
+      if (analysisText.includes('bullish')) bullishScore += 2;
+      if (analysisText.includes('buy')) bullishScore += 2;
+      if (analysisText.includes('uptrend') || analysisText.includes('up trend')) bullishScore += 2;
+      
+      // Check for bearish signals (PUT, sell, down)
+      if (analysisText.includes('put')) bearishScore += 3;
+      if (analysisText.includes('بيع')) bearishScore += 3;
+      if (analysisText.includes('هابط')) bearishScore += 2;
+      if (analysisText.includes('هبوط')) bearishScore += 2;
+      if (analysisText.includes('انخفاض')) bearishScore += 1;
+      if (analysisText.includes('اختراق لأسفل') || analysisText.includes('اختراق هبوطي')) bearishScore += 2;
+      if (analysisText.includes('bearish')) bearishScore += 2;
+      if (analysisText.includes('sell')) bearishScore += 2;
+      if (analysisText.includes('downtrend') || analysisText.includes('down trend')) bearishScore += 2;
+      
+      console.log('Direction scores - Bullish:', bullishScore, 'Bearish:', bearishScore);
+      
+      // Determine direction based on score
+      if (bearishScore > bullishScore) {
+        direction = 'هبوط';
+      } else {
+        direction = 'صعود';
       }
+      
+      // Pattern detection
+      if (analysisText.includes('مثلث صاعد') || analysisText.includes('ascending triangle')) {
+        pattern = 'مثلث صاعد';
+      } else if (analysisText.includes('مثلث هابط') || analysisText.includes('descending triangle')) {
+        pattern = 'مثلث هابط';
+      } else if (analysisText.includes('مثلث') || analysisText.includes('triangle')) {
+        pattern = 'مثلث متماثل';
+      } else if (analysisText.includes('قناة صاعدة') || analysisText.includes('ascending channel')) {
+        pattern = 'قناة صاعدة';
+      } else if (analysisText.includes('قناة هابطة') || analysisText.includes('descending channel')) {
+        pattern = 'قناة هابطة';
+      } else if (analysisText.includes('قناة') || analysisText.includes('channel')) {
+        pattern = direction === 'صعود' ? 'قناة صاعدة' : 'قناة هابطة';
+      } else if (analysisText.includes('راية') || analysisText.includes('flag')) {
+        pattern = direction === 'صعود' ? 'راية صاعدة' : 'راية هابطة';
+      } else if (analysisText.includes('رأس وكتفين مقلوب') || analysisText.includes('inverse head')) {
+        pattern = 'رأس وكتفين مقلوب';
+      } else if (analysisText.includes('رأس وكتفين') || analysisText.includes('head and shoulders')) {
+        pattern = 'رأس وكتفين';
+      } else if (analysisText.includes('قمة مزدوجة') || analysisText.includes('double top')) {
+        pattern = 'قمة مزدوجة';
+      } else if (analysisText.includes('قاع مزدوج') || analysisText.includes('double bottom')) {
+        pattern = 'قاع مزدوج';
+      } else if (analysisText.includes('وتد') || analysisText.includes('wedge')) {
+        pattern = direction === 'صعود' ? 'وتد صاعد' : 'وتد هابط';
+      } else if (analysisText.includes('دعم') && analysisText.includes('مقاومة')) {
+        pattern = 'دعم ومقاومة';
+      } else if (analysisText.includes('اختراق') || analysisText.includes('breakout')) {
+        pattern = 'اختراق';
+      } else if (analysisText.includes('ارتداد') || analysisText.includes('bounce')) {
+        pattern = 'ارتداد';
+      }
+
+      console.log('Detected pattern:', pattern, 'Direction:', direction);
 
       const { data, error } = await supabase.functions.invoke('generate-pattern-image', {
         body: { pattern, direction, symbol }
