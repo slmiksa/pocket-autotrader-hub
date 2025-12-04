@@ -8,12 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Star, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Target, BookOpen, User, Loader2, Image as ImageIcon, Users, Sparkles, ChevronRight, Edit2, Camera } from 'lucide-react';
+import { ArrowLeft, Star, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Target, BookOpen, User, Loader2, Image as ImageIcon, Users, Sparkles, ChevronRight, Edit2, Camera, Bell } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useDailyJournal, NewJournalEntry } from '@/hooks/useDailyJournal';
 import { useSavedAnalyses } from '@/hooks/useSavedAnalyses';
 import { ProfessionalTradingJournal } from '@/components/trading/ProfessionalTradingJournal';
 import { ProfileEditDialog } from '@/components/profile/ProfileEditDialog';
+import { PriceAlertsList } from '@/components/alerts/PriceAlertsList';
 import { toast } from 'sonner';
 
 interface CommunityPost {
@@ -280,13 +281,20 @@ const Profile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="favorites" className="w-full">
-          <TabsList className="w-full grid grid-cols-4 bg-card/50 border border-border/50 backdrop-blur-sm p-1 rounded-xl">
+          <TabsList className="w-full grid grid-cols-5 bg-card/50 border border-border/50 backdrop-blur-sm p-1 rounded-xl">
             <TabsTrigger 
               value="favorites" 
               className="flex-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary rounded-lg transition-all"
             >
               <Star className="h-4 w-4 ml-1" />
               <span className="hidden sm:inline">المفضلة</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="alerts" 
+              className="flex-1 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400 rounded-lg transition-all"
+            >
+              <Bell className="h-4 w-4 ml-1" />
+              <span className="hidden sm:inline">التنبيهات</span>
             </TabsTrigger>
             <TabsTrigger 
               value="posts" 
@@ -367,6 +375,25 @@ const Profile = () => {
                   ))}
                 </div>
               )}
+            </Card>
+          </TabsContent>
+
+          {/* Alerts Tab */}
+          <TabsContent value="alerts" className="mt-4">
+            <Card className="p-5 border-border/50 bg-card/50 backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-orange-500/20">
+                    <Bell className="h-5 w-5 text-orange-400" />
+                  </div>
+                  التنبيهات السعرية
+                </h3>
+                <Button onClick={() => navigate('/markets')} variant="outline" size="sm" className="border-orange-500/30 hover:bg-orange-500/10">
+                  <Plus className="h-4 w-4 ml-2" />
+                  إضافة تنبيه
+                </Button>
+              </div>
+              <PriceAlertsList />
             </Card>
           </TabsContent>
 
