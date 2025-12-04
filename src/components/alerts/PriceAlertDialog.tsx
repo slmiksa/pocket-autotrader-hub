@@ -124,7 +124,41 @@ export const PriceAlertDialog = ({
               className="text-lg"
               dir="ltr"
             />
-            {currentPrice && targetPrice && (
+            
+            {/* Quick price buttons based on current price */}
+            {currentPrice && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">اختر سعر سريع:</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { label: '-5%', value: currentPrice * 0.95 },
+                    { label: '-2%', value: currentPrice * 0.98 },
+                    { label: '-1%', value: currentPrice * 0.99 },
+                    { label: 'الحالي', value: currentPrice },
+                    { label: '+1%', value: currentPrice * 1.01 },
+                    { label: '+2%', value: currentPrice * 1.02 },
+                    { label: '+5%', value: currentPrice * 1.05 },
+                    { label: '+10%', value: currentPrice * 1.10 },
+                  ].map((item) => (
+                    <Button
+                      key={item.label}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-xs h-8 hover:bg-primary/20 hover:border-primary"
+                      onClick={() => setTargetPrice(item.value.toFixed(item.value < 1 ? 6 : 2))}
+                    >
+                      {item.label}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-xs text-primary font-medium">
+                  السعر الحالي: {currentPrice.toFixed(currentPrice < 1 ? 6 : 2)}
+                </p>
+              </div>
+            )}
+            
+            {targetPrice && (
               <p className="text-xs text-muted-foreground">
                 {condition === 'above' 
                   ? `سيتم إشعارك عندما يصل السعر إلى ${targetPrice} أو أعلى`
