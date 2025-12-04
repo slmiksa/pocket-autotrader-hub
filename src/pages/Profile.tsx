@@ -12,6 +12,7 @@ import { useSavedAnalyses } from '@/hooks/useSavedAnalyses';
 import { ProfessionalTradingJournal } from '@/components/trading/ProfessionalTradingJournal';
 import { ProfileEditDialog } from '@/components/profile/ProfileEditDialog';
 import { PriceAlertsList } from '@/components/alerts/PriceAlertsList';
+import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown';
 import { toast } from 'sonner';
 
 interface CommunityPost {
@@ -197,7 +198,7 @@ const Profile = () => {
               <Sparkles className="h-5 w-5 text-primary" />
               الملف الشخصي
             </h1>
-            <div className="w-10" />
+            <NotificationsDropdown />
           </div>
         </div>
       </header>
