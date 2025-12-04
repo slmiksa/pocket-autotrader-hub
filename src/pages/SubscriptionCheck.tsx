@@ -193,10 +193,7 @@ const SubscriptionCheck = () => {
             <Button onClick={() => navigate("/auth")} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0" size="lg">
               تسجيل الدخول / التسجيل
             </Button>
-            <Button onClick={() => navigate("/admin-login")} variant="outline" className="w-full border-slate-700 text-slate-300 hover:bg-slate-800">
-              <Shield className="h-4 w-4 ml-2" />
-              دخول المسؤول
-            </Button>
+            
           </CardContent>
         </Card>
       </div>;
