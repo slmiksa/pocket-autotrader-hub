@@ -1048,7 +1048,7 @@ export const SmartSupport = () => {
                 <p className="text-sm text-slate-400">
                   اختر القسم المناسب لسؤالك:
                 </p>
-                <Button variant="ghost" size="sm" onClick={handleClose} className="text-slate-400 hover:text-white bg-muted-foreground">
+                <Button variant="ghost" size="sm" onClick={handleClose} className="bg-muted-foreground text-popover">
                   عودة
                 </Button>
               </div>
