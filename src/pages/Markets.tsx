@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ArrowLeft, TrendingUp, TrendingDown, Loader2, RefreshCw, Star, User, BarChart3, Sparkles, Bell } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Loader2, RefreshCw, Star, User, BarChart3, Sparkles, Bell, Search } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
 import { PriceAlertDialog } from '@/components/alerts/PriceAlertDialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -249,6 +250,7 @@ const Markets = () => {
   const [user, setUser] = useState<any>(null);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [selectedMarket, setSelectedMarket] = useState<MarketItem | null>(null);
+  const [categorySearchTerms, setCategorySearchTerms] = useState<{ [key: string]: string }>({});
   const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
 
   // Check user auth
@@ -398,9 +400,15 @@ const Markets = () => {
 
       {/* Markets Accordion */}
       <main className="container mx-auto px-4 py-6 relative z-10">
-        <Accordion type="multiple" defaultValue={['عملات رقمية']} className="space-y-4">
+        <Accordion type="multiple" defaultValue={[]} className="space-y-4">
           {categories.map((category) => {
             const categoryMarkets = markets.filter((market) => market.category === category);
+            const searchKey = category as keyof typeof categorySearchTerms;
+            const searchTerm = categorySearchTerms[searchKey] || '';
+            const filteredMarkets = categoryMarkets.filter((market) => 
+              market.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              market.nameAr.includes(searchTerm)
+            );
             
             return (
               <AccordionItem 
@@ -419,8 +427,19 @@ const Markets = () => {
                 </AccordionTrigger>
                 
                 <AccordionContent className="px-6 pb-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mt-4">
-                    {categoryMarkets.map((market) => {
+                  {/* Search Bar for Category */}
+                  <div className="relative mt-4 mb-4">
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      type="text"
+                      placeholder={`ابحث في ${category}...`}
+                      value={searchTerm}
+                      onChange={(e) => setCategorySearchTerms(prev => ({ ...prev, [category]: e.target.value }))}
+                      className="pr-10 bg-slate-700/50 border-slate-600/50 text-white placeholder:text-slate-500 rounded-xl"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                    {filteredMarkets.map((market) => {
                       const priceData = prices[market.symbol];
                       const isMarketFavorite = isFavorite(market.symbol);
                       
