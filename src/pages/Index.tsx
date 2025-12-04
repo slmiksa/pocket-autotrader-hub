@@ -269,77 +269,110 @@ const Index = () => {
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[280px] bg-slate-950 border-slate-800">
-                  <SheetHeader>
-                    <SheetTitle className="text-right text-white">القائمة</SheetTitle>
-                  </SheetHeader>
-                  <div className="flex flex-col gap-3 mt-6">
-                    {isSupported && (
-                      <Button
-                        onClick={() => { handleNotificationToggle(); setMobileMenuOpen(false); }}
-                        variant={permission === 'granted' ? 'default' : 'outline'}
-                        className={`w-full justify-start gap-2 ${permission !== 'granted' ? 'bg-slate-900 border-slate-700 text-white hover:bg-slate-800' : ''}`}
+                <SheetContent side="right" className="w-[280px] bg-[#0f1219] border-white/10 p-0">
+                  <div className="flex flex-col h-full">
+                    {/* Header */}
+                    <div className="text-center py-6 border-b border-white/10">
+                      <h2 className="text-white text-lg font-semibold">القائمة</h2>
+                    </div>
+                    
+                    {/* Menu Items */}
+                    <div className="flex flex-col gap-2 p-4 flex-1 overflow-auto" dir="rtl">
+                      {isSupported && (
+                        <button
+                          onClick={() => { handleNotificationToggle(); setMobileMenuOpen(false); }}
+                          className="flex items-center gap-3 px-4 py-3 rounded-full border transition-all text-sm font-medium bg-[#252b3b] text-white/70 border-white/10 hover:bg-[#2d3548] hover:text-white"
+                        >
+                          {permission === 'granted' ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+                          {permission === 'granted' ? 'الإشعارات مفعّلة' : 'تفعيل الإشعارات'}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => { handleTestSound(); setMobileMenuOpen(false); }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-full border transition-all text-sm font-medium bg-[#252b3b] text-white/70 border-white/10 hover:bg-[#2d3548] hover:text-white"
                       >
-                        {permission === 'granted' ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-                        <span>{permission === 'granted' ? 'الإشعارات مفعّلة' : 'تفعيل الإشعارات'}</span>
-                      </Button>
-                    )}
-                    <Button
-                      onClick={() => { handleTestSound(); setMobileMenuOpen(false); }}
-                      variant="outline"
-                      className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800"
-                    >
-                      <Volume2 className="h-4 w-4" />
-                      <span>اختبار صوت التنبيه</span>
-                    </Button>
-                    {imageAnalysisEnabled && (
-                      <Button onClick={() => { navigate('/image-analysis'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
-                        <Image className="h-4 w-4" />
-                        <span>تحليل الأسواق</span>
-                      </Button>
-                    )}
-                    {professionalSignalsEnabled && (
-                      <Button onClick={() => { navigate('/professional-signals'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
-                        <Shield className="h-4 w-4" />
-                        <span>توصيات المحترفين</span>
-                      </Button>
-                    )}
-                    <Button onClick={() => { navigate('/supply-demand'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-gradient-to-r from-purple-900/50 to-purple-900/30 border-purple-500/30 text-white hover:bg-purple-900/60">
-                      <TrendingUp className="h-4 w-4 text-purple-400" />
-                      <span>محلل العرض والطلب</span>
-                    </Button>
-                    <Button onClick={() => { navigate('/markets'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
-                      <BarChart3 className="h-4 w-4" />
-                      <span>الأسواق</span>
-                    </Button>
-                    <Button onClick={() => { navigate('/news'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
-                      <Newspaper className="h-4 w-4" />
-                      <span>الأخبار</span>
-                    </Button>
-                    <Button onClick={() => { navigate('/community'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
-                      <Users className="h-4 w-4" />
-                      <span>المجتمع</span>
-                    </Button>
-                    <Button onClick={() => { navigate('/profile'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-gradient-to-r from-amber-900/50 to-amber-900/30 border-amber-500/30 text-white hover:bg-amber-900/60">
-                      <UserIcon className="h-4 w-4 text-amber-400" />
-                      <span>حسابي والمفضلة</span>
-                    </Button>
-                    <Button onClick={() => { window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
-                      <MessageCircle className="h-4 w-4" />
-                      <span>دعم فني</span>
-                    </Button>
+                        <Volume2 className="h-4 w-4" />
+                        اختيار صوت التنبيه
+                      </button>
+                      {imageAnalysisEnabled && (
+                        <button
+                          onClick={() => { navigate('/image-analysis'); setMobileMenuOpen(false); }}
+                          className="flex items-center gap-3 px-4 py-3 rounded-full border transition-all text-sm font-medium bg-[#252b3b] text-white/70 border-white/10 hover:bg-[#2d3548] hover:text-white"
+                        >
+                          <Image className="h-4 w-4" />
+                          تحليل الأسواق
+                        </button>
+                      )}
+                      {professionalSignalsEnabled && (
+                        <button
+                          onClick={() => { navigate('/professional-signals'); setMobileMenuOpen(false); }}
+                          className="flex items-center gap-3 px-4 py-3 rounded-full border transition-all text-sm font-medium bg-[#252b3b] text-white/70 border-white/10 hover:bg-[#2d3548] hover:text-white"
+                        >
+                          <Shield className="h-4 w-4" />
+                          توصيات المحترفين
+                        </button>
+                      )}
+                      <button
+                        onClick={() => { navigate('/supply-demand'); setMobileMenuOpen(false); }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-full border transition-all text-sm font-medium bg-[#252b3b] text-white/70 border-white/10 hover:bg-[#2d3548] hover:text-white"
+                      >
+                        <TrendingUp className="h-4 w-4" />
+                        محلل العرض والطلب
+                      </button>
+                      <button
+                        onClick={() => { navigate('/markets'); setMobileMenuOpen(false); }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-full border transition-all text-sm font-medium bg-[#252b3b] text-white/70 border-white/10 hover:bg-[#2d3548] hover:text-white"
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                        الأسواق
+                      </button>
+                      <button
+                        onClick={() => { navigate('/news'); setMobileMenuOpen(false); }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-full border transition-all text-sm font-medium bg-[#252b3b] text-white/70 border-white/10 hover:bg-[#2d3548] hover:text-white"
+                      >
+                        <Newspaper className="h-4 w-4" />
+                        الأخبار
+                      </button>
+                      <button
+                        onClick={() => { navigate('/community'); setMobileMenuOpen(false); }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-full border transition-all text-sm font-medium bg-[#252b3b] text-white/70 border-white/10 hover:bg-[#2d3548] hover:text-white"
+                      >
+                        <Users className="h-4 w-4" />
+                        المجتمع
+                      </button>
+                      <button
+                        onClick={() => { navigate('/profile'); setMobileMenuOpen(false); }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-full border transition-all text-sm font-medium bg-[#252b3b] text-white/70 border-white/10 hover:bg-[#2d3548] hover:text-white"
+                      >
+                        <UserIcon className="h-4 w-4" />
+                        حسابي والمفضلة
+                      </button>
+                      <button
+                        onClick={() => { window.open('https://wa.me/966575594911?text=tadawolpocket', '_blank'); setMobileMenuOpen(false); }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-full border transition-all text-sm font-medium bg-[#252b3b] text-white/70 border-white/10 hover:bg-[#2d3548] hover:text-white"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        دعم فني
+                      </button>
+                      <button
+                        onClick={() => { navigate('/install'); setMobileMenuOpen(false); }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-full border transition-all text-sm font-medium bg-[#252b3b] text-white/70 border-white/10 hover:bg-[#2d3548] hover:text-white"
+                      >
+                        <Download className="h-4 w-4" />
+                        تحميل كتطبيق
+                      </button>
+                    </div>
                     
-                    {/* Install App Button */}
-                    <InstallAppButton 
-                      variant="outline" 
-                      fullWidth 
-                      className="justify-start bg-gradient-to-r from-emerald-900/50 to-emerald-900/30 border-emerald-500/30 text-white hover:bg-emerald-900/60"
-                    />
-                    
-                    <Button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} variant="ghost" className="w-full justify-start gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10">
-                      <LogOut className="h-4 w-4" />
-                      <span>تسجيل الخروج</span>
-                    </Button>
+                    {/* Footer - Logout */}
+                    <div className="p-4 border-t border-white/10">
+                      <button
+                        onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                        className="flex items-center justify-center gap-2 w-full text-red-400 hover:text-red-300 py-3 text-sm"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        تسجيل الخروج
+                      </button>
+                    </div>
                   </div>
                 </SheetContent>
               </Sheet>
