@@ -131,215 +131,198 @@ export default function LiveChart() {
       tvSymbol: string;
       displayName: string;
     }> = {
-      // Forex
-      eurusd: {
-        tvSymbol: "FX:EURUSD",
-        displayName: "يورو/دولار (EUR/USD)"
-      },
-      gbpusd: {
-        tvSymbol: "FX:GBPUSD",
-        displayName: "جنيه/دولار (GBP/USD)"
-      },
-      usdjpy: {
-        tvSymbol: "FX:USDJPY",
-        displayName: "دولار/ين (USD/JPY)"
-      },
-      usdchf: {
-        tvSymbol: "FX:USDCHF",
-        displayName: "دولار/فرنك (USD/CHF)"
-      },
-      audusd: {
-        tvSymbol: "FX:AUDUSD",
-        displayName: "أسترالي/دولار (AUD/USD)"
-      },
-      usdcad: {
-        tvSymbol: "FX:USDCAD",
-        displayName: "دولار/كندي (USD/CAD)"
-      },
-      nzdusd: {
-        tvSymbol: "FX:NZDUSD",
-        displayName: "نيوزيلندي/دولار (NZD/USD)"
-      },
-      eurgbp: {
-        tvSymbol: "FX:EURGBP",
-        displayName: "يورو/جنيه (EUR/GBP)"
-      },
-      eurjpy: {
-        tvSymbol: "FX:EURJPY",
-        displayName: "يورو/ين (EUR/JPY)"
-      },
-      gbpjpy: {
-        tvSymbol: "FX:GBPJPY",
-        displayName: "جنيه/ين (GBP/JPY)"
-      },
+      // Forex - Major & Cross Pairs
+      eurusd: { tvSymbol: "FX:EURUSD", displayName: "يورو/دولار (EUR/USD)" },
+      gbpusd: { tvSymbol: "FX:GBPUSD", displayName: "جنيه/دولار (GBP/USD)" },
+      usdjpy: { tvSymbol: "FX:USDJPY", displayName: "دولار/ين (USD/JPY)" },
+      usdchf: { tvSymbol: "FX:USDCHF", displayName: "دولار/فرنك (USD/CHF)" },
+      audusd: { tvSymbol: "FX:AUDUSD", displayName: "أسترالي/دولار (AUD/USD)" },
+      usdcad: { tvSymbol: "FX:USDCAD", displayName: "دولار/كندي (USD/CAD)" },
+      nzdusd: { tvSymbol: "FX:NZDUSD", displayName: "نيوزيلندي/دولار (NZD/USD)" },
+      eurgbp: { tvSymbol: "FX:EURGBP", displayName: "يورو/جنيه (EUR/GBP)" },
+      eurjpy: { tvSymbol: "FX:EURJPY", displayName: "يورو/ين (EUR/JPY)" },
+      gbpjpy: { tvSymbol: "FX:GBPJPY", displayName: "جنيه/ين (GBP/JPY)" },
+      eurchf: { tvSymbol: "FX:EURCHF", displayName: "يورو/فرنك (EUR/CHF)" },
+      euraud: { tvSymbol: "FX:EURAUD", displayName: "يورو/أسترالي (EUR/AUD)" },
+      eurcad: { tvSymbol: "FX:EURCAD", displayName: "يورو/كندي (EUR/CAD)" },
+      eurnzd: { tvSymbol: "FX:EURNZD", displayName: "يورو/نيوزيلندي (EUR/NZD)" },
+      gbpchf: { tvSymbol: "FX:GBPCHF", displayName: "جنيه/فرنك (GBP/CHF)" },
+      gbpaud: { tvSymbol: "FX:GBPAUD", displayName: "جنيه/أسترالي (GBP/AUD)" },
+      gbpcad: { tvSymbol: "FX:GBPCAD", displayName: "جنيه/كندي (GBP/CAD)" },
+      gbpnzd: { tvSymbol: "FX:GBPNZD", displayName: "جنيه/نيوزيلندي (GBP/NZD)" },
+      audjpy: { tvSymbol: "FX:AUDJPY", displayName: "أسترالي/ين (AUD/JPY)" },
+      audnzd: { tvSymbol: "FX:AUDNZD", displayName: "أسترالي/نيوزيلندي (AUD/NZD)" },
+      audcad: { tvSymbol: "FX:AUDCAD", displayName: "أسترالي/كندي (AUD/CAD)" },
+      audchf: { tvSymbol: "FX:AUDCHF", displayName: "أسترالي/فرنك (AUD/CHF)" },
+      nzdjpy: { tvSymbol: "FX:NZDJPY", displayName: "نيوزيلندي/ين (NZD/JPY)" },
+      nzdcad: { tvSymbol: "FX:NZDCAD", displayName: "نيوزيلندي/كندي (NZD/CAD)" },
+      nzdchf: { tvSymbol: "FX:NZDCHF", displayName: "نيوزيلندي/فرنك (NZD/CHF)" },
+      cadjpy: { tvSymbol: "FX:CADJPY", displayName: "كندي/ين (CAD/JPY)" },
+      cadchf: { tvSymbol: "FX:CADCHF", displayName: "كندي/فرنك (CAD/CHF)" },
+      chfjpy: { tvSymbol: "FX:CHFJPY", displayName: "فرنك/ين (CHF/JPY)" },
+      
       // Crypto
-      bitcoin: {
-        tvSymbol: "BITSTAMP:BTCUSD",
-        displayName: "بيتكوين (BTC/USD)"
-      },
-      ethereum: {
-        tvSymbol: "BITSTAMP:ETHUSD",
-        displayName: "إيثريوم (ETH/USD)"
-      },
-      bnb: {
-        tvSymbol: "BINANCE:BNBUSDT",
-        displayName: "بي إن بي (BNB/USD)"
-      },
-      solana: {
-        tvSymbol: "COINBASE:SOLUSD",
-        displayName: "سولانا (SOL/USD)"
-      },
-      xrp: {
-        tvSymbol: "BITSTAMP:XRPUSD",
-        displayName: "ريبل (XRP/USD)"
-      },
-      cardano: {
-        tvSymbol: "COINBASE:ADAUSD",
-        displayName: "كاردانو (ADA/USD)"
-      },
-      dogecoin: {
-        tvSymbol: "BINANCE:DOGEUSDT",
-        displayName: "دوجكوين (DOGE/USD)"
-      },
-      litecoin: {
-        tvSymbol: "COINBASE:LTCUSD",
-        displayName: "لايتكوين (LTC/USD)"
-      },
-      avalanche: {
-        tvSymbol: "COINBASE:AVAXUSD",
-        displayName: "أفالانش (AVAX/USD)"
-      },
-      polkadot: {
-        tvSymbol: "COINBASE:DOTUSD",
-        displayName: "بولكادوت (DOT/USD)"
-      },
-      chainlink: {
-        tvSymbol: "COINBASE:LINKUSD",
-        displayName: "تشين لينك (LINK/USD)"
-      },
-      polygon: {
-        tvSymbol: "COINBASE:MATICUSD",
-        displayName: "بوليجون (MATIC/USD)"
-      },
-      shiba: {
-        tvSymbol: "BINANCE:SHIBUSDT",
-        displayName: "شيبا إينو (SHIB/USD)"
-      },
-      tron: {
-        tvSymbol: "BINANCE:TRXUSDT",
-        displayName: "ترون (TRX/USD)"
-      },
-      uniswap: {
-        tvSymbol: "COINBASE:UNIUSD",
-        displayName: "يونيسواب (UNI/USD)"
-      },
+      bitcoin: { tvSymbol: "BITSTAMP:BTCUSD", displayName: "بيتكوين (BTC/USD)" },
+      ethereum: { tvSymbol: "BITSTAMP:ETHUSD", displayName: "إيثريوم (ETH/USD)" },
+      bnb: { tvSymbol: "BINANCE:BNBUSDT", displayName: "بي إن بي (BNB/USD)" },
+      solana: { tvSymbol: "COINBASE:SOLUSD", displayName: "سولانا (SOL/USD)" },
+      xrp: { tvSymbol: "BITSTAMP:XRPUSD", displayName: "ريبل (XRP/USD)" },
+      cardano: { tvSymbol: "COINBASE:ADAUSD", displayName: "كاردانو (ADA/USD)" },
+      dogecoin: { tvSymbol: "BINANCE:DOGEUSDT", displayName: "دوجكوين (DOGE/USD)" },
+      litecoin: { tvSymbol: "COINBASE:LTCUSD", displayName: "لايتكوين (LTC/USD)" },
+      avalanche: { tvSymbol: "COINBASE:AVAXUSD", displayName: "أفالانش (AVAX/USD)" },
+      polkadot: { tvSymbol: "COINBASE:DOTUSD", displayName: "بولكادوت (DOT/USD)" },
+      chainlink: { tvSymbol: "COINBASE:LINKUSD", displayName: "تشين لينك (LINK/USD)" },
+      polygon: { tvSymbol: "COINBASE:MATICUSD", displayName: "بوليجون (MATIC/USD)" },
+      shiba: { tvSymbol: "BINANCE:SHIBUSDT", displayName: "شيبا إينو (SHIB/USD)" },
+      tron: { tvSymbol: "BINANCE:TRXUSDT", displayName: "ترون (TRX/USD)" },
+      uniswap: { tvSymbol: "COINBASE:UNIUSD", displayName: "يونيسواب (UNI/USD)" },
+      cosmos: { tvSymbol: "COINBASE:ATOMUSD", displayName: "كوزموس (ATOM/USD)" },
+      ethereumclassic: { tvSymbol: "COINBASE:ETCUSD", displayName: "إيثريوم كلاسيك (ETC/USD)" },
+      stellar: { tvSymbol: "COINBASE:XLMUSD", displayName: "ستيلار (XLM/USD)" },
+      bitcoincash: { tvSymbol: "COINBASE:BCHUSD", displayName: "بيتكوين كاش (BCH/USD)" },
+      algorand: { tvSymbol: "COINBASE:ALGOUSD", displayName: "ألجوراند (ALGO/USD)" },
+      vechain: { tvSymbol: "BINANCE:VETUSDT", displayName: "في تشين (VET/USD)" },
+      filecoin: { tvSymbol: "COINBASE:FILUSD", displayName: "فايل كوين (FIL/USD)" },
+      near: { tvSymbol: "COINBASE:NEARUSD", displayName: "نير بروتوكول (NEAR/USD)" },
+      aptos: { tvSymbol: "BINANCE:APTUSDT", displayName: "أبتوس (APT/USD)" },
+      arbitrum: { tvSymbol: "BINANCE:ARBUSDT", displayName: "أربيتروم (ARB/USD)" },
+      optimism: { tvSymbol: "BINANCE:OPUSDT", displayName: "أوبتيميزم (OP/USD)" },
+      sui: { tvSymbol: "BINANCE:SUIUSDT", displayName: "سوي (SUI/USD)" },
+      pepe: { tvSymbol: "BINANCE:PEPEUSDT", displayName: "بيبي (PEPE/USD)" },
+      sandbox: { tvSymbol: "COINBASE:SANDUSD", displayName: "ذا ساندبوكس (SAND/USD)" },
+      decentraland: { tvSymbol: "COINBASE:MANAUSD", displayName: "ديسنترالاند (MANA/USD)" },
+      hedera: { tvSymbol: "BINANCE:HBARUSDT", displayName: "هيديرا (HBAR/USD)" },
+      fantom: { tvSymbol: "BINANCE:FTMUSDT", displayName: "فانتوم (FTM/USD)" },
+      aave: { tvSymbol: "COINBASE:AAVEUSD", displayName: "آفي (AAVE/USD)" },
+      render: { tvSymbol: "BINANCE:RENDERUSDT", displayName: "رندر (RENDER/USD)" },
+      injective: { tvSymbol: "BINANCE:INJUSDT", displayName: "إنجيكتيف (INJ/USD)" },
+      
       // Commodities
-      gold: {
-        tvSymbol: "OANDA:XAUUSD",
-        displayName: "الذهب (XAU/USD)"
-      },
-      silver: {
-        tvSymbol: "OANDA:XAGUSD",
-        displayName: "الفضة (XAG/USD)"
-      },
-      oil: {
-        tvSymbol: "TVC:USOIL",
-        displayName: "النفط الخام (WTI)"
-      },
-      naturalgas: {
-        tvSymbol: "TVC:NATURALGAS",
-        displayName: "الغاز الطبيعي"
-      },
-      platinum: {
-        tvSymbol: "TVC:PLATINUM",
-        displayName: "البلاتين"
-      },
-      copper: {
-        tvSymbol: "TVC:COPPER",
-        displayName: "النحاس"
-      },
+      gold: { tvSymbol: "OANDA:XAUUSD", displayName: "الذهب (XAU/USD)" },
+      silver: { tvSymbol: "OANDA:XAGUSD", displayName: "الفضة (XAG/USD)" },
+      oil: { tvSymbol: "TVC:USOIL", displayName: "النفط الخام (WTI)" },
+      brentoil: { tvSymbol: "TVC:UKOIL", displayName: "نفط برنت (Brent)" },
+      naturalgas: { tvSymbol: "TVC:NATURALGAS", displayName: "الغاز الطبيعي" },
+      platinum: { tvSymbol: "TVC:PLATINUM", displayName: "البلاتين" },
+      palladium: { tvSymbol: "TVC:PALLADIUM", displayName: "البلاديوم" },
+      copper: { tvSymbol: "TVC:COPPER", displayName: "النحاس" },
+      wheat: { tvSymbol: "CBOT:ZW1!", displayName: "القمح" },
+      corn: { tvSymbol: "CBOT:ZC1!", displayName: "الذرة" },
+      soybeans: { tvSymbol: "CBOT:ZS1!", displayName: "فول الصويا" },
+      coffee: { tvSymbol: "ICEUS:KC1!", displayName: "القهوة" },
+      sugar: { tvSymbol: "ICEUS:SB1!", displayName: "السكر" },
+      cotton: { tvSymbol: "ICEUS:CT1!", displayName: "القطن" },
+      
       // Indices
-      sp500: {
-        tvSymbol: "FOREXCOM:SPXUSD",
-        displayName: "إس آند بي 500 (S&P 500)"
-      },
-      dowjones: {
-        tvSymbol: "TVC:DJI",
-        displayName: "داو جونز (Dow Jones)"
-      },
-      nasdaq: {
-        tvSymbol: "NASDAQ:NDX",
-        displayName: "ناسداك (NASDAQ)"
-      },
-      dax: {
-        tvSymbol: "XETR:DAX",
-        displayName: "داكس الألماني (DAX)"
-      },
-      ftse100: {
-        tvSymbol: "TVC:UKX",
-        displayName: "فوتسي 100 (FTSE 100)"
-      },
-      nikkei: {
-        tvSymbol: "TVC:NI225",
-        displayName: "نيكاي 225 (Nikkei)"
-      },
-      cac40: {
-        tvSymbol: "TVC:CAC40",
-        displayName: "كاك 40 (CAC 40)"
-      },
-      // Stocks
-      apple: {
-        tvSymbol: "NASDAQ:AAPL",
-        displayName: "أبل (Apple)"
-      },
-      tesla: {
-        tvSymbol: "NASDAQ:TSLA",
-        displayName: "تسلا (Tesla)"
-      },
-      amazon: {
-        tvSymbol: "NASDAQ:AMZN",
-        displayName: "أمازون (Amazon)"
-      },
-      google: {
-        tvSymbol: "NASDAQ:GOOGL",
-        displayName: "جوجل (Google)"
-      },
-      microsoft: {
-        tvSymbol: "NASDAQ:MSFT",
-        displayName: "مايكروسوفت (Microsoft)"
-      },
-      meta: {
-        tvSymbol: "NASDAQ:META",
-        displayName: "ميتا (Meta)"
-      },
-      nvidia: {
-        tvSymbol: "NASDAQ:NVDA",
-        displayName: "إنفيديا (NVIDIA)"
-      },
-      netflix: {
-        tvSymbol: "NASDAQ:NFLX",
-        displayName: "نتفليكس (Netflix)"
-      },
-      amd: {
-        tvSymbol: "NASDAQ:AMD",
-        displayName: "إيه إم دي (AMD)"
-      },
-      intel: {
-        tvSymbol: "NASDAQ:INTC",
-        displayName: "إنتل (Intel)"
-      },
-      disney: {
-        tvSymbol: "NYSE:DIS",
-        displayName: "ديزني (Disney)"
-      },
-      cocacola: {
-        tvSymbol: "NYSE:KO",
-        displayName: "كوكا كولا (Coca-Cola)"
-      }
+      sp500: { tvSymbol: "FOREXCOM:SPXUSD", displayName: "إس آند بي 500 (S&P 500)" },
+      dowjones: { tvSymbol: "TVC:DJI", displayName: "داو جونز (Dow Jones)" },
+      nasdaq: { tvSymbol: "NASDAQ:NDX", displayName: "ناسداك (NASDAQ)" },
+      russell2000: { tvSymbol: "TVC:RUT", displayName: "راسل 2000 (Russell 2000)" },
+      dax: { tvSymbol: "XETR:DAX", displayName: "داكس الألماني (DAX)" },
+      ftse100: { tvSymbol: "TVC:UKX", displayName: "فوتسي 100 (FTSE 100)" },
+      nikkei: { tvSymbol: "TVC:NI225", displayName: "نيكاي 225 (Nikkei)" },
+      cac40: { tvSymbol: "TVC:CAC40", displayName: "كاك 40 (CAC 40)" },
+      hangseng: { tvSymbol: "TVC:HSI", displayName: "هانج سينج (Hang Seng)" },
+      asx200: { tvSymbol: "PEPPERSTONE:AUS200", displayName: "إيه إس إكس 200 (ASX 200)" },
+      
+      // US Stocks
+      apple: { tvSymbol: "NASDAQ:AAPL", displayName: "أبل (Apple)" },
+      microsoft: { tvSymbol: "NASDAQ:MSFT", displayName: "مايكروسوفت (Microsoft)" },
+      google: { tvSymbol: "NASDAQ:GOOGL", displayName: "جوجل (Google)" },
+      amazon: { tvSymbol: "NASDAQ:AMZN", displayName: "أمازون (Amazon)" },
+      nvidia: { tvSymbol: "NASDAQ:NVDA", displayName: "إنفيديا (NVIDIA)" },
+      tesla: { tvSymbol: "NASDAQ:TSLA", displayName: "تسلا (Tesla)" },
+      meta: { tvSymbol: "NASDAQ:META", displayName: "ميتا (Meta)" },
+      netflix: { tvSymbol: "NASDAQ:NFLX", displayName: "نتفليكس (Netflix)" },
+      amd: { tvSymbol: "NASDAQ:AMD", displayName: "إيه إم دي (AMD)" },
+      intel: { tvSymbol: "NASDAQ:INTC", displayName: "إنتل (Intel)" },
+      qualcomm: { tvSymbol: "NASDAQ:QCOM", displayName: "كوالكوم (Qualcomm)" },
+      broadcom: { tvSymbol: "NASDAQ:AVGO", displayName: "برودكوم (Broadcom)" },
+      oracle: { tvSymbol: "NYSE:ORCL", displayName: "أوراكل (Oracle)" },
+      salesforce: { tvSymbol: "NYSE:CRM", displayName: "سيلزفورس (Salesforce)" },
+      adobe: { tvSymbol: "NASDAQ:ADBE", displayName: "أدوبي (Adobe)" },
+      paypal: { tvSymbol: "NASDAQ:PYPL", displayName: "باي بال (PayPal)" },
+      visa: { tvSymbol: "NYSE:V", displayName: "فيزا (Visa)" },
+      mastercard: { tvSymbol: "NYSE:MA", displayName: "ماستركارد (Mastercard)" },
+      jpmorgan: { tvSymbol: "NYSE:JPM", displayName: "جيه بي مورجان (JPMorgan)" },
+      bankofamerica: { tvSymbol: "NYSE:BAC", displayName: "بنك أوف أمريكا (Bank of America)" },
+      wellsfargo: { tvSymbol: "NYSE:WFC", displayName: "ويلز فارجو (Wells Fargo)" },
+      goldmansachs: { tvSymbol: "NYSE:GS", displayName: "جولدمان ساكس (Goldman Sachs)" },
+      morganstanley: { tvSymbol: "NYSE:MS", displayName: "مورجان ستانلي (Morgan Stanley)" },
+      berkshire: { tvSymbol: "NYSE:BRK.B", displayName: "بيركشاير هاثاواي (Berkshire)" },
+      jnj: { tvSymbol: "NYSE:JNJ", displayName: "جونسون آند جونسون (J&J)" },
+      pfizer: { tvSymbol: "NYSE:PFE", displayName: "فايزر (Pfizer)" },
+      moderna: { tvSymbol: "NASDAQ:MRNA", displayName: "مودرنا (Moderna)" },
+      abbott: { tvSymbol: "NYSE:ABT", displayName: "أبوت (Abbott)" },
+      merck: { tvSymbol: "NYSE:MRK", displayName: "ميرك (Merck)" },
+      elililly: { tvSymbol: "NYSE:LLY", displayName: "إيلي ليلي (Eli Lilly)" },
+      unitedhealth: { tvSymbol: "NYSE:UNH", displayName: "يونايتد هيلث (UnitedHealth)" },
+      disney: { tvSymbol: "NYSE:DIS", displayName: "ديزني (Disney)" },
+      comcast: { tvSymbol: "NASDAQ:CMCSA", displayName: "كومكاست (Comcast)" },
+      cocacola: { tvSymbol: "NYSE:KO", displayName: "كوكا كولا (Coca-Cola)" },
+      pepsico: { tvSymbol: "NASDAQ:PEP", displayName: "بيبسيكو (PepsiCo)" },
+      pg: { tvSymbol: "NYSE:PG", displayName: "بروكتر آند جامبل (P&G)" },
+      nike: { tvSymbol: "NYSE:NKE", displayName: "نايكي (Nike)" },
+      starbucks: { tvSymbol: "NASDAQ:SBUX", displayName: "ستاربكس (Starbucks)" },
+      mcdonalds: { tvSymbol: "NYSE:MCD", displayName: "ماكدونالدز (McDonald's)" },
+      homedepot: { tvSymbol: "NYSE:HD", displayName: "هوم ديبو (Home Depot)" },
+      walmart: { tvSymbol: "NYSE:WMT", displayName: "وول مارت (Walmart)" },
+      target: { tvSymbol: "NYSE:TGT", displayName: "تارجت (Target)" },
+      costco: { tvSymbol: "NASDAQ:COST", displayName: "كوستكو (Costco)" },
+      exxonmobil: { tvSymbol: "NYSE:XOM", displayName: "إكسون موبيل (ExxonMobil)" },
+      chevron: { tvSymbol: "NYSE:CVX", displayName: "شيفرون (Chevron)" },
+      conocophillips: { tvSymbol: "NYSE:COP", displayName: "كونوكو فيليبس (ConocoPhillips)" },
+      schlumberger: { tvSymbol: "NYSE:SLB", displayName: "شلمبرجير (Schlumberger)" },
+      boeing: { tvSymbol: "NYSE:BA", displayName: "بوينج (Boeing)" },
+      lockheedmartin: { tvSymbol: "NYSE:LMT", displayName: "لوكهيد مارتن (Lockheed Martin)" },
+      raytheon: { tvSymbol: "NYSE:RTX", displayName: "رايثيون (Raytheon)" },
+      caterpillar: { tvSymbol: "NYSE:CAT", displayName: "كاتربيلر (Caterpillar)" },
+      '3m': { tvSymbol: "NYSE:MMM", displayName: "3إم (3M)" },
+      ge: { tvSymbol: "NYSE:GE", displayName: "جنرال إلكتريك (GE)" },
+      ford: { tvSymbol: "NYSE:F", displayName: "فورد (Ford)" },
+      gm: { tvSymbol: "NYSE:GM", displayName: "جنرال موتورز (GM)" },
+      rivian: { tvSymbol: "NASDAQ:RIVN", displayName: "ريفيان (Rivian)" },
+      lucid: { tvSymbol: "NASDAQ:LCID", displayName: "لوسيد (Lucid)" },
+      americanairlines: { tvSymbol: "NASDAQ:AAL", displayName: "أمريكان إيرلاينز (American Airlines)" },
+      delta: { tvSymbol: "NYSE:DAL", displayName: "دلتا (Delta)" },
+      unitedairlines: { tvSymbol: "NASDAQ:UAL", displayName: "يونايتد إيرلاينز (United Airlines)" },
+      southwest: { tvSymbol: "NYSE:LUV", displayName: "ساوث ويست (Southwest)" },
+      att: { tvSymbol: "NYSE:T", displayName: "إيه تي آند تي (AT&T)" },
+      verizon: { tvSymbol: "NYSE:VZ", displayName: "فيرايزون (Verizon)" },
+      tmobile: { tvSymbol: "NASDAQ:TMUS", displayName: "تي موبايل (T-Mobile)" },
+      uber: { tvSymbol: "NYSE:UBER", displayName: "أوبر (Uber)" },
+      airbnb: { tvSymbol: "NASDAQ:ABNB", displayName: "إير بي إن بي (Airbnb)" },
+      zoom: { tvSymbol: "NASDAQ:ZM", displayName: "زوم (Zoom)" },
+      spotify: { tvSymbol: "NYSE:SPOT", displayName: "سبوتيفاي (Spotify)" },
+      block: { tvSymbol: "NYSE:SQ", displayName: "بلوك (Block/Square)" },
+      coinbase: { tvSymbol: "NASDAQ:COIN", displayName: "كوينبيس (Coinbase)" },
+      palantir: { tvSymbol: "NYSE:PLTR", displayName: "بالانتير (Palantir)" },
+      snowflake: { tvSymbol: "NYSE:SNOW", displayName: "سنوفليك (Snowflake)" },
+      crowdstrike: { tvSymbol: "NASDAQ:CRWD", displayName: "كراود سترايك (CrowdStrike)" },
+      servicenow: { tvSymbol: "NYSE:NOW", displayName: "سيرفس ناو (ServiceNow)" },
+      intuit: { tvSymbol: "NASDAQ:INTU", displayName: "إنتويت (Intuit)" },
+      shopify: { tvSymbol: "NYSE:SHOP", displayName: "شوبيفاي (Shopify)" },
+      twilio: { tvSymbol: "NYSE:TWLO", displayName: "تويليو (Twilio)" },
+      datadog: { tvSymbol: "NASDAQ:DDOG", displayName: "داتا دوج (Datadog)" },
+      mongodb: { tvSymbol: "NASDAQ:MDB", displayName: "مونجو دي بي (MongoDB)" },
+      okta: { tvSymbol: "NASDAQ:OKTA", displayName: "أوكتا (Okta)" },
+      asml: { tvSymbol: "NASDAQ:ASML", displayName: "إيه إس إم إل (ASML)" },
+      tsmc: { tvSymbol: "NYSE:TSM", displayName: "تي إس إم سي (TSMC)" },
+      sony: { tvSymbol: "NYSE:SONY", displayName: "سوني (Sony)" },
+      nintendo: { tvSymbol: "OTCMKTS:NTDOY", displayName: "نينتندو (Nintendo)" }
     };
-    return symbolMap[symbol] || {
-      tvSymbol: "BITSTAMP:BTCUSD",
-      displayName: "بيتكوين (BTC/USD)"
+    
+    // If symbol exists in map, return it
+    if (symbolMap[symbol]) {
+      return symbolMap[symbol];
+    }
+    
+    // For unknown symbols, try to construct a TradingView symbol
+    // Default to NASDAQ for unknown stocks
+    return {
+      tvSymbol: `NASDAQ:${symbol.toUpperCase()}`,
+      displayName: symbol.charAt(0).toUpperCase() + symbol.slice(1)
     };
   };
   const symbolInfo = getSymbolInfo();
