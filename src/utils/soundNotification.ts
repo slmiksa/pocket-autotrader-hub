@@ -48,6 +48,18 @@ const playMobileBeep = () => {
   }
 };
 
+// Vibrate device for notifications (mobile only)
+export const vibrateDevice = (pattern: number | number[] = [200, 100, 200]) => {
+  try {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+      console.log('Device vibrated');
+    }
+  } catch (error) {
+    console.error('Vibration error:', error);
+  }
+};
+
 // Create notification sound for CALL signals (ascending - positive)
 export const playCallNotificationSound = () => {
   try {
@@ -120,9 +132,12 @@ export const playPutNotificationSound = () => {
   }
 };
 
-// Generic notification sound (neutral)
+// Generic notification sound (neutral) with vibration
 export const playNotificationSound = () => {
   try {
+    // Vibrate device first
+    vibrateDevice([200, 100, 200]);
+    
     // Try mobile-friendly audio first (works better on iOS/Android)
     playMobileBeep();
     
