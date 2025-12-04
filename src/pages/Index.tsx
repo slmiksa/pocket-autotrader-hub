@@ -7,10 +7,11 @@ import { LivePriceCards } from "@/components/LivePriceCards";
 import { HomeContent } from "@/components/HomeContent";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper, Shield, Menu, User as UserIcon, Users, BarChart3, Download } from "lucide-react";
+import { TrendingUp, Loader2, LogOut, Calendar, MessageCircle, Image, Bell, BellOff, LineChart, Newspaper, Shield, Menu, User as UserIcon, Users, BarChart3, Download, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
 import { InstallAppButton } from "@/components/InstallAppButton";
+import { initAudioContext, playNotificationSound } from "@/utils/soundNotification";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -104,11 +105,34 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Initialize audio context on first user interaction
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      initAudioContext();
+      // Remove listeners after first interaction
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+    
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
+    
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+  }, []);
+
   const handleNotificationToggle = async () => {
     const granted = await requestPermission(false);
     if (!granted && permission === 'denied') {
       toast.error('يرجى السماح بالإشعارات من إعدادات المتصفح');
     }
+  };
+
+  const handleTestSound = () => {
+    playNotificationSound();
+    toast.success('تم تشغيل صوت الاختبار');
   };
 
   useEffect(() => {
@@ -188,6 +212,15 @@ const Index = () => {
                     <span>{permission === 'granted' ? 'مفعّلة' : 'تفعيل الإشعارات'}</span>
                   </Button>
                 )}
+                <Button
+                  onClick={handleTestSound}
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  title="اختبار الصوت"
+                >
+                  <Volume2 className="h-4 w-4" />
+                </Button>
                 {imageAnalysisEnabled && (
                   <Button onClick={() => navigate('/image-analysis')} variant="outline" size="sm" className="gap-1.5">
                     <Image className="h-4 w-4" />
@@ -252,6 +285,14 @@ const Index = () => {
                         <span>{permission === 'granted' ? 'الإشعارات مفعّلة' : 'تفعيل الإشعارات'}</span>
                       </Button>
                     )}
+                    <Button
+                      onClick={() => { handleTestSound(); setMobileMenuOpen(false); }}
+                      variant="outline"
+                      className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800"
+                    >
+                      <Volume2 className="h-4 w-4" />
+                      <span>اختبار صوت التنبيه</span>
+                    </Button>
                     {imageAnalysisEnabled && (
                       <Button onClick={() => { navigate('/image-analysis'); setMobileMenuOpen(false); }} variant="outline" className="w-full justify-start gap-2 bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
                         <Image className="h-4 w-4" />
