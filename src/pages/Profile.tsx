@@ -174,7 +174,10 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(222,47%,6%)]" dir="rtl">
+    <div className="min-h-screen bg-[hsl(222,47%,6%)] pt-[env(safe-area-inset-top)]" dir="rtl">
+      {/* Safe Area Background */}
+      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-[hsl(222,47%,8%)] z-[60]" />
+      
       {/* Animated Background Gradients */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-primary/10 via-primary/5 to-transparent rounded-full blur-3xl" />
@@ -183,7 +186,7 @@ const Profile = () => {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[hsl(222,47%,8%)]/80 backdrop-blur-xl border-b border-[hsl(217,33%,17%)]">
+      <header className="sticky top-0 z-50 bg-[hsl(222,47%,8%)]/80 backdrop-blur-xl border-b border-[hsl(217,33%,17%)] pt-[env(safe-area-inset-top)]">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button 

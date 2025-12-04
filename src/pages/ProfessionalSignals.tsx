@@ -141,7 +141,8 @@ const ProfessionalSignals = () => {
 
   if (!hasAccess) {
     return (
-      <div className="min-h-screen bg-background p-4">
+      <div className="min-h-screen bg-background p-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
+        <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-background z-[60]" />
         <div className="max-w-2xl mx-auto">
           <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
             <ArrowLeft className="ml-2 h-4 w-4" />
@@ -188,7 +189,8 @@ const ProfessionalSignals = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="min-h-screen bg-background p-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
+      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-background z-[60]" />
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate(-1)}>
