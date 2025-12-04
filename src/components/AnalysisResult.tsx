@@ -2,14 +2,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUp, ArrowDown, Shield, DollarSign, Target, TrendingUp, AlertCircle } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
-
 interface AnalysisResultProps {
   analysis: string | any;
 }
-
-export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
+export const AnalysisResult = ({
+  analysis
+}: AnalysisResultProps) => {
   let data: any;
-  
+
   // Check if analysis is already an object
   if (typeof analysis === 'object' && analysis !== null) {
     data = analysis;
@@ -18,74 +18,82 @@ export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
       data = JSON.parse(analysis);
     } catch {
       // If not JSON, display as formatted markdown text
-    return (
-      <Card className="bg-card border-border">
+      return <Card className="bg-card border-border">
         <CardContent className="p-6">
           <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{
             fontSize: '15px',
             lineHeight: '1.8',
             textAlign: 'right'
           }}>
-            <ReactMarkdown
-              components={{
-                h1: ({children}) => <h1 className="text-2xl font-bold mt-6 mb-4 text-foreground">{children}</h1>,
-                h2: ({children}) => <h2 className="text-xl font-bold mt-6 mb-3 text-foreground">{children}</h2>,
-                h3: ({children}) => <h3 className="text-lg font-semibold mt-4 mb-2 text-foreground">{children}</h3>,
-                p: ({children}) => <p className="mb-3 text-foreground">{children}</p>,
-                ul: ({children}) => <ul className="list-disc pr-6 mb-4 space-y-2">{children}</ul>,
-                ol: ({children}) => <ol className="list-decimal pr-6 mb-4 space-y-2">{children}</ol>,
-                li: ({children}) => <li className="text-foreground">{children}</li>,
-                strong: ({children}) => <strong className="font-bold text-primary">{children}</strong>,
-                em: ({children}) => <em className="italic text-foreground">{children}</em>,
-                blockquote: ({children}) => <blockquote className="border-r-4 border-primary pr-4 py-2 my-4 bg-muted/50 rounded">{children}</blockquote>,
-                code: ({children}) => <code className="bg-muted px-2 py-1 rounded text-sm">{children}</code>,
-              }}
-            >
+            <ReactMarkdown components={{
+              h1: ({
+                children
+              }) => <h1 className="text-2xl font-bold mt-6 mb-4 text-foreground">{children}</h1>,
+              h2: ({
+                children
+              }) => <h2 className="text-xl font-bold mt-6 mb-3 text-foreground">{children}</h2>,
+              h3: ({
+                children
+              }) => <h3 className="text-lg font-semibold mt-4 mb-2 text-foreground">{children}</h3>,
+              p: ({
+                children
+              }) => <p className="mb-3 text-foreground">{children}</p>,
+              ul: ({
+                children
+              }) => <ul className="list-disc pr-6 mb-4 space-y-2">{children}</ul>,
+              ol: ({
+                children
+              }) => <ol className="list-decimal pr-6 mb-4 space-y-2">{children}</ol>,
+              li: ({
+                children
+              }) => <li className="text-foreground">{children}</li>,
+              strong: ({
+                children
+              }) => <strong className="font-bold text-primary">{children}</strong>,
+              em: ({
+                children
+              }) => <em className="italic text-foreground">{children}</em>,
+              blockquote: ({
+                children
+              }) => <blockquote className="border-r-4 border-primary pr-4 py-2 my-4 bg-muted/50 rounded">{children}</blockquote>,
+              code: ({
+                children
+              }) => <code className="bg-muted px-2 py-1 rounded text-sm">{children}</code>
+            }}>
               {analysis}
             </ReactMarkdown>
           </div>
         </CardContent>
-      </Card>
-    );
+      </Card>;
     }
   }
-
   const isUpDirection = data.direction?.includes('شراء') || data.direction?.includes('CALL') || data.direction?.toUpperCase().includes('BUY');
-
-  return (
-    <div className="space-y-4">
+  return <div className="space-y-4">
       {/* Main Direction Card */}
       <Card className={`border-2 ${isUpDirection ? 'border-green-500 bg-green-500/5' : 'border-red-500 bg-red-500/5'}`}>
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {isUpDirection ? (
-                <div className="p-3 rounded-full bg-green-500/10">
+              {isUpDirection ? <div className="p-3 rounded-full bg-green-500/10">
                   <ArrowUp className="h-6 w-6 text-green-500" />
-                </div>
-              ) : (
-                <div className="p-3 rounded-full bg-red-500/10">
+                </div> : <div className="p-3 rounded-full bg-red-500/10">
                   <ArrowDown className="h-6 w-6 text-red-500" />
-                </div>
-              )}
+                </div>}
               <div>
                 <p className="text-sm text-muted-foreground">الاتجاه</p>
                 <p className="text-2xl font-bold">{data.direction}</p>
               </div>
             </div>
-            {data.confidence && (
-              <Badge variant={data.confidence.includes('قوية') ? 'default' : 'secondary'} className="text-lg px-4 py-2">
+            {data.confidence && <Badge variant={data.confidence.includes('قوية') ? 'default' : 'secondary'} className="text-lg px-4 py-2">
                 {data.confidence}
-              </Badge>
-            )}
+              </Badge>}
           </div>
         </CardContent>
       </Card>
 
       {/* Price Levels Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {data.entryPoint && (
-          <Card className="border-blue-500/50 bg-blue-500/5">
+        {data.entryPoint && <Card className="border-blue-500/50 bg-blue-500/5">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-full bg-blue-500/10">
@@ -93,15 +101,13 @@ export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">نقطة الدخول</p>
-                  <p className="text-lg font-bold text-foreground">{data.entryPoint}</p>
+                  <p className="text-lg font-bold bg-transparent text-primary-foreground">{data.entryPoint}</p>
                 </div>
               </div>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
-        {data.stopLoss && (
-          <Card className="border-red-500/50 bg-red-500/5">
+        {data.stopLoss && <Card className="border-red-500/50 bg-red-500/5">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-full bg-red-500/10">
@@ -113,11 +119,9 @@ export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
                 </div>
               </div>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
-        {data.takeProfit && (
-          <Card className="border-green-500/50 bg-green-500/5">
+        {data.takeProfit && <Card className="border-green-500/50 bg-green-500/5">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-full bg-green-500/10">
@@ -129,13 +133,11 @@ export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
                 </div>
               </div>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
       </div>
 
       {/* Current Price */}
-      {data.currentPrice && (
-        <Card className="border-amber-500/50 bg-amber-500/5">
+      {data.currentPrice && <Card className="border-amber-500/50 bg-amber-500/5">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-amber-500/10">
@@ -147,12 +149,10 @@ export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
               </div>
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* Trend */}
-      {data.trend && (
-        <Card>
+      {data.trend && <Card>
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
               <TrendingUp className="h-5 w-5 text-primary mt-1" />
@@ -162,12 +162,10 @@ export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
               </div>
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* Detailed Analysis */}
-      {data.analysis && (
-        <Card>
+      {data.analysis && <Card>
           <CardContent className="pt-6">
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-primary" />
@@ -179,12 +177,10 @@ export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
               </p>
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* Advice */}
-      {data.advice && (
-        <Card className="border-primary/30 bg-primary/5">
+      {data.advice && <Card className="border-primary/30 bg-primary/5">
           <CardContent className="pt-6">
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
               💡 النصائح والتوجيهات
@@ -195,8 +191,7 @@ export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
               </p>
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* General Warning */}
       <Card className="border-amber-500/50 bg-amber-500/5">
@@ -212,6 +207,5 @@ export const AnalysisResult = ({ analysis }: AnalysisResultProps) => {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
