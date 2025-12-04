@@ -21,6 +21,7 @@ import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 import { SmartSupport } from "./components/SmartSupport";
 import { GlobalHeader } from "./components/GlobalHeader";
+import { PriceAlertWatcher } from "./components/PriceAlertWatcher";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
       <BrowserRouter>
         <GlobalHeader />
         <SmartSupport />
+        <PriceAlertWatcher />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
