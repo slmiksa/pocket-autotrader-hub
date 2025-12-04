@@ -109,11 +109,11 @@ const Auth = () => {
         <AnnouncementBanner />
       <div className="flex flex-col items-center justify-center p-4 min-h-[calc(100vh-56px)]">
         {/* Welcome Message */}
-        <div className="text-center mb-6 max-w-md">
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">
+        <div className="text-center mb-6 max-w-md animate-fade-in">
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-3 animate-scale-in" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>
             مرحباً بك عميلنا الجديد
           </h1>
-          <p className="text-slate-400 text-sm md:text-base leading-relaxed">
+          <p className="text-slate-400 text-sm md:text-base leading-relaxed animate-fade-in" style={{ animationDelay: '0.3s', animationFillMode: 'both' }}>
             نتشرف بانضمامك إلى أفضل منصة ذكاء اصطناعي في الشرق الأوسط متخصصة في الأسهم والتوصيات
           </p>
         </div>
