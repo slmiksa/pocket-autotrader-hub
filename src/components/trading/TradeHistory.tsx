@@ -128,21 +128,21 @@ export const TradeHistory = () => {
   };
 
   return (
-    <Card>
-      <CardHeader className="space-y-4">
-        <div className="flex items-center justify-between">
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
-            <CardTitle>قائمة صفقاتي</CardTitle>
+            <CardTitle className="text-lg">قائمة صفقاتي</CardTitle>
             <CardDescription>الصفقات التي سجلت نتائجها</CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button 
               variant={showChart ? "default" : "outline"} 
               size="sm" 
               onClick={() => setShowChart(!showChart)}
             >
               <BarChart3 className="h-4 w-4 ml-1" />
-              الرسم البياني
+              الرسم
             </Button>
             {!isToday && (
               <Button variant="outline" size="sm" onClick={goToToday}>
@@ -155,30 +155,32 @@ export const TradeHistory = () => {
             </Button>
           </div>
         </div>
+      </CardHeader>
 
-        {/* Date Navigator with Calendar */}
-        <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-muted/50 border">
-          <Button variant="ghost" size="icon" onClick={goToPreviousDay}>
+      <CardContent className="space-y-4">
+        {/* Date Navigator */}
+        <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-muted/50 border">
+          <Button variant="ghost" size="icon" onClick={goToPreviousDay} className="h-8 w-8">
             <ChevronRight className="h-4 w-4" />
           </Button>
           
           <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
             <PopoverTrigger asChild>
-              <Button variant="ghost" className="min-w-[200px] justify-center gap-2">
+              <Button variant="ghost" className="min-w-[180px] justify-center gap-2 h-8 text-sm">
                 <CalendarIcon className="h-4 w-4 text-primary" />
                 <span className="font-semibold text-foreground">
-                  {format(selectedDate, 'EEEE dd MMMM yyyy', { locale: ar })}
+                  {format(selectedDate, 'EEEE dd MMMM', { locale: ar })}
                 </span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="center">
+            <PopoverContent className="w-auto p-0 z-50" align="center" sideOffset={8}>
               <Calendar
                 mode="single"
                 selected={selectedDate}
                 onSelect={handleDateSelect}
                 disabled={(date) => date > new Date()}
                 initialFocus
-                className="p-3 pointer-events-auto"
+                className="pointer-events-auto"
               />
             </PopoverContent>
           </Popover>
@@ -188,55 +190,56 @@ export const TradeHistory = () => {
             size="icon" 
             onClick={goToNextDay}
             disabled={isToday}
+            className="h-8 w-8"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Day Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="rounded-lg bg-card border p-3">
-            <div className="text-xs text-muted-foreground">صفقات اليوم</div>
-            <div className="text-2xl font-bold">{dayStats.total}</div>
+        {/* Day Stats - 2x2 Grid */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-lg bg-card border p-3 text-center">
+            <div className="text-xs text-muted-foreground mb-1">صفقات اليوم</div>
+            <div className="text-xl font-bold">{dayStats.total}</div>
           </div>
-          <div className="rounded-lg bg-success/20 border border-success/30 p-3">
-            <div className="text-xs text-muted-foreground">ناجحة</div>
-            <div className="text-2xl font-bold text-success">{dayStats.wins}</div>
+          <div className="rounded-lg bg-success/10 border border-success/20 p-3 text-center">
+            <div className="text-xs text-muted-foreground mb-1">ناجحة</div>
+            <div className="text-xl font-bold text-success">{dayStats.wins}</div>
           </div>
-          <div className="rounded-lg bg-danger/20 border border-danger/30 p-3">
-            <div className="text-xs text-muted-foreground">خاسرة</div>
-            <div className="text-2xl font-bold text-danger">{dayStats.losses}</div>
+          <div className="rounded-lg bg-danger/10 border border-danger/20 p-3 text-center">
+            <div className="text-xs text-muted-foreground mb-1">خاسرة</div>
+            <div className="text-xl font-bold text-danger">{dayStats.losses}</div>
           </div>
-          <div className="rounded-lg bg-primary/20 border border-primary/30 p-3">
-            <div className="text-xs text-muted-foreground">نسبة النجاح</div>
-            <div className="text-2xl font-bold text-primary">{dayStats.winRate}%</div>
+          <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 text-center">
+            <div className="text-xs text-muted-foreground mb-1">نسبة النجاح</div>
+            <div className="text-xl font-bold text-primary">{dayStats.winRate}%</div>
           </div>
         </div>
 
-        {/* All Time Stats Summary */}
+        {/* All Time Stats */}
         {allStats.total > 0 && (
-          <div className="p-3 rounded-lg bg-muted/30 border text-center">
+          <div className="p-2 rounded-lg bg-muted/30 border text-center">
             <span className="text-xs text-muted-foreground">
-              الإجمالي الكلي: {allStats.total} صفقة | {allStats.wins} ربح | {allStats.losses} خسارة | نسبة النجاح {allStats.winRate}%
+              الإجمالي: {allStats.total} صفقة | {allStats.wins} ربح | {allStats.losses} خسارة | {allStats.winRate}%
             </span>
           </div>
         )}
 
-        {/* Weekly Performance Chart */}
+        {/* Weekly Chart */}
         {showChart && (
-          <div className="rounded-lg border bg-card p-4">
-            <h4 className="text-sm font-medium mb-3 text-center">أداء الأسبوع</h4>
-            <div className="h-[180px]">
+          <div className="rounded-lg border bg-card p-3">
+            <h4 className="text-sm font-medium mb-2 text-center">أداء الأسبوع</h4>
+            <div className="h-[140px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <BarChart data={weeklyData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis 
-                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                     axisLine={false}
                     tickLine={false}
                     domain={[0, 100]}
@@ -251,7 +254,7 @@ export const TradeHistory = () => {
                             <p className="font-medium">{data.fullDate}</p>
                             <p className="text-success">ربح: {data.wins}</p>
                             <p className="text-danger">خسارة: {data.losses}</p>
-                            <p className="text-primary font-bold">نسبة النجاح: {data.winRate}%</p>
+                            <p className="text-primary font-bold">نسبة: {data.winRate}%</p>
                           </div>
                         );
                       }
@@ -272,49 +275,39 @@ export const TradeHistory = () => {
             </div>
           </div>
         )}
-      </CardHeader>
 
-      <CardContent>
-        <ScrollArea className="h-[350px]">
+        {/* Trades List */}
+        <ScrollArea className="h-[280px]">
           {myTrades.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[250px] text-center">
-              <Calendar className="h-12 w-12 text-muted-foreground/50 mb-3" />
-              <p className="text-muted-foreground">لا توجد صفقات في هذا اليوم</p>
-              <p className="text-xs text-muted-foreground mt-2">
-                سجل نتائج صفقاتك من قسم التوصيات المباشرة
+            <div className="flex flex-col items-center justify-center h-[200px] text-center">
+              <CalendarIcon className="h-10 w-10 text-muted-foreground/50 mb-2" />
+              <p className="text-sm text-muted-foreground">لا توجد صفقات في هذا اليوم</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                سجل نتائج صفقاتك من التوصيات المباشرة
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {myTrades.map(signal => signal && (
                 <div 
                   key={signal.id} 
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4 hover:bg-accent/50 transition-colors"
+                  className="flex items-center justify-between gap-2 rounded-lg border bg-card p-3"
                 >
-                  <div className="flex items-center gap-3 flex-1">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
                     <div className={cn(
-                      "flex h-10 w-10 items-center justify-center rounded-lg shrink-0",
+                      "flex h-8 w-8 items-center justify-center rounded-lg shrink-0",
                       signal.direction === "CALL" ? "bg-success/20" : "bg-danger/20"
                     )}>
                       {signal.direction === "CALL" 
-                        ? <TrendingUp className="h-5 w-5 text-success" /> 
-                        : <TrendingDown className="h-5 w-5 text-danger" />
+                        ? <TrendingUp className="h-4 w-4 text-success" /> 
+                        : <TrendingDown className="h-4 w-4 text-danger" />
                       }
                     </div>
                     
-                    <div className="space-y-1 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-foreground">{signal.asset}</span>
-                        <Badge variant="outline" className="text-xs">{signal.timeframe}</Badge>
-                        <Badge 
-                          variant={signal.direction === "CALL" ? "default" : "destructive"} 
-                          className={cn(
-                            "text-xs",
-                            signal.direction === "CALL" ? "bg-success hover:bg-success/90" : "bg-danger hover:bg-danger/90"
-                          )}
-                        >
-                          {signal.direction}
-                        </Badge>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <span className="font-medium text-sm">{signal.asset}</span>
+                        <Badge variant="outline" className="text-[10px] px-1 py-0">{signal.timeframe}</Badge>
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {format(new Date(signal.received_at), 'HH:mm')}
@@ -325,21 +318,11 @@ export const TradeHistory = () => {
                   <Badge 
                     variant={signal.userResult === 'win' ? 'default' : 'destructive'} 
                     className={cn(
-                      "gap-1 text-base px-3 py-1",
+                      "gap-1 text-xs px-2 py-1 shrink-0",
                       signal.userResult === 'win' && 'bg-success hover:bg-success/90'
                     )}
                   >
-                    {signal.userResult === 'win' ? (
-                      <>
-                        <CheckCircle2 className="h-4 w-4" />
-                        ✅ ربح
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-4 w-4" />
-                        ❌ خسارة
-                      </>
-                    )}
+                    {signal.userResult === 'win' ? '✅ ربح' : '❌ خسارة'}
                   </Badge>
                 </div>
               ))}
