@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Upload, Loader2, Info, Save, Bell } from "lucide-react";
+import { ArrowLeft, RefreshCw, Upload, Loader2, Info, Save, Bell, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSavedAnalyses } from "@/hooks/useSavedAnalyses";
@@ -10,6 +10,26 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PriceAlertDialog } from "@/components/alerts/PriceAlertDialog";
+
+// Symbol to API mapping for price fetching
+const symbolToPriceAPI: Record<string, { api: 'binance' | 'yahoo', symbol: string }> = {
+  bitcoin: { api: 'binance', symbol: 'BTCUSDT' },
+  ethereum: { api: 'binance', symbol: 'ETHUSDT' },
+  bnb: { api: 'binance', symbol: 'BNBUSDT' },
+  solana: { api: 'binance', symbol: 'SOLUSDT' },
+  xrp: { api: 'binance', symbol: 'XRPUSDT' },
+  cardano: { api: 'binance', symbol: 'ADAUSDT' },
+  dogecoin: { api: 'binance', symbol: 'DOGEUSDT' },
+  avalanche: { api: 'binance', symbol: 'AVAXUSDT' },
+  polkadot: { api: 'binance', symbol: 'DOTUSDT' },
+  polygon: { api: 'binance', symbol: 'MATICUSDT' },
+  chainlink: { api: 'binance', symbol: 'LINKUSDT' },
+  litecoin: { api: 'binance', symbol: 'LTCUSDT' },
+  shiba: { api: 'binance', symbol: 'SHIBUSDT' },
+  pepe: { api: 'binance', symbol: 'PEPEUSDT' },
+  gold: { api: 'binance', symbol: 'XAUUSDT' },
+};
+
 export default function LiveChart() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -25,9 +45,52 @@ export default function LiveChart() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  const [priceCopied, setPriceCopied] = useState(false);
   const {
     saveAnalysis
   } = useSavedAnalyses();
+
+  // Fetch current price from API
+  const fetchCurrentPrice = useCallback(async () => {
+    const priceConfig = symbolToPriceAPI[symbol];
+    if (!priceConfig) return;
+
+    try {
+      if (priceConfig.api === 'binance') {
+        const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${priceConfig.symbol}`);
+        const data = await response.json();
+        if (data.price) {
+          setCurrentPrice(parseFloat(data.price));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching price:', error);
+    }
+  }, [symbol]);
+
+  // Fetch price on mount and every 2 seconds
+  useEffect(() => {
+    fetchCurrentPrice();
+    const interval = setInterval(fetchCurrentPrice, 2000);
+    return () => clearInterval(interval);
+  }, [fetchCurrentPrice]);
+
+  // Copy price to clipboard
+  const handleCopyPrice = () => {
+    if (currentPrice) {
+      const priceStr = currentPrice < 1 ? currentPrice.toFixed(8) : currentPrice.toFixed(2);
+      navigator.clipboard.writeText(priceStr);
+      setPriceCopied(true);
+      toast.success(`تم نسخ السعر: ${priceStr}`);
+      setTimeout(() => setPriceCopied(false), 2000);
+    }
+  };
+
+  // Open alert dialog with current price
+  const handleOpenAlertWithPrice = () => {
+    setAlertDialogOpen(true);
+  };
 
   // Check if chart analysis is enabled for the user
   useEffect(() => {
@@ -485,11 +548,31 @@ export default function LiveChart() {
               </div>
             </div>
             
-            {/* Alert Button */}
-            {user && <Button onClick={() => setAlertDialogOpen(true)} variant="outline" size="sm" className="gap-1.5 border-orange-500/30 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/50 text-xs sm:text-sm h-8 flex-shrink-0">
-                <Bell className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">تنبيه سعري</span>
-              </Button>}
+            {/* Price Display and Actions */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {currentPrice && (
+                <div className="flex items-center gap-1 bg-slate-800/60 rounded-lg px-2 py-1 border border-slate-700">
+                  <span className="text-xs text-white/60">السعر:</span>
+                  <span className="text-sm font-bold text-emerald-400" dir="ltr">
+                    {currentPrice < 1 ? currentPrice.toFixed(6) : currentPrice.toFixed(2)}
+                  </span>
+                  <Button
+                    onClick={handleCopyPrice}
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-white/60 hover:text-white hover:bg-white/10"
+                  >
+                    {priceCopied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                  </Button>
+                </div>
+              )}
+              
+              {/* Alert Button */}
+              {user && <Button onClick={handleOpenAlertWithPrice} variant="outline" size="sm" className="gap-1.5 border-orange-500/30 text-orange-400 hover:bg-orange-500/10 hover:border-orange-500/50 text-xs sm:text-sm h-8 flex-shrink-0">
+                  <Bell className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">تنبيه سعري</span>
+                </Button>}
+            </div>
             
             {/* Timeframe Selector */}
             <Select value={selectedTimeframe} onValueChange={val => {
@@ -770,12 +853,17 @@ export default function LiveChart() {
         </Dialog>
 
         {/* Price Alert Dialog */}
-        <PriceAlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen} market={{
-        name: symbolInfo.displayName.split(' (')[0],
-        nameAr: symbolInfo.displayName.split(' (')[0],
-        symbol: symbol,
-        category: symbol.includes('TADAWUL') ? 'السوق السعودي' : ['bitcoin', 'ethereum', 'bnb', 'solana', 'xrp', 'cardano', 'dogecoin'].includes(symbol) ? 'عملات رقمية' : ['gold', 'silver', 'oil', 'naturalgas'].includes(symbol) ? 'سلع' : ['sp500', 'dowjones', 'nasdaq', 'dax'].includes(symbol) ? 'مؤشرات' : ['eurusd', 'gbpusd', 'usdjpy'].includes(symbol) ? 'فوركس' : 'أسهم'
-      }} />
+        <PriceAlertDialog 
+          open={alertDialogOpen} 
+          onOpenChange={setAlertDialogOpen} 
+          market={{
+            name: symbolInfo.displayName.split(' (')[0],
+            nameAr: symbolInfo.displayName.split(' (')[0],
+            symbol: symbol,
+            category: symbol.includes('TADAWUL') ? 'السوق السعودي' : ['bitcoin', 'ethereum', 'bnb', 'solana', 'xrp', 'cardano', 'dogecoin'].includes(symbol) ? 'عملات رقمية' : ['gold', 'silver', 'oil', 'naturalgas'].includes(symbol) ? 'سلع' : ['sp500', 'dowjones', 'nasdaq', 'dax'].includes(symbol) ? 'مؤشرات' : ['eurusd', 'gbpusd', 'usdjpy'].includes(symbol) ? 'فوركس' : 'أسهم'
+          }}
+          currentPrice={currentPrice || undefined}
+        />
       </main>
     </div>;
 }
