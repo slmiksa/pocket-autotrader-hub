@@ -1,23 +1,48 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { TrendingUp, TrendingDown, CheckCircle2, XCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { TrendingUp, TrendingDown, CheckCircle2, XCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Download, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSignals } from "@/hooks/useSignals";
 import { useUserTradeResults } from "@/hooks/useUserTradeResults";
-import { format, isSameDay, addDays, subDays } from "date-fns";
+import { format, isSameDay, addDays, subDays, startOfDay } from "date-fns";
 import { ar } from "date-fns/locale";
 import { toast } from "sonner";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
 
 export const TradeHistory = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [showChart, setShowChart] = useState(true);
   const { signals, loading } = useSignals();
   const { userResults, loading: loadingResults, getStats } = useUserTradeResults();
+
+  // Calculate weekly stats for chart
+  const weeklyData = useMemo(() => {
+    const data = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = subDays(new Date(), i);
+      const dayResults = userResults.filter(r => isSameDay(new Date(r.created_at), date));
+      const wins = dayResults.filter(r => r.user_result === 'win').length;
+      const losses = dayResults.filter(r => r.user_result === 'loss').length;
+      const total = wins + losses;
+      const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+      
+      data.push({
+        date: format(date, 'EEE', { locale: ar }),
+        fullDate: format(date, 'dd/MM'),
+        wins,
+        losses,
+        total,
+        winRate,
+      });
+    }
+    return data;
+  }, [userResults]);
 
   if (loading || loadingResults) {
     return (
@@ -111,6 +136,14 @@ export const TradeHistory = () => {
             <CardDescription>الصفقات التي سجلت نتائجها</CardDescription>
           </div>
           <div className="flex gap-2">
+            <Button 
+              variant={showChart ? "default" : "outline"} 
+              size="sm" 
+              onClick={() => setShowChart(!showChart)}
+            >
+              <BarChart3 className="h-4 w-4 ml-1" />
+              الرسم البياني
+            </Button>
             {!isToday && (
               <Button variant="outline" size="sm" onClick={goToToday}>
                 اليوم
@@ -186,6 +219,57 @@ export const TradeHistory = () => {
             <span className="text-xs text-muted-foreground">
               الإجمالي الكلي: {allStats.total} صفقة | {allStats.wins} ربح | {allStats.losses} خسارة | نسبة النجاح {allStats.winRate}%
             </span>
+          </div>
+        )}
+
+        {/* Weekly Performance Chart */}
+        {showChart && (
+          <div className="rounded-lg border bg-card p-4">
+            <h4 className="text-sm font-medium mb-3 text-center">أداء الأسبوع</h4>
+            <div className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                    axisLine={false}
+                    tickLine={false}
+                    domain={[0, 100]}
+                    tickFormatter={(value) => `${value}%`}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-popover border rounded-lg p-2 shadow-lg text-xs">
+                            <p className="font-medium">{data.fullDate}</p>
+                            <p className="text-success">ربح: {data.wins}</p>
+                            <p className="text-danger">خسارة: {data.losses}</p>
+                            <p className="text-primary font-bold">نسبة النجاح: {data.winRate}%</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar dataKey="winRate" radius={[4, 4, 0, 0]}>
+                    {weeklyData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.winRate >= 50 ? 'hsl(var(--success))' : entry.total > 0 ? 'hsl(var(--danger))' : 'hsl(var(--muted))'}
+                        opacity={entry.total === 0 ? 0.3 : 1}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         )}
       </CardHeader>
