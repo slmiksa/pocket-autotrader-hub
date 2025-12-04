@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
+// Navigation items for mobile sidebar
 const navItems = [
   { label: "تفعيل الإشعارات", icon: Bell, path: null, action: "notifications", color: "default" },
   { label: "اختيار صوت التنبيه", icon: Bell, path: null, action: "sound", color: "default" },
@@ -30,7 +31,7 @@ const navItems = [
   { label: "المجتمع", icon: Users, path: "/community", color: "default" },
   { label: "حسابي والمفضلة", icon: User, path: "/profile", color: "default" },
   { label: "دعم فني", icon: Target, path: null, action: "support", color: "default" },
-  { label: "تحميل كتطبيق", icon: Menu, path: "/install", color: "green" },
+  { label: "تحميل كتطبيق", icon: Menu, path: "/install", color: "default" },
 ];
 
 // Header navigation items (fewer items)
