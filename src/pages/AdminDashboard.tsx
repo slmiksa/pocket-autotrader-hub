@@ -111,7 +111,6 @@ const AdminDashboard = () => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      toast.success("تم تسجيل الخروج بنجاح");
       navigate("/admin-login");
     } catch (error: any) {
       console.error("Error logging out:", error);
