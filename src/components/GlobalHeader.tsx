@@ -24,11 +24,11 @@ const navItems = [
   { label: "اختيار صوت التنبيه", icon: Bell, path: null, action: "sound", color: "default" },
   { label: "تحليل الأسواق", icon: Image, path: "/image-analysis", color: "default" },
   { label: "توصيات المحترفين", icon: Target, path: "/professional-signals", color: "default" },
-  { label: "محلل العرض والطلب", icon: TrendingUp, path: "/supply-demand", color: "purple" },
+  { label: "محلل العرض والطلب", icon: TrendingUp, path: "/supply-demand", color: "default" },
   { label: "الأسواق", icon: BarChart3, path: "/markets", color: "default" },
   { label: "الأخبار", icon: Newspaper, path: "/news", color: "default" },
   { label: "المجتمع", icon: Users, path: "/community", color: "default" },
-  { label: "حسابي والمفضلة", icon: User, path: "/profile", color: "purple" },
+  { label: "حسابي والمفضلة", icon: User, path: "/profile", color: "default" },
   { label: "دعم فني", icon: Target, path: null, action: "support", color: "default" },
   { label: "تحميل كتطبيق", icon: Menu, path: "/install", color: "green" },
 ];
