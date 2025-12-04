@@ -569,14 +569,7 @@ export default function LiveChart() {
       {/* Chart Container */}
       <main className="container mx-auto px-4 py-6">
         <Card className="p-4 bg-[#12121a] border-white/10">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold text-white mb-1">
-              الشارت المباشر - TradingView
-            </h2>
-            <p className="text-sm text-white/50">
-              بيانات حقيقية ومباشرة مع الشموع اليابانية والمؤشرات الفنية
-            </p>
-          </div>
+          
           
           {/* TradingView Chart Widget or Saudi Stock Notice */}
           {isSaudiStock ? <div className="w-full rounded-lg overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] to-[#0f0f1a] border border-white/10" style={{
