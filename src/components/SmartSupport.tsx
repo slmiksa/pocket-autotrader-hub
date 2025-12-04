@@ -1030,7 +1030,7 @@ export const SmartSupport = () => {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-full sm:max-w-md p-0 pt-[env(safe-area-inset-top)] bg-slate-900 border-slate-700">
-        <SheetHeader className="p-4 border-b border-slate-700 bg-primary text-primary-foreground mt-2 my-[36px]">
+        <SheetHeader className="p-4 border-b border-slate-700 bg-primary text-primary-foreground mt-2 my-[11px]">
           <div className="flex items-center gap-2">
             {(selectedSection || selectedQuestion) && <Button variant="ghost" size="icon" onClick={handleBack} className="text-primary-foreground hover:bg-primary-foreground/20">
                 <ChevronRight className="h-5 w-5" />
