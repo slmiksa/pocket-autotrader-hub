@@ -185,11 +185,8 @@ const Profile = () => {
   }
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[hsl(222,47%,6%)] pt-[env(safe-area-inset-top)]">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[hsl(222,47%,6%)] pt-[calc(env(safe-area-inset-top)+48px)]">
       <div dir="rtl" className="h-full">
-      {/* Safe Area Background */}
-      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-[hsl(222,47%,8%)] z-[60]" />
-      
       {/* Animated Background Gradients */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-primary/10 via-primary/5 to-transparent rounded-full blur-3xl" />
@@ -197,8 +194,8 @@ const Profile = () => {
         <div className="absolute top-1/3 left-0 w-72 h-72 bg-purple-600/5 rounded-full blur-3xl" />
       </div>
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-[hsl(222,47%,8%)]/80 backdrop-blur-xl border-b border-[hsl(217,33%,17%)] pt-[env(safe-area-inset-top)]">
+      {/* Page Header - Part of scrollable content */}
+      <header className="bg-[hsl(222,47%,8%)]/80 backdrop-blur-xl border-b border-[hsl(217,33%,17%)]">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button 
