@@ -258,9 +258,6 @@ export const GlobalHeader = () => {
         </div>
       </div>
     </header>
-    
-    {/* Spacer to push content below fixed header */}
-    <div className="h-12" style={{ marginTop: 'env(safe-area-inset-top)' }} />
     </>
   );
 };
