@@ -19,20 +19,25 @@ export const usePullToRefresh = ({
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (disabled || isRefreshing) return;
     
-    const container = containerRef.current;
-    if (!container) return;
+    // Check if we're at the very top of the page (window scroll)
+    const isAtTop = window.scrollY <= 0;
     
-    // Only trigger if at top of scroll
-    if (container.scrollTop <= 0) {
+    if (isAtTop) {
       startYRef.current = e.touches[0].clientY;
+    } else {
+      startYRef.current = 0;
     }
   }, [disabled, isRefreshing]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (disabled || isRefreshing || startYRef.current === 0) return;
     
-    const container = containerRef.current;
-    if (!container || container.scrollTop > 0) return;
+    // Only allow pull if at the very top
+    if (window.scrollY > 0) {
+      startYRef.current = 0;
+      setPullDistance(0);
+      return;
+    }
 
     const currentY = e.touches[0].clientY;
     const distance = currentY - startYRef.current;
@@ -45,6 +50,10 @@ export const usePullToRefresh = ({
       if (distance > 10) {
         e.preventDefault();
       }
+    } else {
+      // User is scrolling up, reset
+      startYRef.current = 0;
+      setPullDistance(0);
     }
   }, [disabled, isRefreshing, threshold]);
 

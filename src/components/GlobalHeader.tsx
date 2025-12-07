@@ -144,7 +144,7 @@ export const GlobalHeader = () => {
   return (
     <>
       {/* Safe Area Background - Fixed at very top */}
-      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-[#1a1f2e] z-[60]" />
+      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-[#0f1219] z-[60]" />
       
       {/* Header - Fixed below safe area */}
       <header className="fixed top-[env(safe-area-inset-top)] left-0 right-0 z-50 w-full bg-[#1a1f2e] border-b border-white/5">
