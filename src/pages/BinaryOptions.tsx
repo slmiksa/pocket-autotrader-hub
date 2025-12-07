@@ -54,12 +54,12 @@ const BinaryOptions = () => {
   if (!user) return null;
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-background dark">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[#0f1219] dark pt-[calc(env(safe-area-inset-top)+56px)]">
       {/* Safe Area Background */}
-      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-card z-[60]" />
+      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-[#0f1219] z-[60]" />
       
       {/* Header */}
-      <header className="border-b border-border bg-card sticky top-0 z-50 pt-[env(safe-area-inset-top)]">
+      <header className="fixed top-[env(safe-area-inset-top)] left-0 right-0 border-b border-border bg-card z-50">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3">
