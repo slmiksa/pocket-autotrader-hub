@@ -626,7 +626,7 @@ const SupplyDemandAnalyzer = () => {
     );
   }
   
-  return <div className="min-h-screen bg-[#0a0e1a] p-4 pt-[calc(env(safe-area-inset-top)+56px)]">
+  return <div className="min-h-screen bg-[#0a0e1a] p-4 pt-14">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4 py-2">
