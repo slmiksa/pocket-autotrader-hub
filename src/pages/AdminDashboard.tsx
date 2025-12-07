@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { ProfessionalSignalsManager } from "@/components/admin/ProfessionalSignalsManager";
 import { ReportsManager } from "@/components/admin/ReportsManager";
 import { HeroSlidesManager } from "@/components/admin/HeroSlidesManager";
+import { PushNotificationsManager } from "@/components/admin/PushNotificationsManager";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -463,6 +464,9 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Push Notifications Manager */}
+        <PushNotificationsManager />
+
         {/* Announcement Banner Management */}
         <Card>
           <CardHeader>
