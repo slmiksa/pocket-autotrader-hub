@@ -112,7 +112,7 @@ const Index = () => {
   }
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-background dark">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-background dark pt-[calc(env(safe-area-inset-top)+48px)]">
       {/* Announcement Banner */}
       <AnnouncementBanner />
 
