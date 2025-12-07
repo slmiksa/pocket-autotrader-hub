@@ -836,6 +836,19 @@ const ImageAnalysis = () => {
       setGeneratingPattern(false);
     }
   };
+  const handleRefresh = useCallback(async () => {
+    // Re-check access
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (authUser) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('image_analysis_enabled')
+        .eq('user_id', authUser.id)
+        .single();
+      setHasAccess(profile?.image_analysis_enabled || false);
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
@@ -913,18 +926,6 @@ const ImageAnalysis = () => {
       </div>
     );
   }
-  const handleRefresh = useCallback(async () => {
-    // Re-check access
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (authUser) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('image_analysis_enabled')
-        .eq('user_id', authUser.id)
-        .single();
-      setHasAccess(profile?.image_analysis_enabled || false);
-    }
-  }, []);
   
   return (
     <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4 pt-[calc(env(safe-area-inset-top,0px)+48px)]">
