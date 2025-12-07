@@ -24,32 +24,34 @@ const symbolToBinance: Record<string, string> = {
   'pepe': 'PEPEUSDT',
 };
 
-async function sendWebPush(subscription: any, payload: string) {
-  const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
-  const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
-  
-  if (!vapidPublicKey || !vapidPrivateKey) {
-    console.error('VAPID keys not configured');
-    return false;
-  }
-
+// Send push notification using simple POST to endpoint
+async function sendWebPush(
+  subscription: { endpoint: string; keys: { p256dh: string; auth: string } }, 
+  payload: string
+): Promise<boolean> {
   try {
-    // Use web-push via HTTP directly
-    const encoder = new TextEncoder();
-    const payloadBytes = encoder.encode(payload);
-    
+    console.log('Sending push to:', subscription.endpoint.substring(0, 60) + '...');
+
+    // Direct POST to push service endpoint
     const response = await fetch(subscription.endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/octet-stream',
-        'Content-Length': payloadBytes.length.toString(),
+        'Content-Type': 'application/json',
         'TTL': '86400',
+        'Urgency': 'high',
       },
-      body: payloadBytes,
+      body: payload,
     });
 
     console.log('Push response status:', response.status);
-    return response.ok || response.status === 201;
+    
+    if (!response.ok && response.status !== 201) {
+      const errorText = await response.text();
+      console.error('Push error:', response.status, errorText);
+      return false;
+    }
+    
+    return true;
   } catch (error) {
     console.error('Error sending push:', error);
     return false;
@@ -119,6 +121,7 @@ serve(async (req) => {
     console.log('Current prices:', priceMap);
 
     let triggeredCount = 0;
+    let pushSuccessCount = 0;
 
     // Check each alert
     for (const alert of alerts) {
@@ -135,7 +138,7 @@ serve(async (req) => {
       }
 
       if (triggered) {
-        console.log(`Alert triggered: ${alert.symbol} ${alert.condition} ${targetPrice} (current: ${currentPrice})`);
+        console.log(`🎯 Alert triggered: ${alert.symbol} ${alert.condition} ${targetPrice} (current: ${currentPrice})`);
 
         // Update alert as triggered
         await supabase
@@ -181,13 +184,15 @@ serve(async (req) => {
           });
 
           for (const sub of subscriptions) {
-            await sendWebPush({
+            const success = await sendWebPush({
               endpoint: sub.endpoint,
               keys: {
                 p256dh: sub.p256dh,
                 auth: sub.auth,
               }
             }, payload);
+            
+            if (success) pushSuccessCount++;
           }
         }
 
@@ -195,12 +200,13 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Triggered ${triggeredCount} alerts`);
+    console.log(`✅ Triggered ${triggeredCount} alerts, ${pushSuccessCount} push notifications sent`);
 
     return new Response(JSON.stringify({ 
       success: true, 
       checked: alerts.length,
-      triggered: triggeredCount 
+      triggered: triggeredCount,
+      pushSent: pushSuccessCount
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

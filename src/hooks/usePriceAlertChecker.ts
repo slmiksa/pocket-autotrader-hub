@@ -1,8 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { playNotificationSound } from '@/utils/soundNotification';
-import { usePriceAlerts, PriceAlert } from './usePriceAlerts';
+import { playPriceAlertSound, ensureAudioReady } from '@/utils/soundNotification';
+import { usePriceAlerts } from './usePriceAlerts';
 
 // Binance symbols mapping
 const symbolToBinance: Record<string, string> = {
@@ -30,20 +30,50 @@ export const usePriceAlertChecker = () => {
   const { alerts, refetch } = usePriceAlerts();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isCheckingRef = useRef(false);
+  const audioInitializedRef = useRef(false);
+
+  // Initialize audio on first user interaction
+  useEffect(() => {
+    const initAudio = () => {
+      if (!audioInitializedRef.current) {
+        ensureAudioReady();
+        audioInitializedRef.current = true;
+        console.log('Audio initialized for price alerts');
+      }
+    };
+
+    // Initialize on any user interaction
+    document.addEventListener('click', initAudio, { once: true });
+    document.addEventListener('touchstart', initAudio, { once: true });
+    document.addEventListener('keydown', initAudio, { once: true });
+
+    return () => {
+      document.removeEventListener('click', initAudio);
+      document.removeEventListener('touchstart', initAudio);
+      document.removeEventListener('keydown', initAudio);
+    };
+  }, []);
 
   const sendBrowserNotification = useCallback((title: string, body: string) => {
     if ('Notification' in window && Notification.permission === 'granted') {
-      const notification = new Notification(title, {
-        body,
-        icon: '/favicon.png',
-        tag: 'price-alert-' + Date.now(),
-        requireInteraction: true,
-      });
-      
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-      };
+      try {
+        const notification = new Notification(title, {
+          body,
+          icon: '/favicon.png',
+          tag: 'price-alert-' + Date.now(),
+          requireInteraction: true,
+          silent: false, // Allow sound
+        });
+        
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+        
+        console.log('Browser notification sent:', title);
+      } catch (error) {
+        console.error('Failed to send browser notification:', error);
+      }
     }
   }, []);
 
@@ -86,7 +116,6 @@ export const usePriceAlertChecker = () => {
     
     for (const symbol of stocksToFetch) {
       try {
-        // Using a CORS proxy or direct Yahoo Finance
         const response = await fetch(
           `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1m&range=1d`
         );
@@ -169,13 +198,14 @@ export const usePriceAlertChecker = () => {
                 });
             }
 
-            // Play sound
-            playNotificationSound();
+            // Play loud alert sound
+            console.log('Playing price alert sound...');
+            playPriceAlertSound();
             
-            // Show toast
+            // Show toast with long duration
             toast.success(`🔔 تنبيه: ${alert.symbol_name_ar}`, {
-              description: `السعر ${alert.condition === 'above' ? 'صعد فوق' : 'هبط تحت'} ${targetPrice}`,
-              duration: 10000,
+              description: `السعر ${alert.condition === 'above' ? 'صعد فوق' : 'هبط تحت'} ${targetPrice} (الحالي: ${currentPrice.toFixed(2)})`,
+              duration: 15000,
             });
             
             // Browser notification
@@ -199,7 +229,9 @@ export const usePriceAlertChecker = () => {
   useEffect(() => {
     // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+      Notification.requestPermission().then(permission => {
+        console.log('Notification permission:', permission);
+      });
     }
 
     // Start checking every 1 second for instant alerts
