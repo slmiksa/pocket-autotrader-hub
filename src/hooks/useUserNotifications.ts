@@ -27,11 +27,23 @@ export const useUserNotifications = () => {
   }, []);
 
   const sendBrowserNotification = useCallback((title: string, body: string) => {
+    // Try to send via Service Worker first (works even when app is in background)
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        title,
+        body,
+        data: { url: '/' }
+      });
+      return;
+    }
+    
+    // Fallback to regular Notification API
     if ('Notification' in window && Notification.permission === 'granted') {
       const notification = new Notification(title, {
         body,
         icon: '/favicon.png',
-        tag: 'price-alert',
+        tag: 'admin-notification',
         requireInteraction: true,
       });
       
