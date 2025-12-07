@@ -23,6 +23,7 @@ import { SmartSupport } from "./components/SmartSupport";
 import { GlobalHeader } from "./components/GlobalHeader";
 import { PriceAlertWatcher } from "./components/PriceAlertWatcher";
 import { BackButton } from "./components/BackButton";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <GlobalHeader />
         <BackButton />
         <SmartSupport />
