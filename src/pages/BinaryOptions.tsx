@@ -54,12 +54,9 @@ const BinaryOptions = () => {
   if (!user) return null;
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[#0f1219] dark pt-[calc(env(safe-area-inset-top)+56px)]">
-      {/* Safe Area Background */}
-      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-[#0f1219] z-[60]" />
-      
-      {/* Header */}
-      <header className="fixed top-[env(safe-area-inset-top)] left-0 right-0 border-b border-border bg-card z-50">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[#0f1219] dark pt-[calc(env(safe-area-inset-top)+48px)]">
+      {/* Page Sub-Header - Part of scrollable content */}
+      <header className="border-b border-border bg-card">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -70,11 +67,10 @@ const BinaryOptions = () => {
                 className="gap-1"
               >
                 <ArrowRight className="h-4 w-4" />
-                <span className="hidden sm:inline">الرئيسية</span>
+                <span>رجوع</span>
               </Button>
-              <div className="rounded-lg bg-primary p-1.5 sm:p-2">
-                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
-              </div>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3 text-right">
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-foreground">
                   الخيارات الثنائية
