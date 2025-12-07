@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowRight, ExternalLink, Calendar, Newspaper, TrendingUp, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 interface NewsArticle {
   title: string;
@@ -47,7 +48,7 @@ const News = () => {
     }
   };
 
-  const fetchNews = async () => {
+  const fetchNews = useCallback(async () => {
     try {
       setLoading(true);
       console.log("Fetching financial news...");
@@ -68,7 +69,12 @@ const News = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const handleRefresh = useCallback(async () => {
+    await fetchNews();
+    toast.success('تم تحديث الأخبار');
+  }, [fetchNews]);
 
   const translateAndShowArticle = async (article: NewsArticle) => {
     setSelectedArticle(article);
@@ -131,6 +137,7 @@ const News = () => {
   }
 
   return (
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden pt-[env(safe-area-inset-top)]">
       {/* Safe Area Background */}
       <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-slate-950 z-[60]" />
@@ -304,6 +311,7 @@ const News = () => {
         </DialogContent>
       </Dialog>
     </div>
+    </PullToRefresh>
   );
 };
 
