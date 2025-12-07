@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { UserProfileDialog } from "@/components/community/UserProfileDialog";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 interface CommunityPost {
   id: string;
@@ -110,7 +111,7 @@ export default function Community() {
     setUser(user);
   };
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('community_posts')
@@ -171,7 +172,13 @@ export default function Community() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const handleRefresh = useCallback(async () => {
+    setLoading(true);
+    await fetchPosts();
+    toast.success('تم تحديث المنشورات');
+  }, [fetchPosts]);
 
   const fetchPostDetails = async (postId: string) => {
     const { data: commentsData } = await supabase
@@ -522,6 +529,7 @@ export default function Community() {
   const isLiked = user && likes.some(l => l.user_id === user.id);
 
   return (
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 pt-[env(safe-area-inset-top)]">
       {/* Safe Area Background */}
       <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-slate-950 z-[60]" />
@@ -1030,5 +1038,6 @@ export default function Community() {
         onPostClick={handlePostFromProfile}
       />
     </div>
+    </PullToRefresh>
   );
 }
