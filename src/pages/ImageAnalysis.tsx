@@ -927,7 +927,7 @@ const ImageAnalysis = () => {
   }, []);
   
   return (
-    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4 pt-14">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4 pt-[calc(env(safe-area-inset-top,0px)+48px)]">
       
       {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">

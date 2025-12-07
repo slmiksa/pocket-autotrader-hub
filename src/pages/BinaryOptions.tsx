@@ -54,7 +54,7 @@ const BinaryOptions = () => {
   if (!user) return null;
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[#0f1219] dark pt-14">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[#0f1219] dark pt-[calc(env(safe-area-inset-top,0px)+48px)]">
       {/* Page Sub-Header - Part of scrollable content */}
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
