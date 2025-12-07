@@ -5,8 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Bell, Send, Users, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Bell, Send, Users, Loader2, User } from "lucide-react";
 import { toast } from "sonner";
+
+interface UserProfile {
+  user_id: string;
+  email: string | null;
+  nickname: string | null;
+}
 
 export const PushNotificationsManager = () => {
   const [title, setTitle] = useState("");
@@ -14,25 +23,67 @@ export const PushNotificationsManager = () => {
   const [sending, setSending] = useState(false);
   const [subscribersCount, setSubscribersCount] = useState(0);
   const [loadingCount, setLoadingCount] = useState(true);
+  const [targetType, setTargetType] = useState<"all" | "selected">("all");
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [subscribedUserIds, setSubscribedUserIds] = useState<string[]>([]);
 
   useEffect(() => {
     loadSubscribersCount();
+    loadUsers();
   }, []);
 
   const loadSubscribersCount = async () => {
     setLoadingCount(true);
     try {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from("push_subscriptions")
-        .select("*", { count: "exact", head: true });
+        .select("user_id");
 
       if (error) throw error;
-      setSubscribersCount(count || 0);
+      
+      const uniqueUserIds = [...new Set(data?.map(s => s.user_id) || [])];
+      setSubscribersCount(uniqueUserIds.length);
+      setSubscribedUserIds(uniqueUserIds);
     } catch (error) {
       console.error("Error loading subscribers count:", error);
     } finally {
       setLoadingCount(false);
     }
+  };
+
+  const loadUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, email, nickname")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error("Error loading users:", error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const toggleUserSelection = (userId: string) => {
+    setSelectedUserIds(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const selectAllSubscribed = () => {
+    setSelectedUserIds(subscribedUserIds);
+  };
+
+  const clearSelection = () => {
+    setSelectedUserIds([]);
   };
 
   const handleSendNotification = async () => {
@@ -46,12 +97,18 @@ export const PushNotificationsManager = () => {
       return;
     }
 
+    if (targetType === "selected" && selectedUserIds.length === 0) {
+      toast.error("يرجى اختيار مستخدم واحد على الأقل");
+      return;
+    }
+
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-admin-push-notification", {
         body: {
           title: title.trim(),
           body: body.trim(),
+          targetUserIds: targetType === "selected" ? selectedUserIds : null,
         },
       });
 
@@ -60,6 +117,7 @@ export const PushNotificationsManager = () => {
       toast.success(`تم إرسال الإشعار إلى ${data?.sentCount || 0} مستخدم`);
       setTitle("");
       setBody("");
+      setSelectedUserIds([]);
       loadSubscribersCount();
     } catch (error: any) {
       console.error("Error sending notification:", error);
@@ -68,6 +126,8 @@ export const PushNotificationsManager = () => {
       setSending(false);
     }
   };
+
+  const subscribedUsers = users.filter(u => subscribedUserIds.includes(u.user_id));
 
   return (
     <Card>
@@ -109,6 +169,92 @@ export const PushNotificationsManager = () => {
           />
         </div>
 
+        <div className="space-y-2">
+          <Label>إرسال إلى</Label>
+          <Select value={targetType} onValueChange={(v: "all" | "selected") => setTargetType(v)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  جميع المشتركين ({subscribersCount})
+                </div>
+              </SelectItem>
+              <SelectItem value="selected">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  مستخدمين محددين
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {targetType === "selected" && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>اختر المستخدمين ({selectedUserIds.length} محدد)</Label>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={selectAllSubscribed}
+                  disabled={subscribedUsers.length === 0}
+                >
+                  تحديد الكل
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={clearSelection}
+                  disabled={selectedUserIds.length === 0}
+                >
+                  إلغاء التحديد
+                </Button>
+              </div>
+            </div>
+            
+            {loadingUsers ? (
+              <div className="flex items-center justify-center p-4">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : subscribedUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center p-4">
+                لا يوجد مستخدمين مشتركين في الإشعارات
+              </p>
+            ) : (
+              <ScrollArea className="h-48 border rounded-lg p-2">
+                <div className="space-y-2">
+                  {subscribedUsers.map((user) => (
+                    <div
+                      key={user.user_id}
+                      className="flex items-center gap-3 p-2 hover:bg-muted rounded-lg cursor-pointer"
+                      onClick={() => toggleUserSelection(user.user_id)}
+                    >
+                      <Checkbox
+                        checked={selectedUserIds.includes(user.user_id)}
+                        onCheckedChange={() => toggleUserSelection(user.user_id)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {user.nickname || user.email || "مستخدم غير معروف"}
+                        </p>
+                        {user.nickname && user.email && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {user.email}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+        )}
+
         <div className="p-4 bg-muted rounded-lg">
           <h4 className="font-medium mb-2">معاينة الإشعار:</h4>
           <div className="bg-card border border-border rounded-lg p-3 space-y-1">
@@ -119,7 +265,13 @@ export const PushNotificationsManager = () => {
 
         <Button
           onClick={handleSendNotification}
-          disabled={sending || !title.trim() || !body.trim() || subscribersCount === 0}
+          disabled={
+            sending || 
+            !title.trim() || 
+            !body.trim() || 
+            (targetType === "all" && subscribersCount === 0) ||
+            (targetType === "selected" && selectedUserIds.length === 0)
+          }
           className="w-full"
         >
           {sending ? (
@@ -130,7 +282,7 @@ export const PushNotificationsManager = () => {
           ) : (
             <>
               <Send className="h-4 w-4 ml-2" />
-              إرسال الإشعار ({subscribersCount} مشترك)
+              إرسال الإشعار ({targetType === "all" ? subscribersCount : selectedUserIds.length} مستخدم)
             </>
           )}
         </Button>
