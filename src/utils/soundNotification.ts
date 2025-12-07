@@ -25,8 +25,15 @@ export const ensureAudioReady = () => {
   }
 };
 
-// Play a beep using oscillator
-const playBeep = (frequency: number, duration: number, startTime: number, ctx: AudioContext, volume: number = 0.8) => {
+// Play a melodic note with smooth envelope
+const playNote = (
+  frequency: number, 
+  duration: number, 
+  startTime: number, 
+  ctx: AudioContext, 
+  volume: number = 0.5,
+  type: OscillatorType = 'sine'
+) => {
   const oscillator = ctx.createOscillator();
   const gainNode = ctx.createGain();
   
@@ -34,33 +41,181 @@ const playBeep = (frequency: number, duration: number, startTime: number, ctx: A
   gainNode.connect(ctx.destination);
   
   oscillator.frequency.value = frequency;
-  oscillator.type = 'square'; // square wave is louder and more attention-grabbing
+  oscillator.type = type;
   
+  // Smooth envelope for pleasant sound
   gainNode.gain.setValueAtTime(0, startTime);
-  gainNode.gain.linearRampToValueAtTime(volume, startTime + 0.01);
-  gainNode.gain.setValueAtTime(volume, startTime + duration - 0.05);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+  gainNode.gain.linearRampToValueAtTime(volume, startTime + 0.05);
+  gainNode.gain.setValueAtTime(volume, startTime + duration - 0.1);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
   
   oscillator.start(startTime);
   oscillator.stop(startTime + duration);
 };
 
-// Create alert tone using AudioContext - LOUD and attention-grabbing
+// Play chord (multiple notes together)
+const playChord = (
+  frequencies: number[], 
+  duration: number, 
+  startTime: number, 
+  ctx: AudioContext, 
+  volume: number = 0.3
+) => {
+  frequencies.forEach(freq => {
+    playNote(freq, duration, startTime, ctx, volume / frequencies.length, 'sine');
+  });
+};
+
+// Musical notes frequencies
+const NOTES = {
+  C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+  C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00, B5: 987.77,
+  C6: 1046.50, D6: 1174.66, E6: 1318.51, F6: 1396.91, G6: 1567.98, A6: 1760.00
+};
+
+// Vibrate device for notifications (mobile only)
+export const vibrateDevice = (pattern: number | number[] = [200, 100, 200]) => {
+  try {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  } catch (error) {
+    console.error('Vibration error:', error);
+  }
+};
+
+// ===== CALL Signal Sound - Beautiful ascending melody =====
+export const playCallNotificationSound = () => {
+  try {
+    const ctx = initAudioContext();
+    const now = ctx.currentTime;
+    
+    // Beautiful ascending arpeggio with harmony - C Major chord progression
+    // Duration: ~2.5 seconds
+    const melody = [
+      { notes: [NOTES.C5], time: 0, duration: 0.25 },
+      { notes: [NOTES.E5], time: 0.2, duration: 0.25 },
+      { notes: [NOTES.G5], time: 0.4, duration: 0.25 },
+      { notes: [NOTES.C6], time: 0.6, duration: 0.35 },
+      // Second phrase - higher
+      { notes: [NOTES.E5, NOTES.G5], time: 1.0, duration: 0.3 },
+      { notes: [NOTES.G5, NOTES.C6], time: 1.3, duration: 0.3 },
+      { notes: [NOTES.C6, NOTES.E6], time: 1.6, duration: 0.5 },
+      // Final triumphant chord
+      { notes: [NOTES.C5, NOTES.E5, NOTES.G5, NOTES.C6], time: 2.1, duration: 0.6 },
+    ];
+    
+    melody.forEach(({ notes, time, duration }) => {
+      if (notes.length === 1) {
+        playNote(notes[0], duration, now + time, ctx, 0.5, 'sine');
+      } else {
+        playChord(notes, duration, now + time, ctx, 0.6);
+      }
+    });
+    
+    vibrateDevice([150, 80, 150, 80, 250]);
+    console.log('CALL notification sound played');
+  } catch (error) {
+    console.error('Error playing CALL notification sound:', error);
+  }
+};
+
+// ===== PUT Signal Sound - Elegant descending melody =====
+export const playPutNotificationSound = () => {
+  try {
+    const ctx = initAudioContext();
+    const now = ctx.currentTime;
+    
+    // Elegant descending melody - Minor key feel
+    // Duration: ~2.5 seconds
+    const melody = [
+      { notes: [NOTES.A5], time: 0, duration: 0.25 },
+      { notes: [NOTES.F5], time: 0.2, duration: 0.25 },
+      { notes: [NOTES.D5], time: 0.4, duration: 0.25 },
+      { notes: [NOTES.A4], time: 0.6, duration: 0.35 },
+      // Second phrase
+      { notes: [NOTES.F5, NOTES.A5], time: 1.0, duration: 0.3 },
+      { notes: [NOTES.D5, NOTES.F5], time: 1.3, duration: 0.3 },
+      { notes: [NOTES.A4, NOTES.D5], time: 1.6, duration: 0.5 },
+      // Final resolving chord
+      { notes: [NOTES.D4, NOTES.F4, NOTES.A4, NOTES.D5], time: 2.1, duration: 0.6 },
+    ];
+    
+    melody.forEach(({ notes, time, duration }) => {
+      if (notes.length === 1) {
+        playNote(notes[0], duration, now + time, ctx, 0.5, 'sine');
+      } else {
+        playChord(notes, duration, now + time, ctx, 0.6);
+      }
+    });
+    
+    vibrateDevice([150, 80, 150, 80, 250]);
+    console.log('PUT notification sound played');
+  } catch (error) {
+    console.error('Error playing PUT notification sound:', error);
+  }
+};
+
+// ===== General Notification Sound - Pleasant chime melody =====
+export const playNotificationSound = () => {
+  try {
+    const ctx = initAudioContext();
+    const now = ctx.currentTime;
+    
+    // Pleasant notification chime - like a doorbell but musical
+    // Duration: ~2 seconds
+    const melody = [
+      { notes: [NOTES.G5], time: 0, duration: 0.2 },
+      { notes: [NOTES.E5], time: 0.15, duration: 0.2 },
+      { notes: [NOTES.C5], time: 0.3, duration: 0.25 },
+      { notes: [NOTES.G5], time: 0.5, duration: 0.3 },
+      // Echo/repeat
+      { notes: [NOTES.G5, NOTES.E5], time: 0.9, duration: 0.25 },
+      { notes: [NOTES.E5, NOTES.C5], time: 1.15, duration: 0.25 },
+      { notes: [NOTES.C5, NOTES.G4, NOTES.E5], time: 1.4, duration: 0.5 },
+    ];
+    
+    melody.forEach(({ notes, time, duration }) => {
+      if (notes.length === 1) {
+        playNote(notes[0], duration, now + time, ctx, 0.45, 'sine');
+      } else {
+        playChord(notes, duration, now + time, ctx, 0.55);
+      }
+    });
+    
+    vibrateDevice([200, 100, 200, 100, 300]);
+    console.log('Notification sound played');
+  } catch (error) {
+    console.error('Error playing notification sound:', error);
+  }
+};
+
+// ===== Alert Tone - Attention grabbing but melodic =====
 const playAlertTone = () => {
   try {
     const ctx = initAudioContext();
+    const now = ctx.currentTime;
     
-    // 5 loud beeps with increasing urgency for maximum attention
-    const beeps = [
-      { freq: 880, time: 0, duration: 0.25 },
-      { freq: 988, time: 0.3, duration: 0.25 },
-      { freq: 1047, time: 0.6, duration: 0.25 },
-      { freq: 1175, time: 0.9, duration: 0.25 },
-      { freq: 1319, time: 1.2, duration: 0.4 },
+    // Alert pattern - urgent but not harsh
+    // Duration: ~2.5 seconds
+    const pattern = [
+      { freq: NOTES.A5, time: 0, duration: 0.15 },
+      { freq: NOTES.E5, time: 0.18, duration: 0.15 },
+      { freq: NOTES.A5, time: 0.36, duration: 0.15 },
+      { freq: NOTES.E5, time: 0.54, duration: 0.15 },
+      // Pause then repeat higher
+      { freq: NOTES.C6, time: 0.9, duration: 0.15 },
+      { freq: NOTES.G5, time: 1.08, duration: 0.15 },
+      { freq: NOTES.C6, time: 1.26, duration: 0.15 },
+      { freq: NOTES.G5, time: 1.44, duration: 0.15 },
+      // Final attention grab
+      { freq: NOTES.E6, time: 1.8, duration: 0.2 },
+      { freq: NOTES.C6, time: 2.0, duration: 0.2 },
+      { freq: NOTES.A5, time: 2.2, duration: 0.35 },
     ];
     
-    beeps.forEach(({ freq, time, duration }) => {
-      playBeep(freq, duration, ctx.currentTime + time, ctx, 0.9);
+    pattern.forEach(({ freq, time, duration }) => {
+      playNote(freq, duration, now + time, ctx, 0.55, 'triangle');
     });
     
     console.log('Alert tone played');
@@ -69,153 +224,119 @@ const playAlertTone = () => {
   }
 };
 
-// Vibrate device for notifications (mobile only) - Strong pattern
-export const vibrateDevice = (pattern: number | number[] = [300, 100, 300, 100, 500]) => {
-  try {
-    if ('vibrate' in navigator) {
-      navigator.vibrate(pattern);
-      console.log('Device vibrated with pattern:', pattern);
-    }
-  } catch (error) {
-    console.error('Vibration error:', error);
-  }
-};
-
-// Create notification sound for CALL signals (ascending - positive)
-export const playCallNotificationSound = () => {
-  try {
-    const ctx = initAudioContext();
-    
-    // Three ascending beeps for CALL (buy/up)
-    const frequencies = [600, 800, 1000]; // Hz - ascending
-    const duration = 0.2; // seconds per beep
-    const gap = 0.08; // seconds between beeps
-    
-    frequencies.forEach((frequency, index) => {
-      playBeep(frequency, duration, ctx.currentTime + (index * (duration + gap)), ctx, 0.7);
-    });
-    
-    vibrateDevice([200, 100, 200]);
-    console.log('CALL notification sound played');
-  } catch (error) {
-    console.error('Error playing CALL notification sound:', error);
-  }
-};
-
-// Create notification sound for PUT signals (descending - negative)
-export const playPutNotificationSound = () => {
-  try {
-    const ctx = initAudioContext();
-    
-    // Three descending beeps for PUT (sell/down)
-    const frequencies = [1000, 800, 600]; // Hz - descending
-    const duration = 0.2; // seconds per beep
-    const gap = 0.08; // seconds between beeps
-    
-    frequencies.forEach((frequency, index) => {
-      playBeep(frequency, duration, ctx.currentTime + (index * (duration + gap)), ctx, 0.7);
-    });
-    
-    vibrateDevice([200, 100, 200]);
-    console.log('PUT notification sound played');
-  } catch (error) {
-    console.error('Error playing PUT notification sound:', error);
-  }
-};
-
-// Generic notification sound (neutral) with vibration - LOUD and LONG
-export const playNotificationSound = () => {
-  try {
-    // Strong vibration pattern: long-short-long-short-extra long
-    vibrateDevice([400, 100, 400, 100, 600]);
-    
-    // Play loud alert tone
-    playAlertTone();
-    
-    console.log('Notification sound and vibration triggered');
-  } catch (error) {
-    console.error('Error playing notification sound:', error);
-    // Fallback - try again
-    try {
-      playAlertTone();
-    } catch (e) {
-      console.error('Fallback also failed:', e);
-    }
-  }
-};
-
-// Price alert specific sound - Very loud and persistent
+// ===== Price Alert Sound - Urgent but beautiful =====
 export const playPriceAlertSound = () => {
   try {
     const ctx = initAudioContext();
+    const now = ctx.currentTime;
     
-    // Urgent alarm-like pattern
-    const pattern = [
-      { freq: 1200, time: 0, duration: 0.15 },
-      { freq: 800, time: 0.2, duration: 0.15 },
-      { freq: 1200, time: 0.4, duration: 0.15 },
-      { freq: 800, time: 0.6, duration: 0.15 },
-      { freq: 1400, time: 0.8, duration: 0.3 },
+    // Urgent price alert - attention grabbing melody
+    // Duration: ~3 seconds
+    const melody = [
+      // First attention call
+      { notes: [NOTES.C6], time: 0, duration: 0.12 },
+      { notes: [NOTES.G5], time: 0.12, duration: 0.12 },
+      { notes: [NOTES.C6], time: 0.24, duration: 0.12 },
+      { notes: [NOTES.G5], time: 0.36, duration: 0.12 },
+      // Rising urgency
+      { notes: [NOTES.D6], time: 0.6, duration: 0.12 },
+      { notes: [NOTES.A5], time: 0.72, duration: 0.12 },
+      { notes: [NOTES.D6], time: 0.84, duration: 0.12 },
+      { notes: [NOTES.A5], time: 0.96, duration: 0.12 },
+      // Climax
+      { notes: [NOTES.E6], time: 1.2, duration: 0.15 },
+      { notes: [NOTES.B5], time: 1.35, duration: 0.15 },
+      { notes: [NOTES.E6], time: 1.5, duration: 0.2 },
+      // Resolving chord
+      { notes: [NOTES.C5, NOTES.E5, NOTES.G5, NOTES.C6], time: 1.8, duration: 0.8 },
     ];
     
-    pattern.forEach(({ freq, time, duration }) => {
-      playBeep(freq, duration, ctx.currentTime + time, ctx, 0.95);
+    melody.forEach(({ notes, time, duration }) => {
+      if (notes.length === 1) {
+        playNote(notes[0], duration, now + time, ctx, 0.55, 'triangle');
+      } else {
+        playChord(notes, duration, now + time, ctx, 0.7);
+      }
     });
     
-    // Strong vibration
-    vibrateDevice([500, 100, 500, 100, 700]);
-    
+    vibrateDevice([300, 100, 300, 100, 500]);
     console.log('Price alert sound played');
   } catch (error) {
     console.error('Price alert sound error:', error);
-    playNotificationSound(); // Fallback
+    playNotificationSound();
   }
 };
 
-// Success sound (win)
+// ===== Success Sound - Celebratory =====
 export const playSuccessSound = () => {
   try {
     const ctx = initAudioContext();
+    const now = ctx.currentTime;
     
-    // Two quick ascending beeps
-    const frequencies = [800, 1200];
-    const duration = 0.15;
-    const gap = 0.1;
+    // Victory fanfare - short but satisfying
+    // Duration: ~1.2 seconds
+    const melody = [
+      { notes: [NOTES.C5], time: 0, duration: 0.12 },
+      { notes: [NOTES.E5], time: 0.1, duration: 0.12 },
+      { notes: [NOTES.G5], time: 0.2, duration: 0.15 },
+      { notes: [NOTES.C6], time: 0.35, duration: 0.25 },
+      { notes: [NOTES.E6], time: 0.6, duration: 0.35 },
+      // Final victory chord
+      { notes: [NOTES.C5, NOTES.E5, NOTES.G5, NOTES.C6], time: 0.95, duration: 0.5 },
+    ];
     
-    frequencies.forEach((frequency, index) => {
-      playBeep(frequency, duration, ctx.currentTime + (index * (duration + gap)), ctx, 0.6);
+    melody.forEach(({ notes, time, duration }) => {
+      if (notes.length === 1) {
+        playNote(notes[0], duration, now + time, ctx, 0.45, 'sine');
+      } else {
+        playChord(notes, duration, now + time, ctx, 0.55);
+      }
     });
     
-    vibrateDevice([100, 50, 100]);
+    vibrateDevice([100, 50, 100, 50, 150]);
     console.log('Success sound played');
   } catch (error) {
     console.error('Error playing success sound:', error);
   }
 };
 
-// Error sound (loss)
+// ===== Error Sound - Soft but noticeable =====
 export const playErrorSound = () => {
   try {
     const ctx = initAudioContext();
+    const now = ctx.currentTime;
     
-    // Single low beep
-    playBeep(400, 0.4, ctx.currentTime, ctx, 0.5);
-    vibrateDevice([300]);
+    // Gentle error indication - not harsh
+    // Duration: ~0.8 seconds
+    const melody = [
+      { notes: [NOTES.E5], time: 0, duration: 0.2 },
+      { notes: [NOTES.C5], time: 0.2, duration: 0.25 },
+      { notes: [NOTES.A4], time: 0.45, duration: 0.35 },
+    ];
+    
+    melody.forEach(({ notes, time, duration }) => {
+      playNote(notes[0], duration, now + time, ctx, 0.4, 'sine');
+    });
+    
+    vibrateDevice([200]);
     console.log('Error sound played');
   } catch (error) {
     console.error('Error playing error sound:', error);
   }
 };
 
-// Test sound - to verify audio is working
+// ===== Test Sound - Verify audio works =====
 export const playTestSound = () => {
   try {
     const ctx = initAudioContext();
+    const now = ctx.currentTime;
     
-    // Simple test beep
-    playBeep(800, 0.3, ctx.currentTime, ctx, 0.8);
-    vibrateDevice([200]);
+    // Simple pleasant test tone
+    playNote(NOTES.C5, 0.2, now, ctx, 0.5, 'sine');
+    playNote(NOTES.E5, 0.2, now + 0.15, ctx, 0.5, 'sine');
+    playNote(NOTES.G5, 0.3, now + 0.3, ctx, 0.5, 'sine');
     
+    vibrateDevice([100]);
     console.log('Test sound played successfully');
     return true;
   } catch (error) {
@@ -224,41 +345,24 @@ export const playTestSound = () => {
   }
 };
 
-// Stock market refresh sound - like trading floor bell/ticker
+// ===== Refresh Sound - Stock market chime =====
 export const playRefreshSound = () => {
   try {
     const ctx = initAudioContext();
+    const now = ctx.currentTime;
     
-    // Stock market ticker/bell sound - quick ascending chime
-    const pattern = [
-      { freq: 1046.50, time: 0, duration: 0.08 },      // C6
-      { freq: 1174.66, time: 0.06, duration: 0.08 },   // D6
-      { freq: 1318.51, time: 0.12, duration: 0.12 },   // E6
-      { freq: 1567.98, time: 0.20, duration: 0.15 },   // G6 - final bell
+    // Quick pleasant refresh chime
+    const melody = [
+      { freq: NOTES.G5, time: 0, duration: 0.08 },
+      { freq: NOTES.C6, time: 0.06, duration: 0.08 },
+      { freq: NOTES.E6, time: 0.12, duration: 0.12 },
     ];
     
-    pattern.forEach(({ freq, time, duration }) => {
-      const oscillator = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      
-      oscillator.frequency.value = freq;
-      oscillator.type = 'sine'; // Clean bell-like tone
-      
-      const startTime = ctx.currentTime + time;
-      gainNode.gain.setValueAtTime(0, startTime);
-      gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-      
-      oscillator.start(startTime);
-      oscillator.stop(startTime + duration);
+    melody.forEach(({ freq, time, duration }) => {
+      playNote(freq, duration, now + time, ctx, 0.35, 'sine');
     });
     
-    // Light vibration feedback
     vibrateDevice([50]);
-    
     console.log('Refresh sound played');
   } catch (error) {
     console.error('Refresh sound error:', error);
