@@ -529,19 +529,16 @@ export default function Community() {
   const isLiked = user && likes.some(l => l.user_id === user.id);
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 pt-[env(safe-area-inset-top)]">
-      {/* Safe Area Background */}
-      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-slate-950 z-[60]" />
-      
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen pt-[calc(env(safe-area-inset-top)+48px)]">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
       {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
 
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50 pt-[env(safe-area-inset-top)]">
+      {/* Page Header - Part of scrollable content */}
+      <div className="bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50 relative z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button

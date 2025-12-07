@@ -1146,10 +1146,7 @@ const Markets = () => {
       addFavorite(market.symbol, market.nameAr, market.name, market.category);
     }
   };
-  return <PullToRefresh onRefresh={handleRefresh} className="min-h-screen"><div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden pt-[env(safe-area-inset-top)]" dir="rtl">
-      {/* Safe Area Background */}
-      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-slate-900 z-[60]" />
-      
+  return <PullToRefresh onRefresh={handleRefresh} className="min-h-screen pt-[calc(env(safe-area-inset-top)+48px)]"><div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden" dir="rtl">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
@@ -1161,8 +1158,8 @@ const Markets = () => {
       {/* Grid Pattern Overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50 pt-[env(safe-area-inset-top)]">
+      {/* Page Header - Part of scrollable content */}
+      <header className="bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50 relative z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="icon" onClick={() => navigate('/')} className="text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-xl">
