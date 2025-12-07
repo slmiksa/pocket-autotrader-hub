@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { TradingDashboard } from "@/components/trading/TradingDashboard";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2, TrendingUp } from "lucide-react";
 
@@ -48,8 +49,12 @@ const BinaryOptions = () => {
 
   if (!user) return null;
 
+  const handleRefresh = useCallback(async () => {
+    window.location.reload();
+  }, []);
+
   return (
-    <div className="min-h-screen bg-background dark">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-background dark">
       {/* Safe Area Background */}
       <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-card z-[60]" />
       
@@ -87,7 +92,7 @@ const BinaryOptions = () => {
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <TradingDashboard />
       </main>
-    </div>
+    </PullToRefresh>
   );
 };
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Upload, Loader2, MessageCircle, Lock, TrendingUp, Target, Activity, ArrowUp, ArrowDown, Shield, DollarSign, Image as ImageIcon, Search } from "lucide-react";
 import { AnalysisResult } from "@/components/AnalysisResult";
 import { PatternImageDisplay } from "@/components/PatternImageDisplay";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 const FOREX_PAIRS = [
   // Major Pairs
@@ -912,9 +913,21 @@ const ImageAnalysis = () => {
       </div>
     );
   }
+  const handleRefresh = useCallback(async () => {
+    // Re-check access
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (authUser) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('image_analysis_enabled')
+        .eq('user_id', authUser.id)
+        .single();
+      setHasAccess(profile?.image_analysis_enabled || false);
+    }
+  }, []);
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
       {/* Safe Area Background */}
       <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-slate-950 z-[60]" />
       
@@ -1509,7 +1522,7 @@ const ImageAnalysis = () => {
         </div>
       )}
       </div>
-    </div>
+    </PullToRefresh>
   );
 };
 

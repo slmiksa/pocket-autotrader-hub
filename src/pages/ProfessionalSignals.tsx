@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { ArrowLeft, TrendingUp, TrendingDown, Clock, Target, Shield, Loader2, Lo
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 interface ProfessionalSignal {
   id: string;
@@ -71,7 +72,7 @@ const ProfessionalSignals = () => {
     }
   };
 
-  const fetchSignals = async () => {
+  const fetchSignals = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("professional_signals")
@@ -89,7 +90,11 @@ const ProfessionalSignals = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const handleRefresh = useCallback(async () => {
+    await fetchSignals();
+  }, [fetchSignals]);
 
   const getDirectionIcon = (direction: string) => {
     return direction === "CALL" || direction === "BUY" ? (
@@ -189,7 +194,7 @@ const ProfessionalSignals = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-background p-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
       <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-background z-[60]" />
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
@@ -303,7 +308,7 @@ const ProfessionalSignals = () => {
           </div>
         )}
       </div>
-    </div>
+    </PullToRefresh>
   );
 };
 
