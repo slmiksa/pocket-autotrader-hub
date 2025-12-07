@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,9 @@ import { ArrowLeft, TrendingUp, TrendingDown, Loader2, RefreshCw, Star, User, Ba
 import { useFavorites } from '@/hooks/useFavorites';
 import { PriceAlertDialog } from '@/components/alerts/PriceAlertDialog';
 import { supabase } from '@/integrations/supabase/client';
+import { PullToRefresh } from '@/components/PullToRefresh';
+import { toast } from 'sonner';
+
 interface MarketItem {
   name: string;
   nameAr: string;
@@ -1078,7 +1081,7 @@ const Markets = () => {
       }
     }) => setUser(user));
   }, []);
-  const fetchPrices = async () => {
+  const fetchPrices = useCallback(async () => {
     try {
       setLoading(true);
       const cryptoMarkets = markets.filter(m => m.binanceSymbol);
@@ -1106,7 +1109,12 @@ const Markets = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const handleRefresh = useCallback(async () => {
+    await fetchPrices();
+    toast.success('تم تحديث الأسعار');
+  }, [fetchPrices]);
   useEffect(() => {
     fetchPrices();
     const interval = setInterval(fetchPrices, 10000);
@@ -1138,7 +1146,7 @@ const Markets = () => {
       addFavorite(market.symbol, market.nameAr, market.name, market.category);
     }
   };
-  return <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden pt-[env(safe-area-inset-top)]" dir="rtl">
+  return <PullToRefresh onRefresh={handleRefresh} className="min-h-screen"><div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden pt-[env(safe-area-inset-top)]" dir="rtl">
       {/* Safe Area Background */}
       <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-slate-900 z-[60]" />
       
@@ -1290,6 +1298,6 @@ const Markets = () => {
 
       {/* Price Alert Dialog */}
       {selectedMarket && <PriceAlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen} market={selectedMarket} currentPrice={prices[selectedMarket.symbol]?.price} />}
-    </div>;
+    </div></PullToRefresh>;
 };
 export default Markets;

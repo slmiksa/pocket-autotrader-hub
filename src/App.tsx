@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import { SmartSupport } from "./components/SmartSupport";
 import { GlobalHeader } from "./components/GlobalHeader";
 import { PriceAlertWatcher } from "./components/PriceAlertWatcher";
+import { BackButton } from "./components/BackButton";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <GlobalHeader />
+        <BackButton />
         <SmartSupport />
         <PriceAlertWatcher />
         <Routes>
