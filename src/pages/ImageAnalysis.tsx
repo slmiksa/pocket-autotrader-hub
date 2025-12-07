@@ -422,6 +422,19 @@ const ImageAnalysis = () => {
     metal.value.toLowerCase().includes(metalSearch.toLowerCase())
   );
 
+  const handleRefresh = useCallback(async () => {
+    // Re-check access
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (authUser) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('image_analysis_enabled')
+        .eq('user_id', authUser.id)
+        .single();
+      setHasAccess(profile?.image_analysis_enabled || false);
+    }
+  }, []);
+
   useEffect(() => {
     const checkAccess = async () => {
       try {
@@ -836,18 +849,6 @@ const ImageAnalysis = () => {
       setGeneratingPattern(false);
     }
   };
-  const handleRefresh = useCallback(async () => {
-    // Re-check access
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (authUser) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('image_analysis_enabled')
-        .eq('user_id', authUser.id)
-        .single();
-      setHasAccess(profile?.image_analysis_enabled || false);
-    }
-  }, []);
 
   if (loading) {
     return (
