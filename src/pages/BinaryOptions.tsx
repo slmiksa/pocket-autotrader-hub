@@ -12,6 +12,10 @@ const BinaryOptions = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
 
+  const handleRefresh = useCallback(async () => {
+    window.location.reload();
+  }, []);
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -48,10 +52,6 @@ const BinaryOptions = () => {
   }
 
   if (!user) return null;
-
-  const handleRefresh = useCallback(async () => {
-    window.location.reload();
-  }, []);
 
   return (
     <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-background dark">
