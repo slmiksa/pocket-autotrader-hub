@@ -618,7 +618,7 @@ export default function LiveChart() {
     await fetchCurrentPrice();
   }, [fetchCurrentPrice]);
 
-  return <PullToRefresh onRefresh={handlePullRefresh} className="min-h-screen bg-[#0a0a0f] pt-14">
+  return <PullToRefresh onRefresh={handlePullRefresh} className="min-h-screen bg-[#0a0a0f] pt-[calc(env(safe-area-inset-top,0px)+48px)]">
     <div dir="rtl" className="h-full">
       {/* Page Header - Part of scrollable content */}
       <header className="border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur">

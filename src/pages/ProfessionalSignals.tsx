@@ -194,7 +194,7 @@ const ProfessionalSignals = () => {
   }
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-background p-4 pt-14">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-background p-4 pt-[calc(env(safe-area-inset-top,0px)+48px)]">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate(-1)}>
