@@ -142,8 +142,13 @@ export const GlobalHeader = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#1a1f2e] border-b border-white/5">
-      <div className="flex items-center justify-between px-3 h-12">
+    <>
+      {/* Safe Area Background - Fixed at very top */}
+      <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-[#1a1f2e] z-[60]" />
+      
+      {/* Header - Fixed below safe area */}
+      <header className="fixed top-[env(safe-area-inset-top)] left-0 right-0 z-50 w-full bg-[#1a1f2e] border-b border-white/5">
+        <div className="flex items-center justify-between px-3 h-12">
         {/* Logo / Brand - Right Side */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <div className="flex items-center justify-center w-8 h-8 rounded bg-gradient-to-br from-cyan-500 to-blue-600">
@@ -253,5 +258,9 @@ export const GlobalHeader = () => {
         </div>
       </div>
     </header>
+    
+    {/* Spacer to push content below fixed header */}
+    <div className="h-12" style={{ marginTop: 'env(safe-area-inset-top)' }} />
+    </>
   );
 };
