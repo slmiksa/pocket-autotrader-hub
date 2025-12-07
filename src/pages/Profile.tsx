@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import { ProfileEditDialog } from '@/components/profile/ProfileEditDialog';
 import { PriceAlertsList } from '@/components/alerts/PriceAlertsList';
 import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown';
 import { PushNotificationToggle } from '@/components/notifications/PushNotificationToggle';
+import { PullToRefresh } from '@/components/PullToRefresh';
 import { toast } from 'sonner';
 
 interface CommunityPost {
@@ -163,6 +164,15 @@ const Profile = () => {
   const stats = getStats();
   const todayEntries = getTodayEntries();
 
+  const handleRefresh = useCallback(async () => {
+    if (user) {
+      await Promise.all([
+        fetchProfile(user.id),
+        fetchMyPosts(user.id)
+      ]);
+    }
+  }, [user]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[hsl(222,47%,8%)] flex items-center justify-center">
@@ -175,7 +185,8 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(222,47%,6%)] pt-[env(safe-area-inset-top)]" dir="rtl">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[hsl(222,47%,6%)] pt-[env(safe-area-inset-top)]">
+      <div dir="rtl" className="h-full">
       {/* Safe Area Background */}
       <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-[hsl(222,47%,8%)] z-[60]" />
       
@@ -647,7 +658,8 @@ const Profile = () => {
           onProfileUpdated={() => fetchProfile(user?.id)}
         />
       </main>
-    </div>
+      </div>
+    </PullToRefresh>
   );
 };
 

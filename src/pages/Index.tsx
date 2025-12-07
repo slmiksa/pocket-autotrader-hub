@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { LivePriceCards } from "@/components/LivePriceCards";
 import { HomeContent } from "@/components/HomeContent";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { Loader2 } from "lucide-react";
 import { initAudioContext } from "@/utils/soundNotification";
 
@@ -94,6 +95,10 @@ const Index = () => {
     };
   }, []);
 
+  const handleRefresh = useCallback(async () => {
+    window.location.reload();
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background dark">
@@ -107,7 +112,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background dark">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-background dark">
       {/* Announcement Banner */}
       <AnnouncementBanner />
 
@@ -127,7 +132,7 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
+    </PullToRefresh>
   );
 };
 

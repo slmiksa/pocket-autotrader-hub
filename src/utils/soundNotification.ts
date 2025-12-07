@@ -223,3 +223,44 @@ export const playTestSound = () => {
     return false;
   }
 };
+
+// Stock market refresh sound - like trading floor bell/ticker
+export const playRefreshSound = () => {
+  try {
+    const ctx = initAudioContext();
+    
+    // Stock market ticker/bell sound - quick ascending chime
+    const pattern = [
+      { freq: 1046.50, time: 0, duration: 0.08 },      // C6
+      { freq: 1174.66, time: 0.06, duration: 0.08 },   // D6
+      { freq: 1318.51, time: 0.12, duration: 0.12 },   // E6
+      { freq: 1567.98, time: 0.20, duration: 0.15 },   // G6 - final bell
+    ];
+    
+    pattern.forEach(({ freq, time, duration }) => {
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      oscillator.frequency.value = freq;
+      oscillator.type = 'sine'; // Clean bell-like tone
+      
+      const startTime = ctx.currentTime + time;
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration);
+    });
+    
+    // Light vibration feedback
+    vibrateDevice([50]);
+    
+    console.log('Refresh sound played');
+  } catch (error) {
+    console.error('Refresh sound error:', error);
+  }
+};

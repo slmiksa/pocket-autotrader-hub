@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PriceAlertDialog } from "@/components/alerts/PriceAlertDialog";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 // Symbol to API mapping for price fetching
 const symbolToPriceAPI: Record<string, { api: 'binance' | 'forex' | 'commodity', symbol: string }> = {
@@ -612,7 +613,13 @@ export default function LiveChart() {
       }
     }
   };
-  return <div className="min-h-screen bg-[#0a0a0f] pt-[env(safe-area-inset-top)]" dir="rtl">
+
+  const handlePullRefresh = useCallback(async () => {
+    await fetchCurrentPrice();
+  }, [fetchCurrentPrice]);
+
+  return <PullToRefresh onRefresh={handlePullRefresh} className="min-h-screen bg-[#0a0a0f] pt-[env(safe-area-inset-top)]">
+    <div dir="rtl" className="h-full">
       {/* Safe Area Background */}
       <div className="fixed top-0 left-0 right-0 h-[env(safe-area-inset-top)] bg-[#0a0a0f] z-[60]" />
       
@@ -948,5 +955,6 @@ export default function LiveChart() {
           currentPrice={currentPrice || undefined}
         />
       </main>
-    </div>;
+    </div>
+  </PullToRefresh>;
 }

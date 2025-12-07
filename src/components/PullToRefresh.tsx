@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { playRefreshSound } from '@/utils/soundNotification';
 
 interface PullToRefreshProps {
   children: ReactNode;
@@ -16,8 +17,13 @@ export const PullToRefresh = ({
   className,
   disabled = false,
 }: PullToRefreshProps) => {
+  const handleRefresh = async () => {
+    playRefreshSound();
+    await onRefresh();
+  };
+
   const { containerRef, isRefreshing, pullDistance } = usePullToRefresh({
-    onRefresh,
+    onRefresh: handleRefresh,
     threshold: 80,
     disabled,
   });
