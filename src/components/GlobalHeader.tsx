@@ -194,10 +194,10 @@ export const GlobalHeader = () => {
       
       {/* Header - Fixed below safe area */}
       <header className="fixed top-[env(safe-area-inset-top)] left-0 right-0 z-50 w-full bg-[#1a1f2e] border-b border-white/5">
-        <div className="h-12 mb-0 mr-[13px] mt-[28px] ml-0 py-0 px-0 items-start justify-between flex flex-row mx-px my-0">
+        <div className="h-20 px-3 flex items-center justify-between">
         {/* Logo / Brand - Right Side */}
-        <Link to="/" className="flex items-center gap-2 shrink-0 text-center mx-0 my-[7px]">
-          <div className="flex items-center justify-center w-8 h-8 rounded bg-gradient-to-br from-cyan-500 to-blue-600">
+        <Link to="/" className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center justify-center w-9 h-9 rounded bg-gradient-to-br from-cyan-500 to-blue-600">
             <TrendingUp className="h-5 w-5 text-white" />
           </div>
           {daysRemaining !== null && <Badge className="bg-[#252b3b] text-white/80 border-0 text-xs font-normal px-2">
@@ -206,8 +206,8 @@ export const GlobalHeader = () => {
         </Link>
 
         {/* Mecca Time Clock - Center on Mobile */}
-        <div className="lg:hidden flex items-center">
-          <AnalogClock size={32} className="my-0 mx-0 px-[29px] py-0" />
+        <div className="lg:hidden flex items-center justify-center absolute left-1/2 transform -translate-x-1/2">
+          <AnalogClock size={50} />
         </div>
 
         {/* Desktop Navigation - Center */}

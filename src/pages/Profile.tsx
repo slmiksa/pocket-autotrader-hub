@@ -185,7 +185,7 @@ const Profile = () => {
   }
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[hsl(222,47%,6%)] pt-[calc(env(safe-area-inset-top,0px)+48px)]">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[hsl(222,47%,6%)] pt-[calc(env(safe-area-inset-top,0px)+88px)]">
       <div dir="rtl" className="h-full">
       {/* Animated Background Gradients */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
