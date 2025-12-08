@@ -102,7 +102,7 @@ const Index = () => {
   if (!user || !session) {
     return null;
   }
-  return <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[#0f1219] dark pt-[calc(env(safe-area-inset-top,0px)+48px)] mx-0 my-[20px]">
+  return <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[#0f1219] dark pt-[calc(env(safe-area-inset-top,0px)+48px)] mx-0 my-[64px]">
       {/* Announcement Banner */}
       <AnnouncementBanner />
 
