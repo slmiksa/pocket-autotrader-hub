@@ -359,6 +359,22 @@ export const HomeContent = () => {
             <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
           </CardContent>
         </Card>
+
+        <Card 
+          className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300" 
+          onClick={() => navigate("/about")}
+        >
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="rounded-xl bg-emerald-500/20 p-4 group-hover:bg-emerald-500/30 transition-colors">
+              <Users className="h-7 w-7 text-emerald-400" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-foreground text-lg">من نحن</h4>
+              <p className="text-sm text-muted-foreground mt-1">تعرف على منصة Tifue Trader وفريق العمل</p>
+            </div>
+            <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-emerald-400 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

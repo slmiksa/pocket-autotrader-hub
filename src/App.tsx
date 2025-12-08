@@ -18,6 +18,7 @@ import Profile from "./pages/Profile";
 import BinaryOptions from "./pages/BinaryOptions";
 import Community from "./pages/Community";
 import Install from "./pages/Install";
+import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import { SmartSupport } from "./components/SmartSupport";
 import { GlobalHeader } from "./components/GlobalHeader";
@@ -54,6 +55,7 @@ const App = () => (
           <Route path="/binary-options" element={<BinaryOptions />} />
           <Route path="/community" element={<Community />} />
           <Route path="/install" element={<Install />} />
+          <Route path="/about" element={<About />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
