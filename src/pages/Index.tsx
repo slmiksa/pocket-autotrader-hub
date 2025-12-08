@@ -8,28 +8,23 @@ import { HomeContent } from "@/components/HomeContent";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { Loader2 } from "lucide-react";
 import { initAudioContext } from "@/utils/soundNotification";
-
 const Index = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-
   const checkSubscription = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("subscription_expires_at")
-        .eq("user_id", userId)
-        .single();
-
+      const {
+        data,
+        error
+      } = await supabase.from("profiles").select("subscription_expires_at").eq("user_id", userId).single();
       if (error) {
         console.error("Error fetching profile:", error);
         setLoading(false);
         navigate("/subscription");
         return false;
       }
-
       if (data && data.subscription_expires_at) {
         const expiresAt = new Date(data.subscription_expires_at);
         const now = new Date();
@@ -38,7 +33,6 @@ const Index = () => {
           return true;
         }
       }
-
       setLoading(false);
       navigate("/subscription");
       return false;
@@ -49,9 +43,12 @@ const Index = () => {
       return false;
     }
   };
-
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: {
+        subscription
+      }
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -63,8 +60,11 @@ const Index = () => {
         navigate("/auth");
       }
     });
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -74,7 +74,6 @@ const Index = () => {
         navigate("/auth");
       }
     });
-
     return () => subscription.unsubscribe();
   }, [navigate]);
 
@@ -85,34 +84,25 @@ const Index = () => {
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('touchstart', handleUserInteraction);
     };
-    
     document.addEventListener('click', handleUserInteraction);
     document.addEventListener('touchstart', handleUserInteraction);
-    
     return () => {
       document.removeEventListener('click', handleUserInteraction);
       document.removeEventListener('touchstart', handleUserInteraction);
     };
   }, []);
-
   const handleRefresh = useCallback(async () => {
     window.location.reload();
   }, []);
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background dark">
+    return <div className="min-h-screen flex items-center justify-center bg-background dark">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
   if (!user || !session) {
     return null;
   }
-
-  return (
-    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[#0f1219] dark pt-[calc(env(safe-area-inset-top,0px)+48px)]">
+  return <PullToRefresh onRefresh={handleRefresh} className="min-h-screen bg-[#0f1219] dark pt-[calc(env(safe-area-inset-top,0px)+48px)] mx-0 my-[20px]">
       {/* Announcement Banner */}
       <AnnouncementBanner />
 
@@ -132,8 +122,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </PullToRefresh>
-  );
+    </PullToRefresh>;
 };
-
 export default Index;
