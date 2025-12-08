@@ -33,8 +33,7 @@ export const AnalogClock = ({ size = 36 }: AnalogClockProps) => {
 
   return (
     <div 
-      className="relative"
-      style={{ width: size, height: size }}
+      className="relative flex flex-col items-center"
       title={`توقيت مكة: ${meccaTime.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}`}
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -111,6 +110,7 @@ export const AnalogClock = ({ size = 36 }: AnalogClockProps) => {
           fill="white"
         />
       </svg>
+      <span className="text-[8px] text-white/80 mt-0.5 whitespace-nowrap">توقيت مكة</span>
     </div>
   );
 };
