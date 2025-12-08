@@ -207,7 +207,7 @@ export const GlobalHeader = () => {
 
         {/* Mecca Time Clock - Center on Mobile */}
         <div className="lg:hidden flex items-center">
-          <AnalogClock size={32} />
+          <AnalogClock size={32} className="my-0 mx-0 px-[29px] py-0" />
         </div>
 
         {/* Desktop Navigation - Center */}
