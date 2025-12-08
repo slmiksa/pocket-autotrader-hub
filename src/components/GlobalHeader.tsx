@@ -23,8 +23,6 @@ import { initAudioContext } from "@/utils/soundNotification";
 
 // Navigation items for mobile sidebar
 const navItems = [
-  { label: "تفعيل الإشعارات", icon: Bell, path: null, action: "notifications", color: "default" },
-  { label: "اختيار صوت التنبيه", icon: Bell, path: null, action: "sound", color: "default" },
   { label: "تحليل الأسواق", icon: Image, path: "/image-analysis", color: "default" },
   { label: "توصيات المحترفين", icon: Target, path: "/professional-signals", color: "default" },
   { label: "محلل العرض والطلب", icon: TrendingUp, path: "/supply-demand", color: "default" },
@@ -38,7 +36,6 @@ const navItems = [
 
 // Header navigation items (fewer items)
 const headerNavItems = [
-  { label: "تفعيل الإشعارات", icon: Bell, path: null, action: "notifications" },
   { label: "تحليل الأسواق", icon: Image, path: "/image-analysis" },
   { label: "توصيات المحترفين", icon: Target, path: "/professional-signals" },
   { label: "محلل العرض والطلب", icon: TrendingUp, path: "/supply-demand" },
