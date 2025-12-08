@@ -47,15 +47,19 @@ export const ImageViewer = ({ src, alt, isOpen, onClose }: ImageViewerProps) => 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-0 overflow-hidden">
-        {/* Close button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="absolute top-3 right-3 z-50 bg-white/10 hover:bg-white/20 text-white rounded-full h-10 w-10"
-        >
-          <X className="h-6 w-6" />
-        </Button>
+        {/* Top bar with close button */}
+        <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/80 to-transparent">
+          <span className="text-white/70 text-sm">اضغط للإغلاق</span>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onClose}
+            className="bg-red-600 hover:bg-red-700 text-white rounded-full h-10 px-5 gap-2 font-medium shadow-lg"
+          >
+            <X className="h-5 w-5" />
+            إغلاق
+          </Button>
+        </div>
 
         {/* Controls */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-full px-3 py-2">
