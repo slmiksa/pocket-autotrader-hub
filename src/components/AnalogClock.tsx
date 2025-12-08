@@ -59,6 +59,6 @@ export const AnalogClock = ({
         {/* Center dot */}
         <circle cx={center} cy={center} r={3} fill="white" />
       </svg>
-      <span className="text-[10px] text-white/80 mt-1 whitespace-nowrap">توقيت مكة</span>
+      
     </div>;
 };
