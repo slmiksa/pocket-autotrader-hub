@@ -194,7 +194,7 @@ export const GlobalHeader = () => {
       
       {/* Header - Fixed below safe area */}
       <header className="fixed top-[env(safe-area-inset-top)] left-0 right-0 z-50 w-full bg-[#1a1f2e] border-b border-white/5">
-        <div className="h-12 flex-row flex items-end justify-between mb-0 mr-[13px] mt-[28px] ml-0 px-0 py-[4px] mx-[8px] my-[9px]">
+        <div className="h-12 flex-row mb-0 mr-[13px] mt-[28px] ml-0 mx-[8px] py-0 px-[13px] flex items-end justify-between my-[7px]">
         {/* Logo / Brand - Right Side */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <div className="flex items-center justify-center w-8 h-8 rounded bg-gradient-to-br from-cyan-500 to-blue-600">
