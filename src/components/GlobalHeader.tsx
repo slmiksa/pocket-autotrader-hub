@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NotificationsDropdown } from "./notifications/NotificationsDropdown";
 import { initAudioContext } from "@/utils/soundNotification";
+import { AnalogClock } from "./AnalogClock";
 
 // Navigation items for mobile sidebar
 const navItems = [
@@ -157,6 +158,11 @@ export const GlobalHeader = () => {
             </Badge>
           )}
         </Link>
+
+        {/* Mecca Time Clock - Center on Mobile */}
+        <div className="lg:hidden flex items-center">
+          <AnalogClock size={32} />
+        </div>
 
         {/* Desktop Navigation - Center */}
         <nav className="hidden lg:flex items-center gap-0.5 flex-1 justify-center" dir="rtl">
