@@ -118,7 +118,15 @@ const Index = () => {
       <footer className="border-t border-border bg-card mt-8 sm:mt-12">
         <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
           <div className="text-center text-xs sm:text-sm text-muted-foreground">
-            
+            برمجة وتطوير{' '}
+            <a 
+              href="https://trndsky.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-medium"
+            >
+              TrndSky
+            </a>
           </div>
         </div>
       </footer>
