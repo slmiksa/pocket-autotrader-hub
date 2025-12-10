@@ -167,6 +167,7 @@ const Auth = () => {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••"
+                    autoComplete="current-password"
                     onKeyPress={e => e.key === "Enter" && handleSignIn()}
                     className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
                   />
@@ -225,6 +226,7 @@ const Auth = () => {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••"
+                    autoComplete="new-password"
                     onKeyPress={e => e.key === "Enter" && handleSignUp()}
                     className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
                   />
