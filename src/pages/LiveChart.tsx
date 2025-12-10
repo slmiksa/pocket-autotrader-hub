@@ -1328,12 +1328,12 @@ export default function LiveChart() {
       {/* Chart Container */}
       <main className={`${isFullscreen ? '' : 'container mx-auto px-4 py-6'}`}>
         {/* Fullscreen Toggle Button - Above the chart */}
-        <div className={`flex justify-end mb-2 gap-2 ${isFullscreen ? 'fixed top-4 right-4 z-[70]' : ''}`}>
+        <div className={`flex justify-end mb-2 gap-2 ${isFullscreen ? 'fixed top-4 right-4 z-[9999]' : ''}`}>
           <Button 
             onClick={() => setIsFullscreen(!isFullscreen)} 
             variant="outline" 
             size="sm"
-            className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
+            className="gap-2 border-primary/30 text-primary hover:bg-primary/10 bg-black/80"
           >
             {isFullscreen ? (
               <>
@@ -1352,14 +1352,14 @@ export default function LiveChart() {
             onClick={takeScreenshot} 
             variant="outline" 
             size="sm"
-            className="gap-2 border-white/20 text-white/70 hover:text-white hover:bg-white/10"
+            className="gap-2 border-white/20 text-white/70 hover:text-white hover:bg-white/10 bg-black/80"
           >
             <Camera className="h-4 w-4" />
             لقطة شاشة
           </Button>
         </div>
         
-        <Card className={`bg-[#12121a] border-white/10 relative ${isFullscreen ? 'fixed inset-0 z-50 rounded-none border-none p-0 pt-12' : 'p-4'}`}>
+        <Card className={`bg-[#12121a] border-white/10 relative ${isFullscreen ? 'fixed inset-0 z-[9998] rounded-none border-none p-0 pt-12' : 'p-4'}`}>
           
           {/* TradingView Chart Widget or Saudi Stock Notice */}
           {isSaudiStock ? <div className="w-full rounded-lg overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] to-[#0f0f1a] border border-white/10" style={{
