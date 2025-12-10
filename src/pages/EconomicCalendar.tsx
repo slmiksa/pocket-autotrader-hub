@@ -4,14 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Calendar, Clock, TrendingUp, TrendingDown, Minus, AlertTriangle, Filter, RefreshCw, Loader2, Globe2 } from 'lucide-react';
-import { format, formatDistanceToNow, isToday, isTomorrow, addDays, startOfDay } from 'date-fns';
+import { ArrowLeft, Calendar, Clock, AlertTriangle, Filter, RefreshCw, Loader2, Bell, BellOff } from 'lucide-react';
+import { format, formatDistanceToNow, isToday, isTomorrow } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { MarketHours } from '@/components/markets/MarketHours';
-
+import { useEconomicEventAlerts } from '@/hooks/useEconomicEventAlerts';
 interface EconomicEvent {
   id: string;
   title: string;
@@ -55,6 +54,7 @@ const EconomicCalendar = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [currencyFilter, setCurrencyFilter] = useState<string>('all');
+  const { hasAlert, toggleAlert, isAuthenticated } = useEconomicEventAlerts();
 
   useEffect(() => {
     refreshCalendar();
@@ -115,6 +115,7 @@ const EconomicCalendar = () => {
     const eventDate = new Date(event.event_time);
     const isPast = eventDate < new Date();
     const timeRemaining = formatDistanceToNow(eventDate, { locale: ar, addSuffix: true });
+    const alertEnabled = hasAlert(event.id);
 
     return (
       <Card 
@@ -173,6 +174,23 @@ const EconomicCalendar = () => {
               </div>
             )}
           </div>
+
+          {/* Alert Button */}
+          {!isPast && isAuthenticated && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => toggleAlert(event.id)}
+              className={`shrink-0 ${
+                alertEnabled 
+                  ? 'text-amber-400 hover:text-amber-300 hover:bg-amber-500/10' 
+                  : 'text-[hsl(215,20%,50%)] hover:text-[hsl(210,40%,98%)] hover:bg-[hsl(217,33%,17%)]'
+              }`}
+              title={alertEnabled ? 'إلغاء التنبيه' : 'تفعيل التنبيه'}
+            >
+              {alertEnabled ? <Bell className="h-5 w-5 fill-current" /> : <BellOff className="h-5 w-5" />}
+            </Button>
+          )}
 
           {/* Impact Indicator */}
           <div className={`w-2 h-full min-h-[60px] rounded-full ${

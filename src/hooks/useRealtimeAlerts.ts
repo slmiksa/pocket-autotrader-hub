@@ -60,21 +60,33 @@ export const useRealtimeAlerts = () => {
     }
   }, []);
 
-  // Check for upcoming economic events
+  // Check for upcoming economic events - only for events user subscribed to
   const checkEconomicEvents = useCallback(async () => {
-    if (!userPrefsRef.current?.economic_alerts_enabled || !userIdRef.current) return;
+    if (!userIdRef.current) return;
 
-    const alertMinutes = userPrefsRef.current.alert_before_minutes || 15;
+    const alertMinutes = userPrefsRef.current?.alert_before_minutes || 15;
     const now = new Date();
     const alertTime = new Date(now.getTime() + alertMinutes * 60 * 1000);
 
     try {
+      // Get user's subscribed event alerts
+      const { data: userAlerts } = await supabase
+        .from('user_economic_alerts')
+        .select('event_id')
+        .eq('user_id', userIdRef.current)
+        .is('notified_at', null);
+
+      if (!userAlerts || userAlerts.length === 0) return;
+
+      const subscribedEventIds = userAlerts.map(a => a.event_id);
+
+      // Get events that are within alert time window
       const { data: events } = await supabase
         .from('economic_events')
         .select('*')
+        .in('id', subscribedEventIds)
         .gte('event_time', now.toISOString())
-        .lte('event_time', alertTime.toISOString())
-        .in('impact', ['high', 'medium']);
+        .lte('event_time', alertTime.toISOString());
 
       if (events && events.length > 0) {
         for (const event of events as EconomicEvent[]) {
@@ -102,6 +114,13 @@ export const useRealtimeAlerts = () => {
               body,
               { eventId: event.id, impact: event.impact, currency: event.currency }
             );
+
+            // Mark as notified
+            await supabase
+              .from('user_economic_alerts')
+              .update({ notified_at: new Date().toISOString() })
+              .eq('user_id', userIdRef.current)
+              .eq('event_id', event.id);
 
             console.log('📅 Economic event alert sent:', event.title_ar);
           }
