@@ -26,6 +26,7 @@ import { GlobalHeader } from "./components/GlobalHeader";
 import { PriceAlertWatcher } from "./components/PriceAlertWatcher";
 import { BackButton } from "./components/BackButton";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { RealtimeAlertsProvider } from "./components/RealtimeAlertsProvider";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
         <BackButton />
         <SmartSupport />
         <PriceAlertWatcher />
+        <RealtimeAlertsProvider />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
