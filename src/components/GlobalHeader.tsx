@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Bell, Image, Target, BarChart3, Newspaper, Users, User, LogOut, Menu, Binary } from "lucide-react";
+import { TrendingUp, Bell, Image, Target, BarChart3, Newspaper, Users, User, LogOut, Menu, Binary, Home, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -12,6 +12,16 @@ import { AnalogClock } from "./AnalogClock";
 
 // Navigation items for mobile sidebar
 const navItems = [{
+  label: "الرئيسية",
+  icon: Home,
+  path: "/",
+  color: "default"
+}, {
+  label: "التقويم الاقتصادي",
+  icon: Calendar,
+  path: "/economic-calendar",
+  color: "default"
+}, {
   label: "تحليل الأسواق",
   icon: Image,
   path: "/image-analysis",
@@ -61,6 +71,14 @@ const navItems = [{
 
 // Header navigation items (fewer items)
 const headerNavItems = [{
+  label: "الرئيسية",
+  icon: Home,
+  path: "/"
+}, {
+  label: "التقويم الاقتصادي",
+  icon: Calendar,
+  path: "/economic-calendar"
+}, {
   label: "تحليل الأسواق",
   icon: Image,
   path: "/image-analysis"
@@ -68,10 +86,6 @@ const headerNavItems = [{
   label: "توصيات المحترفين",
   icon: Target,
   path: "/professional-signals"
-}, {
-  label: "محلل العرض والطلب",
-  icon: TrendingUp,
-  path: "/supply-demand"
 }, {
   label: "الأسواق",
   icon: BarChart3,
@@ -84,10 +98,6 @@ const headerNavItems = [{
   label: "الأخبار",
   icon: Newspaper,
   path: "/news"
-}, {
-  label: "المجتمع",
-  icon: Users,
-  path: "/community"
 }, {
   label: "حسابي",
   icon: User,
