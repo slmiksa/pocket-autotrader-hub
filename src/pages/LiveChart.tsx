@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Upload, Loader2, Info, Save, Bell, Copy, Check, Maximize2, Minimize2 } from "lucide-react";
+import { ArrowLeft, RefreshCw, Upload, Loader2, Info, Save, Bell, Copy, Check, Maximize2, Minimize2, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSavedAnalyses } from "@/hooks/useSavedAnalyses";
@@ -725,18 +725,35 @@ export default function LiveChart() {
 
       {/* Chart Container */}
       <main className={`${isFullscreen ? '' : 'container mx-auto px-4 py-6'}`}>
-        <Card className={`bg-[#12121a] border-white/10 ${isFullscreen ? 'fixed inset-0 z-50 rounded-none border-none p-0' : 'p-4'}`}>
-          {/* Fullscreen Toggle Button */}
-          <Button
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            variant="ghost"
-            size="icon"
-            className={`absolute z-[60] bg-slate-800/80 hover:bg-slate-700 text-white border border-white/20 ${
-              isFullscreen ? 'top-4 left-4' : 'top-2 left-2'
-            }`}
-          >
-            {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
-          </Button>
+        <Card className={`bg-[#12121a] border-white/10 relative ${isFullscreen ? 'fixed inset-0 z-50 rounded-none border-none p-0' : 'p-4'}`}>
+          {/* Chart Action Buttons - Positioned on top of the chart */}
+          <div className={`absolute z-[60] flex gap-2 ${isFullscreen ? 'top-4 left-4' : 'top-6 left-6'}`}>
+            {/* Fullscreen Toggle Button */}
+            <Button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              variant="ghost"
+              size="icon"
+              className="bg-slate-800/80 hover:bg-slate-700 text-white border border-white/20 h-9 w-9"
+              title={isFullscreen ? "تصغير" : "تكبير"}
+            >
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
+            
+            {/* Screenshot Button */}
+            <Button
+              onClick={() => {
+                toast.info("التقط صورة للشاشة من جهازك", {
+                  description: "استخدم اختصار لقطة الشاشة في جهازك أو اضغط مطولاً على الشاشة"
+                });
+              }}
+              variant="ghost"
+              size="icon"
+              className="bg-slate-800/80 hover:bg-slate-700 text-white border border-white/20 h-9 w-9"
+              title="لقطة شاشة"
+            >
+              <Camera className="h-4 w-4" />
+            </Button>
+          </div>
           
           {/* TradingView Chart Widget or Saudi Stock Notice */}
           {isSaudiStock ? <div className="w-full rounded-lg overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] to-[#0f0f1a] border border-white/10" style={{
