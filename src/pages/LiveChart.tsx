@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PriceAlertDialog } from "@/components/alerts/PriceAlertDialog";
 import { PullToRefresh } from "@/components/PullToRefresh";
+import { setChartFullscreen } from "@/hooks/useFullscreenChart";
 
 // Symbol to API mapping for price fetching
 const symbolToPriceAPI: Record<string, {
@@ -201,7 +202,13 @@ export default function LiveChart() {
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [priceCopied, setPriceCopied] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreenLocal] = useState(false);
+  
+  // Custom setter that also updates global state
+  const setIsFullscreen = (value: boolean) => {
+    setIsFullscreenLocal(value);
+    setChartFullscreen(value);
+  };
   const {
     saveAnalysis
   } = useSavedAnalyses();
@@ -255,6 +262,13 @@ export default function LiveChart() {
     const interval = setInterval(fetchCurrentPrice, 2000);
     return () => clearInterval(interval);
   }, [fetchCurrentPrice]);
+
+  // Reset fullscreen state when leaving the page
+  useEffect(() => {
+    return () => {
+      setChartFullscreen(false);
+    };
+  }, []);
 
   // Copy price to clipboard
   const handleCopyPrice = () => {

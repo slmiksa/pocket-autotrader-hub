@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NotificationsDropdown } from "./notifications/NotificationsDropdown";
 import { initAudioContext } from "@/utils/soundNotification";
 import { AnalogClock } from "./AnalogClock";
+import { subscribeToChartFullscreen, getChartFullscreen } from "@/hooks/useFullscreenChart";
 
 // Navigation items for mobile sidebar
 const navItems = [{
@@ -109,6 +110,15 @@ export const GlobalHeader = () => {
   const [user, setUser] = useState<any>(null);
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isChartFullscreen, setIsChartFullscreen] = useState(getChartFullscreen());
+
+  // Subscribe to chart fullscreen state changes
+  useEffect(() => {
+    const unsubscribe = subscribeToChartFullscreen((value) => {
+      setIsChartFullscreen(value);
+    });
+    return unsubscribe;
+  }, []);
 
   // Hide header on these routes
   const hiddenRoutes = ["/admin", "/admin-login", "/auth", "/subscription"];
@@ -155,8 +165,8 @@ export const GlobalHeader = () => {
     return () => subscription.unsubscribe();
   }, [shouldHide]);
 
-  // Hide if route is in hidden list OR if user doesn't have valid subscription
-  if (shouldHide || !user || !hasValidSubscription) return null;
+  // Hide if route is in hidden list OR if user doesn't have valid subscription OR if chart is in fullscreen
+  if (shouldHide || !user || !hasValidSubscription || isChartFullscreen) return null;
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
