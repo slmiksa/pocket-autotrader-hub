@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, BarChart3, Newspaper, Target, Shield, Zap, LineChart, ArrowUpRight, CheckCircle2, Star, Users, Award, Sparkles } from "lucide-react";
+import { TrendingUp, BarChart3, Newspaper, Target, Shield, Zap, LineChart, ArrowUpRight, CheckCircle2, Star, Users, Award, Sparkles, Calendar } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { useRef, useEffect, useState } from "react";
@@ -373,6 +373,22 @@ export const HomeContent = () => {
               <p className="text-sm text-muted-foreground mt-1">تعرف على منصة Tifue Trader وفريق العمل</p>
             </div>
             <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-emerald-400 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300" 
+          onClick={() => navigate("/economic-calendar")}
+        >
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="rounded-xl bg-blue-500/20 p-4 group-hover:bg-blue-500/30 transition-colors">
+              <Calendar className="h-7 w-7 text-blue-400" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-foreground text-lg">التقويم الاقتصادي</h4>
+              <p className="text-sm text-muted-foreground mt-1">تابع الأحداث الاقتصادية ومواعيد الأسواق</p>
+            </div>
+            <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-blue-400 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
           </CardContent>
         </Card>
       </div>

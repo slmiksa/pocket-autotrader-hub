@@ -197,6 +197,48 @@ export type Database = {
           },
         ]
       }
+      economic_events: {
+        Row: {
+          actual_value: string | null
+          country: string
+          created_at: string | null
+          currency: string
+          event_time: string
+          forecast_value: string | null
+          id: string
+          impact: string
+          previous_value: string | null
+          title: string
+          title_ar: string
+        }
+        Insert: {
+          actual_value?: string | null
+          country: string
+          created_at?: string | null
+          currency: string
+          event_time: string
+          forecast_value?: string | null
+          id?: string
+          impact: string
+          previous_value?: string | null
+          title: string
+          title_ar: string
+        }
+        Update: {
+          actual_value?: string | null
+          country?: string
+          created_at?: string | null
+          currency?: string
+          event_time?: string
+          forecast_value?: string | null
+          id?: string
+          impact?: string
+          previous_value?: string | null
+          title?: string
+          title_ar?: string
+        }
+        Relationships: []
+      }
       hero_slides: {
         Row: {
           button_link: string
@@ -236,6 +278,42 @@ export type Database = {
           subtitle?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      market_schedules: {
+        Row: {
+          close_time: string
+          created_at: string | null
+          days_active: string[] | null
+          id: string
+          is_active: boolean | null
+          market_name: string
+          market_name_ar: string
+          open_time: string
+          timezone: string
+        }
+        Insert: {
+          close_time: string
+          created_at?: string | null
+          days_active?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          market_name: string
+          market_name_ar: string
+          open_time: string
+          timezone?: string
+        }
+        Update: {
+          close_time?: string
+          created_at?: string | null
+          days_active?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          market_name?: string
+          market_name_ar?: string
+          open_time?: string
+          timezone?: string
         }
         Relationships: []
       }
@@ -338,11 +416,14 @@ export type Database = {
       profiles: {
         Row: {
           activated_code: string | null
+          alert_before_minutes: number | null
           avatar_url: string | null
           created_at: string
+          economic_alerts_enabled: boolean | null
           email: string | null
           id: string
           image_analysis_enabled: boolean | null
+          market_alerts_enabled: boolean | null
           nickname: string | null
           professional_signals_enabled: boolean | null
           subscription_expires_at: string | null
@@ -352,11 +433,14 @@ export type Database = {
         }
         Insert: {
           activated_code?: string | null
+          alert_before_minutes?: number | null
           avatar_url?: string | null
           created_at?: string
+          economic_alerts_enabled?: boolean | null
           email?: string | null
           id?: string
           image_analysis_enabled?: boolean | null
+          market_alerts_enabled?: boolean | null
           nickname?: string | null
           professional_signals_enabled?: boolean | null
           subscription_expires_at?: string | null
@@ -366,11 +450,14 @@ export type Database = {
         }
         Update: {
           activated_code?: string | null
+          alert_before_minutes?: number | null
           avatar_url?: string | null
           created_at?: string
+          economic_alerts_enabled?: boolean | null
           email?: string | null
           id?: string
           image_analysis_enabled?: boolean | null
+          market_alerts_enabled?: boolean | null
           nickname?: string | null
           professional_signals_enabled?: boolean | null
           subscription_expires_at?: string | null
@@ -785,6 +872,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_market_preferences: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          market_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          market_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          market_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_market_preferences_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "market_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_notifications: {
         Row: {
