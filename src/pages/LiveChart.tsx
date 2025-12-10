@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Upload, Loader2, Info, Save, Bell, Copy, Check } from "lucide-react";
+import { ArrowLeft, RefreshCw, Upload, Loader2, Info, Save, Bell, Copy, Check, Maximize2, Minimize2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSavedAnalyses } from "@/hooks/useSavedAnalyses";
@@ -96,6 +96,7 @@ export default function LiveChart() {
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [priceCopied, setPriceCopied] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const {
     saveAnalysis
   } = useSavedAnalyses();
@@ -723,13 +724,23 @@ export default function LiveChart() {
       </header>
 
       {/* Chart Container */}
-      <main className="container mx-auto px-4 py-6">
-        <Card className="p-4 bg-[#12121a] border-white/10">
-          
+      <main className={`${isFullscreen ? '' : 'container mx-auto px-4 py-6'}`}>
+        <Card className={`bg-[#12121a] border-white/10 ${isFullscreen ? 'fixed inset-0 z-50 rounded-none border-none p-0' : 'p-4'}`}>
+          {/* Fullscreen Toggle Button */}
+          <Button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            variant="ghost"
+            size="icon"
+            className={`absolute z-[60] bg-slate-800/80 hover:bg-slate-700 text-white border border-white/20 ${
+              isFullscreen ? 'top-4 left-4' : 'top-2 left-2'
+            }`}
+          >
+            {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+          </Button>
           
           {/* TradingView Chart Widget or Saudi Stock Notice */}
           {isSaudiStock ? <div className="w-full rounded-lg overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] to-[#0f0f1a] border border-white/10" style={{
-          height: '600px'
+          height: isFullscreen ? '100vh' : '600px'
         }}>
               <div className="text-center p-8 max-w-lg">
                 <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-primary/20 flex items-center justify-center">
@@ -754,7 +765,7 @@ export default function LiveChart() {
                 </p>
               </div>
             </div> : <div ref={containerRef} className="w-full rounded-lg overflow-hidden" style={{
-          height: '600px'
+          height: isFullscreen ? '100vh' : '600px'
         }} />}
           
           
