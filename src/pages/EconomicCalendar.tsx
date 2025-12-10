@@ -57,11 +57,28 @@ const EconomicCalendar = () => {
   const [currencyFilter, setCurrencyFilter] = useState<string>('all');
 
   useEffect(() => {
-    fetchEvents();
+    refreshCalendar();
   }, []);
 
-  const fetchEvents = async () => {
+  const refreshCalendar = async () => {
     setLoading(true);
+    try {
+      // First, fetch fresh data from Finnhub API
+      console.log('Fetching fresh economic calendar data...');
+      const { error: fetchError } = await supabase.functions.invoke('fetch-economic-calendar');
+      if (fetchError) {
+        console.error('Error fetching from API:', fetchError);
+      }
+      
+      // Then load from database
+      await fetchEvents();
+    } catch (error) {
+      console.error('Error refreshing calendar:', error);
+      await fetchEvents();
+    }
+  };
+
+  const fetchEvents = async () => {
     try {
       const { data, error } = await supabase
         .from('economic_events')
@@ -213,10 +230,11 @@ const EconomicCalendar = () => {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                onClick={fetchEvents}
+                onClick={refreshCalendar}
+                disabled={loading}
                 className="text-[hsl(215,20%,65%)] hover:text-[hsl(210,40%,98%)] hover:bg-[hsl(217,33%,17%)]"
               >
-                <RefreshCw className="h-5 w-5" />
+                <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
               </Button>
             </div>
           </div>
