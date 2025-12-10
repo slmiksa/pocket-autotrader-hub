@@ -120,7 +120,7 @@ const Auth = () => {
 
         <Card className="w-full max-w-md bg-slate-900/80 border-slate-800 backdrop-blur-xl">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg shadow-amber-500/20">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-sky-500 shadow-lg shadow-sky-400/20">
               <TrendingUp className="h-8 w-8 text-white" />
             </div>
             <CardTitle className="text-2xl text-white">توصيات الهوامير</CardTitle>
@@ -131,10 +131,10 @@ const Auth = () => {
           <CardContent>
             <Tabs value={isLogin ? "login" : "signup"} onValueChange={v => setIsLogin(v === "login")}>
               <TabsList className="grid w-full grid-cols-2 mb-4 bg-slate-800">
-                <TabsTrigger value="login" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+                <TabsTrigger value="login" className="data-[state=active]:bg-sky-400 data-[state=active]:text-white">
                   تسجيل الدخول
                 </TabsTrigger>
-                <TabsTrigger value="signup" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+                <TabsTrigger value="signup" className="data-[state=active]:bg-sky-400 data-[state=active]:text-white">
                   إنشاء حساب
                 </TabsTrigger>
               </TabsList>
@@ -175,7 +175,7 @@ const Auth = () => {
                 <Button
                   onClick={handleSignIn}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
+                  className="w-full bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 text-white"
                   size="lg"
                 >
                   تسجيل الدخول
@@ -233,7 +233,7 @@ const Auth = () => {
                 <Button
                   onClick={handleSignUp}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
+                  className="w-full bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 text-white"
                   size="lg"
                 >
                   إنشاء حساب
