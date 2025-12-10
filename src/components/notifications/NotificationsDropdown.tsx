@@ -1,10 +1,78 @@
 import { useState } from 'react';
-import { Bell, Check, Trash2, CheckCheck, X, TrendingUp, TrendingDown } from 'lucide-react';
+import { Bell, Trash2, CheckCheck, X, TrendingUp, TrendingDown, Calendar, Clock, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUserNotifications, UserNotification } from '@/hooks/useUserNotifications';
 import { useNavigate } from 'react-router-dom';
+
+// Get icon and colors based on notification type
+const getNotificationStyle = (notification: UserNotification) => {
+  const type = notification.type;
+  const data = notification.data as Record<string, unknown> | undefined;
+  
+  switch (type) {
+    case 'economic_event':
+      const impact = data?.impact as string | undefined;
+      return {
+        icon: Calendar,
+        bgColor: impact === 'high' ? 'bg-red-500/20' : 'bg-amber-500/20',
+        iconColor: impact === 'high' ? 'text-red-400' : 'text-amber-400',
+      };
+    case 'market_open':
+      return {
+        icon: Activity,
+        bgColor: 'bg-emerald-500/20',
+        iconColor: 'text-emerald-400',
+      };
+    case 'market_close':
+      return {
+        icon: Clock,
+        bgColor: 'bg-orange-500/20',
+        iconColor: 'text-orange-400',
+      };
+    case 'price_alert':
+      const condition = data?.condition as string | undefined;
+      return {
+        icon: condition === 'above' ? TrendingUp : TrendingDown,
+        bgColor: condition === 'above' ? 'bg-emerald-500/20' : 'bg-red-500/20',
+        iconColor: condition === 'above' ? 'text-emerald-400' : 'text-red-400',
+      };
+    case 'professional_signal':
+      return {
+        icon: TrendingUp,
+        bgColor: 'bg-primary/20',
+        iconColor: 'text-primary',
+      };
+    default:
+      return {
+        icon: Bell,
+        bgColor: 'bg-primary/20',
+        iconColor: 'text-primary',
+      };
+  }
+};
+
+// Get navigation URL based on notification type
+const getNavigationUrl = (notification: UserNotification): string | null => {
+  const type = notification.type;
+  const data = notification.data as Record<string, unknown> | undefined;
+  
+  switch (type) {
+    case 'economic_event':
+      return '/economic-calendar';
+    case 'market_open':
+    case 'market_close':
+      return '/markets';
+    case 'price_alert':
+      const symbol = data?.symbol as string | undefined;
+      return symbol ? `/live-chart?symbol=${symbol}` : '/markets';
+    case 'professional_signal':
+      return '/professional-signals';
+    default:
+      return null;
+  }
+};
 
 export const NotificationsDropdown = () => {
   const navigate = useNavigate();
@@ -22,9 +90,9 @@ export const NotificationsDropdown = () => {
   const handleNotificationClick = (notification: UserNotification) => {
     markAsRead(notification.id);
     
-    // Navigate based on notification type
-    if (notification.type === 'price_alert' && notification.data?.symbol) {
-      navigate(`/live-chart?symbol=${notification.data.symbol}`);
+    const url = getNavigationUrl(notification);
+    if (url) {
+      navigate(url);
       setOpen(false);
     }
   };
@@ -105,65 +173,62 @@ export const NotificationsDropdown = () => {
             </div>
           ) : (
             <div className="divide-y divide-[hsl(217,33%,17%)]">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`p-3 cursor-pointer transition-colors hover:bg-[hsl(217,33%,15%)] ${
-                    !notification.is_read ? 'bg-primary/5' : ''
-                  }`}
-                  onClick={() => handleNotificationClick(notification)}
-                >
-                  <div className="flex items-start gap-3">
-                    {/* Icon */}
-                    <div className={`p-2 rounded-lg ${
-                      notification.data?.condition === 'above' 
-                        ? 'bg-emerald-500/20' 
-                        : 'bg-red-500/20'
-                    }`}>
-                      {notification.data?.condition === 'above' ? (
-                        <TrendingUp className="h-4 w-4 text-emerald-400" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4 text-red-400" />
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className={`text-sm font-medium ${
-                          notification.is_read 
-                            ? 'text-[hsl(215,20%,65%)]' 
-                            : 'text-[hsl(210,40%,98%)]'
-                        }`}>
-                          {notification.title}
-                        </p>
-                        {!notification.is_read && (
-                          <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />
-                        )}
+              {notifications.map((notification) => {
+                const style = getNotificationStyle(notification);
+                const IconComponent = style.icon;
+                
+                return (
+                  <div
+                    key={notification.id}
+                    className={`p-3 cursor-pointer transition-colors hover:bg-[hsl(217,33%,15%)] group ${
+                      !notification.is_read ? 'bg-primary/5' : ''
+                    }`}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Icon */}
+                      <div className={`p-2 rounded-lg ${style.bgColor}`}>
+                        <IconComponent className={`h-4 w-4 ${style.iconColor}`} />
                       </div>
-                      <p className="text-xs text-[hsl(215,20%,50%)] mt-0.5 line-clamp-2">
-                        {notification.body}
-                      </p>
-                      <p className="text-[10px] text-[hsl(215,20%,40%)] mt-1">
-                        {formatTime(notification.created_at)}
-                      </p>
-                    </div>
 
-                    {/* Delete button */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-[hsl(215,20%,40%)] hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotification(notification.id);
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className={`text-sm font-medium ${
+                            notification.is_read 
+                              ? 'text-[hsl(215,20%,65%)]' 
+                              : 'text-[hsl(210,40%,98%)]'
+                          }`}>
+                            {notification.title}
+                          </p>
+                          {!notification.is_read && (
+                            <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />
+                          )}
+                        </div>
+                        <p className="text-xs text-[hsl(215,20%,50%)] mt-0.5 line-clamp-2">
+                          {notification.body}
+                        </p>
+                        <p className="text-[10px] text-[hsl(215,20%,40%)] mt-1">
+                          {formatTime(notification.created_at)}
+                        </p>
+                      </div>
+
+                      {/* Delete button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-[hsl(215,20%,40%)] hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNotification(notification.id);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </ScrollArea>
