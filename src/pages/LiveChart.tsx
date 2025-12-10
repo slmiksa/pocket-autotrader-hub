@@ -267,6 +267,13 @@ export default function LiveChart() {
     }
   };
 
+  // Take screenshot of the chart
+  const takeScreenshot = () => {
+    if (containerRef.current) {
+      toast.info("لالتقاط صورة الشارت، استخدم أداة لقطة الشاشة في جهازك أو اضغط على زر الشاشة في لوحة المفاتيح");
+    }
+  };
+
   // Open alert dialog with current price
   const handleOpenAlertWithPrice = () => {
     setAlertDialogOpen(true);
@@ -1223,8 +1230,8 @@ export default function LiveChart() {
   }, [fetchCurrentPrice]);
   return <PullToRefresh onRefresh={handlePullRefresh} className="min-h-screen bg-[#0a0a0f] pt-[calc(env(safe-area-inset-top,0px)+88px)]">
     <div dir="rtl" className="h-full">
-      {/* Page Header - Part of scrollable content */}
-      <header className="border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur">
+      {/* Page Header - Part of scrollable content - Hidden in fullscreen */}
+      {!isFullscreen && <header className="border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur">
         <div className="container px-3 sm:px-4 py-3 mx-0">
           {/* Top Row: Back button and Symbol */}
           <div className="flex items-center justify-between gap-2 mb-3">
@@ -1316,21 +1323,43 @@ export default function LiveChart() {
               </Button>
             </div>}
         </div>
-      </header>
+      </header>}
 
       {/* Chart Container */}
       <main className={`${isFullscreen ? '' : 'container mx-auto px-4 py-6'}`}>
-        <Card className={`bg-[#12121a] border-white/10 relative ${isFullscreen ? 'fixed inset-0 z-50 rounded-none border-none p-0' : 'p-4'}`}>
-          {/* Chart Action Buttons - Positioned on top of the chart */}
-          <div className={`absolute z-[60] flex gap-2 ${isFullscreen ? 'top-4 left-4' : 'top-6 left-6'}`}>
-            {/* Fullscreen Toggle Button */}
-            <Button onClick={() => setIsFullscreen(!isFullscreen)} variant="ghost" size="icon" title={isFullscreen ? "تصغير" : "تكبير"} className="text-white border border-white/20 h-9 w-9 my-[29px] mx-[240px] px-0 py-0 text-left bg-primary">
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            </Button>
-            
-            {/* Screenshot Button */}
-            
-          </div>
+        {/* Fullscreen Toggle Button - Above the chart */}
+        <div className={`flex justify-end mb-2 gap-2 ${isFullscreen ? 'fixed top-4 right-4 z-[70]' : ''}`}>
+          <Button 
+            onClick={() => setIsFullscreen(!isFullscreen)} 
+            variant="outline" 
+            size="sm"
+            className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
+          >
+            {isFullscreen ? (
+              <>
+                <Minimize2 className="h-4 w-4" />
+                تصغير الشارت
+              </>
+            ) : (
+              <>
+                <Maximize2 className="h-4 w-4" />
+                تكبير الشارت
+              </>
+            )}
+          </Button>
+          
+          <Button 
+            onClick={takeScreenshot} 
+            variant="outline" 
+            size="sm"
+            className="gap-2 border-white/20 text-white/70 hover:text-white hover:bg-white/10"
+          >
+            <Camera className="h-4 w-4" />
+            لقطة شاشة
+          </Button>
+        </div>
+        
+        <Card className={`bg-[#12121a] border-white/10 relative ${isFullscreen ? 'fixed inset-0 z-50 rounded-none border-none p-0 pt-12' : 'p-4'}`}>
           
           {/* TradingView Chart Widget or Saudi Stock Notice */}
           {isSaudiStock ? <div className="w-full rounded-lg overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] to-[#0f0f1a] border border-white/10" style={{
@@ -1359,7 +1388,7 @@ export default function LiveChart() {
                 </p>
               </div>
             </div> : <div ref={containerRef} className="w-full rounded-lg overflow-hidden" style={{
-            height: isFullscreen ? '100vh' : '600px'
+            height: isFullscreen ? 'calc(100vh - 48px)' : '600px'
           }} />}
           
           
