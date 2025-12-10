@@ -213,6 +213,7 @@ export const useUserNotifications = () => {
     markAllAsRead,
     deleteNotification,
     clearAllNotifications,
-    refetch: fetchNotifications
+    refetch: fetchNotifications,
+    sendBrowserNotification
   };
 };
