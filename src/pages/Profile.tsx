@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowLeft, Star, TrendingUp, Plus, Trash2, Calendar, BookOpen, User, Loader2, Image as ImageIcon, Users, Sparkles, ChevronRight, Edit2, Camera, Bell } from 'lucide-react';
+import { ArrowLeft, Star, TrendingUp, Plus, Trash2, Calendar, BookOpen, User, Loader2, Image as ImageIcon, Users, Sparkles, ChevronRight, Edit2, Camera, Bell, Settings } from 'lucide-react';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useDailyJournal, NewJournalEntry } from '@/hooks/useDailyJournal';
 import { useSavedAnalyses } from '@/hooks/useSavedAnalyses';
@@ -14,6 +14,7 @@ import { ProfileEditDialog } from '@/components/profile/ProfileEditDialog';
 import { PriceAlertsList } from '@/components/alerts/PriceAlertsList';
 import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown';
 import { PushNotificationToggle } from '@/components/notifications/PushNotificationToggle';
+import { NotificationSettings } from '@/components/notifications/NotificationSettings';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { toast } from 'sonner';
 
@@ -407,6 +408,11 @@ const Profile = () => {
               {/* Push Notification Toggle */}
               <div className="mb-4">
                 <PushNotificationToggle />
+              </div>
+              
+              {/* Economic & Market Notification Settings */}
+              <div className="mb-4">
+                <NotificationSettings userId={user?.id || ''} />
               </div>
               
               <PriceAlertsList />
