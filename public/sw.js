@@ -1,5 +1,5 @@
 // Service Worker for Push Notifications
-const CACHE_NAME = 'pocket-trader-v2';
+const CACHE_NAME = 'pocket-trader-v3';
 
 // Install event
 self.addEventListener('install', (event) => {
@@ -13,13 +13,32 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 
+// Get notification URL based on type
+function getNotificationUrl(data) {
+  if (!data) return '/';
+  
+  switch (data.type) {
+    case 'economic_event':
+      return '/economic-calendar';
+    case 'market_open':
+    case 'market_close':
+      return '/markets';
+    case 'price_alert':
+      return '/markets';
+    case 'professional_signal':
+      return '/professional-signals';
+    default:
+      return data.url || '/';
+  }
+}
+
 // Push event - receives push notifications from server
 self.addEventListener('push', (event) => {
   console.log('Push notification received:', event);
 
   let data = {
-    title: '🔔 تنبيه سعري',
-    body: 'لديك تنبيه جديد',
+    title: '🔔 إشعار جديد',
+    body: 'لديك إشعار جديد',
     icon: '/favicon.png',
     badge: '/favicon.png',
     requireInteraction: true,
@@ -39,20 +58,36 @@ self.addEventListener('push', (event) => {
     }
   }
 
+  // Set appropriate icon based on notification type
+  let icon = '/favicon.png';
+  let tag = 'notification-' + Date.now();
+  
+  if (data.data?.type === 'economic_event') {
+    tag = 'economic-' + (data.data.eventId || Date.now());
+  } else if (data.data?.type === 'market_open') {
+    tag = 'market-open-' + (data.data.marketId || Date.now());
+  } else if (data.data?.type === 'market_close') {
+    tag = 'market-close-' + (data.data.marketId || Date.now());
+  } else if (data.data?.type === 'price_alert') {
+    tag = 'price-alert-' + Date.now();
+  } else if (data.data?.type === 'professional_signal') {
+    tag = 'signal-' + Date.now();
+  }
+
   const options = {
     body: data.body,
-    icon: data.icon || '/favicon.png',
+    icon: data.icon || icon,
     badge: data.badge || '/favicon.png',
     vibrate: data.vibrate || [400, 100, 400, 100, 600],
-    requireInteraction: true, // Keep notification until user interacts
-    tag: data.tag || 'price-alert-' + Date.now(),
-    renotify: true, // Vibrate even if same tag
+    requireInteraction: true,
+    tag: data.tag || tag,
+    renotify: true,
     data: data.data || {},
     actions: [
       { action: 'open', title: 'فتح التطبيق' },
       { action: 'close', title: 'إغلاق' }
     ],
-    silent: false, // Allow sound
+    silent: false,
   };
 
   event.waitUntil(
@@ -73,8 +108,8 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  // Open or focus the app
-  const urlToOpen = data?.url || '/markets';
+  // Get URL based on notification type
+  const urlToOpen = getNotificationUrl(data);
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
@@ -148,8 +183,6 @@ self.addEventListener('periodicsync', (event) => {
 async function checkPriceAlerts() {
   try {
     console.log('Checking price alerts in background...');
-    // This would need the Supabase URL - for now just log
-    // Background checks are handled by the main app when open
   } catch (error) {
     console.error('Error checking price alerts:', error);
   }
