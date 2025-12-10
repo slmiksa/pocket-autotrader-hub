@@ -1324,7 +1324,7 @@ export default function LiveChart() {
           {/* Chart Action Buttons - Positioned on top of the chart */}
           <div className={`absolute z-[60] flex gap-2 ${isFullscreen ? 'top-4 left-4' : 'top-6 left-6'}`}>
             {/* Fullscreen Toggle Button */}
-            <Button onClick={() => setIsFullscreen(!isFullscreen)} variant="ghost" size="icon" title={isFullscreen ? "تصغير" : "تكبير"} className="bg-slate-800/80 hover:bg-slate-700 text-white border border-white/20 h-9 w-9 text-center my-[29px] mx-[23px]">
+            <Button onClick={() => setIsFullscreen(!isFullscreen)} variant="ghost" size="icon" title={isFullscreen ? "تصغير" : "تكبير"} className="text-white border border-white/20 h-9 w-9 my-[29px] mx-[240px] px-0 py-0 text-left bg-primary">
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </Button>
             
