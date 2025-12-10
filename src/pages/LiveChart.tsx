@@ -1329,31 +1329,17 @@ export default function LiveChart() {
       <main className={`${isFullscreen ? '' : 'container mx-auto px-4 py-6'}`}>
         {/* Fullscreen Toggle Button - Above the chart */}
         <div className={`flex justify-end mb-2 gap-2 ${isFullscreen ? 'fixed top-4 right-4 z-[9999]' : ''}`}>
-          <Button 
-            onClick={() => setIsFullscreen(!isFullscreen)} 
-            variant="outline" 
-            size="sm"
-            className="gap-2 border-primary/30 text-primary hover:bg-primary/10 bg-black/80"
-          >
-            {isFullscreen ? (
-              <>
+          <Button onClick={() => setIsFullscreen(!isFullscreen)} variant="outline" size="sm" className="gap-2 border-primary/30 hover:bg-primary/10 bg-black/80 mx-0 my-0 px-0 py-0 text-xs text-primary-foreground">
+            {isFullscreen ? <>
                 <Minimize2 className="h-4 w-4" />
                 تصغير الشارت
-              </>
-            ) : (
-              <>
+              </> : <>
                 <Maximize2 className="h-4 w-4" />
                 تكبير الشارت
-              </>
-            )}
+              </>}
           </Button>
           
-          <Button 
-            onClick={takeScreenshot} 
-            variant="outline" 
-            size="sm"
-            className="gap-2 border-white/20 text-white/70 hover:text-white hover:bg-white/10 bg-black/80"
-          >
+          <Button onClick={takeScreenshot} variant="outline" size="sm" className="gap-2 border-white/20 text-white/70 hover:text-white hover:bg-white/10 bg-black/80 text-xs">
             <Camera className="h-4 w-4" />
             لقطة شاشة
           </Button>
