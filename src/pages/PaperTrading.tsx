@@ -326,21 +326,23 @@ const PaperTrading = () => {
     return () => clearInterval(interval);
   }, [disclaimerAccepted, selectedSymbol.symbol, fetchRealPrices, checkTPSL]);
 
-  // Calculate P&L for a position
-  const calculatePnL = (position: OpenPosition) => {
+  // Calculate P&L for a position - Real calculation based on pips
+  const calculatePnL = useCallback((position: OpenPosition) => {
     const currentPx = prices[position.symbol] || position.entryPrice;
     const priceDiff = position.direction === "buy" 
       ? currentPx - position.entryPrice 
       : position.entryPrice - currentPx;
     const pips = priceDiff / position.pip;
-    const pnl = pips * position.lotSize * 10; // Simplified P&L calculation
-    return { pnl, pips, currentPrice: currentPx };
-  };
+    // Real P&L: pips * lot size * 10 (standard pip value for mini lots)
+    const pnl = pips * position.lotSize * 10;
+    const pnlPercent = (pnl / position.amount) * 100;
+    return { pnl, pips, currentPrice: currentPx, pnlPercent };
+  }, [prices]);
 
   // Total P&L
   const totalOpenPnL = openPositions.reduce((sum, pos) => sum + calculatePnL(pos).pnl, 0);
 
-  // Handle opening a trade
+  // Handle opening a trade - use the REAL current price from API
   const handleOpenTrade = async (direction: "buy" | "sell") => {
     if (!wallet) return;
     
@@ -349,6 +351,9 @@ const PaperTrading = () => {
 
     const tp = takeProfit ? parseFloat(takeProfit) : undefined;
     const sl = stopLoss ? parseFloat(stopLoss) : undefined;
+    
+    // Use the current real price from the prices state
+    const realEntryPrice = prices[selectedSymbol.symbol] || currentPrice;
 
     const success = await openTrade({
       symbol: selectedSymbol.symbol,
@@ -356,7 +361,7 @@ const PaperTrading = () => {
       trade_type: direction,
       order_type: "market",
       amount: tradeAmount,
-      entry_price: currentPrice,
+      entry_price: realEntryPrice,
     });
 
     if (success) {
@@ -365,7 +370,7 @@ const PaperTrading = () => {
         symbol: selectedSymbol.symbol,
         symbolName: selectedSymbol.name,
         direction,
-        entryPrice: currentPrice,
+        entryPrice: realEntryPrice, // Use REAL price
         lotSize,
         amount: tradeAmount,
         openedAt: new Date(),
@@ -486,24 +491,7 @@ const PaperTrading = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Open Positions Badge */}
-              {openPositions.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPositionsSheetOpen(true)}
-                  className={cn(
-                    "h-8 px-2 rounded-lg border text-xs font-bold",
-                    totalOpenPnL >= 0 
-                      ? "bg-green-500/10 border-green-500/30 text-green-400" 
-                      : "bg-red-500/10 border-red-500/30 text-red-400"
-                  )}
-                >
-                  <BarChart2 className="h-3 w-3 mr-1" />
-                  {openPositions.length} | {totalOpenPnL >= 0 ? "+" : ""}{totalOpenPnL.toFixed(2)}$
-                </Button>
-              )}
-
+              {/* Wallet Balance */}
               <div className="bg-[#1a2235] rounded-lg px-3 py-1.5 border border-cyan-500/20 flex items-center gap-2">
                 <Wallet className="h-3 w-3 text-cyan-400" />
                 <span className="text-sm font-bold">${wallet?.balance.toFixed(2)}</span>
@@ -619,38 +607,80 @@ const PaperTrading = () => {
             </Badge>
           </div>
 
-          {/* TradingView Chart */}
+          {/* TradingView Chart - Clean without overlays */}
           <div className="flex-1 relative min-h-0">
             <div 
               ref={chartContainerRef}
               className="tradingview-widget-container absolute inset-0"
               style={{ height: "100%", width: "100%" }}
             />
-            
-            {/* Open Positions Indicator */}
-            {openPositions.filter(p => p.symbol === selectedSymbol.symbol).length > 0 && (
-              <div className="absolute top-2 left-2 z-10 pointer-events-none">
-                <div className="bg-[#0d1421]/90 backdrop-blur-sm border border-cyan-500/30 rounded-lg p-2 space-y-1">
-                  <p className="text-[10px] text-cyan-400 font-bold">صفقات مفتوحة:</p>
-                  {openPositions.filter(p => p.symbol === selectedSymbol.symbol).map((pos) => {
-                    const { pnl } = calculatePnL(pos);
-                    const isProfit = pnl >= 0;
-                    return (
-                      <div key={pos.id} className="flex items-center gap-2 text-[10px]">
-                        <Badge className={cn("h-4 text-[8px]", pos.direction === "buy" ? "bg-green-500" : "bg-red-500")}>
-                          {pos.direction === "buy" ? "شراء" : "بيع"}
-                        </Badge>
-                        <span className="font-mono text-white">@ {pos.entryPrice.toFixed(pos.pip < 0.01 ? 5 : 2)}</span>
-                        <span className={cn("font-bold", isProfit ? "text-green-400" : "text-red-400")}>
-                          {isProfit ? "+" : ""}{pnl.toFixed(2)}$
+          </div>
+
+          {/* Open Positions Bar - Modern horizontal scrollable */}
+          {openPositions.length > 0 && (
+            <div className="bg-[#0d1421] border-y border-cyan-500/10 px-2 py-2 shrink-0">
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                <div className="flex items-center gap-1 shrink-0 px-2 py-1 rounded-lg bg-[#1a2235] border border-cyan-500/20">
+                  <BarChart2 className="h-3 w-3 text-cyan-400" />
+                  <span className={cn("text-xs font-bold", totalOpenPnL >= 0 ? "text-green-400" : "text-red-400")}>
+                    {totalOpenPnL >= 0 ? "+" : ""}{totalOpenPnL.toFixed(2)}$
+                  </span>
+                </div>
+                {openPositions.map((position) => {
+                  const { pnl, pips, currentPrice: posCurrentPrice } = calculatePnL(position);
+                  const isProfit = pnl >= 0;
+                  return (
+                    <div 
+                      key={position.id}
+                      className={cn(
+                        "shrink-0 flex items-center gap-2 px-2 py-1.5 rounded-lg border cursor-pointer transition-all hover:scale-[1.02]",
+                        isProfit 
+                          ? "bg-green-500/10 border-green-500/30" 
+                          : "bg-red-500/10 border-red-500/30"
+                      )}
+                      onClick={() => setPositionsSheetOpen(true)}
+                    >
+                      <Badge className={cn("h-5 text-[9px]", position.direction === "buy" ? "bg-green-600" : "bg-red-600")}>
+                        {position.direction === "buy" ? "↑" : "↓"}
+                      </Badge>
+                      <div className="text-[10px]">
+                        <span className="font-bold">{position.symbolName}</span>
+                        <span className="text-muted-foreground mx-1">x{position.lotSize}</span>
+                      </div>
+                      <div className="text-[10px] font-mono">
+                        <span className="text-muted-foreground">{position.entryPrice.toFixed(position.pip < 0.01 ? 5 : 2)}</span>
+                        <span className="mx-1">→</span>
+                        <span className={isProfit ? "text-green-400" : "text-red-400"}>
+                          {posCurrentPrice.toFixed(position.pip < 0.01 ? 5 : 2)}
                         </span>
                       </div>
-                    );
-                  })}
-                </div>
+                      <span className={cn("text-[10px] font-bold", isProfit ? "text-green-400" : "text-red-400")}>
+                        {isProfit ? "+" : ""}{pnl.toFixed(2)}$
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 hover:bg-red-500/20"
+                        onClick={(e) => { e.stopPropagation(); handleClosePosition(position); }}
+                      >
+                        <X className="h-3 w-3 text-red-400" />
+                      </Button>
+                    </div>
+                  );
+                })}
+                {openPositions.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCloseAll}
+                    className="shrink-0 h-7 text-[10px] text-red-400 hover:bg-red-500/20 border border-red-500/30"
+                  >
+                    إغلاق الكل
+                  </Button>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Trading Panel */}
           <div className="bg-gradient-to-t from-[#0d1421] to-transparent border-t border-cyan-500/10 p-3 shrink-0 space-y-2 pb-6">
