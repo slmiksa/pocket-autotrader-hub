@@ -9,11 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { 
   Loader2, TrendingUp, TrendingDown, Wallet, 
   ChevronDown, History, Search, X, RefreshCw, 
-  Trophy, Zap, ArrowRight, DollarSign, Percent,
-  Clock, BarChart2, Edit2, Check
+  Trophy, Zap, ArrowLeft, DollarSign, Percent,
+  Clock, BarChart2, Edit2, Check, Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { playTradeWinSound, playTradeLossSound } from "@/utils/soundNotification";
@@ -92,10 +93,12 @@ const PaperTrading = () => {
   const [editingPositionId, setEditingPositionId] = useState<string | null>(null);
   const [editTP, setEditTP] = useState<string>("");
   const [editSL, setEditSL] = useState<string>("");
+  const [walletDialogOpen, setWalletDialogOpen] = useState(false);
+  const [newWalletBalance, setNewWalletBalance] = useState<string>("");
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const tvWidgetRef = useRef<any>(null);
   
-  const { wallet, trades, openTrade, closeTrade, resetWallet, refetch } = useVirtualWallet();
+  const { wallet, trades, openTrade, closeTrade, resetWallet, updateWalletBalance, refetch } = useVirtualWallet();
 
   // Check authentication
   useEffect(() => {
@@ -477,25 +480,32 @@ const PaperTrading = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate("/")}
+                onClick={() => navigate(-1)}
                 className="h-9 w-9 rounded-xl bg-[#1a2235] border border-cyan-500/20 hover:bg-cyan-500/20"
               >
-                <ArrowRight className="h-5 w-5 text-cyan-400" />
+                <ArrowLeft className="h-5 w-5 text-cyan-400" />
               </Button>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
                   <Zap className="h-4 w-4 text-white" />
                 </div>
-                <h1 className="text-sm font-bold text-cyan-400">TIFUE TRADE</h1>
+                <h1 className="text-sm font-bold text-cyan-400">التداول الوهمي</h1>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Wallet Balance */}
-              <div className="bg-[#1a2235] rounded-lg px-3 py-1.5 border border-cyan-500/20 flex items-center gap-2">
+              {/* Wallet Balance - Clickable to edit */}
+              <button
+                onClick={() => {
+                  setNewWalletBalance(wallet?.balance.toString() || "1000");
+                  setWalletDialogOpen(true);
+                }}
+                className="bg-[#1a2235] rounded-lg px-3 py-1.5 border border-cyan-500/20 flex items-center gap-2 hover:bg-cyan-500/10 transition-colors"
+              >
                 <Wallet className="h-3 w-3 text-cyan-400" />
                 <span className="text-sm font-bold">${wallet?.balance.toFixed(2)}</span>
-              </div>
+                <Settings className="h-3 w-3 text-cyan-400/50" />
+              </button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -618,62 +628,87 @@ const PaperTrading = () => {
 
           {/* Open Positions Bar - Modern horizontal scrollable */}
           {openPositions.length > 0 && (
-            <div className="bg-[#0d1421] border-y border-cyan-500/10 px-2 py-2 shrink-0">
+            <div className="bg-gradient-to-r from-[#0d1421] via-[#121a2d] to-[#0d1421] border-y border-white/10 px-2 py-2.5 shrink-0">
               <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                <div className="flex items-center gap-1 shrink-0 px-2 py-1 rounded-lg bg-[#1a2235] border border-cyan-500/20">
-                  <BarChart2 className="h-3 w-3 text-cyan-400" />
-                  <span className={cn("text-xs font-bold", totalOpenPnL >= 0 ? "text-green-400" : "text-red-400")}>
+                {/* Total P&L Badge */}
+                <div className={cn(
+                  "flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg border",
+                  totalOpenPnL >= 0 
+                    ? "bg-emerald-500/10 border-emerald-500/30" 
+                    : "bg-rose-500/10 border-rose-500/30"
+                )}>
+                  <BarChart2 className={cn("h-3.5 w-3.5", totalOpenPnL >= 0 ? "text-emerald-400" : "text-rose-400")} />
+                  <span className={cn("text-sm font-bold", totalOpenPnL >= 0 ? "text-emerald-400" : "text-rose-400")}>
                     {totalOpenPnL >= 0 ? "+" : ""}{totalOpenPnL.toFixed(2)}$
                   </span>
                 </div>
+                
                 {openPositions.map((position) => {
-                  const { pnl, pips, currentPrice: posCurrentPrice } = calculatePnL(position);
+                  const { pnl, currentPrice: posCurrentPrice } = calculatePnL(position);
                   const isProfit = pnl >= 0;
                   return (
                     <div 
                       key={position.id}
                       className={cn(
-                        "shrink-0 flex items-center gap-2 px-2 py-1.5 rounded-lg border cursor-pointer transition-all hover:scale-[1.02]",
+                        "shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all hover:scale-[1.01]",
                         isProfit 
-                          ? "bg-green-500/10 border-green-500/30" 
-                          : "bg-red-500/10 border-red-500/30"
+                          ? "bg-emerald-500/10 border-emerald-500/20 hover:border-emerald-500/40" 
+                          : "bg-rose-500/10 border-rose-500/20 hover:border-rose-500/40"
                       )}
                       onClick={() => setPositionsSheetOpen(true)}
                     >
-                      <Badge className={cn("h-5 text-[9px]", position.direction === "buy" ? "bg-green-600" : "bg-red-600")}>
-                        {position.direction === "buy" ? "↑" : "↓"}
+                      {/* Direction Badge */}
+                      <Badge className={cn(
+                        "h-5 text-[10px] font-bold",
+                        position.direction === "buy" 
+                          ? "bg-emerald-500 hover:bg-emerald-600" 
+                          : "bg-rose-500 hover:bg-rose-600"
+                      )}>
+                        {position.direction === "buy" ? "شراء" : "بيع"}
                       </Badge>
-                      <div className="text-[10px]">
-                        <span className="font-bold">{position.symbolName}</span>
-                        <span className="text-muted-foreground mx-1">x{position.lotSize}</span>
+                      
+                      {/* Symbol & Lot */}
+                      <div className="text-xs">
+                        <span className="font-bold text-white">{position.symbolName}</span>
+                        <span className="text-white/50 mx-1">×{position.lotSize}</span>
                       </div>
-                      <div className="text-[10px] font-mono">
-                        <span className="text-muted-foreground">{position.entryPrice.toFixed(position.pip < 0.01 ? 5 : 2)}</span>
-                        <span className="mx-1">→</span>
-                        <span className={isProfit ? "text-green-400" : "text-red-400"}>
+                      
+                      {/* Entry → Current Price */}
+                      <div className="text-xs font-mono flex items-center gap-1">
+                        <span className="text-cyan-400">{position.entryPrice.toFixed(position.pip < 0.01 ? 5 : 2)}</span>
+                        <span className="text-white/30">→</span>
+                        <span className={isProfit ? "text-emerald-400" : "text-rose-400"}>
                           {posCurrentPrice.toFixed(position.pip < 0.01 ? 5 : 2)}
                         </span>
                       </div>
-                      <span className={cn("text-[10px] font-bold", isProfit ? "text-green-400" : "text-red-400")}>
+                      
+                      {/* P&L */}
+                      <span className={cn("text-xs font-bold min-w-[60px] text-left", isProfit ? "text-emerald-400" : "text-rose-400")}>
                         {isProfit ? "+" : ""}{pnl.toFixed(2)}$
                       </span>
+                      
+                      {/* Close Button */}
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-5 w-5 hover:bg-red-500/20"
+                        className={cn(
+                          "h-5 w-5 rounded",
+                          isProfit ? "hover:bg-emerald-500/20" : "hover:bg-rose-500/20"
+                        )}
                         onClick={(e) => { e.stopPropagation(); handleClosePosition(position); }}
                       >
-                        <X className="h-3 w-3 text-red-400" />
+                        <X className={cn("h-3 w-3", isProfit ? "text-emerald-400" : "text-rose-400")} />
                       </Button>
                     </div>
                   );
                 })}
+                
                 {openPositions.length > 1 && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleCloseAll}
-                    className="shrink-0 h-7 text-[10px] text-red-400 hover:bg-red-500/20 border border-red-500/30"
+                    className="shrink-0 h-7 text-xs text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 rounded-lg"
                   >
                     إغلاق الكل
                   </Button>
@@ -927,13 +962,13 @@ const PaperTrading = () => {
                       <p className="text-lg font-bold text-cyan-400">{wallet?.total_trades || 0}</p>
                       <p className="text-[10px] text-muted-foreground">إجمالي</p>
                     </div>
-                    <div className="bg-green-500/10 rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-green-400">{wallet?.winning_trades || 0}</p>
-                      <p className="text-[10px] text-green-400/60">رابحة</p>
+                    <div className="bg-emerald-500/10 rounded-lg p-2 text-center">
+                      <p className="text-lg font-bold text-emerald-400">{wallet?.winning_trades || 0}</p>
+                      <p className="text-[10px] text-emerald-400/60">رابحة</p>
                     </div>
-                    <div className="bg-red-500/10 rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-red-400">{wallet?.losing_trades || 0}</p>
-                      <p className="text-[10px] text-red-400/60">خاسرة</p>
+                    <div className="bg-rose-500/10 rounded-lg p-2 text-center">
+                      <p className="text-lg font-bold text-rose-400">{wallet?.losing_trades || 0}</p>
+                      <p className="text-[10px] text-rose-400/60">خاسرة</p>
                     </div>
                   </div>
                 </div>
@@ -945,15 +980,17 @@ const PaperTrading = () => {
                         className={cn(
                           "p-3 rounded-lg border text-sm", 
                           (trade.profit_loss || 0) > 0 
-                            ? "bg-green-500/5 border-green-500/20" 
-                            : "bg-red-500/5 border-red-500/20"
+                            ? "bg-emerald-500/5 border-emerald-500/20" 
+                            : "bg-rose-500/5 border-rose-500/20"
                         )}
                       >
                         <div className="flex justify-between mb-1">
                           <div className="flex items-center gap-2">
                             <Badge 
-                              variant={trade.trade_type === "buy" ? "default" : "destructive"} 
-                              className="text-[10px]"
+                              className={cn(
+                                "text-[10px]",
+                                trade.trade_type === "buy" ? "bg-emerald-500" : "bg-rose-500"
+                              )}
                             >
                               {trade.trade_type === "buy" ? "شراء" : "بيع"}
                             </Badge>
@@ -961,7 +998,7 @@ const PaperTrading = () => {
                           </div>
                           <span className={cn(
                             "font-bold", 
-                            (trade.profit_loss || 0) > 0 ? "text-green-400" : "text-red-400"
+                            (trade.profit_loss || 0) > 0 ? "text-emerald-400" : "text-rose-400"
                           )}>
                             {(trade.profit_loss || 0) > 0 ? "+" : ""}${(trade.profit_loss || 0).toFixed(2)}
                           </span>
@@ -977,6 +1014,68 @@ const PaperTrading = () => {
               </div>
             </SheetContent>
           </Sheet>
+
+          {/* Wallet Edit Dialog */}
+          <Dialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen}>
+            <DialogContent className="bg-[#0d1421] border-cyan-500/20 max-w-sm">
+              <DialogHeader>
+                <DialogTitle className="text-center">تعديل رأس مال المحفظة</DialogTitle>
+              </DialogHeader>
+              <div className="py-4 space-y-4">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-2">الرصيد الحالي</p>
+                  <p className="text-2xl font-bold text-cyan-400">${wallet?.balance.toFixed(2)}</p>
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">الرصيد الجديد ($)</label>
+                  <Input
+                    type="number"
+                    value={newWalletBalance}
+                    onChange={(e) => setNewWalletBalance(e.target.value)}
+                    placeholder="أدخل الرصيد الجديد"
+                    min="0"
+                    step="100"
+                    className="bg-[#1a2235] border-cyan-500/20 text-center text-lg"
+                  />
+                </div>
+                {/* Quick Presets */}
+                <div className="grid grid-cols-4 gap-2">
+                  {[1000, 5000, 10000, 50000].map((amount) => (
+                    <Button
+                      key={amount}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setNewWalletBalance(amount.toString())}
+                      className="text-xs border-cyan-500/20 hover:bg-cyan-500/10"
+                    >
+                      ${amount.toLocaleString()}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <DialogFooter className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setWalletDialogOpen(false)}
+                  className="flex-1 border-white/20"
+                >
+                  إلغاء
+                </Button>
+                <Button 
+                  onClick={async () => {
+                    const balance = parseFloat(newWalletBalance);
+                    if (!isNaN(balance) && balance >= 0) {
+                      await updateWalletBalance(balance);
+                      setWalletDialogOpen(false);
+                    }
+                  }}
+                  className="flex-1 bg-cyan-500 hover:bg-cyan-600"
+                >
+                  تحديث الرصيد
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </div>
