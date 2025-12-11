@@ -515,11 +515,9 @@ const PaperTrading = () => {
               </SheetContent>
             </Sheet>
 
-            {/* Current Price */}
+            {/* Symbol Info - price from TradingView chart */}
             <div className="flex-1 flex items-center justify-center">
-              <span className="text-lg font-bold font-mono text-cyan-400">
-                {currentPrice.toFixed(selectedSymbol.pip < 0.01 ? 5 : 2)}
-              </span>
+              <span className="text-xs text-muted-foreground">السعر من الشارت ↓</span>
             </div>
 
             {/* Timeframe Selector */}
@@ -554,99 +552,29 @@ const PaperTrading = () => {
               style={{ height: "100%", width: "100%" }}
             />
             
-            {/* Entry Price Lines Overlay */}
-            {openPositions.filter(p => p.symbol === selectedSymbol.symbol).map((position, index) => {
-              const chartHeight = chartContainerRef.current?.clientHeight || 400;
-              const priceRange = currentPrice * 0.01; // 1% range
-              const topOffset = ((position.entryPrice - currentPrice) / priceRange) * (chartHeight / 2);
-              const lineTop = Math.max(40, Math.min(chartHeight - 40, (chartHeight / 2) - topOffset));
-              
-              return (
-                <div
-                  key={position.id}
-                  className="absolute left-0 right-0 pointer-events-none z-10 flex items-center"
-                  style={{ top: `${lineTop}px` }}
-                >
-                  {/* Entry Line */}
-                  <div 
-                    className={cn(
-                      "h-[2px] flex-1",
-                      position.direction === "buy" 
-                        ? "bg-green-500" 
-                        : "bg-red-500"
-                    )}
-                    style={{
-                      background: position.direction === "buy" 
-                        ? "repeating-linear-gradient(90deg, #22c55e 0px, #22c55e 8px, transparent 8px, transparent 12px)"
-                        : "repeating-linear-gradient(90deg, #ef4444 0px, #ef4444 8px, transparent 8px, transparent 12px)"
-                    }}
-                  />
-                  {/* Entry Price Label */}
-                  <div 
-                    className={cn(
-                      "px-2 py-0.5 rounded text-[10px] font-mono font-bold whitespace-nowrap",
-                      position.direction === "buy" 
-                        ? "bg-green-500 text-white" 
-                        : "bg-red-500 text-white"
-                    )}
-                  >
-                    {position.direction === "buy" ? "↑" : "↓"} {position.entryPrice.toFixed(position.pip < 0.01 ? 5 : 2)}
-                  </div>
+            {/* Open Positions Indicator */}
+            {openPositions.filter(p => p.symbol === selectedSymbol.symbol).length > 0 && (
+              <div className="absolute top-2 left-2 z-10 pointer-events-none">
+                <div className="bg-[#0d1421]/90 backdrop-blur-sm border border-cyan-500/30 rounded-lg p-2 space-y-1">
+                  <p className="text-[10px] text-cyan-400 font-bold">صفقات مفتوحة:</p>
+                  {openPositions.filter(p => p.symbol === selectedSymbol.symbol).map((pos) => {
+                    const { pnl } = calculatePnL(pos);
+                    const isProfit = pnl >= 0;
+                    return (
+                      <div key={pos.id} className="flex items-center gap-2 text-[10px]">
+                        <Badge className={cn("h-4 text-[8px]", pos.direction === "buy" ? "bg-green-500" : "bg-red-500")}>
+                          {pos.direction === "buy" ? "شراء" : "بيع"}
+                        </Badge>
+                        <span className="font-mono text-white">@ {pos.entryPrice.toFixed(pos.pip < 0.01 ? 5 : 2)}</span>
+                        <span className={cn("font-bold", isProfit ? "text-green-400" : "text-red-400")}>
+                          {isProfit ? "+" : ""}{pnl.toFixed(2)}$
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-
-            {/* Take Profit Lines */}
-            {openPositions.filter(p => p.symbol === selectedSymbol.symbol && p.takeProfit).map((position) => {
-              const chartHeight = chartContainerRef.current?.clientHeight || 400;
-              const priceRange = currentPrice * 0.01;
-              const topOffset = ((position.takeProfit! - currentPrice) / priceRange) * (chartHeight / 2);
-              const lineTop = Math.max(20, Math.min(chartHeight - 20, (chartHeight / 2) - topOffset));
-              
-              return (
-                <div
-                  key={`tp-${position.id}`}
-                  className="absolute left-0 right-0 pointer-events-none z-10 flex items-center"
-                  style={{ top: `${lineTop}px` }}
-                >
-                  <div 
-                    className="h-[1px] flex-1 bg-green-400/50"
-                    style={{
-                      background: "repeating-linear-gradient(90deg, #4ade80 0px, #4ade80 4px, transparent 4px, transparent 8px)"
-                    }}
-                  />
-                  <div className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-green-400/20 text-green-400 border border-green-400/30">
-                    TP {position.takeProfit?.toFixed(2)}
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Stop Loss Lines */}
-            {openPositions.filter(p => p.symbol === selectedSymbol.symbol && p.stopLoss).map((position) => {
-              const chartHeight = chartContainerRef.current?.clientHeight || 400;
-              const priceRange = currentPrice * 0.01;
-              const topOffset = ((position.stopLoss! - currentPrice) / priceRange) * (chartHeight / 2);
-              const lineTop = Math.max(20, Math.min(chartHeight - 20, (chartHeight / 2) - topOffset));
-              
-              return (
-                <div
-                  key={`sl-${position.id}`}
-                  className="absolute left-0 right-0 pointer-events-none z-10 flex items-center"
-                  style={{ top: `${lineTop}px` }}
-                >
-                  <div 
-                    className="h-[1px] flex-1 bg-red-400/50"
-                    style={{
-                      background: "repeating-linear-gradient(90deg, #f87171 0px, #f87171 4px, transparent 4px, transparent 8px)"
-                    }}
-                  />
-                  <div className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-red-400/20 text-red-400 border border-red-400/30">
-                    SL {position.stopLoss?.toFixed(2)}
-                  </div>
-                </div>
-              );
-            })}
+              </div>
+            )}
           </div>
 
           {/* Trading Panel */}
