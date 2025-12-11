@@ -325,6 +325,71 @@ export const playErrorSound = () => {
   }
 };
 
+// ===== Trade Win Sound - Celebratory coins/cash register =====
+export const playTradeWinSound = () => {
+  try {
+    const ctx = initAudioContext();
+    const now = ctx.currentTime;
+    
+    // Exciting win celebration - like coins dropping
+    const melody = [
+      { notes: [NOTES.E5], time: 0, duration: 0.1 },
+      { notes: [NOTES.G5], time: 0.08, duration: 0.1 },
+      { notes: [NOTES.B5], time: 0.16, duration: 0.1 },
+      { notes: [NOTES.E6], time: 0.24, duration: 0.15 },
+      // Celebration fanfare
+      { notes: [NOTES.G5, NOTES.B5, NOTES.E6], time: 0.45, duration: 0.2 },
+      { notes: [NOTES.A5, NOTES.C6, NOTES.E6], time: 0.65, duration: 0.2 },
+      // Final victory chord
+      { notes: [NOTES.C5, NOTES.E5, NOTES.G5, NOTES.C6, NOTES.E6], time: 0.9, duration: 0.6 },
+    ];
+    
+    melody.forEach(({ notes, time, duration }) => {
+      if (notes.length === 1) {
+        playNote(notes[0], duration, now + time, ctx, 0.5, 'sine');
+      } else {
+        playChord(notes, duration, now + time, ctx, 0.6);
+      }
+    });
+    
+    vibrateDevice([100, 50, 100, 50, 200]);
+    console.log('Trade win sound played');
+  } catch (error) {
+    console.error('Error playing trade win sound:', error);
+  }
+};
+
+// ===== Trade Loss Sound - Soft descending tone =====
+export const playTradeLossSound = () => {
+  try {
+    const ctx = initAudioContext();
+    const now = ctx.currentTime;
+    
+    // Gentle loss indication - descending, not harsh
+    const melody = [
+      { notes: [NOTES.A5], time: 0, duration: 0.15 },
+      { notes: [NOTES.F5], time: 0.12, duration: 0.15 },
+      { notes: [NOTES.D5], time: 0.24, duration: 0.2 },
+      { notes: [NOTES.A4], time: 0.4, duration: 0.3 },
+      // Soft minor chord ending
+      { notes: [NOTES.D4, NOTES.F4, NOTES.A4], time: 0.7, duration: 0.4 },
+    ];
+    
+    melody.forEach(({ notes, time, duration }) => {
+      if (notes.length === 1) {
+        playNote(notes[0], duration, now + time, ctx, 0.35, 'sine');
+      } else {
+        playChord(notes, duration, now + time, ctx, 0.4);
+      }
+    });
+    
+    vibrateDevice([200, 100, 200]);
+    console.log('Trade loss sound played');
+  } catch (error) {
+    console.error('Error playing trade loss sound:', error);
+  }
+};
+
 // ===== Test Sound - Verify audio works =====
 export const playTestSound = () => {
   try {

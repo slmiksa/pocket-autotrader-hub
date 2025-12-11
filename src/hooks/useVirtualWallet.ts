@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { playTradeWinSound, playTradeLossSound } from '@/utils/soundNotification';
 
 export interface VirtualWallet {
   id: string;
@@ -204,6 +205,13 @@ export const useVirtualWallet = () => {
         .eq('id', wallet.id);
 
       if (walletError) throw walletError;
+
+      // Play sound notification
+      if (isWin) {
+        playTradeWinSound();
+      } else {
+        playTradeLossSound();
+      }
 
       toast.success(profitLoss > 0 ? `🎉 ربح: $${profitLoss.toFixed(2)}` : `📉 خسارة: $${Math.abs(profitLoss).toFixed(2)}`);
       await fetchWallet();
