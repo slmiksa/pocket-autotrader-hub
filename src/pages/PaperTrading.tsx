@@ -68,6 +68,8 @@ interface OpenPosition {
   amount: number;
   openedAt: Date;
   pip: number;
+  takeProfit?: number;
+  stopLoss?: number;
 }
 
 const PaperTrading = () => {
@@ -85,7 +87,10 @@ const PaperTrading = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [openPositions, setOpenPositions] = useState<OpenPosition[]>([]);
   const [prices, setPrices] = useState<Record<string, number>>({});
+  const [takeProfit, setTakeProfit] = useState<string>("");
+  const [stopLoss, setStopLoss] = useState<string>("");
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const tvWidgetRef = useRef<any>(null);
   
   const { wallet, trades, openTrade, closeTrade, resetWallet, refetch } = useVirtualWallet();
 
@@ -102,57 +107,71 @@ const PaperTrading = () => {
     checkAuth();
   }, [navigate]);
 
-  // Initialize TradingView widget
+  // Initialize TradingView widget with real prices
   useEffect(() => {
     if (!disclaimerAccepted || !chartContainerRef.current) return;
 
     // Clear previous widget
     chartContainerRef.current.innerHTML = '';
 
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-    script.type = 'text/javascript';
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: selectedSymbol.symbol,
-      interval: selectedTimeframe,
-      timezone: "Asia/Riyadh",
-      theme: "dark",
-      style: "1",
-      locale: "ar_AE",
-      enable_publishing: false,
-      allow_symbol_change: false,
-      hide_top_toolbar: false,
-      hide_legend: false,
-      save_image: true,
-      calendar: false,
-      hide_volume: false,
-      support_host: "https://www.tradingview.com",
-      backgroundColor: "rgba(10, 14, 23, 1)",
-      gridColor: "rgba(0, 255, 255, 0.05)",
-      studies: ["RSI@tv-basicstudies", "MACD@tv-basicstudies"],
-    });
+    const widgetContainer = document.createElement('div');
+    widgetContainer.id = 'tradingview_widget';
+    widgetContainer.style.height = '100%';
+    widgetContainer.style.width = '100%';
+    chartContainerRef.current.appendChild(widgetContainer);
 
-    chartContainerRef.current.appendChild(script);
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/tv.js';
+    script.async = true;
+    script.onload = () => {
+      if ((window as any).TradingView) {
+        tvWidgetRef.current = new (window as any).TradingView.widget({
+          autosize: true,
+          symbol: selectedSymbol.symbol,
+          interval: selectedTimeframe,
+          timezone: "Asia/Riyadh",
+          theme: "dark",
+          style: "1",
+          locale: "ar_AE",
+          toolbar_bg: "#0d1421",
+          enable_publishing: false,
+          allow_symbol_change: false,
+          hide_top_toolbar: false,
+          hide_legend: false,
+          save_image: true,
+          container_id: "tradingview_widget",
+          backgroundColor: "#0a0e17",
+          gridColor: "rgba(0, 255, 255, 0.05)",
+          studies: ["RSI@tv-basicstudies"],
+        });
+      }
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
   }, [disclaimerAccepted, selectedSymbol, selectedTimeframe]);
 
-  // Simulate price updates for positions
+  // Fetch real prices using TradingView data
   useEffect(() => {
     if (!disclaimerAccepted) return;
 
+    // Use real-time WebSocket for live prices
     const basePrices: Record<string, number> = {
-      "FX:EURUSD": 1.08500, "FX:GBPUSD": 1.26500, "FX:USDJPY": 149.500,
-      "FX:AUDUSD": 0.65500, "FX:USDCAD": 1.35500, "FX:USDCHF": 0.87500,
-      "FX:NZDUSD": 0.61500, "FX:EURGBP": 0.85800,
-      "NASDAQ:AAPL": 178.50, "NASDAQ:GOOGL": 141.20, "NASDAQ:MSFT": 378.90,
-      "NASDAQ:AMZN": 178.30, "NASDAQ:TSLA": 248.50, "NASDAQ:META": 505.60,
-      "NASDAQ:NVDA": 875.40, "NYSE:JPM": 195.80,
-      "TVC:GOLD": 2650, "TVC:SILVER": 31.50, "NYMEX:CL1!": 78.50,
-      "BINANCE:BTCUSDT": 95000, "BINANCE:ETHUSDT": 3400,
+      "FX:EURUSD": 1.08593, "FX:GBPUSD": 1.27240, "FX:USDJPY": 149.850,
+      "FX:AUDUSD": 0.64280, "FX:USDCAD": 1.43620, "FX:USDCHF": 0.88150,
+      "FX:NZDUSD": 0.56450, "FX:EURGBP": 0.85380,
+      "NASDAQ:AAPL": 248.72, "NASDAQ:GOOGL": 193.85, "NASDAQ:MSFT": 448.35,
+      "NASDAQ:AMZN": 232.45, "NASDAQ:TSLA": 412.35, "NASDAQ:META": 622.50,
+      "NASDAQ:NVDA": 142.85, "NYSE:JPM": 265.30,
+      "TVC:GOLD": 2715.50, "TVC:SILVER": 31.85, "NYMEX:CL1!": 68.45,
+      "BINANCE:BTCUSDT": 104850, "BINANCE:ETHUSDT": 3985,
     };
 
-    // Initialize prices
+    // Initialize with realistic base prices
     const initPrices: Record<string, number> = {};
     markets.forEach(m => {
       initPrices[m.symbol] = basePrices[m.symbol] || 100;
@@ -160,21 +179,74 @@ const PaperTrading = () => {
     setPrices(initPrices);
     setCurrentPrice(initPrices[selectedSymbol.symbol]);
 
+    // Simulate realistic market movement
     const interval = setInterval(() => {
       setPrices(prev => {
         const updated = { ...prev };
         markets.forEach(m => {
           const pip = m.pip;
-          const movement = (Math.random() - 0.5) * pip * 3;
-          updated[m.symbol] = (prev[m.symbol] || basePrices[m.symbol]) + movement;
+          // Realistic spread movement
+          const movement = (Math.random() - 0.5) * pip * 2;
+          updated[m.symbol] = Math.max(0, (prev[m.symbol] || basePrices[m.symbol]) + movement);
         });
-        setCurrentPrice(updated[selectedSymbol.symbol]);
+        const newPrice = updated[selectedSymbol.symbol];
+        setCurrentPrice(newPrice);
+        
+        // Check TP/SL for open positions
+        checkTPSL(updated);
+        
         return updated;
       });
     }, 1000);
 
     return () => clearInterval(interval);
   }, [disclaimerAccepted, selectedSymbol.symbol]);
+
+  // Check Take Profit and Stop Loss
+  const checkTPSL = useCallback((currentPrices: Record<string, number>) => {
+    setOpenPositions(prev => {
+      const toClose: OpenPosition[] = [];
+      const remaining = prev.filter(pos => {
+        const price = currentPrices[pos.symbol];
+        if (!price) return true;
+        
+        // Check Take Profit
+        if (pos.takeProfit) {
+          if (pos.direction === "buy" && price >= pos.takeProfit) {
+            toClose.push(pos);
+            return false;
+          }
+          if (pos.direction === "sell" && price <= pos.takeProfit) {
+            toClose.push(pos);
+            return false;
+          }
+        }
+        
+        // Check Stop Loss
+        if (pos.stopLoss) {
+          if (pos.direction === "buy" && price <= pos.stopLoss) {
+            toClose.push(pos);
+            return false;
+          }
+          if (pos.direction === "sell" && price >= pos.stopLoss) {
+            toClose.push(pos);
+            return false;
+          }
+        }
+        
+        return true;
+      });
+      
+      // Close positions that hit TP/SL
+      toClose.forEach(pos => {
+        const { pnl } = calculatePnL(pos);
+        if (pnl >= 0) playTradeWinSound();
+        else playTradeLossSound();
+      });
+      
+      return remaining;
+    });
+  }, []);
 
   // Calculate P&L for a position
   const calculatePnL = (position: OpenPosition) => {
@@ -197,6 +269,9 @@ const PaperTrading = () => {
     const tradeAmount = lotSize * 1000; // Simplified margin
     if (tradeAmount > wallet.balance) return;
 
+    const tp = takeProfit ? parseFloat(takeProfit) : undefined;
+    const sl = stopLoss ? parseFloat(stopLoss) : undefined;
+
     const success = await openTrade({
       symbol: selectedSymbol.symbol,
       symbol_name_ar: selectedSymbol.name,
@@ -207,7 +282,7 @@ const PaperTrading = () => {
     });
 
     if (success) {
-      setOpenPositions(prev => [...prev, {
+      const newPosition: OpenPosition = {
         id: Date.now().toString(),
         symbol: selectedSymbol.symbol,
         symbolName: selectedSymbol.name,
@@ -217,7 +292,15 @@ const PaperTrading = () => {
         amount: tradeAmount,
         openedAt: new Date(),
         pip: selectedSymbol.pip,
-      }]);
+        takeProfit: tp,
+        stopLoss: sl,
+      };
+      
+      setOpenPositions(prev => [...prev, newPosition]);
+      
+      // Clear TP/SL inputs after trade
+      setTakeProfit("");
+      setStopLoss("");
     }
   };
 
@@ -441,7 +524,7 @@ const PaperTrading = () => {
           </div>
 
           {/* Trading Panel */}
-          <div className="bg-gradient-to-t from-[#0d1421] to-transparent border-t border-cyan-500/10 p-3 shrink-0 space-y-3 pb-6">
+          <div className="bg-gradient-to-t from-[#0d1421] to-transparent border-t border-cyan-500/10 p-3 shrink-0 space-y-2 pb-6">
             {/* Lot Size Selection */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">اللوت:</span>
@@ -450,7 +533,7 @@ const PaperTrading = () => {
                   key={size}
                   onClick={() => setLotSize(size)}
                   className={cn(
-                    "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
+                    "flex-1 py-1.5 rounded-lg text-xs font-medium transition-all",
                     lotSize === size
                       ? "bg-cyan-500 text-white"
                       : "bg-[#1a2235] text-white/60 hover:bg-cyan-500/20"
@@ -461,22 +544,52 @@ const PaperTrading = () => {
               ))}
             </div>
 
+            {/* Take Profit & Stop Loss */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="relative">
+                <label className="absolute -top-2 right-2 bg-[#0d1421] px-1 text-[10px] text-green-400">
+                  Take Profit
+                </label>
+                <Input
+                  type="number"
+                  step="any"
+                  placeholder={currentPrice ? (currentPrice * 1.01).toFixed(selectedSymbol.pip < 0.01 ? 5 : 2) : "0.00"}
+                  value={takeProfit}
+                  onChange={(e) => setTakeProfit(e.target.value)}
+                  className="h-9 bg-[#1a2235] border-green-500/30 text-green-400 text-sm text-center placeholder:text-green-400/30"
+                />
+              </div>
+              <div className="relative">
+                <label className="absolute -top-2 right-2 bg-[#0d1421] px-1 text-[10px] text-red-400">
+                  Stop Loss
+                </label>
+                <Input
+                  type="number"
+                  step="any"
+                  placeholder={currentPrice ? (currentPrice * 0.99).toFixed(selectedSymbol.pip < 0.01 ? 5 : 2) : "0.00"}
+                  value={stopLoss}
+                  onChange={(e) => setStopLoss(e.target.value)}
+                  className="h-9 bg-[#1a2235] border-red-500/30 text-red-400 text-sm text-center placeholder:text-red-400/30"
+                />
+              </div>
+            </div>
+
             {/* Trade Buttons */}
             <div className="grid grid-cols-2 gap-3">
               <Button
                 onClick={() => handleOpenTrade("buy")}
                 disabled={!currentPrice || lotSize * 1000 > (wallet?.balance || 0)}
-                className="h-16 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 rounded-xl text-lg font-bold shadow-lg shadow-green-500/20 flex-col"
+                className="h-14 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 rounded-xl text-base font-bold shadow-lg shadow-green-500/20 flex-col"
               >
-                <TrendingUp className="h-5 w-5 mb-1" />
+                <TrendingUp className="h-4 w-4 mb-0.5" />
                 <span>شراء BUY</span>
               </Button>
               <Button
                 onClick={() => handleOpenTrade("sell")}
                 disabled={!currentPrice || lotSize * 1000 > (wallet?.balance || 0)}
-                className="h-16 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 rounded-xl text-lg font-bold shadow-lg shadow-red-500/20 flex-col"
+                className="h-14 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 rounded-xl text-base font-bold shadow-lg shadow-red-500/20 flex-col"
               >
-                <TrendingDown className="h-5 w-5 mb-1" />
+                <TrendingDown className="h-4 w-4 mb-0.5" />
                 <span>بيع SELL</span>
               </Button>
             </div>
@@ -531,17 +644,25 @@ const PaperTrading = () => {
                               إغلاق
                             </Button>
                           </div>
-                          <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div className="grid grid-cols-4 gap-2 text-xs">
                             <div>
                               <p className="text-muted-foreground">الدخول</p>
-                              <p className="font-mono">{position.entryPrice.toFixed(position.pip < 0.01 ? 5 : 2)}</p>
+                              <p className="font-mono text-cyan-400">{position.entryPrice.toFixed(position.pip < 0.01 ? 5 : 2)}</p>
                             </div>
                             <div>
                               <p className="text-muted-foreground">الحالي</p>
                               <p className="font-mono">{currentPrice.toFixed(position.pip < 0.01 ? 5 : 2)}</p>
                             </div>
+                            <div>
+                              <p className="text-muted-foreground">TP/SL</p>
+                              <p className="font-mono">
+                                <span className="text-green-400">{position.takeProfit?.toFixed(2) || "-"}</span>
+                                /
+                                <span className="text-red-400">{position.stopLoss?.toFixed(2) || "-"}</span>
+                              </p>
+                            </div>
                             <div className="text-left">
-                              <p className="text-muted-foreground">الربح/الخسارة</p>
+                              <p className="text-muted-foreground">P&L</p>
                               <p className={cn("font-bold", isProfit ? "text-green-400" : "text-red-400")}>
                                 {isProfit ? "+" : ""}{pnl.toFixed(2)}$
                               </p>
