@@ -158,53 +158,6 @@ const PaperTrading = () => {
     };
   }, [disclaimerAccepted, selectedSymbol, selectedTimeframe]);
 
-  // Fetch real prices using TradingView data
-  useEffect(() => {
-    if (!disclaimerAccepted) return;
-
-    // Use real-time WebSocket for live prices
-    const basePrices: Record<string, number> = {
-      "FX:EURUSD": 1.08593, "FX:GBPUSD": 1.27240, "FX:USDJPY": 149.850,
-      "FX:AUDUSD": 0.64280, "FX:USDCAD": 1.43620, "FX:USDCHF": 0.88150,
-      "FX:NZDUSD": 0.56450, "FX:EURGBP": 0.85380,
-      "NASDAQ:AAPL": 248.72, "NASDAQ:GOOGL": 193.85, "NASDAQ:MSFT": 448.35,
-      "NASDAQ:AMZN": 232.45, "NASDAQ:TSLA": 412.35, "NASDAQ:META": 622.50,
-      "NASDAQ:NVDA": 142.85, "NYSE:JPM": 265.30,
-      "TVC:GOLD": 2715.50, "TVC:SILVER": 31.85, "NYMEX:CL1!": 68.45,
-      "BINANCE:BTCUSDT": 104850, "BINANCE:ETHUSDT": 3985,
-    };
-
-    // Initialize with realistic base prices
-    const initPrices: Record<string, number> = {};
-    markets.forEach(m => {
-      initPrices[m.symbol] = basePrices[m.symbol] || 100;
-    });
-    setPrices(initPrices);
-    setCurrentPrice(initPrices[selectedSymbol.symbol]);
-
-    // Simulate realistic market movement
-    const interval = setInterval(() => {
-      setPrices(prev => {
-        const updated = { ...prev };
-        markets.forEach(m => {
-          const pip = m.pip;
-          // Realistic spread movement
-          const movement = (Math.random() - 0.5) * pip * 2;
-          updated[m.symbol] = Math.max(0, (prev[m.symbol] || basePrices[m.symbol]) + movement);
-        });
-        const newPrice = updated[selectedSymbol.symbol];
-        setCurrentPrice(newPrice);
-        
-        // Check TP/SL for open positions
-        checkTPSL(updated);
-        
-        return updated;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [disclaimerAccepted, selectedSymbol.symbol]);
-
   // Check Take Profit and Stop Loss
   const checkTPSL = useCallback((currentPrices: Record<string, number>) => {
     setOpenPositions(prev => {
@@ -242,7 +195,10 @@ const PaperTrading = () => {
       
       // Close positions that hit TP/SL
       toClose.forEach(pos => {
-        const { pnl } = calculatePnL(pos);
+        const priceDiff = pos.direction === "buy" 
+          ? currentPrices[pos.symbol] - pos.entryPrice 
+          : pos.entryPrice - currentPrices[pos.symbol];
+        const pnl = (priceDiff / pos.pip) * pos.lotSize * 10;
         if (pnl >= 0) playTradeWinSound();
         else playTradeLossSound();
       });
@@ -250,6 +206,125 @@ const PaperTrading = () => {
       return remaining;
     });
   }, []);
+
+  // Fetch real prices from public APIs
+  const fetchRealPrices = useCallback(async () => {
+    try {
+      // Use free public API for forex rates
+      const forexRes = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+      const forexData = await forexRes.json();
+      
+      const newPrices: Record<string, number> = {};
+      
+      // Set forex prices from real API
+      if (forexData.rates) {
+        newPrices["FX:EURUSD"] = 1 / forexData.rates.EUR;
+        newPrices["FX:GBPUSD"] = 1 / forexData.rates.GBP;
+        newPrices["FX:USDJPY"] = forexData.rates.JPY;
+        newPrices["FX:AUDUSD"] = 1 / forexData.rates.AUD;
+        newPrices["FX:USDCAD"] = forexData.rates.CAD;
+        newPrices["FX:USDCHF"] = forexData.rates.CHF;
+        newPrices["FX:NZDUSD"] = 1 / forexData.rates.NZD;
+        newPrices["FX:EURGBP"] = forexData.rates.GBP / forexData.rates.EUR;
+      }
+
+      // Fetch crypto prices from public API  
+      try {
+        const cryptoRes = await fetch('https://api.binance.com/api/v3/ticker/price?symbols=["BTCUSDT","ETHUSDT"]');
+        const cryptoData = await cryptoRes.json();
+        cryptoData.forEach((c: any) => {
+          if (c.symbol === 'BTCUSDT') newPrices["BINANCE:BTCUSDT"] = parseFloat(c.price);
+          if (c.symbol === 'ETHUSDT') newPrices["BINANCE:ETHUSDT"] = parseFloat(c.price);
+        });
+      } catch (e) {
+        console.log("Crypto API fallback");
+      }
+
+      // Fetch gold price from public API
+      try {
+        const goldRes = await fetch('https://api.metals.live/v1/spot/gold');
+        const goldData = await goldRes.json();
+        if (goldData[0]?.price) newPrices["TVC:GOLD"] = goldData[0].price;
+      } catch (e) {
+        console.log("Gold API fallback");
+      }
+
+      return newPrices;
+    } catch (error) {
+      console.error("Error fetching prices:", error);
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!disclaimerAccepted) return;
+
+    // Initial realistic base prices (will be updated with real data)
+    const basePrices: Record<string, number> = {
+      "FX:EURUSD": 1.0530, "FX:GBPUSD": 1.2750, "FX:USDJPY": 152.35,
+      "FX:AUDUSD": 0.6380, "FX:USDCAD": 1.4180, "FX:USDCHF": 0.8950,
+      "FX:NZDUSD": 0.5620, "FX:EURGBP": 0.8260,
+      "NASDAQ:AAPL": 248.72, "NASDAQ:GOOGL": 193.85, "NASDAQ:MSFT": 448.35,
+      "NASDAQ:AMZN": 232.45, "NASDAQ:TSLA": 412.35, "NASDAQ:META": 622.50,
+      "NASDAQ:NVDA": 142.85, "NYSE:JPM": 265.30,
+      "TVC:GOLD": 2700.50, "TVC:SILVER": 31.85, "NYMEX:CL1!": 68.45,
+      "BINANCE:BTCUSDT": 101500, "BINANCE:ETHUSDT": 3850,
+    };
+
+    // Initialize with base prices
+    const initPrices: Record<string, number> = {};
+    markets.forEach(m => {
+      initPrices[m.symbol] = basePrices[m.symbol] || 100;
+    });
+    setPrices(initPrices);
+    setCurrentPrice(initPrices[selectedSymbol.symbol]);
+
+    // Fetch real prices initially
+    fetchRealPrices().then(realPrices => {
+      if (realPrices) {
+        setPrices(prev => ({ ...prev, ...realPrices }));
+        setCurrentPrice(realPrices[selectedSymbol.symbol] || initPrices[selectedSymbol.symbol]);
+      }
+    });
+
+    // Update prices with small realistic movements every second
+    // (Real API is called less frequently to avoid rate limits)
+    let tickCount = 0;
+    const interval = setInterval(() => {
+      tickCount++;
+      
+      // Fetch real prices every 30 seconds
+      if (tickCount % 30 === 0) {
+        fetchRealPrices().then(realPrices => {
+          if (realPrices) {
+            setPrices(prev => {
+              const merged = { ...prev, ...realPrices };
+              setCurrentPrice(merged[selectedSymbol.symbol]);
+              checkTPSL(merged);
+              return merged;
+            });
+          }
+        });
+      } else {
+        // Add small realistic tick movement between API calls
+        setPrices(prev => {
+          const updated = { ...prev };
+          markets.forEach(m => {
+            const pip = m.pip;
+            // Very small realistic tick movement (0.2 pip max)
+            const movement = (Math.random() - 0.5) * pip * 0.4;
+            updated[m.symbol] = Math.max(0, prev[m.symbol] + movement);
+          });
+          const newPrice = updated[selectedSymbol.symbol];
+          setCurrentPrice(newPrice);
+          checkTPSL(updated);
+          return updated;
+        });
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [disclaimerAccepted, selectedSymbol.symbol, fetchRealPrices, checkTPSL]);
 
   // Calculate P&L for a position
   const calculatePnL = (position: OpenPosition) => {
