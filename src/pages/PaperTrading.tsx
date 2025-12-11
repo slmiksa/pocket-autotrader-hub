@@ -10,8 +10,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Loader2, TrendingUp, TrendingDown, Wallet, Clock, 
-  ChevronDown, History, Search, Star, X, RefreshCw, 
-  Trophy, Zap, Target, ArrowUp, ArrowDown
+  ChevronDown, History, Search, X, RefreshCw, 
+  Trophy, Zap, ArrowUp, ArrowDown, ArrowRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { playTradeWinSound, playTradeLossSound } from "@/utils/soundNotification";
@@ -424,11 +424,19 @@ const PaperTrading = () => {
         <div className="h-screen flex flex-col">
           {/* Header */}
           <header className="bg-gradient-to-r from-[#0d1421] via-[#121a2d] to-[#0d1421] border-b border-cyan-500/20 px-3 py-2 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-                <Zap className="h-4 w-4 text-white" />
-              </div>
-              <div>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/")}
+                className="h-9 w-9 rounded-xl bg-[#1a2235] border border-cyan-500/20 hover:bg-cyan-500/20"
+              >
+                <ArrowRight className="h-5 w-5 text-cyan-400" />
+              </Button>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                  <Zap className="h-4 w-4 text-white" />
+                </div>
                 <h1 className="text-sm font-bold text-cyan-400">TIFUE TRADE</h1>
               </div>
             </div>
