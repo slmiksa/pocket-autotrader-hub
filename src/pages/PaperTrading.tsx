@@ -693,15 +693,6 @@ const PaperTrading = () => {
               className="tradingview-widget-container absolute inset-0 overflow-hidden"
               style={{ height: "100%", width: "100%" }}
             />
-            {/* Live Price Overlay */}
-            <div className="absolute top-2 right-2 z-10 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-cyan-500/30">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-cyan-400/70">السعر الحالي:</span>
-                <span className="text-sm font-bold text-cyan-400 font-mono">
-                  {currentPrice.toFixed(selectedSymbol.pip < 0.01 ? 5 : 2)}
-                </span>
-              </div>
-            </div>
           </div>
 
           {/* Open Positions Bar - Modern horizontal scrollable */}
