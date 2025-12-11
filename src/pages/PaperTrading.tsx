@@ -336,60 +336,58 @@ const PaperTrading = () => {
     setPrices(initPrices);
     setCurrentPrice(initPrices[selectedSymbol.symbol]);
 
-    // Fetch real price for selected symbol immediately
-    const updateSelectedPrice = async () => {
-      const livePrice = await fetchLivePrice(selectedSymbol.symbol);
-      if (livePrice) {
-        setPrices(prev => {
-          const updated = { ...prev, [selectedSymbol.symbol]: livePrice };
-          setCurrentPrice(livePrice);
-          checkTPSL(updated);
-          return updated;
-        });
-      }
-    };
-    updateSelectedPrice();
-
-    // Also fetch from batch API for all symbols
+    // Fetch real prices initially
     fetchRealPrices().then(realPrices => {
       if (realPrices) {
         setPrices(prev => {
           const merged = { ...prev, ...realPrices };
-          const selectedPrice = merged[selectedSymbol.symbol];
-          setCurrentPrice(selectedPrice);
+          setCurrentPrice(merged[selectedSymbol.symbol]);
           return merged;
         });
       }
     });
 
-    // Update prices every 3 seconds with live data
-    const interval = setInterval(async () => {
-      // Get live price for selected symbol
-      const livePrice = await fetchLivePrice(selectedSymbol.symbol);
-      
-      if (livePrice) {
-        setPrices(prev => {
-          const updated = { ...prev, [selectedSymbol.symbol]: livePrice };
-          setCurrentPrice(livePrice);
-          checkTPSL(updated);
-          return updated;
+    // Update prices every second with realistic tick movements
+    const interval = setInterval(() => {
+      setPrices(prev => {
+        const updated = { ...prev };
+        
+        // Apply realistic tick movement to ALL markets
+        markets.forEach(m => {
+          const pip = m.pip;
+          // Random movement between -0.5 to +0.5 pips
+          const movement = (Math.random() - 0.5) * pip;
+          updated[m.symbol] = Math.max(0.00001, prev[m.symbol] + movement);
         });
-      } else {
-        // Fallback: very small tick for realism
-        setPrices(prev => {
-          const pip = selectedSymbol.pip;
-          const movement = (Math.random() - 0.5) * pip * 0.2;
-          const newPrice = Math.max(0, prev[selectedSymbol.symbol] + movement);
-          const updated = { ...prev, [selectedSymbol.symbol]: newPrice };
-          setCurrentPrice(newPrice);
-          checkTPSL(updated);
-          return updated;
-        });
-      }
-    }, 3000);
+        
+        // Update current price for selected symbol
+        setCurrentPrice(updated[selectedSymbol.symbol]);
+        
+        // Check TP/SL with new prices
+        checkTPSL(updated);
+        
+        return updated;
+      });
+    }, 1000);
 
-    return () => clearInterval(interval);
-  }, [disclaimerAccepted, selectedSymbol.symbol, fetchRealPrices, fetchLivePrice, checkTPSL]);
+    // Fetch real prices every 30 seconds
+    const realPriceInterval = setInterval(() => {
+      fetchRealPrices().then(realPrices => {
+        if (realPrices) {
+          setPrices(prev => {
+            const merged = { ...prev, ...realPrices };
+            setCurrentPrice(merged[selectedSymbol.symbol]);
+            return merged;
+          });
+        }
+      });
+    }, 30000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(realPriceInterval);
+    };
+  }, [disclaimerAccepted, selectedSymbol.symbol, fetchRealPrices, checkTPSL]);
 
   // Calculate P&L for a position - Real calculation based on pips
   const calculatePnL = useCallback((position: OpenPosition) => {
