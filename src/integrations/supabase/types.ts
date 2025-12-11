@@ -1020,6 +1020,119 @@ export type Database = {
           },
         ]
       }
+      virtual_trades: {
+        Row: {
+          amount: number
+          closed_at: string | null
+          created_at: string
+          entry_price: number
+          exit_price: number | null
+          id: string
+          opened_at: string
+          order_type: string
+          profit_loss: number | null
+          quantity: number
+          status: string
+          stop_loss: number | null
+          symbol: string
+          symbol_name_ar: string
+          take_profit: number | null
+          trade_type: string
+          updated_at: string
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          closed_at?: string | null
+          created_at?: string
+          entry_price: number
+          exit_price?: number | null
+          id?: string
+          opened_at?: string
+          order_type: string
+          profit_loss?: number | null
+          quantity: number
+          status?: string
+          stop_loss?: number | null
+          symbol: string
+          symbol_name_ar: string
+          take_profit?: number | null
+          trade_type: string
+          updated_at?: string
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          closed_at?: string | null
+          created_at?: string
+          entry_price?: number
+          exit_price?: number | null
+          id?: string
+          opened_at?: string
+          order_type?: string
+          profit_loss?: number | null
+          quantity?: number
+          status?: string
+          stop_loss?: number | null
+          symbol?: string
+          symbol_name_ar?: string
+          take_profit?: number | null
+          trade_type?: string
+          updated_at?: string
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "virtual_trades_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "virtual_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      virtual_wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          initial_balance: number
+          losing_trades: number
+          total_profit_loss: number
+          total_trades: number
+          updated_at: string
+          user_id: string
+          winning_trades: number
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          initial_balance?: number
+          losing_trades?: number
+          total_profit_loss?: number
+          total_trades?: number
+          updated_at?: string
+          user_id: string
+          winning_trades?: number
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          initial_balance?: number
+          losing_trades?: number
+          total_profit_loss?: number
+          total_trades?: number
+          updated_at?: string
+          user_id?: string
+          winning_trades?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
