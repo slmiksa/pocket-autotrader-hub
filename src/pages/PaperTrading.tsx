@@ -13,7 +13,7 @@ import {
   Loader2, TrendingUp, TrendingDown, Wallet, 
   ChevronDown, History, Search, X, RefreshCw, 
   Trophy, Zap, ArrowRight, DollarSign, Percent,
-  Clock, BarChart2
+  Clock, BarChart2, Edit2, Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { playTradeWinSound, playTradeLossSound } from "@/utils/soundNotification";
@@ -89,6 +89,9 @@ const PaperTrading = () => {
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [takeProfit, setTakeProfit] = useState<string>("");
   const [stopLoss, setStopLoss] = useState<string>("");
+  const [editingPositionId, setEditingPositionId] = useState<string | null>(null);
+  const [editTP, setEditTP] = useState<string>("");
+  const [editSL, setEditSL] = useState<string>("");
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const tvWidgetRef = useRef<any>(null);
   
@@ -344,6 +347,35 @@ const PaperTrading = () => {
   });
 
   const winRate = wallet ? (wallet.total_trades > 0 ? (wallet.winning_trades / wallet.total_trades * 100).toFixed(0) : 0) : 0;
+
+  // Handle editing TP/SL for a position
+  const startEditingPosition = (position: OpenPosition) => {
+    setEditingPositionId(position.id);
+    setEditTP(position.takeProfit?.toString() || "");
+    setEditSL(position.stopLoss?.toString() || "");
+  };
+
+  const saveEditedTPSL = (positionId: string) => {
+    setOpenPositions(prev => prev.map(pos => {
+      if (pos.id === positionId) {
+        return {
+          ...pos,
+          takeProfit: editTP ? parseFloat(editTP) : undefined,
+          stopLoss: editSL ? parseFloat(editSL) : undefined,
+        };
+      }
+      return pos;
+    }));
+    setEditingPositionId(null);
+    setEditTP("");
+    setEditSL("");
+  };
+
+  const cancelEditing = () => {
+    setEditingPositionId(null);
+    setEditTP("");
+    setEditSL("");
+  };
 
   if (loading) {
     return (
@@ -711,6 +743,8 @@ const PaperTrading = () => {
                     {openPositions.map((position) => {
                       const { pnl, pips, currentPrice } = calculatePnL(position);
                       const isProfit = pnl >= 0;
+                      const isEditing = editingPositionId === position.id;
+                      
                       return (
                         <div 
                           key={position.id} 
@@ -729,39 +763,105 @@ const PaperTrading = () => {
                               <span className="font-bold text-sm">{position.symbolName}</span>
                               <span className="text-xs text-muted-foreground">x{position.lotSize}</span>
                             </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleClosePosition(position)}
-                              className="h-7 text-xs border-white/20"
-                            >
-                              إغلاق
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-4 gap-2 text-xs">
-                            <div>
-                              <p className="text-muted-foreground">الدخول</p>
-                              <p className="font-mono text-cyan-400">{position.entryPrice.toFixed(position.pip < 0.01 ? 5 : 2)}</p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">الحالي</p>
-                              <p className="font-mono">{currentPrice.toFixed(position.pip < 0.01 ? 5 : 2)}</p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">TP/SL</p>
-                              <p className="font-mono">
-                                <span className="text-green-400">{position.takeProfit?.toFixed(2) || "-"}</span>
-                                /
-                                <span className="text-red-400">{position.stopLoss?.toFixed(2) || "-"}</span>
-                              </p>
-                            </div>
-                            <div className="text-left">
-                              <p className="text-muted-foreground">P&L</p>
-                              <p className={cn("font-bold", isProfit ? "text-green-400" : "text-red-400")}>
-                                {isProfit ? "+" : ""}{pnl.toFixed(2)}$
-                              </p>
+                            <div className="flex items-center gap-1">
+                              {!isEditing && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => startEditingPosition(position)}
+                                  className="h-7 w-7 p-0 text-cyan-400 hover:bg-cyan-500/20"
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleClosePosition(position)}
+                                className="h-7 text-xs border-white/20"
+                              >
+                                إغلاق
+                              </Button>
                             </div>
                           </div>
+                          
+                          {/* Editing TP/SL */}
+                          {isEditing ? (
+                            <div className="space-y-2">
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="relative">
+                                  <label className="absolute -top-1.5 right-2 bg-[#0d1421] px-1 text-[9px] text-green-400">
+                                    Take Profit
+                                  </label>
+                                  <Input
+                                    type="number"
+                                    step="any"
+                                    placeholder="0.00"
+                                    value={editTP}
+                                    onChange={(e) => setEditTP(e.target.value)}
+                                    className="h-8 bg-[#1a2235] border-green-500/30 text-green-400 text-xs text-center"
+                                  />
+                                </div>
+                                <div className="relative">
+                                  <label className="absolute -top-1.5 right-2 bg-[#0d1421] px-1 text-[9px] text-red-400">
+                                    Stop Loss
+                                  </label>
+                                  <Input
+                                    type="number"
+                                    step="any"
+                                    placeholder="0.00"
+                                    value={editSL}
+                                    onChange={(e) => setEditSL(e.target.value)}
+                                    className="h-8 bg-[#1a2235] border-red-500/30 text-red-400 text-xs text-center"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => saveEditedTPSL(position.id)}
+                                  className="flex-1 h-7 text-xs bg-cyan-500 hover:bg-cyan-600"
+                                >
+                                  <Check className="h-3 w-3 mr-1" />
+                                  حفظ
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={cancelEditing}
+                                  className="flex-1 h-7 text-xs border-white/20"
+                                >
+                                  <X className="h-3 w-3 mr-1" />
+                                  إلغاء
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-4 gap-2 text-xs">
+                              <div>
+                                <p className="text-muted-foreground">الدخول</p>
+                                <p className="font-mono text-cyan-400">{position.entryPrice.toFixed(position.pip < 0.01 ? 5 : 2)}</p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">الحالي</p>
+                                <p className="font-mono">{currentPrice.toFixed(position.pip < 0.01 ? 5 : 2)}</p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">TP/SL</p>
+                                <p className="font-mono">
+                                  <span className="text-green-400">{position.takeProfit?.toFixed(2) || "-"}</span>
+                                  /
+                                  <span className="text-red-400">{position.stopLoss?.toFixed(2) || "-"}</span>
+                                </p>
+                              </div>
+                              <div className="text-left">
+                                <p className="text-muted-foreground">P&L</p>
+                                <p className={cn("font-bold", isProfit ? "text-green-400" : "text-red-400")}>
+                                  {isProfit ? "+" : ""}{pnl.toFixed(2)}$
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
