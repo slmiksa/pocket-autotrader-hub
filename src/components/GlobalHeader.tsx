@@ -130,7 +130,7 @@ export const GlobalHeader = () => {
   }, []);
 
   // Hide header on these routes
-  const hiddenRoutes = ["/admin", "/admin-login", "/auth", "/subscription"];
+  const hiddenRoutes = ["/admin", "/admin-login", "/auth", "/subscription", "/paper-trading"];
   const shouldHide = hiddenRoutes.includes(location.pathname);
   const [hasValidSubscription, setHasValidSubscription] = useState(false);
   useEffect(() => {
