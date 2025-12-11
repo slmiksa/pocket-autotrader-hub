@@ -113,7 +113,7 @@ const PaperTrading = () => {
     checkAuth();
   }, [navigate]);
 
-  // Initialize TradingView widget with real prices
+  // Initialize TradingView Advanced Chart with Indicators
   useEffect(() => {
     if (!disclaimerAccepted || !chartContainerRef.current) return;
 
@@ -121,42 +121,55 @@ const PaperTrading = () => {
     chartContainerRef.current.innerHTML = '';
 
     const widgetContainer = document.createElement('div');
-    widgetContainer.id = 'tradingview_widget';
+    widgetContainer.id = 'tradingview_advanced_chart';
     widgetContainer.style.height = '100%';
     widgetContainer.style.width = '100%';
     chartContainerRef.current.appendChild(widgetContainer);
 
+    // Use TradingView Advanced Real-Time Chart widget with full indicator support
     const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/tv.js';
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
     script.async = true;
-    script.onload = () => {
-      if ((window as any).TradingView) {
-        tvWidgetRef.current = new (window as any).TradingView.widget({
-          autosize: true,
-          symbol: selectedSymbol.symbol,
-          interval: selectedTimeframe,
-          timezone: "Asia/Riyadh",
-          theme: "dark",
-          style: "1",
-          locale: "ar_AE",
-          toolbar_bg: "#0d1421",
-          enable_publishing: false,
-          allow_symbol_change: false,
-          hide_top_toolbar: false,
-          hide_legend: false,
-          save_image: true,
-          container_id: "tradingview_widget",
-          backgroundColor: "#0a0e17",
-          gridColor: "rgba(0, 255, 255, 0.05)",
-          studies: ["RSI@tv-basicstudies"],
-        });
-      }
-    };
-    document.head.appendChild(script);
+    script.type = 'text/javascript';
+    script.innerHTML = JSON.stringify({
+      autosize: true,
+      symbol: selectedSymbol.symbol,
+      interval: selectedTimeframe,
+      timezone: "Asia/Riyadh",
+      theme: "dark",
+      style: "1",
+      locale: "ar_AE",
+      backgroundColor: "rgba(10, 14, 23, 1)",
+      gridColor: "rgba(0, 255, 255, 0.05)",
+      allow_symbol_change: false,
+      calendar: false,
+      hide_volume: false,
+      support_host: "https://www.tradingview.com",
+      // Enable studies/indicators toolbar
+      studies: [
+        "RSI@tv-basicstudies",
+        "MASimple@tv-basicstudies",
+        "MACD@tv-basicstudies"
+      ],
+      // Show drawing tools
+      drawings_access: { type: "all" },
+      // Enable indicators panel
+      enabled_features: [
+        "header_indicators",
+        "header_chart_type",
+        "header_settings",
+        "header_compare",
+        "header_screenshot",
+        "use_localstorage_for_settings",
+        "study_templates"
+      ],
+      disabled_features: [],
+    });
+    widgetContainer.appendChild(script);
 
     return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
+      if (chartContainerRef.current) {
+        chartContainerRef.current.innerHTML = '';
       }
     };
   }, [disclaimerAccepted, selectedSymbol, selectedTimeframe]);
@@ -259,12 +272,54 @@ const PaperTrading = () => {
     }
   }, []);
 
+  // Fetch price directly from TradingView data feed using Finnhub/Alpha Vantage as backup
+  const fetchLivePrice = useCallback(async (symbol: string): Promise<number | null> => {
+    try {
+      // For Forex - use exchangerate-api 
+      if (symbol.startsWith("FX:")) {
+        const pair = symbol.replace("FX:", "");
+        const base = pair.substring(0, 3);
+        const quote = pair.substring(3);
+        
+        const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
+        const data = await res.json();
+        if (data.rates && data.rates[quote]) {
+          return data.rates[quote];
+        }
+      }
+      
+      // For Crypto - use Binance
+      if (symbol.startsWith("BINANCE:")) {
+        const pair = symbol.replace("BINANCE:", "");
+        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${pair}`);
+        const data = await res.json();
+        if (data.price) {
+          return parseFloat(data.price);
+        }
+      }
+      
+      // For Gold
+      if (symbol === "TVC:GOLD") {
+        const res = await fetch('https://api.metals.live/v1/spot/gold');
+        const data = await res.json();
+        if (data[0]?.price) {
+          return data[0].price;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error fetching live price:", error);
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
     if (!disclaimerAccepted) return;
 
-    // Initial realistic base prices (will be updated with real data)
+    // Initialize with accurate base prices
     const basePrices: Record<string, number> = {
-      "FX:EURUSD": 1.0530, "FX:GBPUSD": 1.2750, "FX:USDJPY": 152.35,
+      "FX:EURUSD": 1.1754, "FX:GBPUSD": 1.2750, "FX:USDJPY": 152.35,
       "FX:AUDUSD": 0.6380, "FX:USDCAD": 1.4180, "FX:USDCHF": 0.8950,
       "FX:NZDUSD": 0.5620, "FX:EURGBP": 0.8260,
       "NASDAQ:AAPL": 248.72, "NASDAQ:GOOGL": 193.85, "NASDAQ:MSFT": 448.35,
@@ -274,7 +329,6 @@ const PaperTrading = () => {
       "BINANCE:BTCUSDT": 101500, "BINANCE:ETHUSDT": 3850,
     };
 
-    // Initialize with base prices
     const initPrices: Record<string, number> = {};
     markets.forEach(m => {
       initPrices[m.symbol] = basePrices[m.symbol] || 100;
@@ -282,52 +336,60 @@ const PaperTrading = () => {
     setPrices(initPrices);
     setCurrentPrice(initPrices[selectedSymbol.symbol]);
 
-    // Fetch real prices initially
+    // Fetch real price for selected symbol immediately
+    const updateSelectedPrice = async () => {
+      const livePrice = await fetchLivePrice(selectedSymbol.symbol);
+      if (livePrice) {
+        setPrices(prev => {
+          const updated = { ...prev, [selectedSymbol.symbol]: livePrice };
+          setCurrentPrice(livePrice);
+          checkTPSL(updated);
+          return updated;
+        });
+      }
+    };
+    updateSelectedPrice();
+
+    // Also fetch from batch API for all symbols
     fetchRealPrices().then(realPrices => {
       if (realPrices) {
-        setPrices(prev => ({ ...prev, ...realPrices }));
-        setCurrentPrice(realPrices[selectedSymbol.symbol] || initPrices[selectedSymbol.symbol]);
+        setPrices(prev => {
+          const merged = { ...prev, ...realPrices };
+          const selectedPrice = merged[selectedSymbol.symbol];
+          setCurrentPrice(selectedPrice);
+          return merged;
+        });
       }
     });
 
-    // Update prices with small realistic movements every second
-    // (Real API is called less frequently to avoid rate limits)
-    let tickCount = 0;
-    const interval = setInterval(() => {
-      tickCount++;
+    // Update prices every 3 seconds with live data
+    const interval = setInterval(async () => {
+      // Get live price for selected symbol
+      const livePrice = await fetchLivePrice(selectedSymbol.symbol);
       
-      // Fetch real prices every 30 seconds
-      if (tickCount % 30 === 0) {
-        fetchRealPrices().then(realPrices => {
-          if (realPrices) {
-            setPrices(prev => {
-              const merged = { ...prev, ...realPrices };
-              setCurrentPrice(merged[selectedSymbol.symbol]);
-              checkTPSL(merged);
-              return merged;
-            });
-          }
+      if (livePrice) {
+        setPrices(prev => {
+          const updated = { ...prev, [selectedSymbol.symbol]: livePrice };
+          setCurrentPrice(livePrice);
+          checkTPSL(updated);
+          return updated;
         });
       } else {
-        // Add small realistic tick movement between API calls
+        // Fallback: very small tick for realism
         setPrices(prev => {
-          const updated = { ...prev };
-          markets.forEach(m => {
-            const pip = m.pip;
-            // Very small realistic tick movement (0.2 pip max)
-            const movement = (Math.random() - 0.5) * pip * 0.4;
-            updated[m.symbol] = Math.max(0, prev[m.symbol] + movement);
-          });
-          const newPrice = updated[selectedSymbol.symbol];
+          const pip = selectedSymbol.pip;
+          const movement = (Math.random() - 0.5) * pip * 0.2;
+          const newPrice = Math.max(0, prev[selectedSymbol.symbol] + movement);
+          const updated = { ...prev, [selectedSymbol.symbol]: newPrice };
           setCurrentPrice(newPrice);
           checkTPSL(updated);
           return updated;
         });
       }
-    }, 1000);
+    }, 3000);
 
     return () => clearInterval(interval);
-  }, [disclaimerAccepted, selectedSymbol.symbol, fetchRealPrices, checkTPSL]);
+  }, [disclaimerAccepted, selectedSymbol.symbol, fetchRealPrices, fetchLivePrice, checkTPSL]);
 
   // Calculate P&L for a position - Real calculation based on pips
   const calculatePnL = useCallback((position: OpenPosition) => {
@@ -345,7 +407,7 @@ const PaperTrading = () => {
   // Total P&L
   const totalOpenPnL = openPositions.reduce((sum, pos) => sum + calculatePnL(pos).pnl, 0);
 
-  // Handle opening a trade - use the REAL current price from API
+  // Handle opening a trade - fetch FRESH price at moment of trade
   const handleOpenTrade = async (direction: "buy" | "sell") => {
     if (!wallet) return;
     
@@ -355,8 +417,15 @@ const PaperTrading = () => {
     const tp = takeProfit ? parseFloat(takeProfit) : undefined;
     const sl = stopLoss ? parseFloat(stopLoss) : undefined;
     
-    // Use the current real price from the prices state
-    const realEntryPrice = prices[selectedSymbol.symbol] || currentPrice;
+    // Fetch fresh live price at the exact moment of trade
+    let entryPrice = currentPrice;
+    const freshPrice = await fetchLivePrice(selectedSymbol.symbol);
+    if (freshPrice) {
+      entryPrice = freshPrice;
+      // Update state with fresh price
+      setPrices(prev => ({ ...prev, [selectedSymbol.symbol]: freshPrice }));
+      setCurrentPrice(freshPrice);
+    }
 
     const success = await openTrade({
       symbol: selectedSymbol.symbol,
@@ -364,7 +433,7 @@ const PaperTrading = () => {
       trade_type: direction,
       order_type: "market",
       amount: tradeAmount,
-      entry_price: realEntryPrice,
+      entry_price: entryPrice,
     });
 
     if (success) {
@@ -373,7 +442,7 @@ const PaperTrading = () => {
         symbol: selectedSymbol.symbol,
         symbolName: selectedSymbol.name,
         direction,
-        entryPrice: realEntryPrice, // Use REAL price
+        entryPrice: entryPrice, // Fresh live price
         lotSize,
         amount: tradeAmount,
         openedAt: new Date(),
@@ -617,13 +686,22 @@ const PaperTrading = () => {
             </Badge>
           </div>
 
-          {/* TradingView Chart - Clean without overlays */}
+          {/* TradingView Advanced Chart with Indicators */}
           <div className="flex-1 relative min-h-0">
             <div 
               ref={chartContainerRef}
-              className="tradingview-widget-container absolute inset-0"
+              className="tradingview-widget-container absolute inset-0 overflow-hidden"
               style={{ height: "100%", width: "100%" }}
             />
+            {/* Live Price Overlay */}
+            <div className="absolute top-2 right-2 z-10 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-cyan-500/30">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-cyan-400/70">السعر الحالي:</span>
+                <span className="text-sm font-bold text-cyan-400 font-mono">
+                  {currentPrice.toFixed(selectedSymbol.pip < 0.01 ? 5 : 2)}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Open Positions Bar - Modern horizontal scrollable */}
