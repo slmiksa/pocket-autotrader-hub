@@ -48,6 +48,33 @@ const News = () => {
     }
   };
 
+  const translateArticle = async (article: NewsArticle): Promise<NewsArticle> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('translate-news', {
+        body: {
+          title: article.title,
+          description: article.description,
+          content: article.description
+        }
+      });
+
+      if (error || !data) {
+        console.error("Translation error:", error);
+        return article;
+      }
+
+      return {
+        ...article,
+        translatedTitle: data.translatedTitle,
+        translatedDescription: data.translatedDescription,
+        translatedContent: data.translatedContent
+      };
+    } catch (error) {
+      console.error("Translation failed:", error);
+      return article;
+    }
+  };
+
   const fetchNews = useCallback(async () => {
     try {
       setLoading(true);
@@ -62,7 +89,16 @@ const News = () => {
       }
 
       console.log("News fetched:", data);
-      setArticles(data.articles || []);
+      const fetchedArticles = data.articles || [];
+      
+      // Translate all articles in parallel
+      toast.info("جاري ترجمة الأخبار...");
+      const translatedArticles = await Promise.all(
+        fetchedArticles.map((article: NewsArticle) => translateArticle(article))
+      );
+      
+      setArticles(translatedArticles);
+      toast.success("تمت ترجمة الأخبار بنجاح");
     } catch (error) {
       console.error("Error:", error);
       toast.error("حدث خطأ أثناء تحميل الأخبار");
@@ -211,15 +247,15 @@ const News = () => {
                 </div>
               )}
               <div className="p-5 space-y-4">
-                <h3 className="text-lg font-bold text-white line-clamp-2 leading-tight group-hover:text-emerald-300 transition-colors duration-300">
-                  {article.title}
+                <h3 className="text-lg font-bold text-white line-clamp-2 leading-tight group-hover:text-emerald-300 transition-colors duration-300" dir="rtl">
+                  {article.translatedTitle || article.title}
                 </h3>
                 <div className="flex items-center gap-2 text-xs text-slate-400">
                   <Calendar className="h-3.5 w-3.5 text-emerald-400" />
                   {formatDate(article.publishedAt)}
                 </div>
-                <p className="text-slate-400 text-sm line-clamp-2 leading-relaxed">
-                  {article.description}
+                <p className="text-slate-400 text-sm line-clamp-2 leading-relaxed" dir="rtl">
+                  {article.translatedDescription || article.description}
                 </p>
                 <Button 
                   onClick={() => translateAndShowArticle(article)}
@@ -252,8 +288,8 @@ const News = () => {
       <Dialog open={!!selectedArticle} onOpenChange={() => setSelectedArticle(null)}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto bg-slate-900 border-slate-700/50 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-2xl md:text-3xl font-bold leading-tight text-white">
-              {selectedArticle?.title}
+            <DialogTitle className="text-2xl md:text-3xl font-bold leading-tight text-white" dir="rtl">
+              {selectedArticle?.translatedTitle || selectedArticle?.title}
             </DialogTitle>
           </DialogHeader>
           
@@ -283,8 +319,8 @@ const News = () => {
                 </div>
               </div>
 
-              <div className="text-lg text-slate-300 leading-relaxed">
-                {selectedArticle.description}
+              <div className="text-lg text-slate-300 leading-relaxed" dir="rtl">
+                {selectedArticle.translatedDescription || selectedArticle.description}
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-slate-700/50">
