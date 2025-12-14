@@ -127,14 +127,14 @@ const EconomicCalendar = () => {
           <div className="text-3xl">{currencyFlags[event.currency] || '🌍'}</div>
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-[hsl(210,40%,98%)] truncate">{event.title_ar}</h3>
-              <Badge className={`${impactColors[event.impact]} text-xs`}>
+            <div className="flex flex-wrap items-start gap-2 mb-1">
+              <Badge className={`${impactColors[event.impact]} text-xs shrink-0`}>
                 {impactLabels[event.impact]}
               </Badge>
+              <h3 className="font-semibold text-[hsl(210,40%,98%)] leading-tight break-words">{event.title_ar}</h3>
             </div>
             
-            <p className="text-sm text-[hsl(215,20%,65%)] mb-2">{event.title}</p>
+            <p className="text-sm text-[hsl(215,20%,65%)] mb-2 break-words">{event.title}</p>
             
             <div className="flex items-center gap-4 text-xs text-[hsl(215,20%,50%)]">
               <span className="flex items-center gap-1">
