@@ -75,6 +75,26 @@ const News = () => {
     }
   };
 
+  // Translate articles one by one with delay to avoid rate limiting
+  const translateArticlesSequentially = async (articles: NewsArticle[]): Promise<NewsArticle[]> => {
+    const translated: NewsArticle[] = [];
+    const articlesToTranslate = articles.slice(0, 6); // Limit to first 6 articles
+    
+    for (let i = 0; i < articlesToTranslate.length; i++) {
+      const translatedArticle = await translateArticle(articlesToTranslate[i]);
+      translated.push(translatedArticle);
+      
+      // Add delay between requests to avoid rate limiting (except for last one)
+      if (i < articlesToTranslate.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+    }
+    
+    // Add remaining untranslated articles
+    const remaining = articles.slice(6);
+    return [...translated, ...remaining];
+  };
+
   const fetchNews = useCallback(async () => {
     try {
       setLoading(true);
@@ -91,14 +111,15 @@ const News = () => {
       console.log("News fetched:", data);
       const fetchedArticles = data.articles || [];
       
-      // Translate all articles in parallel
-      toast.info("جاري ترجمة الأخبار...");
-      const translatedArticles = await Promise.all(
-        fetchedArticles.map((article: NewsArticle) => translateArticle(article))
-      );
+      // First show articles without translation
+      setArticles(fetchedArticles);
+      setLoading(false);
       
+      // Then translate in background
+      toast.info("جاري ترجمة الأخبار...");
+      const translatedArticles = await translateArticlesSequentially(fetchedArticles);
       setArticles(translatedArticles);
-      toast.success("تمت ترجمة الأخبار بنجاح");
+      toast.success("تمت ترجمة الأخبار");
     } catch (error) {
       console.error("Error:", error);
       toast.error("حدث خطأ أثناء تحميل الأخبار");
