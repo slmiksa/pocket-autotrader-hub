@@ -20,7 +20,6 @@ import Community from "./pages/Community";
 import Install from "./pages/Install";
 import About from "./pages/About";
 import EconomicCalendar from "./pages/EconomicCalendar";
-import PaperTrading from "./pages/PaperTrading";
 import NotFound from "./pages/NotFound";
 import { SmartSupport } from "./components/SmartSupport";
 import { GlobalHeader } from "./components/GlobalHeader";
@@ -61,7 +60,6 @@ const App = () => (
           <Route path="/install" element={<Install />} />
           <Route path="/about" element={<About />} />
           <Route path="/economic-calendar" element={<EconomicCalendar />} />
-          <Route path="/paper-trading" element={<PaperTrading />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

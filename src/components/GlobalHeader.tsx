@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Bell, Image, Target, BarChart3, Newspaper, Users, User, LogOut, Menu, Binary, Home, Calendar, GraduationCap } from "lucide-react";
+import { TrendingUp, Bell, Image, Target, BarChart3, Newspaper, Users, User, LogOut, Menu, Binary, Home, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -47,11 +47,6 @@ const navItems = [{
   icon: Newspaper,
   path: "/news",
   color: "default"
-}, {
-  label: "تداول وتعلم",
-  icon: GraduationCap,
-  path: "/paper-trading",
-  color: "green"
 }, {
   label: "المجتمع",
   icon: Users,
@@ -100,10 +95,6 @@ const headerNavItems = [{
   label: "الخيارات الثنائية",
   icon: Binary,
   path: "/binary-options"
-}, {
-  label: "تداول وتعلم",
-  icon: GraduationCap,
-  path: "/paper-trading"
 }, {
   label: "الأخبار",
   icon: Newspaper,
