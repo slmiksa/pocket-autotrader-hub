@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import Index from "./pages/Index";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
@@ -30,6 +31,28 @@ import { RealtimeAlertsProvider } from "./components/RealtimeAlertsProvider";
 
 const queryClient = new QueryClient();
 
+const RecoveryHashRedirect = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // If the auth system redirects to the root with recovery tokens in the hash,
+    // route the user to /auth so the recovery UI can be shown.
+    const hash = window.location.hash || "";
+    if (!hash) return;
+
+    const hashParams = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
+    const accessToken = hashParams.get("access_token");
+    const type = hashParams.get("type");
+
+    if (accessToken && type === "recovery" && location.pathname !== "/auth") {
+      navigate(`/auth?type=recovery${hash}`, { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -37,6 +60,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <ScrollToTop />
+        <RecoveryHashRedirect />
         <GlobalHeader />
         <BackButton />
         <SmartSupport />
@@ -50,7 +74,7 @@ const App = () => (
           <Route path="/subscription" element={<SubscriptionCheck />} />
           <Route path="/image-analysis" element={<ImageAnalysis />} />
           <Route path="/professional-signals" element={<ProfessionalSignals />} />
-          
+
           <Route path="/live-chart" element={<LiveChart />} />
           <Route path="/supply-demand" element={<SupplyDemandAnalyzer />} />
           <Route path="/markets" element={<Markets />} />
