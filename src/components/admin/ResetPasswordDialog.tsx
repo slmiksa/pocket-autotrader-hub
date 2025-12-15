@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordStrength, isPasswordStrong } from "@/components/ui/password-strength";
 import { Loader2, Eye, EyeOff, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -110,6 +111,8 @@ export const ResetPasswordDialog = ({
             </div>
           </div>
 
+          <PasswordStrength password={newPassword} />
+
           <div className="space-y-2">
             <Label htmlFor="confirm-password">تأكيد كلمة المرور</Label>
             <Input
@@ -133,7 +136,7 @@ export const ResetPasswordDialog = ({
           </Button>
           <Button 
             onClick={handleResetPassword} 
-            disabled={loading || !newPassword || !confirmPassword || newPassword !== confirmPassword}
+            disabled={loading || !newPassword || !confirmPassword || newPassword !== confirmPassword || !isPasswordStrong(newPassword)}
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "تغيير كلمة المرور"}
           </Button>
