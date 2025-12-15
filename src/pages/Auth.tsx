@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const { sendRegistrationEmail } = useEmail();
-  
+
   // 2FA States
   const [show2FA, setShow2FA] = useState(false);
   const [otpCode, setOtpCode] = useState("");
@@ -37,60 +37,84 @@ const Auth = () => {
 
   // Password Recovery States
   const [showPasswordRecovery, setShowPasswordRecovery] = useState(false);
+  const showPasswordRecoveryRef = useRef(false);
+  const isRecoveryFlowRef = useRef(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [recoveryLoading, setRecoveryLoading] = useState(false);
 
   useEffect(() => {
+    // Decide recovery intent synchronously (before any redirects)
+    const urlParams = new URLSearchParams(window.location.search);
+    const typeFromSearch = urlParams.get("type");
+
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get("access_token");
+    const tokenType = hashParams.get("type");
+    const errorDescription = hashParams.get("error_description");
+
+    const isRecoveryIntent = typeFromSearch === "recovery" || (accessToken && tokenType === "recovery");
+    isRecoveryFlowRef.current = Boolean(isRecoveryIntent);
+
+    if (errorDescription) {
+      toast.error("الرابط منتهي الصلاحية أو غير صالح. يرجى طلب رابط جديد.");
+      window.history.replaceState({}, document.title, "/auth");
+      return;
+    }
+
     // Listen for auth state changes including PASSWORD_RECOVERY
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth event:", event, session);
-      
-      if (event === 'PASSWORD_RECOVERY') {
-        // User clicked recovery link and session was established
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth event:", event);
+
+      if (event === "PASSWORD_RECOVERY") {
+        showPasswordRecoveryRef.current = true;
         setShowPasswordRecovery(true);
-      } else if (event === 'SIGNED_IN' && !showPasswordRecovery) {
-        // Normal sign in - redirect to home
+        return;
+      }
+
+      // IMPORTANT: During recovery flow, do NOT redirect to home on SIGNED_IN
+      if (event === "SIGNED_IN" && !isRecoveryFlowRef.current && !showPasswordRecoveryRef.current) {
         navigate("/");
+      }
+
+      // If user signs out during recovery, reset flags
+      if (event === "SIGNED_OUT") {
+        showPasswordRecoveryRef.current = false;
+        isRecoveryFlowRef.current = false;
       }
     });
 
-    // Check URL params for recovery type
-    const urlParams = new URLSearchParams(window.location.search);
-    const type = urlParams.get('type');
-    
-    // Check for hash fragment (Supabase sends tokens in hash)
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
-    const tokenType = hashParams.get('type');
-    const errorDescription = hashParams.get('error_description');
-    
-    if (errorDescription) {
-      toast.error("الرابط منتهي الصلاحية أو غير صالح. يرجى طلب رابط جديد.");
-      window.history.replaceState({}, document.title, '/auth');
-      return;
-    }
-    
-    if (accessToken && tokenType === 'recovery') {
-      const refreshToken = hashParams.get('refresh_token');
-      
+    // If Supabase sent tokens in hash, establish session and show recovery UI
+    if (accessToken && tokenType === "recovery") {
+      const refreshToken = hashParams.get("refresh_token");
+
       if (refreshToken) {
-        supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken
-        }).then(({ error }) => {
-          if (!error) {
-            setShowPasswordRecovery(true);
-            window.history.replaceState({}, document.title, '/auth?type=recovery');
-          } else {
-            toast.error("فشل في تحميل جلسة الاستعادة");
-          }
-        });
+        // Mark recovery *before* setting session to prevent redirects
+        isRecoveryFlowRef.current = true;
+        showPasswordRecoveryRef.current = true;
+
+        supabase.auth
+          .setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+          .then(({ error }) => {
+            if (!error) {
+              setShowPasswordRecovery(true);
+              window.history.replaceState({}, document.title, "/auth?type=recovery");
+            } else {
+              toast.error("فشل في تحميل جلسة الاستعادة");
+            }
+          });
       }
-    } else if (type === 'recovery') {
+    } else if (typeFromSearch === "recovery") {
+      isRecoveryFlowRef.current = true;
       // Check if we already have a session for recovery
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
+          showPasswordRecoveryRef.current = true;
           setShowPasswordRecovery(true);
         } else {
           toast.error("الجلسة منتهية. يرجى طلب رابط استعادة جديد.");
@@ -107,7 +131,7 @@ const Auth = () => {
     }
 
     return () => subscription.unsubscribe();
-  }, [navigate, showPasswordRecovery]);
+  }, [navigate]);
 
   // Resend timer countdown
   useEffect(() => {
