@@ -421,6 +421,7 @@ export type Database = {
           created_at: string
           economic_alerts_enabled: boolean | null
           email: string | null
+          email_notifications_enabled: boolean | null
           id: string
           image_analysis_enabled: boolean | null
           market_alerts_enabled: boolean | null
@@ -438,6 +439,7 @@ export type Database = {
           created_at?: string
           economic_alerts_enabled?: boolean | null
           email?: string | null
+          email_notifications_enabled?: boolean | null
           id?: string
           image_analysis_enabled?: boolean | null
           market_alerts_enabled?: boolean | null
@@ -455,6 +457,7 @@ export type Database = {
           created_at?: string
           economic_alerts_enabled?: boolean | null
           email?: string | null
+          email_notifications_enabled?: boolean | null
           id?: string
           image_analysis_enabled?: boolean | null
           market_alerts_enabled?: boolean | null

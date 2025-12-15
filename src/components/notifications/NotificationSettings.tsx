@@ -25,6 +25,7 @@ interface UserPreferences {
   economic_alerts_enabled: boolean;
   market_alerts_enabled: boolean;
   alert_before_minutes: number;
+  email_notifications_enabled: boolean;
 }
 
 export const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
@@ -33,7 +34,8 @@ export const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
   const [preferences, setPreferences] = useState<UserPreferences>({
     economic_alerts_enabled: false,
     market_alerts_enabled: false,
-    alert_before_minutes: 15
+    alert_before_minutes: 15,
+    email_notifications_enabled: false
   });
   const [markets, setMarkets] = useState<MarketSchedule[]>([]);
   const [selectedMarkets, setSelectedMarkets] = useState<string[]>([]);
@@ -47,7 +49,7 @@ export const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
       // Fetch user preferences
       const { data: profile } = await supabase
         .from('profiles')
-        .select('economic_alerts_enabled, market_alerts_enabled, alert_before_minutes')
+        .select('economic_alerts_enabled, market_alerts_enabled, alert_before_minutes, email_notifications_enabled')
         .eq('user_id', userId)
         .single();
 
@@ -55,7 +57,8 @@ export const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
         setPreferences({
           economic_alerts_enabled: profile.economic_alerts_enabled || false,
           market_alerts_enabled: profile.market_alerts_enabled || false,
-          alert_before_minutes: profile.alert_before_minutes || 15
+          alert_before_minutes: profile.alert_before_minutes || 15,
+          email_notifications_enabled: (profile as any).email_notifications_enabled || false
         });
       }
 
@@ -95,8 +98,9 @@ export const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
         .update({
           economic_alerts_enabled: preferences.economic_alerts_enabled,
           market_alerts_enabled: preferences.market_alerts_enabled,
-          alert_before_minutes: preferences.alert_before_minutes
-        })
+          alert_before_minutes: preferences.alert_before_minutes,
+          email_notifications_enabled: preferences.email_notifications_enabled
+        } as any)
         .eq('user_id', userId);
 
       if (profileError) throw profileError;
@@ -148,6 +152,27 @@ export const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Email Notifications */}
+      <Card className="p-5 border-[hsl(217,33%,17%)] bg-[hsl(217,33%,12%)]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-purple-500/20">
+              <Bell className="h-5 w-5 text-purple-400" />
+            </div>
+            <div>
+              <Label className="text-[hsl(210,40%,98%)] font-semibold">إشعارات البريد الإلكتروني</Label>
+              <p className="text-xs text-[hsl(215,20%,65%)] mt-1">
+                استلم جميع الإشعارات عبر البريد الإلكتروني أيضاً
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={preferences.email_notifications_enabled}
+            onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, email_notifications_enabled: checked }))}
+          />
+        </div>
+      </Card>
+
       {/* Economic Calendar Alerts */}
       <Card className="p-5 border-[hsl(217,33%,17%)] bg-[hsl(217,33%,12%)]">
         <div className="flex items-center justify-between">
