@@ -15,6 +15,7 @@ import { ProfessionalSignalsManager } from "@/components/admin/ProfessionalSigna
 import { ReportsManager } from "@/components/admin/ReportsManager";
 import { HeroSlidesManager } from "@/components/admin/HeroSlidesManager";
 import { PushNotificationsManager } from "@/components/admin/PushNotificationsManager";
+import { EmailManager } from "@/components/admin/EmailManager";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -466,6 +467,9 @@ const AdminDashboard = () => {
       <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Push Notifications Manager */}
         <PushNotificationsManager />
+
+        {/* Email Manager */}
+        <EmailManager />
 
         {/* Announcement Banner Management */}
         <Card>
