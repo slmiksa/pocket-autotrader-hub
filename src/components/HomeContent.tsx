@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, BarChart3, Newspaper, Target, Shield, Zap, LineChart, ArrowUpRight, CheckCircle2, Star, Users, Award, Sparkles, Calendar } from "lucide-react";
+import { TrendingUp, BarChart3, Target, Shield, Zap, LineChart, ArrowUpRight, CheckCircle2, Star, Users, Award, Sparkles, Calendar } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { useRef, useEffect, useState } from "react";
@@ -38,7 +38,7 @@ const gradientMap: Record<string, string> = {
 const iconMap: Record<string, any> = {
   "/binary-options": Target,
   "/supply-demand": BarChart3,
-  "/news": Newspaper,
+  
   "/markets": LineChart,
   "/live-chart": LineChart,
   "/professional-signals": Star,
@@ -101,15 +101,6 @@ export const HomeContent = () => {
     iconBg: "bg-amber-500/20",
     iconColor: "text-amber-400",
     borderColor: "border-amber-500/30"
-  }, {
-    icon: Newspaper,
-    title: "أخبار الأسواق",
-    description: "آخر الأخبار المالية والاقتصادية المؤثرة",
-    path: "/news",
-    gradient: "from-purple-500/20 to-purple-600/5",
-    iconBg: "bg-purple-500/20",
-    iconColor: "text-purple-400",
-    borderColor: "border-purple-500/30"
   }];
 
   const platformFeatures = [{
@@ -328,21 +319,6 @@ export const HomeContent = () => {
 
       {/* Quick Links */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card 
-          className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300" 
-          onClick={() => navigate("/news")}
-        >
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="rounded-xl bg-blue-500/20 p-4 group-hover:bg-blue-500/30 transition-colors">
-              <Newspaper className="h-7 w-7 text-blue-400" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-foreground text-lg">آخر الأخبار</h4>
-              <p className="text-sm text-muted-foreground mt-1">تابع أحدث الأخبار المالية المؤثرة على الأسواق</p>
-            </div>
-            <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-blue-400 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
-          </CardContent>
-        </Card>
 
         <Card 
           className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:bg-primary/5 transition-all duration-300" 
