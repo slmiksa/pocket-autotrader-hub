@@ -157,6 +157,59 @@ serve(async (req) => {
 
     console.log(`Created ${notifications.length} notification records for realtime delivery`);
 
+    // Send email notifications for users who have email notifications enabled
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    if (resendApiKey) {
+      // Get profiles with email notifications enabled
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, email, email_notifications_enabled')
+        .in('user_id', uniqueUserIds)
+        .eq('email_notifications_enabled', true);
+
+      if (profiles && profiles.length > 0) {
+        const emailsToSend = profiles.filter(p => p.email).map(p => p.email);
+        
+        if (emailsToSend.length > 0) {
+          const emailHtml = `
+            <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px 15px 0 0; text-align: center;">
+                <h1 style="color: white; margin: 0; font-size: 24px;">🔔 ${title}</h1>
+              </div>
+              <div style="background: white; padding: 30px; border-radius: 0 0 15px 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <p style="color: #333; font-size: 18px; line-height: 1.8; margin: 0;">${body}</p>
+                <div style="text-align: center; margin-top: 25px;">
+                  <a href="https://tifue.com" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+                    فتح التطبيق
+                  </a>
+                </div>
+              </div>
+              <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+            </div>
+          `;
+
+          try {
+            await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${resendApiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                from: "TIFUE SA <noreply@tifue.com>",
+                to: emailsToSend,
+                subject: `🔔 ${title}`,
+                html: emailHtml,
+              }),
+            });
+            console.log(`Email notifications sent to ${emailsToSend.length} users`);
+          } catch (emailError) {
+            console.error('Error sending email notifications:', emailError);
+          }
+        }
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

@@ -163,6 +163,58 @@ serve(async (req) => {
             }
           });
 
+        // Send email notification if enabled
+        const resendApiKey = Deno.env.get('RESEND_API_KEY');
+        if (resendApiKey) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email, email_notifications_enabled')
+            .eq('user_id', alert.user_id)
+            .single();
+
+          if (profile?.email && profile?.email_notifications_enabled) {
+            const emailHtml = `
+              <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+                <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 15px 15px 0 0; text-align: center;">
+                  <h1 style="color: white; margin: 0; font-size: 24px;">⚡ تنبيه سعري</h1>
+                </div>
+                <div style="background: white; padding: 30px; border-radius: 0 0 15px 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                  <div style="background: #f8f9fa; padding: 25px; border-radius: 12px; text-align: center;">
+                    <p style="font-size: 28px; font-weight: bold; color: #333; margin: 0;">${alert.symbol_name_ar}</p>
+                    <p style="font-size: 18px; color: #666; margin: 15px 0;">السعر ${alert.condition === 'above' ? 'صعد فوق' : 'هبط تحت'} ${targetPrice}</p>
+                    <p style="font-size: 24px; color: #10b981; font-weight: bold; margin: 0;">السعر الحالي: ${currentPrice.toFixed(2)}</p>
+                  </div>
+                  <div style="text-align: center; margin-top: 25px;">
+                    <a href="https://tifue.com/markets" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+                      عرض الأسواق
+                    </a>
+                  </div>
+                </div>
+                <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+              </div>
+            `;
+
+            try {
+              await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${resendApiKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  from: "TIFUE SA <noreply@tifue.com>",
+                  to: [profile.email],
+                  subject: `⚡ تنبيه سعري: ${alert.symbol_name_ar}`,
+                  html: emailHtml,
+                }),
+              });
+              console.log(`Email notification sent for price alert to ${profile.email}`);
+            } catch (emailError) {
+              console.error('Error sending price alert email:', emailError);
+            }
+          }
+        }
+
         // Get user's push subscriptions
         const { data: subscriptions } = await supabase
           .from('push_subscriptions')
