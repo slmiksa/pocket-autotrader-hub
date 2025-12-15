@@ -17,25 +17,21 @@ serve(async (req) => {
     const resendApiKey = Deno.env.get('RESEND_API_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Checking for expiring subscriptions...');
+    console.log('Checking for expiring subscriptions (10 days window)...');
 
     const now = new Date();
     
-    // Check for subscriptions expiring in 3 days
-    const threeDaysFromNow = new Date(now);
-    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-    
-    // Check for subscriptions expiring in 1 day
-    const oneDayFromNow = new Date(now);
-    oneDayFromNow.setDate(oneDayFromNow.getDate() + 1);
+    // Check for subscriptions expiring in the next 10 days
+    const tenDaysFromNow = new Date(now);
+    tenDaysFromNow.setDate(tenDaysFromNow.getDate() + 10);
 
-    // Get profiles with subscriptions expiring in 1 or 3 days
+    // Get profiles with subscriptions expiring in the next 10 days
     const { data: expiringProfiles, error: profilesError } = await supabase
       .from('profiles')
       .select('user_id, email, nickname, subscription_expires_at, email_notifications_enabled')
       .not('subscription_expires_at', 'is', null)
       .gt('subscription_expires_at', now.toISOString())
-      .lt('subscription_expires_at', threeDaysFromNow.toISOString());
+      .lte('subscription_expires_at', tenDaysFromNow.toISOString());
 
     if (profilesError) {
       console.error('Error fetching profiles:', profilesError);
@@ -68,22 +64,40 @@ serve(async (req) => {
         day: 'numeric'
       });
 
-      const isUrgent = daysRemaining <= 1;
-      const gradientColors = isUrgent 
+      const isUrgent = daysRemaining <= 3;
+      const isVeryUrgent = daysRemaining <= 1;
+      
+      const gradientColors = isVeryUrgent 
         ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' 
-        : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+        : isUrgent 
+          ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+          : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+      
+      const bgColor = isVeryUrgent ? '#fef2f2' : isUrgent ? '#fffbeb' : '#eff6ff';
+      const borderColor = isVeryUrgent ? '#ef4444' : isUrgent ? '#f59e0b' : '#3b82f6';
+      const textColor = isVeryUrgent ? '#991b1b' : isUrgent ? '#92400e' : '#1e40af';
+
+      const urgencyText = isVeryUrgent 
+        ? '🚨 اشتراكك ينتهي غداً!' 
+        : isUrgent 
+          ? `⚠️ اشتراكك ينتهي خلال ${daysRemaining} أيام فقط!`
+          : `⏰ متبقي ${daysRemaining} أيام على انتهاء اشتراكك`;
 
       const emailHtml = `
         <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
           <div style="background: ${gradientColors}; padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">⚠️ تذكير بانتهاء الاشتراك</h1>
+            <h1 style="color: white; margin: 0; font-size: 28px;">${urgencyText}</h1>
+            <div style="background: rgba(255,255,255,0.2); display: inline-block; padding: 15px 30px; border-radius: 50px; margin-top: 20px;">
+              <span style="color: white; font-size: 48px; font-weight: bold;">${daysRemaining}</span>
+              <span style="color: white; font-size: 18px; display: block;">يوم متبقي</span>
+            </div>
           </div>
           <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
             <p style="font-size: 20px; color: #333; margin-bottom: 20px;">مرحباً ${profile.nickname || 'عزيزنا'}،</p>
             
-            <div style="background: ${isUrgent ? '#fef2f2' : '#fffbeb'}; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid ${isUrgent ? '#ef4444' : '#f59e0b'};">
-              <p style="color: ${isUrgent ? '#991b1b' : '#92400e'}; font-size: 18px; margin: 0; font-weight: bold;">
-                ${isUrgent ? '🚨 اشتراكك سينتهي غداً!' : `⏰ اشتراكك سينتهي خلال ${daysRemaining} أيام`}
+            <div style="background: ${bgColor}; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid ${borderColor};">
+              <p style="color: ${textColor}; font-size: 18px; margin: 0; font-weight: bold;">
+                ${urgencyText}
               </p>
               <p style="color: #555; font-size: 16px; margin: 15px 0 0 0;">
                 تاريخ الانتهاء: <strong>${formattedDate}</strong>
@@ -128,9 +142,11 @@ serve(async (req) => {
           body: JSON.stringify({
             from: "TIFUE SA <noreply@tifue.com>",
             to: [profile.email],
-            subject: isUrgent 
+            subject: isVeryUrgent 
               ? `🚨 اشتراكك ينتهي غداً - جدد الآن!`
-              : `⚠️ تذكير: اشتراكك ينتهي خلال ${daysRemaining} أيام`,
+              : isUrgent 
+                ? `⚠️ متبقي ${daysRemaining} أيام فقط على انتهاء اشتراكك`
+                : `⏰ تذكير: متبقي ${daysRemaining} أيام على انتهاء اشتراكك`,
             html: emailHtml,
           }),
         });
@@ -141,7 +157,11 @@ serve(async (req) => {
           .insert({
             user_id: profile.user_id,
             type: 'subscription_reminder',
-            title: isUrgent ? '🚨 اشتراكك ينتهي غداً!' : `⚠️ اشتراكك ينتهي خلال ${daysRemaining} أيام`,
+            title: isVeryUrgent 
+              ? '🚨 اشتراكك ينتهي غداً!' 
+              : isUrgent 
+                ? `⚠️ متبقي ${daysRemaining} أيام فقط!`
+                : `⏰ متبقي ${daysRemaining} أيام`,
             body: `تاريخ الانتهاء: ${formattedDate}. جدد اشتراكك للاستمرار في الاستفادة من جميع الخدمات.`,
             data: {
               expires_at: profile.subscription_expires_at,
