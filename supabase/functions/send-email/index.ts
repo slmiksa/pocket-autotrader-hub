@@ -35,33 +35,54 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log(`Sending email to: ${Array.isArray(to) ? to.join(', ') : to}`);
+    const recipients = Array.isArray(to) ? to : [to];
+    console.log(`Sending email to ${recipients.length} recipient(s)`);
     console.log(`Subject: ${subject}`);
 
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: from || "TIFUE SA <noreply@tifue.com>",
-        to: Array.isArray(to) ? to : [to],
-        subject: subject,
-        html: html,
-      }),
-    });
+    // Send each email individually to prevent exposing recipient list
+    const results: { email: string; success: boolean; error?: string }[] = [];
+    
+    for (const recipient of recipients) {
+      try {
+        const response = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${RESEND_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: from || "TIFUE SA <noreply@tifue.com>",
+            to: [recipient],
+            subject: subject,
+            html: html,
+          }),
+        });
 
-    const data = await response.json();
+        const data = await response.json();
 
-    if (!response.ok) {
-      console.error("Resend API error:", data);
-      throw new Error(data.message || "Failed to send email");
+        if (!response.ok) {
+          console.error(`Failed to send to ${recipient}:`, data);
+          results.push({ email: recipient, success: false, error: data.message });
+        } else {
+          results.push({ email: recipient, success: true });
+        }
+      } catch (err: any) {
+        console.error(`Error sending to ${recipient}:`, err);
+        results.push({ email: recipient, success: false, error: err.message });
+      }
     }
 
-    console.log("Email sent successfully:", data);
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.filter(r => !r.success).length;
+    
+    console.log(`Email results: ${successCount} success, ${failCount} failed`);
 
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      sent: successCount, 
+      failed: failCount,
+      total: recipients.length 
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
