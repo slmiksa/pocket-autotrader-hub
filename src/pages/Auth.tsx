@@ -29,15 +29,36 @@ const Auth = () => {
   const [pendingSession, setPendingSession] = useState<any>(null);
   const [resendTimer, setResendTimer] = useState(0);
 
+  // Forgot Password States
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  // Password Recovery States
+  const [showPasswordRecovery, setShowPasswordRecovery] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
+
   useEffect(() => {
+    // Check if this is a password recovery callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const type = urlParams.get('type');
+    
+    if (type === 'recovery') {
+      // User came from password reset email
+      setShowPasswordRecovery(true);
+      return;
+    }
+
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      if (session && !showPasswordRecovery) {
         navigate("/");
       }
     };
     checkUser();
-  }, [navigate]);
+  }, [navigate, showPasswordRecovery]);
 
   // Resend timer countdown
   useEffect(() => {
@@ -204,6 +225,233 @@ const Auth = () => {
     setPendingSession(null);
     setResendTimer(0);
   };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) {
+      toast.error("يرجى إدخال البريد الإلكتروني");
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: `${window.location.origin}/auth?type=recovery`
+      });
+
+      if (error) throw error;
+
+      toast.success("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني");
+      setShowForgotPassword(false);
+      setForgotEmail("");
+    } catch (error: any) {
+      console.error("Error sending reset email:", error);
+      toast.error(error.message || "فشل إرسال رابط إعادة تعيين كلمة المرور");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handlePasswordRecovery = async () => {
+    if (!newPassword || !confirmPassword) {
+      toast.error("يرجى إدخال كلمة المرور وتأكيدها");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("كلمات المرور غير متطابقة");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+      return;
+    }
+
+    setRecoveryLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast.success("تم تغيير كلمة المرور بنجاح! جاري تحويلك...");
+      
+      // Clear URL params
+      window.history.replaceState({}, document.title, '/auth');
+      
+      setTimeout(() => {
+        setShowPasswordRecovery(false);
+        setNewPassword("");
+        setConfirmPassword("");
+        navigate("/");
+      }, 1500);
+    } catch (error: any) {
+      console.error("Error updating password:", error);
+      toast.error(error.message || "فشل تغيير كلمة المرور");
+    } finally {
+      setRecoveryLoading(false);
+    }
+  };
+
+  // Password Recovery Screen (coming from email link)
+  if (showPasswordRecovery) {
+    return (
+      <div 
+        className="min-h-screen relative"
+        style={{
+          backgroundImage: `url(${authBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px]" />
+        
+        <div className="relative z-10">
+          <AnnouncementBanner />
+          <div className="flex flex-col items-center justify-center p-4 min-h-[calc(100vh-56px)]">
+            <Card className="w-full max-w-md bg-slate-900/80 border-slate-800 backdrop-blur-xl">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-lg shadow-emerald-400/20">
+                  <Lock className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl text-white">إنشاء كلمة مرور جديدة</CardTitle>
+                <CardDescription className="text-slate-400">
+                  أدخل كلمة المرور الجديدة لحسابك
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password" className="flex items-center gap-2 text-slate-300">
+                    <Lock className="h-4 w-4" />
+                    كلمة المرور الجديدة
+                  </Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password" className="flex items-center gap-2 text-slate-300">
+                    <Lock className="h-4 w-4" />
+                    تأكيد كلمة المرور
+                  </Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    onKeyPress={(e) => e.key === "Enter" && handlePasswordRecovery()}
+                    className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
+                  />
+                </div>
+
+                {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                  <p className="text-sm text-red-400">كلمات المرور غير متطابقة</p>
+                )}
+
+                <Button
+                  onClick={handlePasswordRecovery}
+                  disabled={recoveryLoading || !newPassword || !confirmPassword || newPassword !== confirmPassword}
+                  className="w-full bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white"
+                  size="lg"
+                >
+                  {recoveryLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    "تغيير كلمة المرور"
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Forgot Password Screen
+  if (showForgotPassword) {
+    return (
+      <div 
+        className="min-h-screen relative"
+        style={{
+          backgroundImage: `url(${authBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px]" />
+        
+        <div className="relative z-10">
+          <AnnouncementBanner />
+          <div className="flex flex-col items-center justify-center p-4 min-h-[calc(100vh-56px)]">
+            <Card className="w-full max-w-md bg-slate-900/80 border-slate-800 backdrop-blur-xl">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-500 shadow-lg shadow-amber-400/20">
+                  <Lock className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl text-white">نسيت كلمة المرور؟</CardTitle>
+                <CardDescription className="text-slate-400">
+                  أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="forgot-email" className="flex items-center gap-2 text-slate-300">
+                    <Mail className="h-4 w-4" />
+                    البريد الإلكتروني
+                  </Label>
+                  <Input
+                    id="forgot-email"
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    onKeyPress={(e) => e.key === "Enter" && handleForgotPassword()}
+                    className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleForgotPassword}
+                  disabled={forgotLoading || !forgotEmail}
+                  className="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white"
+                  size="lg"
+                >
+                  {forgotLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    "إرسال رابط إعادة التعيين"
+                  )}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setForgotEmail("");
+                  }}
+                  disabled={forgotLoading}
+                  className="w-full border-slate-700 text-slate-300 hover:bg-slate-800"
+                >
+                  العودة لتسجيل الدخول
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // 2FA Verification Screen
   if (show2FA) {
@@ -390,6 +638,14 @@ const Auth = () => {
                   size="lg"
                 >
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "تسجيل الدخول"}
+                </Button>
+
+                <Button
+                  variant="link"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="w-full text-slate-400 hover:text-sky-400"
+                >
+                  نسيت كلمة المرور؟
                 </Button>
               </TabsContent>
 
