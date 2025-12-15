@@ -143,6 +143,11 @@ const Auth = () => {
       if (error) throw error;
       
       if (data.session) {
+        // 2FA temporarily disabled - direct login
+        toast.success("تم تسجيل الدخول بنجاح!");
+        navigate("/");
+        
+        /* 2FA CODE - TEMPORARILY DISABLED
         // Store session and send 2FA code
         setPendingSession(data.session);
         await send2FACode(data.user.id);
@@ -151,6 +156,7 @@ const Auth = () => {
         await supabase.auth.signOut();
         
         setShow2FA(true);
+        */
       }
     } catch (error: any) {
       console.error("Error signing in:", error);
