@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { PasswordStrength, isPasswordStrong } from "@/components/ui/password-strength";
 import { TrendingUp, Mail, Lock, User, Shield, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
@@ -337,6 +338,8 @@ const Auth = () => {
                   />
                 </div>
 
+                <PasswordStrength password={newPassword} />
+
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password" className="flex items-center gap-2 text-slate-300">
                     <Lock className="h-4 w-4" />
@@ -359,7 +362,7 @@ const Auth = () => {
 
                 <Button
                   onClick={handlePasswordRecovery}
-                  disabled={recoveryLoading || !newPassword || !confirmPassword || newPassword !== confirmPassword}
+                  disabled={recoveryLoading || !newPassword || !confirmPassword || newPassword !== confirmPassword || !isPasswordStrong(newPassword)}
                   className="w-full bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white"
                   size="lg"
                 >
@@ -698,9 +701,11 @@ const Auth = () => {
                   />
                 </div>
 
+                <PasswordStrength password={password} />
+
                 <Button
                   onClick={handleSignUp}
-                  disabled={loading}
+                  disabled={loading || !isPasswordStrong(password)}
                   className="w-full bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 text-white"
                   size="lg"
                 >
