@@ -16,6 +16,7 @@ import { ReportsManager } from "@/components/admin/ReportsManager";
 import { HeroSlidesManager } from "@/components/admin/HeroSlidesManager";
 import { PushNotificationsManager } from "@/components/admin/PushNotificationsManager";
 import { EmailManager } from "@/components/admin/EmailManager";
+import { ResetPasswordDialog } from "@/components/admin/ResetPasswordDialog";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -27,6 +28,10 @@ const AdminDashboard = () => {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
+
+  // Reset password dialog state
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [selectedUserForReset, setSelectedUserForReset] = useState<{ email: string; userId: string } | null>(null);
 
   // Form state
   const [newCode, setNewCode] = useState("");
@@ -296,28 +301,13 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleResetPassword = async (userEmail: string) => {
+  const handleResetPassword = (userEmail: string, userId: string) => {
     if (!userEmail) {
       toast.error("لا يوجد بريد إلكتروني لهذا المستخدم");
       return;
     }
-
-    if (!confirm(`هل تريد إرسال رابط إعادة تعيين كلمة المرور إلى ${userEmail}؟`)) {
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke('reset-user-password', {
-        body: { user_email: userEmail }
-      });
-
-      if (error) throw error;
-
-      toast.success(`تم إرسال رابط إعادة تعيين كلمة المرور إلى ${userEmail}`);
-    } catch (error: any) {
-      console.error("Error resetting password:", error);
-      toast.error(error.message || "فشل إرسال رابط إعادة تعيين كلمة المرور");
-    }
+    setSelectedUserForReset({ email: userEmail, userId });
+    setResetPasswordOpen(true);
   };
 
   const generateRandomCode = () => {
@@ -763,7 +753,7 @@ const AdminDashboard = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleResetPassword(user.email)}
+                              onClick={() => handleResetPassword(user.email, user.user_id)}
                               disabled={!user.email}
                               className="gap-1"
                             >
@@ -1021,6 +1011,16 @@ const AdminDashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Reset Password Dialog */}
+        {selectedUserForReset && (
+          <ResetPasswordDialog
+            open={resetPasswordOpen}
+            onOpenChange={setResetPasswordOpen}
+            userEmail={selectedUserForReset.email}
+            userId={selectedUserForReset.userId}
+          />
+        )}
       </main>
     </div>
   );
