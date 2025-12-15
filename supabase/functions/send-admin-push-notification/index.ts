@@ -142,7 +142,7 @@ serve(async (req) => {
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
 
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    const { data: { user }, error: authError } = await authClient.auth.getUser(token);
     
     console.log("Auth result:", { userId: user?.id, error: authError?.message });
     
