@@ -186,7 +186,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: "TIFUE SA <noreply@tifue.com>",
+        from: "TIFUE SA <support@tifue.com>",
         to: [email],
         subject: "🔐 إعادة تعيين كلمة المرور - TIFUE SA",
         html: emailHtml,
