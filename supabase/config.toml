@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.fetch-economic-calendar]
 verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
