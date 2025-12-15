@@ -67,13 +67,34 @@ serve(async (req) => {
       throw new Error('فشل في إنشاء رابط إعادة التعيين');
     }
 
-    const resetLink = resetData.properties?.action_link;
+    let resetLink = resetData.properties?.action_link;
     
     if (!resetLink) {
       throw new Error('فشل في الحصول على رابط إعادة التعيين');
     }
 
-    console.log('Reset link generated successfully');
+    // Replace the default Supabase domain with the actual custom domain
+    // The link comes in format: https://supabase-project.supabase.co/auth/v1/verify?...&redirect_to=...
+    // We need to extract the token and build our own redirect URL
+    const url = new URL(resetLink);
+    const token = url.searchParams.get('token');
+    const type = url.searchParams.get('type');
+    
+    if (token && type) {
+      // Build the correct redirect URL with the token in the hash
+      resetLink = `https://tifue.com/auth#access_token=${token}&type=recovery`;
+    } else {
+      // Fallback: just replace the redirect_to parameter
+      resetLink = resetLink.replace(
+        /pocket-autotrader-hub\.lovable\.app/g, 
+        'tifue.com'
+      ).replace(
+        /redirect_to=[^&]*/,
+        'redirect_to=' + encodeURIComponent('https://tifue.com/auth?type=recovery')
+      );
+    }
+
+    console.log('Reset link generated successfully:', resetLink);
 
     // Send email with custom template using Resend
     const emailHtml = `
