@@ -223,6 +223,7 @@ export const EmailManager = () => {
 
   const sendEmails = async () => {
     const emails = getSelectedEmails();
+
     if (emails.length === 0) {
       toast.error("يرجى اختيار مستخدم واحد على الأقل");
       return;
@@ -232,26 +233,41 @@ export const EmailManager = () => {
       return;
     }
 
+    // Avoid sending huge batches in a single request (providers often limit recipients per email)
+    const MAX_RECIPIENTS_PER_BATCH = 25;
+    const batches: string[][] = [];
+    for (let i = 0; i < emails.length; i += MAX_RECIPIENTS_PER_BATCH) {
+      batches.push(emails.slice(i, i + MAX_RECIPIENTS_PER_BATCH));
+    }
+
     setSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-email', {
-        body: {
-          to: emails,
-          subject,
-          html: emailContent
+      let sentTotal = 0;
+
+      for (const batch of batches) {
+        const { error } = await supabase.functions.invoke("send-email", {
+          body: {
+            to: batch,
+            subject,
+            html: emailContent,
+          },
+        });
+
+        if (error) {
+          throw error;
         }
-      });
 
-      if (error) throw error;
+        sentTotal += batch.length;
+      }
 
-      toast.success(`تم إرسال الإيميل إلى ${emails.length} مستخدم بنجاح`);
+      toast.success(`تم إرسال الإيميل إلى ${sentTotal} مستخدم بنجاح`);
       setSelectedUsers([]);
       setSubject("");
       setEmailContent("");
       setUseTemplate(null);
     } catch (error: any) {
       console.error("Error sending emails:", error);
-      toast.error("فشل إرسال الإيميلات");
+      toast.error(error?.message || "فشل إرسال الإيميلات");
     } finally {
       setSending(false);
     }
