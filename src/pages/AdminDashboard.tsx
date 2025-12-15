@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Plus, Trash2, Copy, Check, ArrowRight, LogOut, Loader2 } from "lucide-react";
+import { Shield, Plus, Trash2, Copy, Check, ArrowRight, LogOut, Loader2, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ProfessionalSignalsManager } from "@/components/admin/ProfessionalSignalsManager";
@@ -293,6 +293,30 @@ const AdminDashboard = () => {
     } catch (error: any) {
       console.error("Error toggling supply demand analyzer:", error);
       toast.error("فشل تحديث حالة محلل العرض والطلب");
+    }
+  };
+
+  const handleResetPassword = async (userEmail: string) => {
+    if (!userEmail) {
+      toast.error("لا يوجد بريد إلكتروني لهذا المستخدم");
+      return;
+    }
+
+    if (!confirm(`هل تريد إرسال رابط إعادة تعيين كلمة المرور إلى ${userEmail}؟`)) {
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-user-password', {
+        body: { user_email: userEmail }
+      });
+
+      if (error) throw error;
+
+      toast.success(`تم إرسال رابط إعادة تعيين كلمة المرور إلى ${userEmail}`);
+    } catch (error: any) {
+      console.error("Error resetting password:", error);
+      toast.error(error.message || "فشل إرسال رابط إعادة تعيين كلمة المرور");
     }
   };
 
@@ -674,6 +698,7 @@ const AdminDashboard = () => {
                       <TableHead>تحليل الصورة</TableHead>
                       <TableHead>محلل العرض والطلب</TableHead>
                       <TableHead>توصيات المحترفين</TableHead>
+                      <TableHead>الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -732,6 +757,18 @@ const AdminDashboard = () => {
                               className={user.professional_signals_enabled ? "bg-primary hover:bg-primary/90" : "border-muted-foreground/30"}
                             >
                               {user.professional_signals_enabled ? "مفعل" : "معطل"}
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleResetPassword(user.email)}
+                              disabled={!user.email}
+                              className="gap-1"
+                            >
+                              <KeyRound className="h-3 w-3" />
+                              إعادة تعيين
                             </Button>
                           </TableCell>
                         </TableRow>
