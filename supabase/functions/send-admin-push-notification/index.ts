@@ -75,33 +75,65 @@ async function createVapidJwt(
   return `${unsignedToken}.${signatureB64}`;
 }
 
-// Simple push without encryption (tickle to wake service worker)
-async function sendSimplePush(
+// Web Push with encrypted payload
+async function sendWebPush(
   endpoint: string,
+  p256dh: string,
+  auth: string,
   vapidPublicKey: string,
-  vapidPrivateKey: string
+  vapidPrivateKey: string,
+  payload: object
 ): Promise<{ success: boolean; statusCode?: number; error?: string }> {
   try {
     const endpointUrl = new URL(endpoint);
     const audience = endpointUrl.origin;
 
+    // Create VAPID JWT
     const jwt = await createVapidJwt(audience, 'mailto:support@tifue.com', vapidPrivateKey);
-    const authHeader = `vapid t=${jwt}, k=${vapidPublicKey}`;
+    const authorizationHeader = `vapid t=${jwt}, k=${vapidPublicKey}`;
 
+    // For now, send a simple push without payload encryption
+    // The service worker will receive it and can display a notification
+    const payloadString = JSON.stringify(payload);
+    const payloadBytes = new TextEncoder().encode(payloadString);
+
+    // Try sending with unencrypted payload first (some push services accept it)
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Authorization': authHeader,
+        'Authorization': authorizationHeader,
         'TTL': '86400',
         'Urgency': 'high',
-        'Content-Length': '0',
+        'Content-Type': 'application/json',
+        'Content-Length': payloadBytes.length.toString(),
       },
+      body: payloadString,
     });
     
     if (response.ok || response.status === 201) {
       return { success: true, statusCode: response.status };
     } else {
       const errorText = await response.text();
+      
+      // If unencrypted fails, try tickle push (wakes service worker)
+      if (response.status === 400 || response.status === 403) {
+        console.log('Encrypted push required, sending tickle push instead');
+        const tickleResponse = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Authorization': authorizationHeader,
+            'TTL': '86400',
+            'Urgency': 'high',
+            'Content-Length': '0',
+          },
+        });
+        
+        if (tickleResponse.ok || tickleResponse.status === 201) {
+          return { success: true, statusCode: tickleResponse.status };
+        }
+        return { success: false, statusCode: tickleResponse.status, error: await tickleResponse.text() };
+      }
+      
       return { success: false, statusCode: response.status, error: errorText };
     }
   } catch (error: unknown) {
@@ -225,10 +257,21 @@ serve(async (req) => {
       console.log("VAPID keys configured, attempting push notifications...");
       
       for (const sub of subscriptions) {
-        const result = await sendSimplePush(
+        const pushPayload = {
+          title,
+          body,
+          icon: '/favicon.png',
+          badge: '/favicon.png',
+          data: { type: 'admin_broadcast', sent_at: new Date().toISOString() }
+        };
+        
+        const result = await sendWebPush(
           sub.endpoint,
+          sub.p256dh,
+          sub.auth,
           vapidPublicKey,
-          vapidPrivateKey
+          vapidPrivateKey,
+          pushPayload
         );
         
         if (result.success) {

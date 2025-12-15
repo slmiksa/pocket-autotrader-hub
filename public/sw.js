@@ -45,17 +45,32 @@ self.addEventListener('push', (event) => {
     vibrate: [400, 100, 400, 100, 600],
   };
 
+  let hasPayload = false;
+  
   try {
     if (event.data) {
-      const payload = event.data.json();
-      data = { ...data, ...payload };
-      console.log('Push payload:', payload);
+      const textData = event.data.text();
+      if (textData && textData.length > 0) {
+        try {
+          const payload = JSON.parse(textData);
+          data = { ...data, ...payload };
+          hasPayload = true;
+          console.log('Push payload:', payload);
+        } catch (e) {
+          data.body = textData;
+          hasPayload = true;
+        }
+      }
     }
   } catch (e) {
     console.log('Error parsing push data:', e);
-    if (event.data) {
-      data.body = event.data.text();
-    }
+  }
+
+  // If no payload (tickle push), show a generic notification
+  if (!hasPayload) {
+    console.log('Tickle push received - showing generic notification');
+    data.title = '🔔 لديك إشعار جديد';
+    data.body = 'افتح التطبيق لعرض التفاصيل';
   }
 
   // Set appropriate icon based on notification type
@@ -72,6 +87,8 @@ self.addEventListener('push', (event) => {
     tag = 'price-alert-' + Date.now();
   } else if (data.data?.type === 'professional_signal') {
     tag = 'signal-' + Date.now();
+  } else if (data.data?.type === 'admin_broadcast') {
+    tag = 'admin-' + Date.now();
   }
 
   const options = {
