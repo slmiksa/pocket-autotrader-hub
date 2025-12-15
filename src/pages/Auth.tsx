@@ -723,6 +723,7 @@ const Auth = () => {
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "تسجيل الدخول"}
                 </Button>
 
+                {/* نسيت كلمة المرور - معطل مؤقتاً
                 <Button
                   variant="link"
                   onClick={() => setShowForgotPassword(true)}
@@ -730,6 +731,7 @@ const Auth = () => {
                 >
                   نسيت كلمة المرور؟
                 </Button>
+                */}
               </TabsContent>
 
               <TabsContent value="signup" className="space-y-4">
