@@ -6,36 +6,106 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Simple Web Push using fetch directly to push services
-async function sendWebPushSimple(
-  subscription: { endpoint: string; p256dh: string; auth: string },
-  payload: string,
+// Function to convert base64url to Uint8Array
+function base64UrlToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Function to convert Uint8Array to base64url
+function uint8ArrayToBase64Url(uint8Array: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < uint8Array.byteLength; i++) {
+    binary += String.fromCharCode(uint8Array[i]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// Create VAPID JWT token
+async function createVapidJwt(
+  audience: string,
+  subject: string,
+  privateKeyBase64: string
+): Promise<string> {
+  const header = { alg: 'ES256', typ: 'JWT' };
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    aud: audience,
+    exp: now + 12 * 60 * 60,
+    sub: subject
+  };
+
+  const headerBytes = new TextEncoder().encode(JSON.stringify(header));
+  const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
+  
+  const headerB64 = uint8ArrayToBase64Url(headerBytes);
+  const payloadB64 = uint8ArrayToBase64Url(payloadBytes);
+  const unsignedToken = `${headerB64}.${payloadB64}`;
+
+  // Import the private key
+  const privateKeyBytes = base64UrlToUint8Array(privateKeyBase64);
+  
+  // Create ArrayBuffer from Uint8Array for importKey
+  const keyBuffer = new ArrayBuffer(privateKeyBytes.length);
+  const keyView = new Uint8Array(keyBuffer);
+  keyView.set(privateKeyBytes);
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyBuffer,
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    false,
+    ['sign']
+  );
+
+  // Sign the token
+  const signatureBuffer = await crypto.subtle.sign(
+    { name: 'ECDSA', hash: 'SHA-256' },
+    cryptoKey,
+    new TextEncoder().encode(unsignedToken)
+  );
+
+  const signatureB64 = uint8ArrayToBase64Url(new Uint8Array(signatureBuffer));
+  return `${unsignedToken}.${signatureB64}`;
+}
+
+// Simple push without encryption (tickle to wake service worker)
+async function sendSimplePush(
+  endpoint: string,
   vapidPublicKey: string,
   vapidPrivateKey: string
 ): Promise<{ success: boolean; statusCode?: number; error?: string }> {
   try {
-    // For FCM and Apple Push, we can use a simpler approach
-    // The payload is sent as JSON body
-    const response = await fetch(subscription.endpoint, {
+    const endpointUrl = new URL(endpoint);
+    const audience = endpointUrl.origin;
+
+    const jwt = await createVapidJwt(audience, 'mailto:support@tifue.com', vapidPrivateKey);
+    const authHeader = `vapid t=${jwt}, k=${vapidPublicKey}`;
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Authorization': authHeader,
         'TTL': '86400',
+        'Urgency': 'high',
+        'Content-Length': '0',
       },
-      body: payload
     });
     
     if (response.ok || response.status === 201) {
-      console.log(`Push sent to: ${subscription.endpoint.substring(0, 60)}...`);
       return { success: true, statusCode: response.status };
     } else {
       const errorText = await response.text();
-      console.warn(`Push response: ${response.status} - ${errorText.substring(0, 100)}`);
       return { success: false, statusCode: response.status, error: errorText };
     }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error("Error sending push:", errorMessage);
     return { success: false, error: errorMessage };
   }
 }
@@ -84,7 +154,7 @@ serve(async (req) => {
       throw new Error("Title and body are required");
     }
 
-    console.log(`Sending notification: "${title}" to ${targetUserIds?.length > 0 ? targetUserIds.length + ' users' : 'all users'}`);
+    console.log(`Admin sending notification: "${title}" to ${targetUserIds?.length > 0 ? targetUserIds.length + ' users' : 'all users'}`);
 
     // Get subscriptions based on target
     let subscriptionsQuery = supabase.from("push_subscriptions").select("*");
@@ -102,82 +172,73 @@ serve(async (req) => {
 
     console.log(`Found ${subscriptions?.length || 0} push subscriptions`);
 
-    if (!subscriptions || subscriptions.length === 0) {
-      return new Response(
-        JSON.stringify({ success: true, sentCount: 0, message: "No subscriptions found" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     // Get unique user IDs
-    const uniqueUserIds = [...new Set(subscriptions.map(s => s.user_id))];
+    const uniqueUserIds = subscriptions && subscriptions.length > 0 
+      ? [...new Set(subscriptions.map(s => s.user_id))]
+      : [];
     
-    // Create notifications in database for realtime delivery
-    const notifications = uniqueUserIds.map(userId => ({
-      user_id: userId,
-      title,
-      body,
-      type: "admin_broadcast",
-      data: { 
-        sent_at: new Date().toISOString(),
-        push_sent: true 
-      },
-    }));
+    // Create notifications in database for realtime delivery (this triggers the app notification)
+    if (uniqueUserIds.length > 0) {
+      const notifications = uniqueUserIds.map(userId => ({
+        user_id: userId,
+        title,
+        body,
+        type: "admin_broadcast",
+        data: { 
+          sent_at: new Date().toISOString(),
+          push_sent: true,
+          show_browser_notification: true
+        },
+      }));
 
-    const { error: notifError } = await supabase
-      .from("user_notifications")
-      .insert(notifications);
+      const { error: notifError } = await supabase
+        .from("user_notifications")
+        .insert(notifications);
 
-    if (notifError) {
-      console.error("Error inserting notifications:", notifError);
+      if (notifError) {
+        console.error("Error inserting notifications:", notifError);
+      } else {
+        console.log(`Created ${notifications.length} notification records for realtime delivery`);
+      }
     }
 
-    console.log(`Created ${notifications.length} notification records for realtime delivery`);
-
-    // Try to send Web Push notifications
+    // Attempt to send Web Push notifications
     let pushSuccessCount = 0;
     let pushFailCount = 0;
     
-    const payload = JSON.stringify({
-      title,
-      body,
-      icon: '/favicon.png',
-      badge: '/favicon.png',
-      data: {
-        url: '/',
-        type: 'admin_broadcast',
-        timestamp: Date.now()
-      }
-    });
-    
-    // Send push to all subscriptions (try each endpoint)
-    for (const sub of subscriptions) {
-      const result = await sendWebPushSimple(
-        { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
-        payload,
-        vapidPublicKey || '',
-        vapidPrivateKey || ''
-      );
+    if (vapidPublicKey && vapidPrivateKey && subscriptions && subscriptions.length > 0) {
+      console.log("VAPID keys configured, attempting push notifications...");
       
-      if (result.success) {
-        pushSuccessCount++;
-      } else {
-        pushFailCount++;
+      for (const sub of subscriptions) {
+        const result = await sendSimplePush(
+          sub.endpoint,
+          vapidPublicKey,
+          vapidPrivateKey
+        );
         
-        // If subscription is expired (410) or invalid (404), remove it
-        if (result.statusCode === 410 || result.statusCode === 404) {
-          console.log(`Removing expired subscription: ${sub.id}`);
-          await supabase.from("push_subscriptions").delete().eq("id", sub.id);
+        if (result.success) {
+          pushSuccessCount++;
+          console.log(`Push sent to: ${sub.endpoint.substring(0, 50)}...`);
+        } else {
+          pushFailCount++;
+          console.log(`Push failed for ${sub.endpoint.substring(0, 40)}: ${result.statusCode} - ${result.error?.substring(0, 50)}`);
+          
+          // If subscription is expired (410) or invalid (404), remove it
+          if (result.statusCode === 410 || result.statusCode === 404) {
+            console.log(`Removing expired subscription: ${sub.id}`);
+            await supabase.from("push_subscriptions").delete().eq("id", sub.id);
+          }
         }
       }
+      
+      console.log(`Push results: ${pushSuccessCount} success, ${pushFailCount} failed`);
+    } else {
+      console.log("VAPID keys not configured or no subscriptions - relying on realtime notifications only");
     }
-    
-    console.log(`Push results: ${pushSuccessCount} success, ${pushFailCount} failed`);
 
     // Send email notifications for users who have email notifications enabled
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    if (resendApiKey) {
-      // Get profiles with email notifications enabled
+    if (resendApiKey && uniqueUserIds.length > 0) {
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, email, email_notifications_enabled')
@@ -231,11 +292,11 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         sentCount: uniqueUserIds.length,
-        totalSubscriptions: subscriptions.length,
+        totalSubscriptions: subscriptions?.length || 0,
         uniqueUsers: uniqueUserIds.length,
         pushSuccessCount,
         pushFailCount,
-        message: `تم إرسال الإشعار إلى ${uniqueUserIds.length} مستخدم (${pushSuccessCount} اشتراك نجح، ${pushFailCount} فشل)`,
+        message: `تم إرسال الإشعار إلى ${uniqueUserIds.length} مستخدم`,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
