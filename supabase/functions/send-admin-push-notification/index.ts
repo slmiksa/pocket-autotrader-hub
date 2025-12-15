@@ -134,9 +134,15 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    
-    // Use service role client to verify the token
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    // Verify the token using a dedicated client that has NO session persistence.
+    // NOTE: auth.getUser(jwt) expects a JWT; it must not rely on cookie/local session state.
+    const authClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
     
     console.log("Auth result:", { userId: user?.id, error: authError?.message });
     
