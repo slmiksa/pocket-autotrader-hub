@@ -125,15 +125,22 @@ serve(async (req) => {
 
     // Verify admin
     const authHeader = req.headers.get("Authorization");
+    console.log("Auth header present:", !!authHeader);
+    
     if (!authHeader) {
       throw new Error("No authorization header");
     }
 
     const token = authHeader.replace("Bearer ", "");
+    
+    // Use service role client to verify the token
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
+    console.log("Auth result:", { userId: user?.id, error: authError?.message });
+    
     if (authError || !user) {
-      throw new Error("Unauthorized");
+      console.error("Auth error details:", authError);
+      throw new Error("Unauthorized - invalid token");
     }
 
     const { data: roleData, error: roleError } = await supabase
