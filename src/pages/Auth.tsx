@@ -9,8 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, Mail, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
-import { useEmail } from "@/hooks/useEmail";
 import { InstallAppButton } from "@/components/InstallAppButton";
+import { useEmail } from "@/hooks/useEmail";
 import authBackground from "@/assets/auth-background.jpg";
 
 const Auth = () => {
@@ -20,7 +20,7 @@ const Auth = () => {
   const [nickname, setNickname] = useState("");
   const [loading, setLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
-  const { sendWelcomeEmail } = useEmail();
+  const { sendRegistrationEmail } = useEmail();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -56,8 +56,8 @@ const Auth = () => {
           nickname: nickname.trim()
         }).eq('user_id', data.user.id);
         
-        // Send welcome email
-        sendWelcomeEmail(email, nickname.trim());
+        // Send registration email
+        sendRegistrationEmail(email, nickname.trim());
       }
       if (data.session) {
         navigate("/");
