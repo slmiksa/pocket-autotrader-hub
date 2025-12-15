@@ -45,7 +45,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: from || "Arabot <onboarding@resend.dev>",
+        from: from || "Arabot <noreply@tifue.com>",
         to: Array.isArray(to) ? to : [to],
         subject: subject,
         html: html,

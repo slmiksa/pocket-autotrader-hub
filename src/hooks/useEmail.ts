@@ -12,7 +12,7 @@ interface SendEmailParams {
 export const useEmail = () => {
   const [loading, setLoading] = useState(false);
 
-  const sendEmail = async ({ to, subject, html, from }: SendEmailParams) => {
+  const sendEmail = async ({ to, subject, html, from = "Arabot <noreply@tifue.com>" }: SendEmailParams) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-email', {
