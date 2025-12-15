@@ -42,16 +42,59 @@ export const useEmail = () => {
         <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
           <p style="font-size: 20px; color: #333; margin-bottom: 20px;">أهلاً ${name || 'بك'}،</p>
           <p style="color: #555; line-height: 1.8; font-size: 16px;">
-            شكراً لتسجيلك في منصة <strong>TIFUE SA</strong>! نحن سعداء بانضمامك إلى أفضل منصة ذكاء اصطناعي للتداول في الشرق الأوسط.
+            شكراً لانضمامك إلى منصة <strong>TIFUE SA</strong>! نحن سعداء بوجودك معنا.
           </p>
-          <p style="color: #555; line-height: 1.8; font-size: 16px;">
+          
+          <p style="color: #555; line-height: 1.8; font-size: 16px; margin-top: 20px;">
+            <strong>استمتع بجميع مميزات المنصة:</strong>
+          </p>
+          
+          <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #0ea5e9;">
+            <p style="color: #0369a1; font-weight: bold; margin: 0 0 15px 0;">📋 الميزات الأساسية:</p>
+            <ul style="color: #555; line-height: 2; margin: 0; padding-right: 20px; font-size: 14px;">
+              <li>✅ توصيات تداول مباشرة</li>
+              <li>✅ سجل خاص لإحصاء صفقاتك</li>
+              <li>✅ دعم فني متواصل</li>
+            </ul>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #f59e0b;">
+            <p style="color: #92400e; font-weight: bold; margin: 0 0 15px 0;">📊 محلل العرض والطلب:</p>
+            <ul style="color: #555; line-height: 2; margin: 0; padding-right: 20px; font-size: 14px;">
+              <li>⭐ تحديد مناطق العرض والطلب</li>
+              <li>⭐ إعداد صفقات مقترحة آلياً</li>
+              <li>⭐ تحليل قوة المناطق</li>
+            </ul>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #10b981;">
+            <p style="color: #065f46; font-weight: bold; margin: 0 0 15px 0;">📈 تحليل الشارت المباشر:</p>
+            <ul style="color: #555; line-height: 2; margin: 0; padding-right: 20px; font-size: 14px;">
+              <li>⭐ شارت TradingView مباشر</li>
+              <li>⭐ تحليل بالذكاء الاصطناعي</li>
+              <li>⭐ توصيات CALL/PUT من الشارت</li>
+            </ul>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #fdf4ff 0%, #f5d0fe 100%); padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #a855f7;">
+            <p style="color: #6b21a8; font-weight: bold; margin: 0 0 15px 0;">🌍 الأسواق المدعومة:</p>
+            <p style="color: #555; font-size: 14px; margin: 0;">الفوركس • الأسهم • العملات الرقمية • المعادن</p>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #eab308;">
+            <p style="color: #854d0e; font-weight: bold; margin: 0;">👑 + توصيات المحترفين الحصرية</p>
+          </div>
+          
+          <p style="color: #555; line-height: 1.8; font-size: 16px; margin-top: 25px;">
             لتفعيل حسابك والاستمتاع بجميع الخدمات، يرجى شراء إحدى باقاتنا المميزة.
           </p>
+          
           <div style="text-align: center; margin: 35px 0;">
             <a href="https://tifue.com/subscription" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 18px 50px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 18px; display: inline-block; box-shadow: 0 4px 15px rgba(102,126,234,0.4);">
               شراء الباقة الآن
             </a>
           </div>
+          
           <p style="color: #888; font-size: 14px; text-align: center;">
             لديك استفسار؟ تواصل معنا في أي وقت!
           </p>
