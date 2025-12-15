@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Mail, Send, Users, Search, CheckCircle2, Loader2 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Mail, Send, Users, Search, CheckCircle2, Loader2, UserCheck, UserX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -16,7 +17,10 @@ interface User {
   email: string | null;
   nickname?: string | null;
   created_at: string;
+  subscription_expires_at: string | null;
 }
+
+type FilterType = "all" | "active" | "inactive";
 
 export const EmailManager = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -24,6 +28,7 @@ export const EmailManager = () => {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<FilterType>("all");
   
   // Email form
   const [subject, setSubject] = useState("");
@@ -35,7 +40,7 @@ export const EmailManager = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id, email, nickname, created_at")
+        .select("user_id, email, nickname, created_at, subscription_expires_at")
         .not("email", "is", null)
         .order("created_at", { ascending: false });
 
@@ -49,10 +54,29 @@ export const EmailManager = () => {
     }
   };
 
-  const filteredUsers = users.filter(user => 
+  const isUserActive = (user: User): boolean => {
+    if (!user.subscription_expires_at) return false;
+    return new Date(user.subscription_expires_at) > new Date();
+  };
+
+  const getFilteredByStatus = () => {
+    switch (filterType) {
+      case "active":
+        return users.filter(isUserActive);
+      case "inactive":
+        return users.filter(user => !isUserActive(user));
+      default:
+        return users;
+    }
+  };
+
+  const filteredUsers = getFilteredByStatus().filter(user => 
     user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.nickname?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const activeCount = users.filter(isUserActive).length;
+  const inactiveCount = users.filter(user => !isUserActive(user)).length;
 
   const toggleUserSelection = (userId: string) => {
     setSelectedUsers(prev => 
@@ -301,22 +325,42 @@ export const EmailManager = () => {
 
             {/* User Selection */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label>اختر الأعضاء ({selectedUsers.length} مختار)</Label>
-                <div className="flex gap-2">
-                  <div className="relative">
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="بحث..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pr-9 w-48"
-                    />
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <Label>اختر الأعضاء ({selectedUsers.length} مختار)</Label>
+                  <div className="flex gap-2">
+                    <div className="relative">
+                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="بحث..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pr-9 w-48"
+                      />
+                    </div>
+                    <Button variant="outline" size="sm" onClick={selectAllUsers}>
+                      {selectedUsers.length === filteredUsers.length && filteredUsers.length > 0 ? "إلغاء الكل" : "تحديد الكل"}
+                    </Button>
                   </div>
-                  <Button variant="outline" size="sm" onClick={selectAllUsers}>
-                    {selectedUsers.length === filteredUsers.length ? "إلغاء الكل" : "تحديد الكل"}
-                  </Button>
                 </div>
+
+                {/* Filter Tabs */}
+                <Tabs value={filterType} onValueChange={(v) => { setFilterType(v as FilterType); setSelectedUsers([]); }}>
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="all" className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      الكل ({users.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="active" className="flex items-center gap-2">
+                      <UserCheck className="h-4 w-4" />
+                      مفعّل ({activeCount})
+                    </TabsTrigger>
+                    <TabsTrigger value="inactive" className="flex items-center gap-2">
+                      <UserX className="h-4 w-4" />
+                      غير مفعّل ({inactiveCount})
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
 
               <div className="border rounded-lg max-h-64 overflow-auto">
@@ -326,6 +370,7 @@ export const EmailManager = () => {
                       <TableHead className="w-12"></TableHead>
                       <TableHead>البريد الإلكتروني</TableHead>
                       <TableHead>الاسم</TableHead>
+                      <TableHead>الحالة</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -343,8 +388,22 @@ export const EmailManager = () => {
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.nickname || "-"}</TableCell>
+                        <TableCell>
+                          {isUserActive(user) ? (
+                            <Badge variant="default" className="bg-green-600">مفعّل</Badge>
+                          ) : (
+                            <Badge variant="secondary">غير مفعّل</Badge>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
+                    {filteredUsers.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                          لا يوجد أعضاء
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>
