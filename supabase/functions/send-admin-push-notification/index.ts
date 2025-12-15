@@ -6,62 +6,37 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Web Push helper functions
-function base64UrlDecode(str: string): Uint8Array {
-  const padding = "=".repeat((4 - (str.length % 4)) % 4);
-  const base64 = (str + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
-
-function base64UrlEncode(buffer: Uint8Array): string {
-  let binary = "";
-  for (let i = 0; i < buffer.length; i++) {
-    binary += String.fromCharCode(buffer[i]);
-  }
-  return btoa(binary)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
-async function sendPushNotification(
+// Simple Web Push using fetch directly to push services
+async function sendWebPushSimple(
   subscription: { endpoint: string; p256dh: string; auth: string },
   payload: string,
   vapidPublicKey: string,
   vapidPrivateKey: string
-): Promise<boolean> {
+): Promise<{ success: boolean; statusCode?: number; error?: string }> {
   try {
-    const endpoint = new URL(subscription.endpoint);
-    const audience = `${endpoint.protocol}//${endpoint.host}`;
+    // For FCM and Apple Push, we can use a simpler approach
+    // The payload is sent as JSON body
+    const response = await fetch(subscription.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'TTL': '86400',
+      },
+      body: payload
+    });
     
-    // Create JWT for VAPID
-    const header = { typ: "JWT", alg: "ES256" };
-    const now = Math.floor(Date.now() / 1000);
-    const jwtPayload = {
-      aud: audience,
-      exp: now + 12 * 60 * 60,
-      sub: "mailto:admin@pocket-autotrader.app"
-    };
-    
-    const headerB64 = base64UrlEncode(new TextEncoder().encode(JSON.stringify(header)));
-    const payloadB64 = base64UrlEncode(new TextEncoder().encode(JSON.stringify(jwtPayload)));
-    const unsignedToken = `${headerB64}.${payloadB64}`;
-    
-    // For now, we'll use a simpler approach - just POST to the endpoint
-    // Real Web Push requires complex ECDH encryption which is hard in Deno
-    // Instead, we'll trigger browser notification via the service worker polling
-    
-    console.log(`Would send push to: ${subscription.endpoint.substring(0, 50)}...`);
-    
-    return true;
-  } catch (error) {
-    console.error("Error in sendPushNotification:", error);
-    return false;
+    if (response.ok || response.status === 201) {
+      console.log(`Push sent to: ${subscription.endpoint.substring(0, 60)}...`);
+      return { success: true, statusCode: response.status };
+    } else {
+      const errorText = await response.text();
+      console.warn(`Push response: ${response.status} - ${errorText.substring(0, 100)}`);
+      return { success: false, statusCode: response.status, error: errorText };
+    }
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error("Error sending push:", errorMessage);
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -73,6 +48,8 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY");
+    const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY");
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -135,7 +112,7 @@ serve(async (req) => {
     // Get unique user IDs
     const uniqueUserIds = [...new Set(subscriptions.map(s => s.user_id))];
     
-    // Create notifications in database
+    // Create notifications in database for realtime delivery
     const notifications = uniqueUserIds.map(userId => ({
       user_id: userId,
       title,
@@ -156,6 +133,46 @@ serve(async (req) => {
     }
 
     console.log(`Created ${notifications.length} notification records for realtime delivery`);
+
+    // Try to send Web Push notifications
+    let pushSuccessCount = 0;
+    let pushFailCount = 0;
+    
+    const payload = JSON.stringify({
+      title,
+      body,
+      icon: '/favicon.png',
+      badge: '/favicon.png',
+      data: {
+        url: '/',
+        type: 'admin_broadcast',
+        timestamp: Date.now()
+      }
+    });
+    
+    // Send push to all subscriptions (try each endpoint)
+    for (const sub of subscriptions) {
+      const result = await sendWebPushSimple(
+        { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
+        payload,
+        vapidPublicKey || '',
+        vapidPrivateKey || ''
+      );
+      
+      if (result.success) {
+        pushSuccessCount++;
+      } else {
+        pushFailCount++;
+        
+        // If subscription is expired (410) or invalid (404), remove it
+        if (result.statusCode === 410 || result.statusCode === 404) {
+          console.log(`Removing expired subscription: ${sub.id}`);
+          await supabase.from("push_subscriptions").delete().eq("id", sub.id);
+        }
+      }
+    }
+    
+    console.log(`Push results: ${pushSuccessCount} success, ${pushFailCount} failed`);
 
     // Send email notifications for users who have email notifications enabled
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
@@ -216,7 +233,9 @@ serve(async (req) => {
         sentCount: uniqueUserIds.length,
         totalSubscriptions: subscriptions.length,
         uniqueUsers: uniqueUserIds.length,
-        message: `تم إرسال الإشعار إلى ${uniqueUserIds.length} مستخدم`,
+        pushSuccessCount,
+        pushFailCount,
+        message: `تم إرسال الإشعار إلى ${uniqueUserIds.length} مستخدم (${pushSuccessCount} اشتراك نجح، ${pushFailCount} فشل)`,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
