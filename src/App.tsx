@@ -10,7 +10,7 @@ import Auth from "./pages/Auth";
 import SubscriptionCheck from "./pages/SubscriptionCheck";
 import ImageAnalysis from "./pages/ImageAnalysis";
 import ProfessionalSignals from "./pages/ProfessionalSignals";
-import News from "./pages/News";
+
 import LiveChart from "./pages/LiveChart";
 import SupplyDemandAnalyzer from "./pages/SupplyDemandAnalyzer";
 import Markets from "./pages/Markets";
@@ -50,7 +50,7 @@ const App = () => (
           <Route path="/subscription" element={<SubscriptionCheck />} />
           <Route path="/image-analysis" element={<ImageAnalysis />} />
           <Route path="/professional-signals" element={<ProfessionalSignals />} />
-          <Route path="/news" element={<News />} />
+          
           <Route path="/live-chart" element={<LiveChart />} />
           <Route path="/supply-demand" element={<SupplyDemandAnalyzer />} />
           <Route path="/markets" element={<Markets />} />
