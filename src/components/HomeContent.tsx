@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, BarChart3, Target, Shield, Zap, LineChart, ArrowUpRight, CheckCircle2, Star, Users, Award, Sparkles, Calendar } from "lucide-react";
+import { TrendingUp, BarChart3, Target, Shield, Zap, LineChart, ArrowUpRight, CheckCircle2, Star, Users, Award, Sparkles, Calendar, Image } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { useRef, useEffect, useState } from "react";
@@ -101,6 +101,24 @@ export const HomeContent = () => {
     iconBg: "bg-amber-500/20",
     iconColor: "text-amber-400",
     borderColor: "border-amber-500/30"
+  }, {
+    icon: Calendar,
+    title: "التقويم الاقتصادي",
+    description: "متابعة الأحداث الاقتصادية المؤثرة على الأسواق",
+    path: "/economic-calendar",
+    gradient: "from-rose-500/20 to-rose-600/5",
+    iconBg: "bg-rose-500/20",
+    iconColor: "text-rose-400",
+    borderColor: "border-rose-500/30"
+  }, {
+    icon: Image,
+    title: "تحليل الأسواق",
+    description: "تحليل الشارتات بالذكاء الاصطناعي",
+    path: "/image-analysis",
+    gradient: "from-purple-500/20 to-purple-600/5",
+    iconBg: "bg-purple-500/20",
+    iconColor: "text-purple-400",
+    borderColor: "border-purple-500/30"
   }];
 
   const platformFeatures = [{
@@ -221,7 +239,7 @@ export const HomeContent = () => {
           <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
         </div>
         
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
           {features.map((feature) => (
             <Card 
               key={feature.path} 
