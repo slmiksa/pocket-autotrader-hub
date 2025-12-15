@@ -289,13 +289,15 @@ const Auth = () => {
 
     setForgotLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-        redirectTo: `${window.location.origin}/auth?type=recovery`
+      // Use custom edge function for better email template
+      const { data, error } = await supabase.functions.invoke('request-password-reset', {
+        body: { email: forgotEmail }
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      toast.success("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني");
+      toast.success(data?.message || "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني");
       setShowForgotPassword(false);
       setForgotEmail("");
     } catch (error: any) {
