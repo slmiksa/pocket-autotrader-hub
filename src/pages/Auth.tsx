@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, Mail, Lock, User } from "lucide-react";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { TrendingUp, Mail, Lock, User, Shield, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { InstallAppButton } from "@/components/InstallAppButton";
@@ -21,6 +22,12 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const { sendRegistrationEmail } = useEmail();
+  
+  // 2FA States
+  const [show2FA, setShow2FA] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [pendingSession, setPendingSession] = useState<any>(null);
+  const [resendTimer, setResendTimer] = useState(0);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -31,6 +38,14 @@ const Auth = () => {
     };
     checkUser();
   }, [navigate]);
+
+  // Resend timer countdown
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
 
   const handleSignUp = async () => {
     if (!email || !password) {
@@ -56,7 +71,6 @@ const Auth = () => {
           nickname: nickname.trim()
         }).eq('user_id', data.user.id);
         
-        // Send registration email
         sendRegistrationEmail(email, nickname.trim());
       }
       if (data.session) {
@@ -74,6 +88,25 @@ const Auth = () => {
     }
   };
 
+  const send2FACode = async (userId: string) => {
+    try {
+      const response = await supabase.functions.invoke('send-2fa-code', {
+        body: { email, userId }
+      });
+      
+      if (response.error) {
+        throw new Error(response.error.message || "فشل في إرسال رمز التحقق");
+      }
+      
+      toast.success("تم إرسال رمز التحقق إلى بريدك الإلكتروني");
+      setResendTimer(60);
+    } catch (error: any) {
+      console.error("Error sending 2FA code:", error);
+      toast.error(error.message || "فشل في إرسال رمز التحقق");
+      throw error;
+    }
+  };
+
   const handleSignIn = async () => {
     if (!email || !password) {
       toast.error("يرجى إدخال البريد الإلكتروني وكلمة المرور");
@@ -86,8 +119,16 @@ const Auth = () => {
         password
       });
       if (error) throw error;
+      
       if (data.session) {
-        navigate("/");
+        // Store session and send 2FA code
+        setPendingSession(data.session);
+        await send2FACode(data.user.id);
+        
+        // Sign out immediately - user needs to verify 2FA first
+        await supabase.auth.signOut();
+        
+        setShow2FA(true);
       }
     } catch (error: any) {
       console.error("Error signing in:", error);
@@ -96,6 +137,167 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  const handleVerify2FA = async () => {
+    if (otpCode.length !== 6) {
+      toast.error("يرجى إدخال رمز التحقق المكون من 6 أرقام");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const response = await supabase.functions.invoke('verify-2fa-code', {
+        body: { email, code: otpCode }
+      });
+      
+      if (response.error || !response.data?.valid) {
+        toast.error(response.data?.error || "رمز التحقق غير صحيح");
+        setLoading(false);
+        return;
+      }
+      
+      // Re-authenticate and complete login
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
+      toast.success("تم تسجيل الدخول بنجاح!");
+      navigate("/");
+    } catch (error: any) {
+      console.error("Error verifying 2FA:", error);
+      toast.error(error.message || "فشل التحقق");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend2FA = async () => {
+    if (resendTimer > 0) return;
+    
+    setLoading(true);
+    try {
+      // Need to re-authenticate to get user ID
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
+      await send2FACode(data.user.id);
+      await supabase.auth.signOut();
+      setOtpCode("");
+    } catch (error: any) {
+      console.error("Error resending 2FA:", error);
+      toast.error(error.message || "فشل في إعادة إرسال الرمز");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBack = () => {
+    setShow2FA(false);
+    setOtpCode("");
+    setPendingSession(null);
+    setResendTimer(0);
+  };
+
+  // 2FA Verification Screen
+  if (show2FA) {
+    return (
+      <div 
+        className="min-h-screen relative"
+        style={{
+          backgroundImage: `url(${authBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px]" />
+        
+        <div className="relative z-10">
+          <AnnouncementBanner />
+          <div className="flex flex-col items-center justify-center p-4 min-h-[calc(100vh-56px)]">
+            <Card className="w-full max-w-md bg-slate-900/80 border-slate-800 backdrop-blur-xl">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 shadow-lg shadow-emerald-400/20">
+                  <Shield className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl text-white">التحقق بخطوتين</CardTitle>
+                <CardDescription className="text-slate-400">
+                  تم إرسال رمز التحقق إلى بريدك الإلكتروني
+                </CardDescription>
+                <p className="text-sky-400 text-sm mt-2 font-medium">{email}</p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex flex-col items-center gap-4">
+                  <Label className="text-slate-300 text-center">أدخل رمز التحقق المكون من 6 أرقام</Label>
+                  <InputOTP
+                    value={otpCode}
+                    onChange={setOtpCode}
+                    maxLength={6}
+                    disabled={loading}
+                  >
+                    <InputOTPGroup className="gap-2">
+                      <InputOTPSlot index={0} className="bg-slate-800 border-slate-700 text-white text-xl h-14 w-12" />
+                      <InputOTPSlot index={1} className="bg-slate-800 border-slate-700 text-white text-xl h-14 w-12" />
+                      <InputOTPSlot index={2} className="bg-slate-800 border-slate-700 text-white text-xl h-14 w-12" />
+                      <InputOTPSlot index={3} className="bg-slate-800 border-slate-700 text-white text-xl h-14 w-12" />
+                      <InputOTPSlot index={4} className="bg-slate-800 border-slate-700 text-white text-xl h-14 w-12" />
+                      <InputOTPSlot index={5} className="bg-slate-800 border-slate-700 text-white text-xl h-14 w-12" />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+
+                <Button
+                  onClick={handleVerify2FA}
+                  disabled={loading || otpCode.length !== 6}
+                  className="w-full bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white"
+                  size="lg"
+                >
+                  {loading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <>
+                      تأكيد الدخول
+                      <ArrowRight className="mr-2 h-5 w-5" />
+                    </>
+                  )}
+                </Button>
+
+                <div className="flex flex-col gap-3 pt-4 border-t border-slate-800">
+                  <Button
+                    variant="ghost"
+                    onClick={handleResend2FA}
+                    disabled={loading || resendTimer > 0}
+                    className="text-slate-400 hover:text-white"
+                  >
+                    {resendTimer > 0 
+                      ? `إعادة الإرسال بعد ${resendTimer} ثانية`
+                      : "إعادة إرسال الرمز"
+                    }
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={handleBack}
+                    disabled={loading}
+                    className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                  >
+                    العودة لتسجيل الدخول
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -107,13 +309,11 @@ const Auth = () => {
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Overlay for better readability */}
       <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[2px]" />
       
       <div className="relative z-10">
         <AnnouncementBanner />
       <div className="flex flex-col items-center justify-center p-4 min-h-[calc(100vh-56px)]">
-        {/* Welcome Message */}
         <div className="text-center mb-6 max-w-md animate-fade-in">
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-3 animate-scale-in" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>
             مرحباً بك عميلنا الجديد
@@ -178,13 +378,18 @@ const Auth = () => {
                   />
                 </div>
 
+                <div className="flex items-center gap-2 text-sm text-slate-400 bg-slate-800/30 p-3 rounded-lg">
+                  <Shield className="h-4 w-4 text-emerald-400" />
+                  <span>محمي بالتحقق بخطوتين عبر البريد الإلكتروني</span>
+                </div>
+
                 <Button
                   onClick={handleSignIn}
                   disabled={loading}
                   className="w-full bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 text-white"
                   size="lg"
                 >
-                  تسجيل الدخول
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "تسجيل الدخول"}
                 </Button>
               </TabsContent>
 
@@ -243,12 +448,11 @@ const Auth = () => {
                   className="w-full bg-gradient-to-r from-sky-400 to-sky-500 hover:from-sky-500 hover:to-sky-600 text-white"
                   size="lg"
                 >
-                  إنشاء حساب
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "إنشاء حساب"}
                 </Button>
               </TabsContent>
             </Tabs>
 
-            {/* Install App Button */}
             <div className="mt-6 pt-4 border-t border-slate-800">
               <InstallAppButton
                 variant="outline"
