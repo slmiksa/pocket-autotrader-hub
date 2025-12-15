@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, Mail, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import { useEmail } from "@/hooks/useEmail";
 import { InstallAppButton } from "@/components/InstallAppButton";
 import authBackground from "@/assets/auth-background.jpg";
 
@@ -19,6 +20,7 @@ const Auth = () => {
   const [nickname, setNickname] = useState("");
   const [loading, setLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+  const { sendWelcomeEmail } = useEmail();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -53,6 +55,9 @@ const Auth = () => {
         await supabase.from('profiles').update({
           nickname: nickname.trim()
         }).eq('user_id', data.user.id);
+        
+        // Send welcome email
+        sendWelcomeEmail(email, nickname.trim());
       }
       if (data.session) {
         navigate("/");
