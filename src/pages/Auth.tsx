@@ -42,23 +42,49 @@ const Auth = () => {
   const [recoveryLoading, setRecoveryLoading] = useState(false);
 
   useEffect(() => {
-    // Check if this is a password recovery callback
-    const urlParams = new URLSearchParams(window.location.search);
-    const type = urlParams.get('type');
-    
-    if (type === 'recovery') {
-      // User came from password reset email
-      setShowPasswordRecovery(true);
-      return;
-    }
+    // Handle password recovery from email link
+    const handleRecovery = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const type = urlParams.get('type');
+      
+      // Check for recovery type in URL
+      if (type === 'recovery') {
+        setShowPasswordRecovery(true);
+        return;
+      }
 
-    const checkUser = async () => {
+      // Check for hash fragment (Supabase sends tokens in hash)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const tokenType = hashParams.get('type');
+      
+      if (accessToken && tokenType === 'recovery') {
+        // Set the session from the hash params
+        const refreshToken = hashParams.get('refresh_token');
+        
+        if (refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (!error) {
+            setShowPasswordRecovery(true);
+            // Clean up the URL
+            window.history.replaceState({}, document.title, '/auth?type=recovery');
+            return;
+          }
+        }
+      }
+
+      // Normal auth check
       const { data: { session } } = await supabase.auth.getSession();
       if (session && !showPasswordRecovery) {
         navigate("/");
       }
     };
-    checkUser();
+    
+    handleRecovery();
   }, [navigate, showPasswordRecovery]);
 
   // Resend timer countdown
