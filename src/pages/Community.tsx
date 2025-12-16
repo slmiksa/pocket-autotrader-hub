@@ -667,37 +667,68 @@ export default function Community() {
       </div>
 
       {/* Create Post Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-lg bg-slate-900 border-slate-800">
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog} modal={true}>
+        <DialogContent className="max-w-lg bg-slate-900 border-slate-800 z-[100]">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-purple-400" />
               مشاركة جديدة
             </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              شارك تحليلاتك وأفكارك مع مجتمع المتداولين
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <Input placeholder="العنوان" value={title} onChange={e => setTitle(e.target.value)} maxLength={100} className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-500" />
-            <Textarea placeholder="اكتب محتوى مشاركتك هنا..." value={content} onChange={e => setContent(e.target.value)} rows={5} maxLength={2000} className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-500 resize-none" />
+            <Input 
+              placeholder="العنوان" 
+              value={title} 
+              onChange={e => setTitle(e.target.value)} 
+              maxLength={100} 
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-500" 
+            />
+            <Textarea 
+              placeholder="اكتب محتوى مشاركتك هنا..." 
+              value={content} 
+              onChange={e => setContent(e.target.value)} 
+              rows={5} 
+              maxLength={2000} 
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-purple-500 resize-none" 
+            />
             <div>
-              {imagePreview ? <div className="relative rounded-lg overflow-hidden">
+              {imagePreview ? (
+                <div className="relative rounded-lg overflow-hidden">
                   <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover" />
-                  <Button size="icon" variant="destructive" className="absolute top-2 left-2 h-8 w-8" onClick={() => {
-                  setImageFile(null);
-                  setImagePreview(null);
-                }}>
+                  <Button 
+                    size="icon" 
+                    variant="destructive" 
+                    className="absolute top-2 left-2 h-8 w-8" 
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreview(null);
+                    }}
+                  >
                     <X className="h-4 w-4" />
                   </Button>
-                </div> : <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:bg-slate-800/50 hover:border-purple-500/50 transition-all">
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:bg-slate-800/50 hover:border-purple-500/50 transition-all">
                   <ImageIcon className="h-8 w-8 text-slate-500 mb-2" />
                   <span className="text-sm text-slate-500">اضغط لإضافة صورة</span>
                   <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                </label>}
+                </label>
+              )}
             </div>
-            <Button onClick={handleCreatePost} disabled={creating || uploading || !title.trim() || !content.trim()} className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
-              {creating || uploading ? <>
+            <Button 
+              onClick={handleCreatePost} 
+              disabled={creating || uploading || !title.trim() || !content.trim()} 
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            >
+              {creating || uploading ? (
+                <>
                   <Loader2 className="h-4 w-4 animate-spin ml-2" />
                   {uploading ? 'جاري رفع الصورة...' : 'جاري النشر...'}
-                </> : 'نشر المشاركة'}
+                </>
+              ) : 'نشر المشاركة'}
             </Button>
           </div>
         </DialogContent>

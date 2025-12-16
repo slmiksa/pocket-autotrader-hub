@@ -91,6 +91,10 @@ const headerNavItems = [{
   icon: Binary,
   path: "/binary-options"
 }, {
+  label: "المجتمع",
+  icon: Users,
+  path: "/community"
+}, {
   label: "حسابي",
   icon: User,
   path: "/profile"
