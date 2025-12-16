@@ -18,6 +18,11 @@ const navItems = [{
   path: "/",
   color: "default"
 }, {
+  label: "نظام التوصيات الذكي",
+  icon: Target,
+  path: "/smart-recovery",
+  color: "purple"
+}, {
   label: "التقويم الاقتصادي",
   icon: Calendar,
   path: "/economic-calendar",
@@ -70,6 +75,10 @@ const headerNavItems = [{
   label: "الرئيسية",
   icon: Home,
   path: "/"
+}, {
+  label: "نظام التوصيات الذكي",
+  icon: Target,
+  path: "/smart-recovery"
 }, {
   label: "التقويم الاقتصادي",
   icon: Calendar,
