@@ -17,6 +17,7 @@ import { HeroSlidesManager } from "@/components/admin/HeroSlidesManager";
 import { PushNotificationsManager } from "@/components/admin/PushNotificationsManager";
 import { EmailManager } from "@/components/admin/EmailManager";
 import { ResetPasswordDialog } from "@/components/admin/ResetPasswordDialog";
+import { BannedUsersManager } from "@/components/admin/BannedUsersManager";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -779,6 +780,9 @@ const AdminDashboard = () => {
 
         {/* Community Reports Management */}
         <ReportsManager />
+
+        {/* Banned Users Management */}
+        <BannedUsersManager />
 
         {/* Admin Account Settings */}
         <Card>
