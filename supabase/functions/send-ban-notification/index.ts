@@ -159,7 +159,15 @@ const handler = async (req: Request): Promise<Response> => {
     if (!res.ok) {
       const errorData = await res.text();
       console.error("Resend API error:", errorData);
-      throw new Error(`Failed to send email: ${errorData}`);
+      // Don't throw - return success with warning so ban still works
+      return new Response(JSON.stringify({ 
+        success: true, 
+        warning: "Email could not be sent - domain not verified on Resend",
+        details: errorData 
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     const emailResponse = await res.json();
