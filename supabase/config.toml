@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.send-ban-notification]
 verify_jwt = false
+
+[functions.analyze-smart-recovery]
+verify_jwt = false

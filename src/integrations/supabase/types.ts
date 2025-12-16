@@ -653,6 +653,78 @@ export type Database = {
         }
         Relationships: []
       }
+      smart_recovery_trades: {
+        Row: {
+          created_at: string
+          cvd_status: string | null
+          direction: string
+          ema_status: string | null
+          entry_price: number
+          entry_reason: string | null
+          entry_time: string
+          exit_price: number | null
+          exit_time: string | null
+          id: string
+          lot_size: number
+          notes: string | null
+          profit_loss: number | null
+          reinforcement_price: number | null
+          result: string | null
+          status: string
+          symbol: string
+          updated_at: string
+          user_id: string
+          vwap_status: string | null
+          was_reinforced: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          cvd_status?: string | null
+          direction: string
+          ema_status?: string | null
+          entry_price: number
+          entry_reason?: string | null
+          entry_time?: string
+          exit_price?: number | null
+          exit_time?: string | null
+          id?: string
+          lot_size?: number
+          notes?: string | null
+          profit_loss?: number | null
+          reinforcement_price?: number | null
+          result?: string | null
+          status?: string
+          symbol: string
+          updated_at?: string
+          user_id: string
+          vwap_status?: string | null
+          was_reinforced?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          cvd_status?: string | null
+          direction?: string
+          ema_status?: string | null
+          entry_price?: number
+          entry_reason?: string | null
+          entry_time?: string
+          exit_price?: number | null
+          exit_time?: string | null
+          id?: string
+          lot_size?: number
+          notes?: string | null
+          profit_loss?: number | null
+          reinforcement_price?: number | null
+          result?: string | null
+          status?: string
+          symbol?: string
+          updated_at?: string
+          user_id?: string
+          vwap_status?: string | null
+          was_reinforced?: boolean | null
+        }
+        Relationships: []
+      }
       subscription_codes: {
         Row: {
           code: string
