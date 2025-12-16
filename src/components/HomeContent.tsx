@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, BarChart3, Target, Shield, Zap, LineChart, ArrowUpRight, CheckCircle2, Star, Users, Award, Sparkles, Calendar, Image } from "lucide-react";
+import { TrendingUp, BarChart3, Target, Shield, Zap, LineChart, ArrowUpRight, CheckCircle2, Star, Users, Award, Sparkles, Calendar, Image, Brain } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { useRef, useEffect, useState } from "react";
@@ -383,6 +383,22 @@ export const HomeContent = () => {
               <p className="text-sm text-muted-foreground mt-1">تابع الأحداث الاقتصادية ومواعيد الأسواق</p>
             </div>
             <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-blue-400 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-all duration-300" 
+          onClick={() => navigate("/smart-recovery")}
+        >
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="rounded-xl bg-cyan-500/20 p-4 group-hover:bg-cyan-500/30 transition-colors">
+              <Brain className="h-7 w-7 text-cyan-400" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-foreground text-lg">Smart Recovery System</h4>
+              <p className="text-sm text-muted-foreground mt-1">نظام تداول محافظ لاسترجاع رأس المال - MT5</p>
+            </div>
+            <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-cyan-400 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
           </CardContent>
         </Card>
       </div>
