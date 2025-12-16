@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, XCircle, Activity, BarChart3, Clock, Target, Shield, BookOpen, RefreshCw, Volume2, VolumeX, Trash2, Bell, Eye } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, XCircle, Activity, BarChart3, Clock, Target, Shield, BookOpen, RefreshCw, Volume2, VolumeX, Trash2, Bell, Eye, Search, Coins, DollarSign, BarChart2, Gem } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMarketAnalysis } from '@/hooks/useMarketAnalysis';
 import { useSmartRecoveryTrades } from '@/hooks/useSmartRecoveryTrades';
 import { 
@@ -20,6 +22,51 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { GlobalHeader } from '@/components/GlobalHeader';
 
+// Market symbols organized by category
+const MARKET_SYMBOLS = {
+  forex: [
+    { symbol: 'EURUSD', name: 'يورو/دولار', nameEn: 'EUR/USD' },
+    { symbol: 'GBPUSD', name: 'جنيه/دولار', nameEn: 'GBP/USD' },
+    { symbol: 'USDJPY', name: 'دولار/ين', nameEn: 'USD/JPY' },
+    { symbol: 'AUDUSD', name: 'استرالي/دولار', nameEn: 'AUD/USD' },
+    { symbol: 'USDCAD', name: 'دولار/كندي', nameEn: 'USD/CAD' },
+    { symbol: 'USDCHF', name: 'دولار/فرنك', nameEn: 'USD/CHF' },
+    { symbol: 'NZDUSD', name: 'نيوزلندي/دولار', nameEn: 'NZD/USD' },
+    { symbol: 'EURGBP', name: 'يورو/جنيه', nameEn: 'EUR/GBP' },
+  ],
+  crypto: [
+    { symbol: 'BTCUSDT', name: 'بيتكوين', nameEn: 'Bitcoin' },
+    { symbol: 'ETHUSDT', name: 'ايثريوم', nameEn: 'Ethereum' },
+    { symbol: 'BNBUSDT', name: 'BNB', nameEn: 'BNB' },
+    { symbol: 'XRPUSDT', name: 'ريبل', nameEn: 'XRP' },
+    { symbol: 'SOLUSDT', name: 'سولانا', nameEn: 'Solana' },
+    { symbol: 'ADAUSDT', name: 'كاردانو', nameEn: 'Cardano' },
+    { symbol: 'DOGEUSDT', name: 'دوجكوين', nameEn: 'Dogecoin' },
+    { symbol: 'DOTUSDT', name: 'بولكادوت', nameEn: 'Polkadot' },
+  ],
+  commodities: [
+    { symbol: 'XAUUSD', name: 'الذهب', nameEn: 'Gold' },
+    { symbol: 'XAGUSD', name: 'الفضة', nameEn: 'Silver' },
+    { symbol: 'WTIUSD', name: 'النفط', nameEn: 'Crude Oil' },
+  ],
+  stocks: [
+    { symbol: 'AAPL', name: 'أبل', nameEn: 'Apple' },
+    { symbol: 'GOOGL', name: 'جوجل', nameEn: 'Google' },
+    { symbol: 'MSFT', name: 'مايكروسوفت', nameEn: 'Microsoft' },
+    { symbol: 'AMZN', name: 'أمازون', nameEn: 'Amazon' },
+    { symbol: 'TSLA', name: 'تسلا', nameEn: 'Tesla' },
+    { symbol: 'META', name: 'ميتا', nameEn: 'Meta' },
+    { symbol: 'NVDA', name: 'انفيديا', nameEn: 'Nvidia' },
+  ],
+};
+
+const CATEGORY_INFO = {
+  forex: { label: 'فوركس', icon: DollarSign, color: 'text-blue-400' },
+  crypto: { label: 'عملات رقمية', icon: Coins, color: 'text-amber-400' },
+  commodities: { label: 'معادن', icon: Gem, color: 'text-yellow-400' },
+  stocks: { label: 'أسهم', icon: BarChart2, color: 'text-purple-400' },
+};
+
 const SmartRecoverySystem = () => {
   const navigate = useNavigate();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -31,9 +78,12 @@ const SmartRecoverySystem = () => {
   });
   const [selectedSymbol, setSelectedSymbol] = useState('XAUUSD');
   const [selectedTimeframe, setSelectedTimeframe] = useState('15m');
-  const [soundEnabled, setSoundEnabled] = useState(false); // Disabled by default
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState<string>('commodities');
+  const [showSymbolPicker, setShowSymbolPicker] = useState(false);
 
   // Check authentication
   useEffect(() => {
@@ -90,6 +140,32 @@ const SmartRecoverySystem = () => {
 
   const { trades, loading: tradesLoading, deleteTrade, getStats } = useSmartRecoveryTrades();
   const stats = getStats();
+
+  // Filter symbols based on search query
+  const filteredSymbols = useMemo(() => {
+    const categorySymbols = MARKET_SYMBOLS[activeCategory as keyof typeof MARKET_SYMBOLS] || [];
+    
+    if (!searchQuery.trim()) {
+      return categorySymbols;
+    }
+    
+    const allSymbols = Object.entries(MARKET_SYMBOLS).flatMap(([cat, symbols]) => 
+      symbols.map(s => ({ ...s, category: cat }))
+    );
+    
+    const query = searchQuery.toLowerCase();
+    return allSymbols.filter(s => 
+      s.symbol.toLowerCase().includes(query) || 
+      s.name.includes(query) || 
+      s.nameEn.toLowerCase().includes(query)
+    );
+  }, [searchQuery, activeCategory]);
+
+  // Get current symbol info
+  const currentSymbolInfo = useMemo(() => {
+    const allSymbols = Object.values(MARKET_SYMBOLS).flat();
+    return allSymbols.find(s => s.symbol === selectedSymbol) || { symbol: selectedSymbol, name: selectedSymbol, nameEn: selectedSymbol };
+  }, [selectedSymbol]);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -183,133 +259,182 @@ const SmartRecoverySystem = () => {
       </div>
 
       <div className="container mx-auto px-3 py-6 space-y-5 max-w-4xl">
-        {/* Symbol & Timeframe Selection */}
-        <div className="flex flex-wrap gap-3 items-center justify-between bg-slate-900/50 p-4 rounded-xl border border-slate-800/50">
-          <div className="flex gap-3">
-            <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
-              <SelectTrigger className="w-[130px] bg-slate-800/80 border-slate-700/50 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="XAUUSD">XAUUSD</SelectItem>
-                <SelectItem value="EURUSD">EURUSD</SelectItem>
-                <SelectItem value="BTCUSDT">BTCUSDT</SelectItem>
-                <SelectItem value="ETHUSDT">ETHUSDT</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
-              <SelectTrigger className="w-[90px] bg-slate-800/80 border-slate-700/50 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="15m">M15</SelectItem>
-                <SelectItem value="30m">M30</SelectItem>
-                <SelectItem value="1h">H1</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetchAnalysis()}
-            disabled={analysisLoading}
-            className="bg-slate-800/50 border-slate-700/50 text-slate-300 hover:bg-slate-700/50"
-          >
-            <RefreshCw className={`h-4 w-4 ml-2 ${analysisLoading ? 'animate-spin' : ''}`} />
-            تحديث
-          </Button>
-        </div>
+        {/* Symbol Selection with Search */}
+        <Card className="bg-slate-900/80 border-slate-700/50">
+          <CardContent className="p-3 space-y-3">
+            {/* Search and Timeframe */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Input
+                  placeholder="ابحث عن رمز..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pr-10 bg-slate-800/80 border-slate-600 text-white placeholder:text-slate-500"
+                />
+              </div>
+              <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
+                <SelectTrigger className="w-[80px] bg-slate-800/80 border-slate-600 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-600">
+                  <SelectItem value="15m">M15</SelectItem>
+                  <SelectItem value="30m">M30</SelectItem>
+                  <SelectItem value="1h">H1</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => refetchAnalysis()}
+                disabled={analysisLoading}
+                className="bg-slate-800/50 border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                <RefreshCw className={`h-4 w-4 ${analysisLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+
+            {/* Category Tabs */}
+            {!searchQuery && (
+              <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+                <TabsList className="w-full bg-slate-800/50 p-1 h-auto">
+                  {Object.entries(CATEGORY_INFO).map(([key, info]) => {
+                    const Icon = info.icon;
+                    return (
+                      <TabsTrigger 
+                        key={key} 
+                        value={key}
+                        className={`flex-1 text-xs py-2 data-[state=active]:bg-slate-700 ${info.color}`}
+                      >
+                        <Icon className="w-3 h-3 ml-1" />
+                        {info.label}
+                      </TabsTrigger>
+                    );
+                  })}
+                </TabsList>
+              </Tabs>
+            )}
+
+            {/* Symbols Grid */}
+            <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
+              {filteredSymbols.map((sym) => (
+                <Button
+                  key={sym.symbol}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedSymbol(sym.symbol);
+                    setSearchQuery('');
+                  }}
+                  className={`justify-start h-auto py-2 px-3 ${
+                    selectedSymbol === sym.symbol 
+                      ? 'bg-primary/20 border border-primary/50 text-primary' 
+                      : 'bg-slate-800/50 hover:bg-slate-700/50 text-white border border-slate-700/30'
+                  }`}
+                >
+                  <div className="text-right w-full">
+                    <div className="font-bold text-xs">{sym.symbol}</div>
+                    <div className="text-[10px] text-slate-400">{sym.name}</div>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Market Status Dashboard */}
-        <Card className="bg-gradient-to-br from-slate-900/80 to-slate-900/50 border-slate-800/50 overflow-hidden">
-          <CardHeader className="pb-2 border-b border-slate-800/50">
+        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700 overflow-hidden shadow-xl">
+          <CardHeader className="pb-2 border-b border-slate-700">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2 text-white">
-                <BarChart3 className="w-4 h-4 text-primary" />
-                {selectedSymbol}
-                {analysisLoading && <RefreshCw className="w-3 h-3 animate-spin text-slate-500" />}
+              <CardTitle className="text-base flex items-center gap-2 text-white">
+                <BarChart3 className="w-5 h-5 text-cyan-400" />
+                <span className="font-bold">{selectedSymbol}</span>
+                <span className="text-slate-400 text-xs">({currentSymbolInfo.name})</span>
+                {analysisLoading && <RefreshCw className="w-3 h-3 animate-spin text-cyan-400" />}
               </CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3 pt-3">
+          <CardContent className="space-y-4 pt-4">
             {analysis ? (
               <>
                 {/* Main Signal - BUY or SELL */}
                 <div 
-                  className={`rounded-xl p-4 text-center cursor-pointer transition-all active:scale-95 ${
+                  className={`rounded-2xl p-5 text-center cursor-pointer transition-all active:scale-95 shadow-lg ${
                     analysis.signalType === 'BUY' 
-                      ? 'bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 border-2 border-emerald-500/50' 
-                      : 'bg-gradient-to-br from-red-500/30 to-red-600/20 border-2 border-red-500/50'
+                      ? 'bg-gradient-to-br from-green-600 to-green-800 border-2 border-green-400' 
+                      : 'bg-gradient-to-br from-red-600 to-red-800 border-2 border-red-400'
                   }`}
                   onClick={triggerManualAlert}
                 >
-                  <div className="flex items-center justify-center gap-3 mb-2">
+                  <div className="flex items-center justify-center gap-3 mb-3">
                     {analysis.signalType === 'BUY' ? (
-                      <TrendingUp className="w-8 h-8 text-emerald-400" />
+                      <TrendingUp className="w-10 h-10 text-white" />
                     ) : (
-                      <TrendingDown className="w-8 h-8 text-red-400" />
+                      <TrendingDown className="w-10 h-10 text-white" />
                     )}
-                    <span className={`text-3xl font-black ${analysis.signalType === 'BUY' ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <span className="text-4xl font-black text-white drop-shadow-lg">
                       {analysis.signalType === 'BUY' ? 'شراء' : 'بيع'}
                     </span>
                   </div>
-                  <div className="text-2xl font-bold text-white mb-1">
-                    {analysis.currentPrice.toFixed(analysis.currentPrice > 100 ? 1 : 4)}
+                  <div className="text-3xl font-bold text-white mb-1">
+                    {analysis.currentPrice.toFixed(analysis.currentPrice > 100 ? 2 : 5)}
                   </div>
                   {analysis.priceChange !== undefined && (
-                    <div className={`text-sm font-medium ${analysis.priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <div className={`inline-flex items-center gap-1 text-lg font-bold px-3 py-1 rounded-full ${
+                      analysis.priceChange >= 0 ? 'bg-green-400/30 text-green-200' : 'bg-red-400/30 text-red-200'
+                    }`}>
                       {analysis.priceChange >= 0 ? '▲' : '▼'} {Math.abs(analysis.priceChange).toFixed(2)}%
                     </div>
                   )}
-                  <div className="text-[10px] text-slate-500 mt-2">اضغط للتنبيه الصوتي</div>
+                  <div className="text-xs text-white/70 mt-3">🔔 اضغط للتنبيه الصوتي</div>
                 </div>
 
                 {/* Compact Status Grid */}
                 <div className="grid grid-cols-4 gap-2">
-                  <div className="bg-slate-800/50 rounded-lg p-2 text-center border border-slate-700/30">
-                    <div className="text-[10px] text-slate-500">الاتجاه</div>
-                    <div className={`text-xs font-bold ${getTrendColor(analysis.trend)}`}>
-                      {analysis.trend === 'bullish' ? '↑' : analysis.trend === 'bearish' ? '↓' : '→'}
+                  <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
+                    <div className="text-[10px] text-cyan-400 font-medium mb-1">الاتجاه</div>
+                    <div className={`text-lg font-black ${analysis.trend === 'bullish' ? 'text-green-400' : analysis.trend === 'bearish' ? 'text-red-400' : 'text-yellow-400'}`}>
+                      {analysis.trend === 'bullish' ? '↑ صاعد' : analysis.trend === 'bearish' ? '↓ هابط' : '→ عرضي'}
                     </div>
                   </div>
-                  <div className="bg-slate-800/50 rounded-lg p-2 text-center border border-slate-700/30">
-                    <div className="text-[10px] text-slate-500">CVD</div>
-                    <div className={`text-xs font-bold ${analysis.cvdStatus === 'rising' ? 'text-emerald-400' : analysis.cvdStatus === 'falling' ? 'text-red-400' : 'text-amber-400'}`}>
+                  <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
+                    <div className="text-[10px] text-cyan-400 font-medium mb-1">CVD</div>
+                    <div className={`text-lg font-black ${analysis.cvdStatus === 'rising' ? 'text-green-400' : analysis.cvdStatus === 'falling' ? 'text-red-400' : 'text-yellow-400'}`}>
                       {analysis.cvdStatus === 'rising' ? '↑' : analysis.cvdStatus === 'falling' ? '↓' : '→'}
                     </div>
                   </div>
-                  <div className="bg-slate-800/50 rounded-lg p-2 text-center border border-slate-700/30">
-                    <div className="text-[10px] text-slate-500">EMA</div>
-                    <div className={`text-xs font-bold ${analysis.priceAboveEMA ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {analysis.priceAboveEMA ? 'فوق' : 'تحت'}
+                  <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
+                    <div className="text-[10px] text-cyan-400 font-medium mb-1">EMA</div>
+                    <div className={`text-lg font-black ${analysis.priceAboveEMA ? 'text-green-400' : 'text-red-400'}`}>
+                      {analysis.priceAboveEMA ? '✓ فوق' : '✗ تحت'}
                     </div>
                   </div>
-                  <div className="bg-slate-800/50 rounded-lg p-2 text-center border border-slate-700/30">
-                    <div className="text-[10px] text-slate-500">VWAP</div>
-                    <div className={`text-xs font-bold ${analysis.nearVWAP ? 'text-emerald-400' : 'text-amber-400'}`}>
-                      {analysis.nearVWAP ? 'قريب' : 'بعيد'}
+                  <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
+                    <div className="text-[10px] text-cyan-400 font-medium mb-1">VWAP</div>
+                    <div className={`text-lg font-black ${analysis.nearVWAP ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {analysis.nearVWAP ? '✓ قريب' : '⚠ بعيد'}
                     </div>
                   </div>
                 </div>
 
                 {/* Price Levels - Compact */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-slate-800/40 rounded-lg p-2 text-center border border-slate-700/30">
-                    <div className="text-[10px] text-slate-500">EMA 200</div>
-                    <div className="font-bold text-sm text-white">{analysis.ema200.toFixed(analysis.ema200 > 100 ? 1 : 4)}</div>
+                  <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
+                    <div className="text-[10px] text-cyan-400 font-medium">EMA 200</div>
+                    <div className="font-bold text-lg text-white">{analysis.ema200.toFixed(analysis.ema200 > 100 ? 2 : 5)}</div>
                   </div>
-                  <div className="bg-slate-800/40 rounded-lg p-2 text-center border border-slate-700/30">
-                    <div className="text-[10px] text-slate-500">VWAP</div>
-                    <div className="font-bold text-sm text-white">{analysis.vwap.toFixed(analysis.vwap > 100 ? 1 : 4)}</div>
+                  <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
+                    <div className="text-[10px] text-cyan-400 font-medium">VWAP</div>
+                    <div className="font-bold text-lg text-white">{analysis.vwap.toFixed(analysis.vwap > 100 ? 2 : 5)}</div>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="text-center py-8">
-                <RefreshCw className="w-10 h-10 mx-auto mb-3 animate-spin text-primary/50" />
-                <p className="text-white font-medium mb-1">جاري تحليل السوق...</p>
-                <p className="text-slate-500 text-xs">جلب بيانات من Binance API</p>
-                <p className="text-slate-600 text-[10px] mt-2">قد يستغرق التحليل بضع ثوانٍ</p>
+              <div className="text-center py-10 bg-slate-800/50 rounded-xl border border-slate-700">
+                <RefreshCw className="w-12 h-12 mx-auto mb-4 animate-spin text-cyan-400" />
+                <p className="text-white text-lg font-bold mb-2">جاري تحليل السوق...</p>
+                <p className="text-cyan-400 text-sm">جلب بيانات من Binance API</p>
+                <p className="text-slate-500 text-xs mt-2">قد يستغرق التحليل بضع ثوانٍ بسبب تحميل البيانات</p>
               </div>
             )}
           </CardContent>
@@ -318,30 +443,30 @@ const SmartRecoverySystem = () => {
         {/* Statistics */}
         {user && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card className="bg-slate-900/50 border-slate-800/50">
+            <Card className="bg-slate-800 border-slate-600">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-white">{stats.total}</div>
-                <div className="text-xs text-slate-500 mt-1">إجمالي التوصيات</div>
+                <div className="text-3xl font-black text-cyan-400">{stats.total}</div>
+                <div className="text-xs text-slate-400 mt-1 font-medium">إجمالي التوصيات</div>
               </CardContent>
             </Card>
-            <Card className="bg-slate-900/50 border-slate-800/50">
+            <Card className="bg-slate-800 border-slate-600">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-emerald-400">{stats.winRate}%</div>
-                <div className="text-xs text-slate-500 mt-1">نسبة النجاح</div>
+                <div className="text-3xl font-black text-green-400">{stats.winRate}%</div>
+                <div className="text-xs text-slate-400 mt-1 font-medium">نسبة النجاح</div>
               </CardContent>
             </Card>
-            <Card className="bg-slate-900/50 border-slate-800/50">
+            <Card className="bg-slate-800 border-slate-600">
               <CardContent className="p-4 text-center">
-                <div className={`text-2xl font-bold ${stats.totalProfitLoss >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                <div className={`text-3xl font-black ${stats.totalProfitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   ${stats.totalProfitLoss.toFixed(2)}
                 </div>
-                <div className="text-xs text-slate-500 mt-1">إجمالي النتائج</div>
+                <div className="text-xs text-slate-400 mt-1 font-medium">إجمالي النتائج</div>
               </CardContent>
             </Card>
-            <Card className="bg-slate-900/50 border-slate-800/50">
+            <Card className="bg-slate-800 border-slate-600">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-blue-400">{stats.openTrades}</div>
-                <div className="text-xs text-slate-500 mt-1">توصيات نشطة</div>
+                <div className="text-3xl font-black text-purple-400">{stats.openTrades}</div>
+                <div className="text-xs text-slate-400 mt-1 font-medium">توصيات نشطة</div>
               </CardContent>
             </Card>
           </div>
