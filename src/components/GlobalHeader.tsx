@@ -18,7 +18,7 @@ const navItems = [{
   path: "/",
   color: "default"
 }, {
-  label: "نظام التوصيات الذكي",
+  label: "Smart Recovery",
   icon: Target,
   path: "/smart-recovery",
   color: "purple"
@@ -76,7 +76,7 @@ const headerNavItems = [{
   icon: Home,
   path: "/"
 }, {
-  label: "نظام التوصيات الذكي",
+  label: "Smart Recovery",
   icon: Target,
   path: "/smart-recovery"
 }, {

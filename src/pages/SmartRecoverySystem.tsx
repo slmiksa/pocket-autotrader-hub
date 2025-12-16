@@ -228,9 +228,9 @@ const SmartRecoverySystem = () => {
               <div>
                 <h1 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
                   <Eye className="w-5 h-5 text-primary" />
-                  نظام التوصيات الذكي
+                  Smart Recovery System
                 </h1>
-                <p className="text-xs text-slate-400">تحليل فني متقدم - MT5</p>
+                <p className="text-xs text-slate-400">نظام التوصيات الذكي - MT5</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -357,68 +357,80 @@ const SmartRecoverySystem = () => {
           <CardContent className="space-y-4 pt-4">
             {analysis ? (
               <>
-                {/* Main Signal - BUY or SELL */}
-                <div 
-                  className={`rounded-2xl p-5 text-center cursor-pointer transition-all active:scale-95 shadow-lg ${
-                    analysis.signalType === 'BUY' 
-                      ? 'bg-gradient-to-br from-green-600 to-green-800 border-2 border-green-400' 
-                      : 'bg-gradient-to-br from-red-600 to-red-800 border-2 border-red-400'
-                  }`}
-                  onClick={triggerManualAlert}
-                >
-                  <div className="flex items-center justify-center gap-3 mb-3">
-                    {analysis.signalType === 'BUY' ? (
-                      <TrendingUp className="w-10 h-10 text-white" />
-                    ) : (
-                      <TrendingDown className="w-10 h-10 text-white" />
-                    )}
-                    <span className="text-4xl font-black text-white drop-shadow-lg">
-                      {analysis.signalType === 'BUY' ? 'شراء' : 'بيع'}
-                    </span>
-                  </div>
-                  <div className="text-3xl font-bold text-white mb-1">
-                    {analysis.currentPrice.toFixed(analysis.currentPrice > 100 ? 2 : 5)}
-                  </div>
-                  {analysis.priceChange !== undefined && (
-                    <div className={`inline-flex items-center gap-1 text-lg font-bold px-3 py-1 rounded-full ${
-                      analysis.priceChange >= 0 ? 'bg-green-400/30 text-green-200' : 'bg-red-400/30 text-red-200'
-                    }`}>
-                      {analysis.priceChange >= 0 ? '▲' : '▼'} {Math.abs(analysis.priceChange).toFixed(2)}%
-                    </div>
-                  )}
-                  <div className="text-xs text-white/70 mt-3">🔔 اضغط للتنبيه الصوتي</div>
-                </div>
+                {/* Determine signal based on trend when signalType is NONE */}
+                {(() => {
+                  const effectiveSignal = analysis.signalType !== 'NONE' 
+                    ? analysis.signalType 
+                    : analysis.trend === 'bullish' ? 'BUY' : analysis.trend === 'bearish' ? 'SELL' : 'BUY';
+                  const isBuy = effectiveSignal === 'BUY';
+                  
+                  return (
+                    <>
+                      {/* Main Signal - BUY or SELL */}
+                      <div 
+                        className={`rounded-2xl p-5 text-center cursor-pointer transition-all active:scale-95 shadow-lg ${
+                          isBuy 
+                            ? 'bg-gradient-to-br from-green-600 to-green-800 border-2 border-green-400' 
+                            : 'bg-gradient-to-br from-red-600 to-red-800 border-2 border-red-400'
+                        }`}
+                        onClick={triggerManualAlert}
+                      >
+                        <div className="flex items-center justify-center gap-3 mb-3">
+                          {isBuy ? (
+                            <TrendingUp className="w-10 h-10 text-white" />
+                          ) : (
+                            <TrendingDown className="w-10 h-10 text-white" />
+                          )}
+                          <span className="text-4xl font-black text-white drop-shadow-lg">
+                            {isBuy ? 'شراء' : 'بيع'}
+                          </span>
+                        </div>
+                        <div className="text-3xl font-bold text-white mb-1">
+                          {analysis.currentPrice.toFixed(analysis.currentPrice > 100 ? 2 : 5)}
+                        </div>
+                        {analysis.priceChange !== undefined && (
+                          <div className={`inline-flex items-center gap-1 text-lg font-bold px-3 py-1 rounded-full ${
+                            analysis.priceChange >= 0 ? 'bg-green-400/30 text-green-200' : 'bg-red-400/30 text-red-200'
+                          }`}>
+                            {analysis.priceChange >= 0 ? '▲' : '▼'} {Math.abs(analysis.priceChange).toFixed(2)}%
+                          </div>
+                        )}
+                        <div className="text-xs text-white/70 mt-3">🔔 اضغط للتنبيه الصوتي</div>
+                      </div>
 
-                {/* Entry, Target, Stop Loss */}
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-gradient-to-br from-blue-900/50 to-blue-800/30 rounded-xl p-3 text-center border border-blue-500/40">
-                    <div className="text-[10px] text-blue-300 font-bold mb-1">🎯 سعر الدخول</div>
-                    <div className="font-black text-lg text-blue-200">
-                      {analysis.currentPrice.toFixed(analysis.currentPrice > 100 ? 2 : 5)}
-                    </div>
-                    <div className="text-[9px] text-blue-400 mt-1">الدخول الآن</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-900/50 to-green-800/30 rounded-xl p-3 text-center border border-green-500/40">
-                    <div className="text-[10px] text-green-300 font-bold mb-1">🏆 الهدف</div>
-                    <div className="font-black text-lg text-green-200">
-                      {analysis.signalType === 'BUY' 
-                        ? (analysis.currentPrice * 1.015).toFixed(analysis.currentPrice > 100 ? 2 : 5)
-                        : (analysis.currentPrice * 0.985).toFixed(analysis.currentPrice > 100 ? 2 : 5)
-                      }
-                    </div>
-                    <div className="text-[9px] text-green-400 mt-1">+1.5%</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-red-900/50 to-red-800/30 rounded-xl p-3 text-center border border-red-500/40">
-                    <div className="text-[10px] text-red-300 font-bold mb-1">🛑 وقف الخسارة</div>
-                    <div className="font-black text-lg text-red-200">
-                      {analysis.signalType === 'BUY' 
-                        ? (analysis.currentPrice * 0.99).toFixed(analysis.currentPrice > 100 ? 2 : 5)
-                        : (analysis.currentPrice * 1.01).toFixed(analysis.currentPrice > 100 ? 2 : 5)
-                      }
-                    </div>
-                    <div className="text-[9px] text-red-400 mt-1">-1%</div>
-                  </div>
-                </div>
+                      {/* Entry, Target, Stop Loss */}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="bg-gradient-to-br from-blue-900/50 to-blue-800/30 rounded-xl p-3 text-center border border-blue-500/40">
+                          <div className="text-[10px] text-blue-300 font-bold mb-1">🎯 سعر الدخول</div>
+                          <div className="font-black text-lg text-blue-200">
+                            {analysis.currentPrice.toFixed(analysis.currentPrice > 100 ? 2 : 5)}
+                          </div>
+                          <div className="text-[9px] text-blue-400 mt-1">الدخول الآن</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-green-900/50 to-green-800/30 rounded-xl p-3 text-center border border-green-500/40">
+                          <div className="text-[10px] text-green-300 font-bold mb-1">🏆 الهدف</div>
+                          <div className="font-black text-lg text-green-200">
+                            {isBuy 
+                              ? (analysis.currentPrice * 1.015).toFixed(analysis.currentPrice > 100 ? 2 : 5)
+                              : (analysis.currentPrice * 0.985).toFixed(analysis.currentPrice > 100 ? 2 : 5)
+                            }
+                          </div>
+                          <div className="text-[9px] text-green-400 mt-1">+1.5%</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-red-900/50 to-red-800/30 rounded-xl p-3 text-center border border-red-500/40">
+                          <div className="text-[10px] text-red-300 font-bold mb-1">🛑 وقف الخسارة</div>
+                          <div className="font-black text-lg text-red-200">
+                            {isBuy 
+                              ? (analysis.currentPrice * 0.99).toFixed(analysis.currentPrice > 100 ? 2 : 5)
+                              : (analysis.currentPrice * 1.01).toFixed(analysis.currentPrice > 100 ? 2 : 5)
+                            }
+                          </div>
+                          <div className="text-[9px] text-red-400 mt-1">-1%</div>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
 
                 {/* Compact Status Grid */}
                 <div className="grid grid-cols-4 gap-2">
