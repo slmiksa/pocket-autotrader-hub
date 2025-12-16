@@ -183,7 +183,7 @@ const SubscriptionCheck = () => {
         </div>
         <Card className="w-full max-w-md bg-slate-900/80 border-slate-800 backdrop-blur-xl relative z-10">
           <CardHeader className="text-center pb-2">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg shadow-amber-500/20">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg shadow-amber-500/20 text-[#6090f0]">
               <TrendingUp className="h-10 w-10 text-white" />
             </div>
             <CardTitle className="text-2xl text-white">TIFUE SA</CardTitle>
