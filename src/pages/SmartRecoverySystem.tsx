@@ -31,9 +31,10 @@ const SmartRecoverySystem = () => {
   });
   const [selectedSymbol, setSelectedSymbol] = useState('XAUUSD');
   const [selectedTimeframe, setSelectedTimeframe] = useState('15m');
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(false); // Disabled by default
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [lastSignalTime, setLastSignalTime] = useState<number>(0);
 
   // Check authentication
   useEffect(() => {
@@ -58,6 +59,11 @@ const SmartRecoverySystem = () => {
   }, [notificationsEnabled]);
 
   const handleSignalDetected = (analysis: MarketAnalysis) => {
+    const now = Date.now();
+    // Prevent notifications more than once per 5 minutes
+    if (now - lastSignalTime < 300000) return;
+    setLastSignalTime(now);
+
     if (soundEnabled) {
       if (analysis.signalType === 'BUY') {
         playBuySignalAlert();
@@ -69,21 +75,21 @@ const SmartRecoverySystem = () => {
     if (notificationsEnabled) {
       sendBrowserNotification(
         `إشارة ${analysis.signalType === 'BUY' ? 'شراء' : 'بيع'} - ${analysis.symbol}`,
-        `السعر: ${analysis.currentPrice.toFixed(2)} | الاتجاه: ${analysis.trend === 'bullish' ? 'صاعد' : 'هابط'}`
+        `السعر: ${analysis.currentPrice.toFixed(2)}`
       );
     }
 
-    toast.success(
-      `🎯 إشارة ${analysis.signalType === 'BUY' ? 'شراء' : 'بيع'} على ${analysis.symbol}`,
-      { duration: 10000 }
-    );
+    // Shorter toast duration and less intrusive
+    toast(`إشارة ${analysis.signalType === 'BUY' ? '📈 شراء' : '📉 بيع'} - ${analysis.symbol}`, {
+      duration: 3000,
+    });
   };
 
   const { analysis, loading: analysisLoading, refetch: refetchAnalysis } = useMarketAnalysis({
     symbol: selectedSymbol,
     timeframe: selectedTimeframe,
     autoRefresh: true,
-    refreshInterval: 30000,
+    refreshInterval: 60000, // Increased to 60 seconds
     onSignalDetected: handleSignalDetected
   });
 
