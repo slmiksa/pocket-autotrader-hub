@@ -357,32 +357,62 @@ const SmartRecoverySystem = () => {
           <CardContent className="space-y-4 pt-4">
             {analysis ? (
               <>
-                {/* Determine signal based on trend when signalType is NONE */}
+                {/* Determine signal with confidence */}
                 {(() => {
-                  const effectiveSignal = analysis.signalType !== 'NONE' 
-                    ? analysis.signalType 
-                    : analysis.trend === 'bullish' ? 'BUY' : analysis.trend === 'bearish' ? 'SELL' : 'BUY';
-                  const isBuy = effectiveSignal === 'BUY';
+                  const signalType = analysis.signalType as 'BUY' | 'SELL' | 'WAIT' | 'NONE';
+                  const isWait = signalType === 'WAIT' || signalType === 'NONE';
+                  const isBuy = signalType === 'BUY';
+                  const confidence = (analysis as any).confidence || 0;
+                  const signalReasons = (analysis as any).signalReasons || [];
                   
                   return (
                     <>
-                      {/* Main Signal - BUY or SELL */}
+                      {/* Confidence Bar */}
+                      <div className="bg-slate-800/80 rounded-xl p-3 border border-slate-600">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-slate-400 font-medium">مستوى الثقة في الإشارة</span>
+                          <span className={`text-sm font-bold ${
+                            confidence >= 60 ? 'text-green-400' : confidence >= 40 ? 'text-amber-400' : 'text-red-400'
+                          }`}>{confidence}%</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-700 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full transition-all duration-500 ${
+                              confidence >= 60 ? 'bg-gradient-to-r from-green-600 to-green-400' : 
+                              confidence >= 40 ? 'bg-gradient-to-r from-amber-600 to-amber-400' : 
+                              'bg-gradient-to-r from-red-600 to-red-400'
+                            }`}
+                            style={{ width: `${confidence}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-[9px] text-slate-500 mt-1">
+                          <span>ضعيف</span>
+                          <span>متوسط</span>
+                          <span>قوي</span>
+                        </div>
+                      </div>
+
+                      {/* Main Signal */}
                       <div 
                         className={`rounded-2xl p-5 text-center cursor-pointer transition-all active:scale-95 shadow-lg ${
-                          isBuy 
-                            ? 'bg-gradient-to-br from-green-600 to-green-800 border-2 border-green-400' 
-                            : 'bg-gradient-to-br from-red-600 to-red-800 border-2 border-red-400'
+                          isWait 
+                            ? 'bg-gradient-to-br from-amber-600/80 to-amber-800/80 border-2 border-amber-400/60'
+                            : isBuy 
+                              ? 'bg-gradient-to-br from-green-600 to-green-800 border-2 border-green-400' 
+                              : 'bg-gradient-to-br from-red-600 to-red-800 border-2 border-red-400'
                         }`}
-                        onClick={triggerManualAlert}
+                        onClick={isWait ? undefined : triggerManualAlert}
                       >
                         <div className="flex items-center justify-center gap-3 mb-3">
-                          {isBuy ? (
+                          {isWait ? (
+                            <AlertTriangle className="w-10 h-10 text-white" />
+                          ) : isBuy ? (
                             <TrendingUp className="w-10 h-10 text-white" />
                           ) : (
                             <TrendingDown className="w-10 h-10 text-white" />
                           )}
                           <span className="text-4xl font-black text-white drop-shadow-lg">
-                            {isBuy ? 'شراء' : 'بيع'}
+                            {isWait ? 'انتظار' : isBuy ? 'شراء' : 'بيع'}
                           </span>
                         </div>
                         <div className="text-3xl font-bold text-white mb-1">
@@ -395,80 +425,146 @@ const SmartRecoverySystem = () => {
                             {analysis.priceChange >= 0 ? '▲' : '▼'} {Math.abs(analysis.priceChange).toFixed(2)}%
                           </div>
                         )}
-                        <div className="text-xs text-white/70 mt-3">🔔 اضغط للتنبيه الصوتي</div>
+                        {isWait ? (
+                          <div className="text-xs text-white/80 mt-3">⏳ الإشارات متضاربة - انتظر تأكيد واضح</div>
+                        ) : (
+                          <div className="text-xs text-white/70 mt-3">🔔 اضغط للتنبيه الصوتي</div>
+                        )}
                       </div>
 
-                      {/* Entry, Target, Stop Loss */}
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="bg-gradient-to-br from-blue-900/50 to-blue-800/30 rounded-xl p-3 text-center border border-blue-500/40">
-                          <div className="text-[10px] text-blue-300 font-bold mb-1">🎯 سعر الدخول</div>
-                          <div className="font-black text-lg text-blue-200">
-                            {analysis.currentPrice.toFixed(analysis.currentPrice > 100 ? 2 : 5)}
+                      {/* Signal Reasons */}
+                      {signalReasons.length > 0 && (
+                        <div className="bg-slate-800/60 rounded-xl p-3 border border-slate-600">
+                          <div className="text-xs text-cyan-400 font-medium mb-2">📊 أسباب التوصية:</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {signalReasons.map((reason: string, idx: number) => (
+                              <span 
+                                key={idx} 
+                                className={`text-[10px] px-2 py-1 rounded-full ${
+                                  reason.includes('صاعد') || reason.includes('شراء') || reason.includes('إيجابي') || reason.includes('ذروة البيع')
+                                    ? 'bg-green-900/50 text-green-300 border border-green-500/30'
+                                    : reason.includes('هابط') || reason.includes('بيع') || reason.includes('سلبي') || reason.includes('ذروة الشراء')
+                                      ? 'bg-red-900/50 text-red-300 border border-red-500/30'
+                                      : 'bg-slate-700 text-slate-300 border border-slate-500/30'
+                                }`}
+                              >
+                                {reason}
+                              </span>
+                            ))}
                           </div>
-                          <div className="text-[9px] text-blue-400 mt-1">الدخول الآن</div>
                         </div>
-                        <div className="bg-gradient-to-br from-green-900/50 to-green-800/30 rounded-xl p-3 text-center border border-green-500/40">
-                          <div className="text-[10px] text-green-300 font-bold mb-1">🏆 الهدف</div>
-                          <div className="font-black text-lg text-green-200">
-                            {isBuy 
-                              ? (analysis.currentPrice * 1.015).toFixed(analysis.currentPrice > 100 ? 2 : 5)
-                              : (analysis.currentPrice * 0.985).toFixed(analysis.currentPrice > 100 ? 2 : 5)
-                            }
+                      )}
+
+                      {/* Entry, Target, Stop Loss - Only show for BUY/SELL signals */}
+                      {!isWait && (
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="bg-gradient-to-br from-blue-900/50 to-blue-800/30 rounded-xl p-3 text-center border border-blue-500/40">
+                            <div className="text-[10px] text-blue-300 font-bold mb-1">🎯 سعر الدخول</div>
+                            <div className="font-black text-lg text-blue-200">
+                              {analysis.currentPrice.toFixed(analysis.currentPrice > 100 ? 2 : 5)}
+                            </div>
+                            <div className="text-[9px] text-blue-400 mt-1">الدخول الآن</div>
                           </div>
-                          <div className="text-[9px] text-green-400 mt-1">+1.5%</div>
-                        </div>
-                        <div className="bg-gradient-to-br from-red-900/50 to-red-800/30 rounded-xl p-3 text-center border border-red-500/40">
-                          <div className="text-[10px] text-red-300 font-bold mb-1">🛑 وقف الخسارة</div>
-                          <div className="font-black text-lg text-red-200">
-                            {isBuy 
-                              ? (analysis.currentPrice * 0.99).toFixed(analysis.currentPrice > 100 ? 2 : 5)
-                              : (analysis.currentPrice * 1.01).toFixed(analysis.currentPrice > 100 ? 2 : 5)
-                            }
+                          <div className="bg-gradient-to-br from-green-900/50 to-green-800/30 rounded-xl p-3 text-center border border-green-500/40">
+                            <div className="text-[10px] text-green-300 font-bold mb-1">🏆 الهدف</div>
+                            <div className="font-black text-lg text-green-200">
+                              {isBuy 
+                                ? (analysis.currentPrice * 1.015).toFixed(analysis.currentPrice > 100 ? 2 : 5)
+                                : (analysis.currentPrice * 0.985).toFixed(analysis.currentPrice > 100 ? 2 : 5)
+                              }
+                            </div>
+                            <div className="text-[9px] text-green-400 mt-1">+1.5%</div>
                           </div>
-                          <div className="text-[9px] text-red-400 mt-1">-1%</div>
+                          <div className="bg-gradient-to-br from-red-900/50 to-red-800/30 rounded-xl p-3 text-center border border-red-500/40">
+                            <div className="text-[10px] text-red-300 font-bold mb-1">🛑 وقف الخسارة</div>
+                            <div className="font-black text-lg text-red-200">
+                              {isBuy 
+                                ? (analysis.currentPrice * 0.99).toFixed(analysis.currentPrice > 100 ? 2 : 5)
+                                : (analysis.currentPrice * 1.01).toFixed(analysis.currentPrice > 100 ? 2 : 5)
+                              }
+                            </div>
+                            <div className="text-[9px] text-red-400 mt-1">-1%</div>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </>
                   );
                 })()}
 
-                {/* Compact Status Grid */}
-                <div className="grid grid-cols-4 gap-2">
-                  <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
-                    <div className="text-[10px] text-cyan-400 font-medium mb-1">الاتجاه</div>
-                    <div className={`text-lg font-black ${analysis.trend === 'bullish' ? 'text-green-400' : analysis.trend === 'bearish' ? 'text-red-400' : 'text-yellow-400'}`}>
-                      {analysis.trend === 'bullish' ? '↑ صاعد' : analysis.trend === 'bearish' ? '↓ هابط' : '→ عرضي'}
+                {/* Compact Status Grid - 5 indicators including RSI */}
+                <div className="grid grid-cols-5 gap-1.5">
+                  <div className="bg-slate-800 rounded-lg p-2 text-center border border-slate-600">
+                    <div className="text-[9px] text-cyan-400 font-medium mb-1">الاتجاه</div>
+                    <div className={`text-sm font-black ${analysis.trend === 'bullish' ? 'text-green-400' : analysis.trend === 'bearish' ? 'text-red-400' : 'text-yellow-400'}`}>
+                      {analysis.trend === 'bullish' ? '↑' : analysis.trend === 'bearish' ? '↓' : '→'}
+                    </div>
+                    <div className={`text-[9px] font-medium ${analysis.trend === 'bullish' ? 'text-green-400' : analysis.trend === 'bearish' ? 'text-red-400' : 'text-yellow-400'}`}>
+                      {analysis.trend === 'bullish' ? 'صاعد' : analysis.trend === 'bearish' ? 'هابط' : 'عرضي'}
                     </div>
                   </div>
-                  <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
-                    <div className="text-[10px] text-cyan-400 font-medium mb-1">الزخم</div>
-                    <div className={`text-lg font-black ${analysis.cvdStatus === 'rising' ? 'text-green-400' : analysis.cvdStatus === 'falling' ? 'text-red-400' : 'text-yellow-400'}`}>
-                      {analysis.cvdStatus === 'rising' ? '↑ قوي' : analysis.cvdStatus === 'falling' ? '↓ ضعيف' : '→ متوسط'}
+                  <div className="bg-slate-800 rounded-lg p-2 text-center border border-slate-600">
+                    <div className="text-[9px] text-cyan-400 font-medium mb-1">RSI</div>
+                    <div className={`text-sm font-black ${
+                      ((analysis as any).rsi || 50) > 70 ? 'text-red-400' : 
+                      ((analysis as any).rsi || 50) < 30 ? 'text-green-400' : 'text-yellow-400'
+                    }`}>
+                      {((analysis as any).rsi || 50).toFixed(0)}
+                    </div>
+                    <div className={`text-[9px] font-medium ${
+                      ((analysis as any).rsi || 50) > 70 ? 'text-red-400' : 
+                      ((analysis as any).rsi || 50) < 30 ? 'text-green-400' : 'text-yellow-400'
+                    }`}>
+                      {((analysis as any).rsi || 50) > 70 ? 'تشبع' : ((analysis as any).rsi || 50) < 30 ? 'فرصة' : 'عادي'}
                     </div>
                   </div>
-                  <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
-                    <div className="text-[10px] text-cyan-400 font-medium mb-1">المتوسط</div>
-                    <div className={`text-lg font-black ${analysis.priceAboveEMA ? 'text-green-400' : 'text-red-400'}`}>
-                      {analysis.priceAboveEMA ? '✓ فوق' : '✗ تحت'}
+                  <div className="bg-slate-800 rounded-lg p-2 text-center border border-slate-600">
+                    <div className="text-[9px] text-cyan-400 font-medium mb-1">MACD</div>
+                    <div className={`text-sm font-black ${
+                      ((analysis as any).macd?.histogram || 0) > 0 ? 'text-green-400' : 'text-red-400'
+                    }`}>
+                      {((analysis as any).macd?.histogram || 0) > 0 ? '↑' : '↓'}
+                    </div>
+                    <div className={`text-[9px] font-medium ${
+                      ((analysis as any).macd?.histogram || 0) > 0 ? 'text-green-400' : 'text-red-400'
+                    }`}>
+                      {((analysis as any).macd?.histogram || 0) > 0 ? 'إيجابي' : 'سلبي'}
                     </div>
                   </div>
-                  <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
-                    <div className="text-[10px] text-cyan-400 font-medium mb-1">السعر العادل</div>
-                    <div className={`text-lg font-black ${analysis.nearVWAP ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {analysis.nearVWAP ? '✓ قريب' : '⚠ بعيد'}
+                  <div className="bg-slate-800 rounded-lg p-2 text-center border border-slate-600">
+                    <div className="text-[9px] text-cyan-400 font-medium mb-1">الزخم</div>
+                    <div className={`text-sm font-black ${analysis.cvdStatus === 'rising' ? 'text-green-400' : analysis.cvdStatus === 'falling' ? 'text-red-400' : 'text-yellow-400'}`}>
+                      {analysis.cvdStatus === 'rising' ? '↑' : analysis.cvdStatus === 'falling' ? '↓' : '→'}
+                    </div>
+                    <div className={`text-[9px] font-medium ${analysis.cvdStatus === 'rising' ? 'text-green-400' : analysis.cvdStatus === 'falling' ? 'text-red-400' : 'text-yellow-400'}`}>
+                      {analysis.cvdStatus === 'rising' ? 'قوي' : analysis.cvdStatus === 'falling' ? 'ضعيف' : 'متوسط'}
+                    </div>
+                  </div>
+                  <div className="bg-slate-800 rounded-lg p-2 text-center border border-slate-600">
+                    <div className="text-[9px] text-cyan-400 font-medium mb-1">EMA200</div>
+                    <div className={`text-sm font-black ${analysis.priceAboveEMA ? 'text-green-400' : 'text-red-400'}`}>
+                      {analysis.priceAboveEMA ? '✓' : '✗'}
+                    </div>
+                    <div className={`text-[9px] font-medium ${analysis.priceAboveEMA ? 'text-green-400' : 'text-red-400'}`}>
+                      {analysis.priceAboveEMA ? 'فوق' : 'تحت'}
                     </div>
                   </div>
                 </div>
 
                 {/* Price Levels */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
-                    <div className="text-[10px] text-cyan-400 font-medium">المتوسط المتحرك 200</div>
-                    <div className="font-bold text-lg text-white">{analysis.ema200.toFixed(analysis.ema200 > 100 ? 2 : 5)}</div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-slate-800 rounded-lg p-2 text-center border border-slate-600">
+                    <div className="text-[9px] text-cyan-400 font-medium">EMA 200</div>
+                    <div className="font-bold text-sm text-white">{analysis.ema200.toFixed(analysis.ema200 > 100 ? 2 : 4)}</div>
                   </div>
-                  <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
-                    <div className="text-[10px] text-cyan-400 font-medium">السعر العادل VWAP</div>
-                    <div className="font-bold text-lg text-white">{analysis.vwap.toFixed(analysis.vwap > 100 ? 2 : 5)}</div>
+                  <div className="bg-slate-800 rounded-lg p-2 text-center border border-slate-600">
+                    <div className="text-[9px] text-cyan-400 font-medium">VWAP</div>
+                    <div className="font-bold text-sm text-white">{analysis.vwap.toFixed(analysis.vwap > 100 ? 2 : 4)}</div>
+                  </div>
+                  <div className="bg-slate-800 rounded-lg p-2 text-center border border-slate-600">
+                    <div className="text-[9px] text-cyan-400 font-medium">قرب VWAP</div>
+                    <div className={`font-bold text-sm ${analysis.nearVWAP ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {analysis.nearVWAP ? '✓ نعم' : '✗ لا'}
+                    </div>
                   </div>
                 </div>
               </>

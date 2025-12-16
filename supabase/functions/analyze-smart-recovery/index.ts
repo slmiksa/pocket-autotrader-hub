@@ -10,13 +10,17 @@ interface MarketAnalysis {
   currentPrice: number;
   ema200: number;
   vwap: number;
+  rsi: number;
+  macd: { macd: number; signal: number; histogram: number };
   trend: 'bullish' | 'bearish' | 'neutral';
   shortTermTrend: 'bullish' | 'bearish' | 'neutral';
   priceAboveEMA: boolean;
   nearVWAP: boolean;
   cvdStatus: 'rising' | 'falling' | 'flat';
   isValidSetup: boolean;
-  signalType: 'BUY' | 'SELL' | 'NONE';
+  signalType: 'BUY' | 'SELL' | 'WAIT';
+  confidence: number; // 0-100
+  signalReasons: string[];
   priceChange: number;
   timestamp: string;
   dataSource: string;
@@ -28,15 +32,12 @@ async function fetchBinancePrice(symbol: string, retries = 3): Promise<number | 
   
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
-      // Add delay between retries to avoid rate limiting
       if (attempt > 0) {
         await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
       
       const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`, {
-        headers: {
-          'Accept': 'application/json',
-        }
+        headers: { 'Accept': 'application/json' }
       });
       
       if (response.ok) {
@@ -44,30 +45,12 @@ async function fetchBinancePrice(symbol: string, retries = 3): Promise<number | 
         return parseFloat(data.price);
       }
       
-      // If rate limited, wait longer
       if (response.status === 429) {
-        console.log('Rate limited, waiting...');
         await new Promise(resolve => setTimeout(resolve, 5000));
         continue;
       }
-      
-      console.error(`Binance API error: ${response.status}`);
     } catch (error) {
       console.error(`Binance fetch error (attempt ${attempt + 1}):`, error);
-    }
-  }
-  
-  // Fallback: try CoinGecko for crypto
-  if (symbol === 'BTCUSDT' || symbol === 'ETHUSDT') {
-    try {
-      const id = symbol === 'BTCUSDT' ? 'bitcoin' : 'ethereum';
-      const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`);
-      if (response.ok) {
-        const data = await response.json();
-        return data[id]?.usd || null;
-      }
-    } catch (error) {
-      console.error('CoinGecko fallback error:', error);
     }
   }
   
@@ -88,7 +71,61 @@ function calculateEMA(prices: number[], period: number): number {
   return ema;
 }
 
-// Calculate VWAP (simplified - using typical price average)
+// Calculate RSI
+function calculateRSI(prices: number[], period: number = 14): number {
+  if (prices.length < period + 1) return 50;
+  
+  let gains = 0;
+  let losses = 0;
+  
+  // Calculate initial average gain/loss
+  for (let i = 1; i <= period; i++) {
+    const change = prices[i] - prices[i - 1];
+    if (change > 0) gains += change;
+    else losses += Math.abs(change);
+  }
+  
+  let avgGain = gains / period;
+  let avgLoss = losses / period;
+  
+  // Calculate smoothed RSI
+  for (let i = period + 1; i < prices.length; i++) {
+    const change = prices[i] - prices[i - 1];
+    if (change > 0) {
+      avgGain = (avgGain * (period - 1) + change) / period;
+      avgLoss = (avgLoss * (period - 1)) / period;
+    } else {
+      avgGain = (avgGain * (period - 1)) / period;
+      avgLoss = (avgLoss * (period - 1) + Math.abs(change)) / period;
+    }
+  }
+  
+  if (avgLoss === 0) return 100;
+  const rs = avgGain / avgLoss;
+  return 100 - (100 / (1 + rs));
+}
+
+// Calculate MACD
+function calculateMACD(prices: number[]): { macd: number; signal: number; histogram: number } {
+  const ema12 = calculateEMA(prices, 12);
+  const ema26 = calculateEMA(prices, 26);
+  const macdLine = ema12 - ema26;
+  
+  // Calculate signal line (9-period EMA of MACD)
+  const macdValues: number[] = [];
+  for (let i = 26; i < prices.length; i++) {
+    const ema12_i = calculateEMA(prices.slice(0, i + 1), 12);
+    const ema26_i = calculateEMA(prices.slice(0, i + 1), 26);
+    macdValues.push(ema12_i - ema26_i);
+  }
+  
+  const signalLine = macdValues.length >= 9 ? calculateEMA(macdValues, 9) : macdLine;
+  const histogram = macdLine - signalLine;
+  
+  return { macd: macdLine, signal: signalLine, histogram };
+}
+
+// Calculate VWAP
 function calculateVWAP(klines: any[]): number {
   if (klines.length === 0) return 0;
   
@@ -109,18 +146,15 @@ function calculateVWAP(klines: any[]): number {
   return cumulativeVolume > 0 ? cumulativeTPV / cumulativeVolume : 0;
 }
 
-// Analyze short-term trend based on recent candles
+// Analyze short-term trend
 function analyzeShortTermTrend(klines: any[]): { trend: 'bullish' | 'bearish' | 'neutral'; priceChange: number } {
   if (klines.length < 10) return { trend: 'neutral', priceChange: 0 };
   
-  // Look at last 10 candles for short-term trend
   const recentKlines = klines.slice(-10);
   const firstClose = parseFloat(recentKlines[0][4]);
   const lastClose = parseFloat(recentKlines[recentKlines.length - 1][4]);
-  
   const priceChange = ((lastClose - firstClose) / firstClose) * 100;
   
-  // Count bullish vs bearish candles
   let bullishCandles = 0;
   let bearishCandles = 0;
   
@@ -131,7 +165,6 @@ function analyzeShortTermTrend(klines: any[]): { trend: 'bullish' | 'bearish' | 
     else if (close < open) bearishCandles++;
   }
   
-  // Also check if making higher highs and higher lows (bullish) or lower highs and lower lows (bearish)
   const highs = recentKlines.map(k => parseFloat(k[2]));
   const lows = recentKlines.map(k => parseFloat(k[3]));
   
@@ -143,50 +176,25 @@ function analyzeShortTermTrend(klines: any[]): { trend: 'bullish' | 'bearish' | 
     if (lows[i] < lows[i - 1]) lowerLows++;
   }
   
-  // Combine signals for trend determination
   const bullishScore = bullishCandles + higherHighs + (priceChange > 0.1 ? 2 : 0);
   const bearishScore = bearishCandles + lowerLows + (priceChange < -0.1 ? 2 : 0);
   
-  if (bullishScore > bearishScore + 2) return { trend: 'bullish', priceChange };
-  if (bearishScore > bullishScore + 2) return { trend: 'bearish', priceChange };
+  if (bullishScore > bearishScore + 3) return { trend: 'bullish', priceChange };
+  if (bearishScore > bullishScore + 3) return { trend: 'bearish', priceChange };
   return { trend: 'neutral', priceChange };
 }
 
-// Analyze CVD trend using volume and price action
+// Analyze CVD
 function analyzeCVD(klines: any[]): 'rising' | 'falling' | 'flat' {
   if (klines.length < 20) return 'flat';
   
   const recentKlines = klines.slice(-20);
-  
-  // Simulate CVD by looking at buy/sell pressure
-  let buyPressure = 0;
-  let sellPressure = 0;
-  
-  for (const k of recentKlines) {
-    const open = parseFloat(k[1]);
-    const high = parseFloat(k[2]);
-    const low = parseFloat(k[3]);
-    const close = parseFloat(k[4]);
-    const volume = parseFloat(k[5]);
-    
-    // Calculate buy/sell pressure based on candle structure
-    const range = high - low;
-    if (range > 0) {
-      const buyVolume = ((close - low) / range) * volume;
-      const sellVolume = ((high - close) / range) * volume;
-      buyPressure += buyVolume;
-      sellPressure += sellVolume;
-    }
-  }
-  
-  // Compare recent CVD (last 10) vs older (first 10)
   const recent10 = recentKlines.slice(-10);
   const older10 = recentKlines.slice(0, 10);
   
   let recentBuy = 0, recentSell = 0, olderBuy = 0, olderSell = 0;
   
   for (const k of recent10) {
-    const open = parseFloat(k[1]);
     const high = parseFloat(k[2]);
     const low = parseFloat(k[3]);
     const close = parseFloat(k[4]);
@@ -199,7 +207,6 @@ function analyzeCVD(klines: any[]): 'rising' | 'falling' | 'flat' {
   }
   
   for (const k of older10) {
-    const open = parseFloat(k[1]);
     const high = parseFloat(k[2]);
     const low = parseFloat(k[3]);
     const close = parseFloat(k[4]);
@@ -214,9 +221,96 @@ function analyzeCVD(klines: any[]): 'rising' | 'falling' | 'flat' {
   const recentDelta = recentBuy - recentSell;
   const olderDelta = olderBuy - olderSell;
   
-  if (recentDelta > olderDelta * 1.1) return 'rising';
-  if (recentDelta < olderDelta * 0.9) return 'falling';
+  if (recentDelta > olderDelta * 1.15) return 'rising';
+  if (recentDelta < olderDelta * 0.85) return 'falling';
   return 'flat';
+}
+
+// Calculate signal confidence and reasons
+function calculateSignalConfidence(
+  trend: string,
+  rsi: number,
+  macd: { macd: number; signal: number; histogram: number },
+  cvdStatus: string,
+  nearVWAP: boolean,
+  priceAboveEMA: boolean
+): { confidence: number; signalType: 'BUY' | 'SELL' | 'WAIT'; reasons: string[] } {
+  let buyScore = 0;
+  let sellScore = 0;
+  const reasons: string[] = [];
+
+  // Trend analysis (weight: 25%)
+  if (trend === 'bullish') {
+    buyScore += 25;
+    reasons.push('الاتجاه صاعد');
+  } else if (trend === 'bearish') {
+    sellScore += 25;
+    reasons.push('الاتجاه هابط');
+  }
+
+  // RSI analysis (weight: 25%)
+  if (rsi < 30) {
+    buyScore += 25;
+    reasons.push('RSI في منطقة ذروة البيع');
+  } else if (rsi < 40) {
+    buyScore += 15;
+    reasons.push('RSI قريب من ذروة البيع');
+  } else if (rsi > 70) {
+    sellScore += 25;
+    reasons.push('RSI في منطقة ذروة الشراء');
+  } else if (rsi > 60) {
+    sellScore += 15;
+    reasons.push('RSI قريب من ذروة الشراء');
+  }
+
+  // MACD analysis (weight: 20%)
+  if (macd.histogram > 0 && macd.macd > macd.signal) {
+    buyScore += 20;
+    reasons.push('MACD إيجابي ومتقاطع للأعلى');
+  } else if (macd.histogram < 0 && macd.macd < macd.signal) {
+    sellScore += 20;
+    reasons.push('MACD سلبي ومتقاطع للأسفل');
+  }
+
+  // CVD analysis (weight: 15%)
+  if (cvdStatus === 'rising') {
+    buyScore += 15;
+    reasons.push('ضغط شراء متزايد');
+  } else if (cvdStatus === 'falling') {
+    sellScore += 15;
+    reasons.push('ضغط بيع متزايد');
+  }
+
+  // VWAP proximity (weight: 10%)
+  if (nearVWAP) {
+    reasons.push('السعر قريب من VWAP');
+    // Near VWAP is good for entry
+    buyScore += 5;
+    sellScore += 5;
+  }
+
+  // EMA position (weight: 5%)
+  if (priceAboveEMA) {
+    buyScore += 5;
+  } else {
+    sellScore += 5;
+  }
+
+  // Determine signal type and confidence
+  const maxScore = Math.max(buyScore, sellScore);
+  const scoreDifference = Math.abs(buyScore - sellScore);
+
+  // Only give signal if there's clear direction (>15 points difference) and minimum confidence (>40)
+  if (scoreDifference >= 15 && maxScore >= 40) {
+    if (buyScore > sellScore) {
+      return { confidence: buyScore, signalType: 'BUY', reasons };
+    } else {
+      return { confidence: sellScore, signalType: 'SELL', reasons };
+    }
+  }
+
+  reasons.push('الإشارات متضاربة - انتظر تأكيد');
+  return { confidence: maxScore, signalType: 'WAIT', reasons };
 }
 
 serve(async (req) => {
@@ -229,13 +323,11 @@ serve(async (req) => {
     
     console.log(`Analyzing ${symbol} on ${timeframe} timeframe`);
 
-    // Fetch current price
     const currentPrice = await fetchBinancePrice(symbol);
     if (!currentPrice) {
       throw new Error('Could not fetch current price');
     }
 
-    // Fetch historical data
     const binanceSymbol = symbol === 'XAUUSD' ? 'PAXGUSDT' : symbol.replace('/', '');
     const klinesResponse = await fetch(
       `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${timeframe}&limit=250`
@@ -248,51 +340,48 @@ serve(async (req) => {
 
     const closePrices = klines.map((k: any[]) => parseFloat(k[4]));
 
-    // Calculate indicators
+    // Calculate all indicators
     const ema200 = calculateEMA(closePrices, 200);
-    const vwap = calculateVWAP(klines.slice(-50)); // Last 50 candles for daily VWAP approximation
+    const vwap = calculateVWAP(klines.slice(-50));
+    const rsi = calculateRSI(closePrices, 14);
+    const macd = calculateMACD(closePrices);
     const cvdStatus = analyzeCVD(klines);
-    
-    // Analyze short-term trend (THIS IS THE KEY FIX)
     const shortTermAnalysis = analyzeShortTermTrend(klines);
 
-    // Determine EMA-based trend (long-term structure)
     const priceAboveEMA = currentPrice > ema200;
-    
-    // Use SHORT-TERM trend for signal generation (more responsive)
     const trend = shortTermAnalysis.trend;
-
-    // Check if price is near VWAP (within 0.5%)
+    
     const vwapDistance = Math.abs((currentPrice - vwap) / vwap) * 100;
-    const nearVWAP = vwapDistance <= 0.5;
+    const nearVWAP = vwapDistance <= 0.8;
 
-    // Determine if setup is valid - now using short-term trend
-    let isValidSetup = false;
-    let signalType: 'BUY' | 'SELL' | 'NONE' = 'NONE';
+    // Calculate confidence-based signal
+    const { confidence, signalType, reasons } = calculateSignalConfidence(
+      trend,
+      rsi,
+      macd,
+      cvdStatus,
+      nearVWAP,
+      priceAboveEMA
+    );
 
-    // BUY: Short-term bullish, near VWAP, CVD rising or flat
-    if (trend === 'bullish' && nearVWAP && (cvdStatus === 'rising' || cvdStatus === 'flat')) {
-      isValidSetup = true;
-      signalType = 'BUY';
-    } 
-    // SELL: Short-term bearish, near VWAP, CVD falling or flat
-    else if (trend === 'bearish' && nearVWAP && (cvdStatus === 'falling' || cvdStatus === 'flat')) {
-      isValidSetup = true;
-      signalType = 'SELL';
-    }
+    const isValidSetup = signalType !== 'WAIT' && confidence >= 50;
 
     const analysis: MarketAnalysis = {
       symbol,
       currentPrice,
       ema200,
       vwap,
-      trend, // Now reflects short-term trend
+      rsi,
+      macd,
+      trend,
       shortTermTrend: shortTermAnalysis.trend,
       priceAboveEMA,
       nearVWAP,
       cvdStatus,
       isValidSetup,
       signalType,
+      confidence,
+      signalReasons: reasons,
       priceChange: shortTermAnalysis.priceChange,
       timestamp: new Date().toISOString(),
       dataSource: symbol === 'XAUUSD' ? 'PAXG/USDT (Binance proxy)' : binanceSymbol
