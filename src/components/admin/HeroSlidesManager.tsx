@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, GripVertical, Save, Image } from "lucide-react";
+import { Plus, Trash2, Save, Image } from "lucide-react";
 
 interface HeroSlide {
   id: string;
@@ -147,84 +147,96 @@ export const HeroSlidesManager = () => {
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-        </CardContent>
-      </Card>
+      <div className="p-8 text-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+      </div>
     );
   }
 
   return (
-    <Card className="border-border/50">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Image className="h-5 w-5 text-primary" />
-              إدارة شرائح السلايدر
-            </CardTitle>
-            <CardDescription>
-              تحكم في شرائح السلايدر المعروضة في الصفحة الرئيسية
-            </CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={addSlide}>
-              <Plus className="h-4 w-4 ml-2" />
-              إضافة شريحة
-            </Button>
-            <Button size="sm" onClick={saveSlides} disabled={saving}>
-              <Save className="h-4 w-4 ml-2" />
-              {saving ? "جاري الحفظ..." : "حفظ التغييرات"}
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-4">
+      {/* Header Actions */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+        <Button variant="outline" size="sm" onClick={addSlide} className="text-xs sm:text-sm">
+          <Plus className="h-4 w-4 ml-1 sm:ml-2" />
+          إضافة شريحة
+        </Button>
+        <Button size="sm" onClick={saveSlides} disabled={saving} className="text-xs sm:text-sm">
+          <Save className="h-4 w-4 ml-1 sm:ml-2" />
+          {saving ? "جاري الحفظ..." : "حفظ التغييرات"}
+        </Button>
+      </div>
+
+      {/* Slides */}
+      <div className="space-y-3">
         {slides.map((slide, index) => (
           <Card key={slide.id} className="border-border/30 bg-muted/20">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-4">
-                <div className="flex items-center gap-2 pt-2">
-                  <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
-                  <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
+            <CardContent className="p-3 sm:p-4">
+              {/* Mobile: Stack everything */}
+              <div className="space-y-3">
+                {/* Header with number, switch and delete */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">شريحة #{index + 1}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <Switch
+                        checked={slide.is_active}
+                        onCheckedChange={(checked) => updateSlide(slide.id, "is_active", checked)}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {slide.is_active ? "مفعّل" : "معطّل"}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => deleteSlide(slide.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                
-                <div className="flex-1 grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>العنوان</Label>
+
+                {/* Form fields */}
+                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">العنوان</Label>
                     <Input
                       value={slide.title}
                       onChange={(e) => updateSlide(slide.id, "title", e.target.value)}
                       placeholder="عنوان الشريحة"
+                      className="h-9 text-sm"
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label>الوصف</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">الوصف</Label>
                     <Input
                       value={slide.subtitle}
                       onChange={(e) => updateSlide(slide.id, "subtitle", e.target.value)}
                       placeholder="وصف الشريحة"
+                      className="h-9 text-sm"
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label>نص الزر</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">نص الزر</Label>
                     <Input
                       value={slide.button_text}
                       onChange={(e) => updateSlide(slide.id, "button_text", e.target.value)}
                       placeholder="نص الزر"
+                      className="h-9 text-sm"
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label>رابط الزر</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">رابط الزر</Label>
                     <Select
                       value={slide.button_link}
                       onValueChange={(value) => updateSlide(slide.id, "button_link", value)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-9 text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -237,13 +249,13 @@ export const HeroSlidesManager = () => {
                     </Select>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label>لون التدرج</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">لون التدرج</Label>
                     <Select
                       value={slide.gradient_color}
                       onValueChange={(value) => updateSlide(slide.id, "gradient_color", value)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-9 text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -256,34 +268,15 @@ export const HeroSlidesManager = () => {
                     </Select>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label>رابط الصورة (اختياري)</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">رابط الصورة</Label>
                     <Input
                       value={slide.image_url || ""}
                       onChange={(e) => updateSlide(slide.id, "image_url", e.target.value || null)}
                       placeholder="https://..."
+                      className="h-9 text-sm"
                     />
                   </div>
-                </div>
-                
-                <div className="flex flex-col items-center gap-3 pt-2">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={slide.is_active}
-                      onCheckedChange={(checked) => updateSlide(slide.id, "is_active", checked)}
-                    />
-                    <span className="text-sm text-muted-foreground">
-                      {slide.is_active ? "مفعّل" : "معطّل"}
-                    </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => deleteSlide(slide.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -295,7 +288,7 @@ export const HeroSlidesManager = () => {
             لا توجد شرائح حالياً. اضغط على "إضافة شريحة" للبدء.
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

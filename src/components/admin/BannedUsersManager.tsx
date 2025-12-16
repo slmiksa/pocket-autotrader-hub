@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,7 +86,6 @@ export function BannedUsersManager() {
       const selectedUser = allUsers.find(u => u.user_id === selectedUserId);
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Check if already banned
       const existingBan = bannedUsers.find(b => b.user_id === selectedUserId);
       if (existingBan) {
         toast.error("هذا المستخدم محظور بالفعل");
@@ -94,7 +93,6 @@ export function BannedUsersManager() {
         return;
       }
 
-      // Add to banned users
       const { error: banError } = await supabase
         .from("banned_users")
         .insert({
@@ -106,7 +104,6 @@ export function BannedUsersManager() {
 
       if (banError) throw banError;
 
-      // Send email notification
       if (selectedUser?.email) {
         try {
           const { error: emailError } = await supabase.functions.invoke("send-ban-notification", {
@@ -164,12 +161,10 @@ export function BannedUsersManager() {
     }
   };
 
-  // Filter users not already banned
   const availableUsers = allUsers.filter(
     u => !bannedUsers.some(b => b.user_id === u.user_id)
   );
 
-  // Filter by search
   const filteredBannedUsers = bannedUsers.filter(
     u => !searchQuery || 
     u.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -178,68 +173,93 @@ export function BannedUsersManager() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-500/10">
-                <Ban className="h-5 w-5 text-red-500" />
-              </div>
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  إدارة المستخدمين المحظورين
-                  {bannedUsers.length > 0 && (
-                    <Badge variant="destructive" className="text-xs">
-                      {bannedUsers.length} محظور
-                    </Badge>
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  حظر وإلغاء حظر المستخدمين من المنصة
-                </CardDescription>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={fetchBannedUsers} disabled={loading}>
-                <RefreshCw className={`h-4 w-4 ml-2 ${loading ? 'animate-spin' : ''}`} />
-                تحديث
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={() => setShowBanDialog(true)}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                <UserX className="h-4 w-4 ml-2" />
-                حظر مستخدم
-              </Button>
-            </div>
+      <div className="space-y-4">
+        {/* Header Actions */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+          {bannedUsers.length > 0 && (
+            <Badge variant="destructive" className="text-xs w-fit">
+              {bannedUsers.length} محظور
+            </Badge>
+          )}
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <Button variant="outline" size="sm" onClick={fetchBannedUsers} disabled={loading} className="text-xs sm:text-sm">
+              <RefreshCw className={`h-4 w-4 ml-1 sm:ml-2 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">تحديث</span>
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={() => setShowBanDialog(true)}
+              className="bg-red-600 hover:bg-red-700 text-xs sm:text-sm"
+            >
+              <UserX className="h-4 w-4 ml-1 sm:ml-2" />
+              حظر مستخدم
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          {/* Search */}
-          <div className="mb-4">
-            <div className="relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="بحث بالبريد أو السبب..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10"
-              />
-            </div>
-          </div>
+        </div>
 
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="بحث بالبريد أو السبب..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-10 h-9"
+          />
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : filteredBannedUsers.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>{searchQuery ? "لا توجد نتائج" : "لا يوجد مستخدمين محظورين"}</p>
+          </div>
+        ) : (
+          <>
+            {/* Mobile Cards */}
+            <div className="block sm:hidden space-y-3">
+              {filteredBannedUsers.map((user) => (
+                <Card key={user.id} className="border-red-500/30 bg-red-500/5">
+                  <CardContent className="p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="text-sm truncate">{user.user_email || "غير محدد"}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {format(new Date(user.banned_at), "dd/MM/yyyy", { locale: ar })}
+                      </span>
+                    </div>
+                    
+                    <Badge variant="destructive" className="font-normal text-xs">
+                      {user.reason}
+                    </Badge>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleUnbanUser(user.id, user.user_email)}
+                      disabled={unbanning === user.id}
+                      className="w-full text-green-600 border-green-600 hover:bg-green-50 h-8 text-xs"
+                    >
+                      {unbanning === user.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin ml-1" />
+                      ) : (
+                        <Trash2 className="h-3 w-3 ml-1" />
+                      )}
+                      إلغاء الحظر
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          ) : filteredBannedUsers.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>{searchQuery ? "لا توجد نتائج" : "لا يوجد مستخدمين محظورين"}</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
+
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -287,9 +307,9 @@ export function BannedUsersManager() {
                 </TableBody>
               </Table>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </>
+        )}
+      </div>
 
       {/* Ban User Dialog */}
       <Dialog open={showBanDialog} onOpenChange={setShowBanDialog}>
@@ -332,14 +352,14 @@ export function BannedUsersManager() {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBanDialog(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setShowBanDialog(false)} className="w-full sm:w-auto">
               إلغاء
             </Button>
             <Button
               onClick={handleBanUser}
               disabled={banning || !selectedUserId || !banReason.trim()}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
             >
               {banning ? (
                 <>
