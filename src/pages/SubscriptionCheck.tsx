@@ -183,14 +183,14 @@ const SubscriptionCheck = () => {
         </div>
         <Card className="w-full max-w-md bg-slate-900/80 border-slate-800 backdrop-blur-xl relative z-10">
           <CardHeader className="text-center pb-2">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg shadow-amber-500/20 text-[#6090f0]">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-[#2a6df4] shadow-lg shadow-[#2a6df4]/30">
               <TrendingUp className="h-10 w-10 text-white" />
             </div>
             <CardTitle className="text-2xl text-white">TIFUE SA</CardTitle>
             <CardDescription className="text-slate-400">يرجى تسجيل الدخول للمتابعة</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button onClick={() => navigate("/auth")} className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0" size="lg">
+            <Button onClick={() => navigate("/auth")} className="w-full bg-[#2a6df4] hover:bg-[#2358c7] text-white border-0" size="lg">
               تسجيل الدخول / التسجيل
             </Button>
             
