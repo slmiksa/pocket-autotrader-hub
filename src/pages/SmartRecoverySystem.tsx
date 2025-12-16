@@ -135,7 +135,7 @@ const SmartRecoverySystem = () => {
     symbol: selectedSymbol,
     timeframe: selectedTimeframe,
     autoRefresh: true,
-    refreshInterval: 60000,
+    refreshInterval: 5000, // تحديث فوري كل 5 ثواني
   });
 
   const { trades, loading: tradesLoading, deleteTrade, getStats } = useSmartRecoveryTrades();
@@ -228,9 +228,9 @@ const SmartRecoverySystem = () => {
               <div>
                 <h1 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
                   <Eye className="w-5 h-5 text-primary" />
-                  Smart Recovery System
+                  نظام التوصيات الذكي
                 </h1>
-                <p className="text-xs text-slate-400">نظام توصيات ذكي - MT5</p>
+                <p className="text-xs text-slate-400">تحليل فني متقدم - MT5</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -389,6 +389,37 @@ const SmartRecoverySystem = () => {
                   <div className="text-xs text-white/70 mt-3">🔔 اضغط للتنبيه الصوتي</div>
                 </div>
 
+                {/* Entry, Target, Stop Loss */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-gradient-to-br from-blue-900/50 to-blue-800/30 rounded-xl p-3 text-center border border-blue-500/40">
+                    <div className="text-[10px] text-blue-300 font-bold mb-1">🎯 سعر الدخول</div>
+                    <div className="font-black text-lg text-blue-200">
+                      {analysis.currentPrice.toFixed(analysis.currentPrice > 100 ? 2 : 5)}
+                    </div>
+                    <div className="text-[9px] text-blue-400 mt-1">الدخول الآن</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-900/50 to-green-800/30 rounded-xl p-3 text-center border border-green-500/40">
+                    <div className="text-[10px] text-green-300 font-bold mb-1">🏆 الهدف</div>
+                    <div className="font-black text-lg text-green-200">
+                      {analysis.signalType === 'BUY' 
+                        ? (analysis.currentPrice * 1.015).toFixed(analysis.currentPrice > 100 ? 2 : 5)
+                        : (analysis.currentPrice * 0.985).toFixed(analysis.currentPrice > 100 ? 2 : 5)
+                      }
+                    </div>
+                    <div className="text-[9px] text-green-400 mt-1">+1.5%</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-red-900/50 to-red-800/30 rounded-xl p-3 text-center border border-red-500/40">
+                    <div className="text-[10px] text-red-300 font-bold mb-1">🛑 وقف الخسارة</div>
+                    <div className="font-black text-lg text-red-200">
+                      {analysis.signalType === 'BUY' 
+                        ? (analysis.currentPrice * 0.99).toFixed(analysis.currentPrice > 100 ? 2 : 5)
+                        : (analysis.currentPrice * 1.01).toFixed(analysis.currentPrice > 100 ? 2 : 5)
+                      }
+                    </div>
+                    <div className="text-[9px] text-red-400 mt-1">-1%</div>
+                  </div>
+                </div>
+
                 {/* Compact Status Grid */}
                 <div className="grid grid-cols-4 gap-2">
                   <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
@@ -398,33 +429,33 @@ const SmartRecoverySystem = () => {
                     </div>
                   </div>
                   <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
-                    <div className="text-[10px] text-cyan-400 font-medium mb-1">CVD</div>
+                    <div className="text-[10px] text-cyan-400 font-medium mb-1">الزخم</div>
                     <div className={`text-lg font-black ${analysis.cvdStatus === 'rising' ? 'text-green-400' : analysis.cvdStatus === 'falling' ? 'text-red-400' : 'text-yellow-400'}`}>
-                      {analysis.cvdStatus === 'rising' ? '↑' : analysis.cvdStatus === 'falling' ? '↓' : '→'}
+                      {analysis.cvdStatus === 'rising' ? '↑ قوي' : analysis.cvdStatus === 'falling' ? '↓ ضعيف' : '→ متوسط'}
                     </div>
                   </div>
                   <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
-                    <div className="text-[10px] text-cyan-400 font-medium mb-1">EMA</div>
+                    <div className="text-[10px] text-cyan-400 font-medium mb-1">المتوسط</div>
                     <div className={`text-lg font-black ${analysis.priceAboveEMA ? 'text-green-400' : 'text-red-400'}`}>
                       {analysis.priceAboveEMA ? '✓ فوق' : '✗ تحت'}
                     </div>
                   </div>
                   <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
-                    <div className="text-[10px] text-cyan-400 font-medium mb-1">VWAP</div>
+                    <div className="text-[10px] text-cyan-400 font-medium mb-1">السعر العادل</div>
                     <div className={`text-lg font-black ${analysis.nearVWAP ? 'text-green-400' : 'text-yellow-400'}`}>
                       {analysis.nearVWAP ? '✓ قريب' : '⚠ بعيد'}
                     </div>
                   </div>
                 </div>
 
-                {/* Price Levels - Compact */}
+                {/* Price Levels */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
-                    <div className="text-[10px] text-cyan-400 font-medium">EMA 200</div>
+                    <div className="text-[10px] text-cyan-400 font-medium">المتوسط المتحرك 200</div>
                     <div className="font-bold text-lg text-white">{analysis.ema200.toFixed(analysis.ema200 > 100 ? 2 : 5)}</div>
                   </div>
                   <div className="bg-slate-800 rounded-lg p-3 text-center border border-slate-600">
-                    <div className="text-[10px] text-cyan-400 font-medium">VWAP</div>
+                    <div className="text-[10px] text-cyan-400 font-medium">السعر العادل VWAP</div>
                     <div className="font-bold text-lg text-white">{analysis.vwap.toFixed(analysis.vwap > 100 ? 2 : 5)}</div>
                   </div>
                 </div>
@@ -433,8 +464,8 @@ const SmartRecoverySystem = () => {
               <div className="text-center py-10 bg-slate-800/50 rounded-xl border border-slate-700">
                 <RefreshCw className="w-12 h-12 mx-auto mb-4 animate-spin text-cyan-400" />
                 <p className="text-white text-lg font-bold mb-2">جاري تحليل السوق...</p>
-                <p className="text-cyan-400 text-sm">جلب بيانات من Binance API</p>
-                <p className="text-slate-500 text-xs mt-2">قد يستغرق التحليل بضع ثوانٍ بسبب تحميل البيانات</p>
+                <p className="text-cyan-400 text-sm">جلب بيانات السعر الحية</p>
+                <p className="text-slate-500 text-xs mt-2">التحديث كل 5 ثواني</p>
               </div>
             )}
           </CardContent>
