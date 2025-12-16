@@ -235,12 +235,19 @@ const SmartRecoverySystem = () => {
                 {/* Main Status Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/30">
-                    <div className="text-xs text-slate-500 mb-2">الاتجاه</div>
+                    <div className="text-xs text-slate-500 mb-2">الاتجاه الحالي</div>
                     <div className={`flex items-center gap-2 ${getTrendColor(analysis.trend)}`}>
                       {getTrendIcon(analysis.trend)}
-                      <span className="font-bold text-sm">
-                        {analysis.trend === 'bullish' ? 'صاعد' : analysis.trend === 'bearish' ? 'هابط' : 'عرضي'}
-                      </span>
+                      <div>
+                        <span className="font-bold text-sm block">
+                          {analysis.trend === 'bullish' ? 'صاعد' : analysis.trend === 'bearish' ? 'هابط' : 'عرضي'}
+                        </span>
+                        {analysis.priceChange !== undefined && (
+                          <span className={`text-xs ${analysis.priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {analysis.priceChange >= 0 ? '+' : ''}{analysis.priceChange.toFixed(2)}%
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -536,8 +543,8 @@ const SmartRecoverySystem = () => {
               <div>
                 <h4 className="font-bold text-amber-400 text-sm mb-1">تنبيه مهم</h4>
                 <p className="text-sm text-slate-400 leading-relaxed">
-                  هذا نظام توصيات فقط وليس تنفيذ تلقائي. النظام يعمل عند تحقق الشروط فقط. 
-                  الامتناع عن التداول جزء أساسي من الاستراتيجية. الأسعار مباشرة من Binance API.
+                  هذا نظام توصيات فقط وليس تنفيذ تلقائي. التحليل يعتمد على الاتجاه القصير المدى (آخر 10 شموع).
+                  للذهب XAUUSD نستخدم PAXG/USDT من Binance كبديل وقد يختلف السعر قليلاً عن السعر الفعلي في MT5.
                 </p>
               </div>
             </div>
