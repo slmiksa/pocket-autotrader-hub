@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Plus, Image as ImageIcon, Loader2, X, User, Trash2, Edit2, Heart, MessageCircle, Send, Flag, Sparkles, Users, Share2, Copy, Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Plus, Image as ImageIcon, Loader2, X, User, Trash2, Edit2, Heart, MessageCircle, Send, Flag, Sparkles, Users, Share2, Copy, Check, TrendingUp, Award, Flame, Clock, Star, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { UserProfileDialog } from "@/components/community/UserProfileDialog";
 import { PullToRefresh } from "@/components/PullToRefresh";
@@ -528,35 +529,55 @@ export default function Community() {
 
   const isLiked = user && likes.some(l => l.user_id === user.id);
 
+  // Stats
+  const totalLikes = Object.values(postLikeCounts).reduce((sum, count) => sum + count, 0);
+  const totalComments = Object.values(postCommentCounts).reduce((sum, count) => sum + count, 0);
+
+  // Get trending post (most likes)
+  const trendingPost = posts.length > 0 
+    ? posts.reduce((max, post) => (postLikeCounts[post.id] || 0) > (postLikeCounts[max.id] || 0) ? post : max, posts[0])
+    : null;
+
   return (
     <PullToRefresh onRefresh={handleRefresh} className="min-h-screen pt-[calc(env(safe-area-inset-top,0px)+88px)]">
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
       {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] animate-pulse" />
+        <div className="absolute bottom-20 right-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-500/5 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+        {/* Floating particles */}
+        <div className="absolute inset-0">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-purple-400/30 rounded-full animate-float"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${5 + Math.random() * 10}s`
+              }}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Page Header - Part of scrollable content */}
-      <div className="bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50 relative z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+      {/* Hero Header */}
+      <div className="relative z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 via-transparent to-transparent" />
+        <div className="container mx-auto px-4 py-8">
+          {/* Navigation */}
+          <div className="flex items-center justify-between mb-8">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate('/')}
-              className="text-slate-400 hover:text-white hover:bg-slate-800"
+              className="text-slate-400 hover:text-white hover:bg-white/10 backdrop-blur-sm"
             >
               <ArrowRight className="h-5 w-5" />
             </Button>
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-purple-400" />
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                مجتمع المتداولين
-              </h1>
-            </div>
             <Button
-              size="icon"
               onClick={() => {
                 if (!user) {
                   toast.error('يجب تسجيل الدخول أولاً');
@@ -565,30 +586,139 @@ export default function Community() {
                 }
                 setShowCreateDialog(true);
               }}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg shadow-purple-500/25"
+              className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 hover:scale-105"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
+              مشاركة جديدة
             </Button>
           </div>
+
+          {/* Hero Content */}
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 mb-6">
+              <Sparkles className="h-4 w-4 text-purple-400 animate-pulse" />
+              <span className="text-sm text-purple-300">مجتمع نشط وحيوي</span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              <span className="bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text text-transparent">
+                مجتمع المتداولين
+              </span>
+            </h1>
+            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+              شارك أفكارك وتحليلاتك مع آلاف المتداولين وتعلم من تجاربهم
+            </p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 p-4 hover:border-purple-500/40 transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center mb-3">
+                  <Users className="h-5 w-5 text-purple-400" />
+                </div>
+                <p className="text-2xl font-bold text-white">{posts.length}</p>
+                <p className="text-sm text-slate-400">مشاركة</p>
+              </div>
+            </div>
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-500/10 to-pink-600/5 border border-pink-500/20 p-4 hover:border-pink-500/40 transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative">
+                <div className="w-10 h-10 rounded-xl bg-pink-500/20 flex items-center justify-center mb-3">
+                  <Heart className="h-5 w-5 text-pink-400" />
+                </div>
+                <p className="text-2xl font-bold text-white">{totalLikes}</p>
+                <p className="text-sm text-slate-400">إعجاب</p>
+              </div>
+            </div>
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 p-4 hover:border-blue-500/40 transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center mb-3">
+                  <MessageCircle className="h-5 w-5 text-blue-400" />
+                </div>
+                <p className="text-2xl font-bold text-white">{totalComments}</p>
+                <p className="text-sm text-slate-400">تعليق</p>
+              </div>
+            </div>
+            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/20 p-4 hover:border-amber-500/40 transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center mb-3">
+                  <Award className="h-5 w-5 text-amber-400" />
+                </div>
+                <p className="text-2xl font-bold text-white">{Object.keys(userNicknames).length || posts.length}</p>
+                <p className="text-sm text-slate-400">متداول</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Trending Post Card */}
+          {trendingPost && (postLikeCounts[trendingPost.id] || 0) > 0 && (
+            <div 
+              className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 border border-amber-500/30 p-4 mb-8 cursor-pointer group hover:border-amber-500/50 transition-all duration-300"
+              onClick={() => openPost(trendingPost)}
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/20 rounded-full blur-3xl" />
+              <div className="relative flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                    <Flame className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      الأكثر تفاعلاً
+                    </Badge>
+                  </div>
+                  <h3 className="text-white font-semibold truncate group-hover:text-amber-200 transition-colors">{trendingPost.title}</h3>
+                  <div className="flex items-center gap-3 text-sm text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <Heart className="h-3 w-3 text-pink-400" fill="currentColor" />
+                      {postLikeCounts[trendingPost.id] || 0}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MessageCircle className="h-3 w-3 text-blue-400" />
+                      {postCommentCounts[trendingPost.id] || 0}
+                    </span>
+                  </div>
+                </div>
+                {trendingPost.image_url && (
+                  <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0">
+                    <img src={trendingPost.image_url} alt="" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-6 relative z-10">
+      <div className="container mx-auto px-4 pb-8 relative z-10">
         {loading ? (
-          <div className="flex justify-center items-center py-20">
+          <div className="flex flex-col justify-center items-center py-20">
             <div className="relative">
-              <Loader2 className="h-10 w-10 animate-spin text-purple-500" />
-              <div className="absolute inset-0 h-10 w-10 rounded-full border-2 border-purple-500/20 animate-ping" />
+              <div className="w-16 h-16 rounded-full border-4 border-purple-500/20 border-t-purple-500 animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-purple-400 animate-pulse" />
+              </div>
             </div>
+            <p className="text-slate-400 mt-4 animate-pulse">جاري تحميل المشاركات...</p>
           </div>
         ) : posts.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border border-purple-500/30">
-              <Sparkles className="h-12 w-12 text-purple-400" />
+            <div className="relative w-32 h-32 mx-auto mb-8">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-3xl rotate-6" />
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-3xl -rotate-6" />
+              <div className="relative w-full h-full rounded-3xl bg-slate-800/50 border border-purple-500/30 flex items-center justify-center backdrop-blur-sm">
+                <Sparkles className="h-14 w-14 text-purple-400" />
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">لا توجد مشاركات بعد</h3>
-            <p className="text-slate-400 mb-6">كن أول من يشارك تجربته مع المجتمع</p>
+            <h3 className="text-2xl font-bold text-white mb-3">لا توجد مشاركات بعد</h3>
+            <p className="text-slate-400 mb-8 max-w-md mx-auto">كن أول من يشارك تجربته وتحليلاته مع مجتمع المتداولين</p>
             <Button
               onClick={() => {
                 if (!user) {
@@ -598,73 +728,108 @@ export default function Community() {
                 }
                 setShowCreateDialog(true);
               }}
-              className="gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+              className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/25 px-8 py-6 text-lg"
             >
-              <Plus className="h-4 w-4" />
-              إضافة مشاركة
+              <Zap className="h-5 w-5" />
+              أنشئ أول مشاركة
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {posts.map((post) => (
-              <Card
-                key={post.id}
-                className="overflow-hidden cursor-pointer group bg-slate-900/50 border-slate-800/50 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300"
-                onClick={() => openPost(post)}
-              >
-                <div className="aspect-square relative bg-slate-800">
-                  {post.image_url ? (
-                    <img
-                      src={post.image_url}
-                      alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/50 to-blue-900/50">
-                      <ImageIcon className="h-12 w-12 text-slate-600" />
-                    </div>
-                  )}
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  {/* Bottom Info */}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/95 via-slate-950/80 to-transparent p-3">
-                    <h3 className="text-white font-semibold text-sm line-clamp-1 mb-1">{post.title}</h3>
-                    <div 
-                      className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openUserProfile(post.user_id, post.user_email);
-                      }}
-                    >
-                      <div className="w-5 h-5 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                        {userAvatars[post.user_id] ? (
-                          <img src={userAvatars[post.user_id]} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <User className="h-3 w-3 text-white" />
-                        )}
-                      </div>
-                      <p className="text-slate-400 text-xs">{getUserDisplayName(post.user_email, post.user_id)}</p>
-                    </div>
-                  </div>
-                  {/* Stats overlay */}
-                  <div className="absolute top-2 left-2 flex gap-2">
-                    {(postLikeCounts[post.id] || 0) > 0 && (
-                      <div className="bg-slate-950/80 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1 border border-slate-700/50">
-                        <Heart className="h-3 w-3 text-pink-500" fill="currentColor" />
-                        <span className="text-white text-xs font-medium">{postLikeCounts[post.id]}</span>
+          <>
+            {/* Section Title */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <Star className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">أحدث المشاركات</h2>
+                <p className="text-sm text-slate-400">تصفح آخر مشاركات المجتمع</p>
+              </div>
+            </div>
+
+            {/* Posts Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {posts.map((post, index) => (
+                <Card
+                  key={post.id}
+                  className="group overflow-hidden cursor-pointer bg-slate-900/50 border-slate-800/50 hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-500 hover:-translate-y-1"
+                  onClick={() => openPost(post)}
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="aspect-square relative bg-slate-800 overflow-hidden">
+                    {post.image_url ? (
+                      <img
+                        src={post.image_url}
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/50 via-slate-800 to-blue-900/50">
+                        <div className="text-center">
+                          <ImageIcon className="h-10 w-10 text-slate-600 mx-auto mb-2" />
+                          <span className="text-xs text-slate-500">بدون صورة</span>
+                        </div>
                       </div>
                     )}
-                    {(postCommentCounts[post.id] || 0) > 0 && (
+                    
+                    {/* Overlay Gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+                    
+                    {/* Time Badge */}
+                    <div className="absolute top-2 right-2">
                       <div className="bg-slate-950/80 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1 border border-slate-700/50">
-                        <MessageCircle className="h-3 w-3 text-blue-400" />
-                        <span className="text-white text-xs font-medium">{postCommentCounts[post.id]}</span>
+                        <Clock className="h-3 w-3 text-slate-400" />
+                        <span className="text-slate-300 text-xs">
+                          {formatDistanceToNow(new Date(post.created_at), { locale: ar, addSuffix: false })}
+                        </span>
                       </div>
-                    )}
+                    </div>
+                    
+                    {/* Stats overlay */}
+                    <div className="absolute top-2 left-2 flex flex-col gap-1">
+                      {(postLikeCounts[post.id] || 0) > 0 && (
+                        <div className="bg-pink-500/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1 shadow-lg shadow-pink-500/30">
+                          <Heart className="h-3 w-3 text-white" fill="currentColor" />
+                          <span className="text-white text-xs font-bold">{postLikeCounts[post.id]}</span>
+                        </div>
+                      )}
+                      {(postCommentCounts[post.id] || 0) > 0 && (
+                        <div className="bg-blue-500/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1 shadow-lg shadow-blue-500/30">
+                          <MessageCircle className="h-3 w-3 text-white" />
+                          <span className="text-white text-xs font-bold">{postCommentCounts[post.id]}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Bottom Info */}
+                    <div className="absolute inset-x-0 bottom-0 p-3">
+                      <h3 className="text-white font-bold text-sm line-clamp-2 mb-2 group-hover:text-purple-200 transition-colors">
+                        {post.title}
+                      </h3>
+                      <div 
+                        className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openUserProfile(post.user_id, post.user_email);
+                        }}
+                      >
+                        <div className="w-6 h-6 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center ring-2 ring-purple-500/30">
+                          {userAvatars[post.user_id] ? (
+                            <img src={userAvatars[post.user_id]} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="h-3 w-3 text-white" />
+                          )}
+                        </div>
+                        <p className="text-slate-300 text-xs font-medium truncate flex-1">
+                          {getUserDisplayName(post.user_email, post.user_id)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
