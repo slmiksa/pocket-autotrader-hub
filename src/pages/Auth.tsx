@@ -215,6 +215,35 @@ const Auth = () => {
       if (error) throw error;
       
       if (data.session) {
+        // Check if user is banned
+        const { data: banData } = await supabase
+          .from("banned_users")
+          .select("reason")
+          .eq("user_id", data.user.id)
+          .single();
+        
+        if (banData) {
+          // User is banned - sign them out and show message
+          await supabase.auth.signOut();
+          toast.error(
+            <div className="text-right">
+              <p className="font-bold text-red-500 mb-2">تم حظر حسابك</p>
+              <p className="text-sm mb-2">السبب: {banData.reason}</p>
+              <a 
+                href="https://wa.me/00966575594911?text=السلام%20عليكم،%20أحتاج%20مساعدة%20بخصوص%20حظر%20حسابي" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-green-500 underline text-sm"
+              >
+                تواصل مع الدعم الفني
+              </a>
+            </div>,
+            { duration: 10000 }
+          );
+          setLoading(false);
+          return;
+        }
+        
         // 2FA temporarily disabled - direct login
         toast.success("تم تسجيل الدخول بنجاح!");
         navigate("/");

@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.request-password-reset]
 verify_jwt = false
+
+[functions.send-ban-notification]
+verify_jwt = false
