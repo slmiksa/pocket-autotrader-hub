@@ -53,7 +53,7 @@ const SubscriptionCheck = () => {
   };
   const openWhatsApp = () => {
     const phoneNumber = "966575594911";
-    const message = "مرحباً، أريد الاشتراك في PocketOption Auto Trader";
+    const message = "مرحباً، أريد الاشتراك في TIFUE SA";
     const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
@@ -186,7 +186,7 @@ const SubscriptionCheck = () => {
             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg shadow-amber-500/20">
               <TrendingUp className="h-10 w-10 text-white" />
             </div>
-            <CardTitle className="text-2xl text-white">PocketOption Auto Trader</CardTitle>
+            <CardTitle className="text-2xl text-white">TIFUE SA</CardTitle>
             <CardDescription className="text-slate-400">يرجى تسجيل الدخول للمتابعة</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -214,7 +214,7 @@ const SubscriptionCheck = () => {
               <TrendingUp className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-white">PocketOption Auto Trader</h1>
+              <h1 className="text-xl md:text-2xl font-bold text-white">TIFUE SA</h1>
               <p className="text-sm text-slate-400">منصة التداول الذكي</p>
             </div>
           </div>
