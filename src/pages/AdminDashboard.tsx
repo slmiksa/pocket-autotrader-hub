@@ -480,17 +480,17 @@ const AdminDashboard = () => {
     onClick: () => void;
   }) => (
     <CollapsibleTrigger asChild onClick={onClick}>
-      <div className="flex items-center justify-between w-full p-4 cursor-pointer hover:bg-muted/50 rounded-lg transition-colors">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-primary/10 p-2">
-            <Icon className="h-5 w-5 text-primary" />
+      <div className="flex items-center justify-between w-full p-3 sm:p-4 cursor-pointer hover:bg-muted/50 rounded-lg transition-colors">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <div className="rounded-lg bg-primary/10 p-1.5 sm:p-2 shrink-0">
+            <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           </div>
-          <div className="text-right">
-            <h3 className="font-semibold text-foreground">{title}</h3>
-            <p className="text-sm text-muted-foreground">{description}</p>
+          <div className="text-right min-w-0 flex-1">
+            <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">{title}</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">{description}</p>
           </div>
         </div>
-        <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground transition-transform duration-200 shrink-0 mr-2 ${isOpen ? 'rotate-180' : ''}`} />
       </div>
     </CollapsibleTrigger>
   );
@@ -499,25 +499,27 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background dark">
       {/* Header */}
       <header className="border-b border-border bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary p-2">
-                <Shield className="h-6 w-6 text-primary-foreground" />
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="rounded-lg bg-primary p-1.5 sm:p-2 shrink-0">
+                <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">لوحة تحكم المسؤول</h1>
-                <p className="text-sm text-muted-foreground">إدارة المنصة والمستخدمين</p>
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">لوحة تحكم المسؤول</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground">إدارة المنصة</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button onClick={() => navigate("/")} variant="outline" size="sm">
-                <ArrowRight className="h-4 w-4 ml-2" />
-                الصفحة الرئيسية
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <Button onClick={() => navigate("/")} variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3">
+                <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
+                <span className="hidden min-[400px]:inline">الرئيسية</span>
+                <span className="min-[400px]:hidden">🏠</span>
               </Button>
-              <Button onClick={handleLogout} variant="outline" size="sm">
-                <LogOut className="h-4 w-4 ml-2" />
-                تسجيل الخروج
+              <Button onClick={handleLogout} variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3">
+                <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
+                <span className="hidden min-[400px]:inline">خروج</span>
+                <span className="min-[400px]:hidden">⬅️</span>
               </Button>
             </div>
           </div>
@@ -525,7 +527,7 @@ const AdminDashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 space-y-4">
+      <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 space-y-3 sm:space-y-4">
         {/* Push Notifications */}
         <Collapsible open={openSections.notifications} onOpenChange={() => toggleSection('notifications')}>
           <Card>
@@ -695,22 +697,24 @@ const AdminDashboard = () => {
                     <Label>الإعلانات الحالية</Label>
                     <div className="space-y-2">
                       {announcements.map((announcement) => (
-                        <div key={announcement.id} className="flex items-center gap-2 p-3 rounded-lg border border-border">
+                        <div key={announcement.id} className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg border border-border">
                           <div 
                             className="flex-1 px-3 py-1 rounded text-sm truncate"
                             style={{ backgroundColor: announcement.background_color, color: announcement.text_color }}
                           >
                             {announcement.content}
                           </div>
-                          <Badge variant={announcement.is_active ? "default" : "secondary"}>
-                            {announcement.is_active ? "نشط" : "معطل"}
-                          </Badge>
-                          <Button size="sm" variant="outline" onClick={() => handleToggleAnnouncement(announcement.id, announcement.is_active)}>
-                            {announcement.is_active ? "تعطيل" : "تفعيل"}
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDeleteAnnouncement(announcement.id)} className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center gap-2 self-end sm:self-auto">
+                            <Badge variant={announcement.is_active ? "default" : "secondary"} className="text-xs">
+                              {announcement.is_active ? "نشط" : "معطل"}
+                            </Badge>
+                            <Button size="sm" variant="outline" onClick={() => handleToggleAnnouncement(announcement.id, announcement.is_active)} className="text-xs h-7">
+                              {announcement.is_active ? "تعطيل" : "تفعيل"}
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleDeleteAnnouncement(announcement.id)} className="text-destructive hover:text-destructive h-7 w-7 p-0">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -736,93 +740,151 @@ const AdminDashboard = () => {
                 {users.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">لا يوجد مستخدمين</div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>البريد الإلكتروني</TableHead>
-                          <TableHead>تاريخ التسجيل</TableHead>
-                          <TableHead>حالة الاشتراك</TableHead>
-                          <TableHead>تاريخ انتهاء الاشتراك</TableHead>
-                          <TableHead>الكود المستخدم</TableHead>
-                          <TableHead>تحليل الصورة</TableHead>
-                          <TableHead>محلل العرض والطلب</TableHead>
-                          <TableHead>توصيات المحترفين</TableHead>
-                          <TableHead>الإجراءات</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {users.map((user) => {
-                          const isActive = user.subscription_expires_at && new Date(user.subscription_expires_at) > new Date();
-                          return (
-                            <TableRow key={user.user_id}>
-                              <TableCell className="font-medium">{user.email || "لا يوجد"}</TableCell>
-                              <TableCell>{format(new Date(user.created_at), "yyyy-MM-dd")}</TableCell>
-                              <TableCell>
-                                {isActive ? (
-                                  <Badge className="bg-success">نشط</Badge>
-                                ) : (
-                                  <Badge variant="destructive">منتهي</Badge>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {user.subscription_expires_at ? (
-                                  <span className={isActive ? "text-success" : "text-destructive"}>
-                                    {format(new Date(user.subscription_expires_at), "yyyy-MM-dd")}
-                                  </span>
-                                ) : (
-                                  <span className="text-muted-foreground">غير مفعل</span>
-                                )}
-                              </TableCell>
-                              <TableCell className="font-mono text-xs">{user.activated_code || "لا يوجد"}</TableCell>
-                              <TableCell>
-                                <Button
-                                  variant={user.image_analysis_enabled ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => toggleImageAnalysis(user.user_id, user.image_analysis_enabled)}
-                                  className={user.image_analysis_enabled ? "bg-success hover:bg-success/90" : ""}
-                                >
-                                  {user.image_analysis_enabled ? "مفعل" : "معطل"}
-                                </Button>
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  variant={user.supply_demand_enabled ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => toggleSupplyDemand(user.user_id, user.supply_demand_enabled)}
-                                  className={user.supply_demand_enabled ? "bg-info hover:bg-info/90" : ""}
-                                >
-                                  {user.supply_demand_enabled ? "مفعل" : "معطل"}
-                                </Button>
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  variant={user.professional_signals_enabled ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => toggleProfessionalSignals(user.user_id, user.professional_signals_enabled)}
-                                  className={user.professional_signals_enabled ? "bg-primary hover:bg-primary/90" : "border-muted-foreground/30"}
-                                >
-                                  {user.professional_signals_enabled ? "مفعل" : "معطل"}
-                                </Button>
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleResetPassword(user.email, user.user_id)}
-                                  disabled={!user.email}
-                                  className="gap-1"
-                                >
-                                  <KeyRound className="h-3 w-3" />
-                                  إعادة تعيين
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
+                  <>
+                    {/* Mobile Cards */}
+                    <div className="block sm:hidden space-y-3">
+                      {users.map((user) => {
+                        const isActive = user.subscription_expires_at && new Date(user.subscription_expires_at) > new Date();
+                        return (
+                          <div key={user.user_id} className="p-3 rounded-lg border border-border bg-card space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground truncate max-w-[180px]">{user.email || "لا يوجد"}</span>
+                              {isActive ? (
+                                <Badge className="bg-success text-xs">نشط</Badge>
+                              ) : (
+                                <Badge variant="destructive" className="text-xs">منتهي</Badge>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              <Button
+                                variant={user.image_analysis_enabled ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => toggleImageAnalysis(user.user_id, user.image_analysis_enabled)}
+                                className={`text-xs h-7 px-2 ${user.image_analysis_enabled ? "bg-success hover:bg-success/90" : ""}`}
+                              >
+                                تحليل الصورة
+                              </Button>
+                              <Button
+                                variant={user.supply_demand_enabled ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => toggleSupplyDemand(user.user_id, user.supply_demand_enabled)}
+                                className={`text-xs h-7 px-2 ${user.supply_demand_enabled ? "bg-info hover:bg-info/90" : ""}`}
+                              >
+                                العرض والطلب
+                              </Button>
+                              <Button
+                                variant={user.professional_signals_enabled ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => toggleProfessionalSignals(user.user_id, user.professional_signals_enabled)}
+                                className={`text-xs h-7 px-2 ${user.professional_signals_enabled ? "bg-primary hover:bg-primary/90" : ""}`}
+                              >
+                                التوصيات
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleResetPassword(user.email, user.user_id)}
+                                disabled={!user.email}
+                                className="text-xs h-7 px-2"
+                              >
+                                <KeyRound className="h-3 w-3 ml-1" />
+                                كلمة السر
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Desktop Table */}
+                    <div className="hidden sm:block overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>البريد الإلكتروني</TableHead>
+                            <TableHead>تاريخ التسجيل</TableHead>
+                            <TableHead>حالة الاشتراك</TableHead>
+                            <TableHead>تاريخ انتهاء الاشتراك</TableHead>
+                            <TableHead>الكود المستخدم</TableHead>
+                            <TableHead>تحليل الصورة</TableHead>
+                            <TableHead>محلل العرض والطلب</TableHead>
+                            <TableHead>توصيات المحترفين</TableHead>
+                            <TableHead>الإجراءات</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {users.map((user) => {
+                            const isActive = user.subscription_expires_at && new Date(user.subscription_expires_at) > new Date();
+                            return (
+                              <TableRow key={user.user_id}>
+                                <TableCell className="font-medium">{user.email || "لا يوجد"}</TableCell>
+                                <TableCell>{format(new Date(user.created_at), "yyyy-MM-dd")}</TableCell>
+                                <TableCell>
+                                  {isActive ? (
+                                    <Badge className="bg-success">نشط</Badge>
+                                  ) : (
+                                    <Badge variant="destructive">منتهي</Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {user.subscription_expires_at ? (
+                                    <span className={isActive ? "text-success" : "text-destructive"}>
+                                      {format(new Date(user.subscription_expires_at), "yyyy-MM-dd")}
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground">غير مفعل</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="font-mono text-xs">{user.activated_code || "لا يوجد"}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant={user.image_analysis_enabled ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => toggleImageAnalysis(user.user_id, user.image_analysis_enabled)}
+                                    className={user.image_analysis_enabled ? "bg-success hover:bg-success/90" : ""}
+                                  >
+                                    {user.image_analysis_enabled ? "مفعل" : "معطل"}
+                                  </Button>
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant={user.supply_demand_enabled ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => toggleSupplyDemand(user.user_id, user.supply_demand_enabled)}
+                                    className={user.supply_demand_enabled ? "bg-info hover:bg-info/90" : ""}
+                                  >
+                                    {user.supply_demand_enabled ? "مفعل" : "معطل"}
+                                  </Button>
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant={user.professional_signals_enabled ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => toggleProfessionalSignals(user.user_id, user.professional_signals_enabled)}
+                                    className={user.professional_signals_enabled ? "bg-primary hover:bg-primary/90" : "border-muted-foreground/30"}
+                                  >
+                                    {user.professional_signals_enabled ? "مفعل" : "معطل"}
+                                  </Button>
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleResetPassword(user.email, user.user_id)}
+                                    disabled={!user.email}
+                                    className="gap-1"
+                                  >
+                                    <KeyRound className="h-3 w-3" />
+                                    إعادة تعيين
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </CollapsibleContent>
@@ -1008,59 +1070,98 @@ const AdminDashboard = () => {
                 {codes.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">لا توجد أكواد</div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>الكود</TableHead>
-                          <TableHead>المدة (أيام)</TableHead>
-                          <TableHead>الاستخدام</TableHead>
-                          <TableHead>الحالة</TableHead>
-                          <TableHead>تاريخ الإنشاء</TableHead>
-                          <TableHead>تاريخ الانتهاء</TableHead>
-                          <TableHead>الإجراءات</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {codes.map((code) => {
-                          const isExpired = code.expires_at && new Date(code.expires_at) < new Date();
-                          const isUsedUp = code.max_uses && code.current_uses >= code.max_uses;
-                          return (
-                            <TableRow key={code.id}>
-                              <TableCell className="font-mono">
-                                <div className="flex items-center gap-2">
-                                  <span>{code.code}</span>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(code.code)}>
-                                    {copiedCode === code.code ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
-                                  </Button>
-                                </div>
-                              </TableCell>
-                              <TableCell>{code.duration_days}</TableCell>
-                              <TableCell>{code.current_uses || 0} / {code.max_uses || "∞"}</TableCell>
-                              <TableCell>
-                                {!code.is_active ? (
-                                  <Badge variant="secondary">غير نشط</Badge>
-                                ) : isExpired ? (
-                                  <Badge variant="destructive">منتهي</Badge>
-                                ) : isUsedUp ? (
-                                  <Badge variant="secondary">مستخدم</Badge>
-                                ) : (
-                                  <Badge className="bg-success">نشط</Badge>
-                                )}
-                              </TableCell>
-                              <TableCell>{format(new Date(code.created_at), "yyyy-MM-dd")}</TableCell>
-                              <TableCell>{code.expires_at ? format(new Date(code.expires_at), "yyyy-MM-dd") : "غير محدد"}</TableCell>
-                              <TableCell>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteCode(code.id)}>
-                                  <Trash2 className="h-4 w-4" />
+                  <>
+                    {/* Mobile Cards */}
+                    <div className="block sm:hidden space-y-3">
+                      {codes.map((code) => {
+                        const isExpired = code.expires_at && new Date(code.expires_at) < new Date();
+                        const isUsedUp = code.max_uses && code.current_uses >= code.max_uses;
+                        return (
+                          <div key={code.id} className="p-3 rounded-lg border border-border bg-card space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-sm">{code.code}</span>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(code.code)}>
+                                  {copiedCode === code.code ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                                 </Button>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
+                              </div>
+                              {!code.is_active ? (
+                                <Badge variant="secondary" className="text-xs">غير نشط</Badge>
+                              ) : isExpired ? (
+                                <Badge variant="destructive" className="text-xs">منتهي</Badge>
+                              ) : isUsedUp ? (
+                                <Badge variant="secondary" className="text-xs">مستخدم</Badge>
+                              ) : (
+                                <Badge className="bg-success text-xs">نشط</Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>{code.duration_days} يوم</span>
+                              <span>{code.current_uses || 0} / {code.max_uses || "∞"}</span>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => handleDeleteCode(code.id)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Desktop Table */}
+                    <div className="hidden sm:block overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>الكود</TableHead>
+                            <TableHead>المدة (أيام)</TableHead>
+                            <TableHead>الاستخدام</TableHead>
+                            <TableHead>الحالة</TableHead>
+                            <TableHead>تاريخ الإنشاء</TableHead>
+                            <TableHead>تاريخ الانتهاء</TableHead>
+                            <TableHead>الإجراءات</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {codes.map((code) => {
+                            const isExpired = code.expires_at && new Date(code.expires_at) < new Date();
+                            const isUsedUp = code.max_uses && code.current_uses >= code.max_uses;
+                            return (
+                              <TableRow key={code.id}>
+                                <TableCell className="font-mono">
+                                  <div className="flex items-center gap-2">
+                                    <span>{code.code}</span>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(code.code)}>
+                                      {copiedCode === code.code ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                                <TableCell>{code.duration_days}</TableCell>
+                                <TableCell>{code.current_uses || 0} / {code.max_uses || "∞"}</TableCell>
+                                <TableCell>
+                                  {!code.is_active ? (
+                                    <Badge variant="secondary">غير نشط</Badge>
+                                  ) : isExpired ? (
+                                    <Badge variant="destructive">منتهي</Badge>
+                                  ) : isUsedUp ? (
+                                    <Badge variant="secondary">مستخدم</Badge>
+                                  ) : (
+                                    <Badge className="bg-success">نشط</Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell>{format(new Date(code.created_at), "yyyy-MM-dd")}</TableCell>
+                                <TableCell>{code.expires_at ? format(new Date(code.expires_at), "yyyy-MM-dd") : "غير محدد"}</TableCell>
+                                <TableCell>
+                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteCode(code.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </CollapsibleContent>
