@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useMarketAnalysis, MarketAnalysis } from '@/hooks/useMarketAnalysis';
+import { useMarketAnalysis } from '@/hooks/useMarketAnalysis';
 import { useSmartRecoveryTrades } from '@/hooks/useSmartRecoveryTrades';
 import { 
   playBuySignalAlert, 
@@ -306,8 +306,10 @@ const SmartRecoverySystem = () => {
               </>
             ) : (
               <div className="text-center py-8">
-                <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin text-primary/50" />
-                <p className="text-slate-400 text-sm">جاري التحليل...</p>
+                <RefreshCw className="w-10 h-10 mx-auto mb-3 animate-spin text-primary/50" />
+                <p className="text-white font-medium mb-1">جاري تحليل السوق...</p>
+                <p className="text-slate-500 text-xs">جلب بيانات من Binance API</p>
+                <p className="text-slate-600 text-[10px] mt-2">قد يستغرق التحليل بضع ثوانٍ</p>
               </div>
             )}
           </CardContent>

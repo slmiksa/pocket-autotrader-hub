@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 export interface MarketAnalysis {
   symbol: string;
@@ -24,7 +23,6 @@ interface UseMarketAnalysisOptions {
   timeframe?: string;
   autoRefresh?: boolean;
   refreshInterval?: number;
-  onSignalDetected?: (analysis: MarketAnalysis) => void;
 }
 
 export const useMarketAnalysis = (options: UseMarketAnalysisOptions = {}) => {
@@ -32,16 +30,19 @@ export const useMarketAnalysis = (options: UseMarketAnalysisOptions = {}) => {
     symbol = 'XAUUSD',
     timeframe = '15m',
     autoRefresh = false,
-    refreshInterval = 30000,
-    onSignalDetected
+    refreshInterval = 60000,
   } = options;
 
   const [analysis, setAnalysis] = useState<MarketAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const previousSignalRef = useRef<string | null>(null);
+  const isFetchingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const fetchAnalysis = useCallback(async () => {
+    // Prevent duplicate calls
+    if (isFetchingRef.current) return null;
+    isFetchingRef.current = true;
     setLoading(true);
     setError(null);
 
@@ -52,36 +53,40 @@ export const useMarketAnalysis = (options: UseMarketAnalysisOptions = {}) => {
 
       if (fnError) throw fnError;
 
-      setAnalysis(data);
-
-      // Check if a new valid signal was detected
-      if (data.isValidSetup && data.signalType !== 'NONE') {
-        const signalKey = `${data.signalType}-${data.timestamp}`;
-        if (previousSignalRef.current !== signalKey) {
-          previousSignalRef.current = signalKey;
-          onSignalDetected?.(data);
-        }
+      if (mountedRef.current) {
+        setAnalysis(data);
       }
 
       return data;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'خطأ في تحليل السوق';
-      setError(message);
+      if (mountedRef.current) {
+        setError(message);
+      }
       console.error('Market analysis error:', err);
       return null;
     } finally {
-      setLoading(false);
+      isFetchingRef.current = false;
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
-  }, [symbol, timeframe, onSignalDetected]);
+  }, [symbol, timeframe]);
 
   useEffect(() => {
+    mountedRef.current = true;
     fetchAnalysis();
 
+    let interval: NodeJS.Timeout | null = null;
     if (autoRefresh) {
-      const interval = setInterval(fetchAnalysis, refreshInterval);
-      return () => clearInterval(interval);
+      interval = setInterval(fetchAnalysis, refreshInterval);
     }
-  }, [fetchAnalysis, autoRefresh, refreshInterval]);
+
+    return () => {
+      mountedRef.current = false;
+      if (interval) clearInterval(interval);
+    };
+  }, [symbol, timeframe, autoRefresh, refreshInterval]);
 
   return {
     analysis,
