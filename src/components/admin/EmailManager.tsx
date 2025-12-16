@@ -119,46 +119,15 @@ export const EmailManager = () => {
             <div style="background: #f0f9ff; padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #0ea5e9;">
               <p style="color: #0369a1; font-weight: bold; margin: 0 0 15px 0;">📋 الميزات الأساسية:</p>
               <ul style="color: #555; line-height: 2; margin: 0; padding-right: 20px;">
-                <li>✅ توصيات تداول مباشرة</li>
-                <li>✅ سجل خاص لإحصاء صفقاتك</li>
-                <li>✅ دعم فني متواصل</li>
+                <li>✅ توصيات تداول مباشرة من تيليجرام</li>
+                <li>✅ تحليل الشارت بالذكاء الاصطناعي</li>
+                <li>✅ محلل العرض والطلب الذكي</li>
+                <li>✅ التقويم الاقتصادي مع التنبيهات</li>
+                <li>✅ يوميات التداول الاحترافية</li>
               </ul>
             </div>
-            <div style="background: #fef3c7; padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #f59e0b;">
-              <p style="color: #92400e; font-weight: bold; margin: 0 0 15px 0;">📊 محلل العرض والطلب:</p>
-              <ul style="color: #555; line-height: 2; margin: 0; padding-right: 20px;">
-                <li>⭐ تحديد مناطق العرض والطلب</li>
-                <li>⭐ إعداد صفقات مقترحة آلياً</li>
-                <li>⭐ تحليل قوة المناطق</li>
-              </ul>
-            </div>
-            <div style="background: #ecfdf5; padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #10b981;">
-              <p style="color: #065f46; font-weight: bold; margin: 0 0 15px 0;">📈 تحليل الشارت المباشر:</p>
-              <ul style="color: #555; line-height: 2; margin: 0; padding-right: 20px;">
-                <li>⭐ شارت TradingView مباشر</li>
-                <li>⭐ تحليل بالذكاء الاصطناعي</li>
-                <li>⭐ توصيات CALL/PUT من الشارت</li>
-              </ul>
-            </div>
-          </div>
-          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
-        </div>
-      `
-    },
-    {
-      id: "activation",
-      name: "تفعيل الباقة",
-      subject: "✅ تم تفعيل حسابك - مرحباً بك في TIFUE SA!",
-      content: `
-        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
-          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">تم تفعيل حسابك بنجاح! ✅</h1>
-          </div>
-          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
-            <p style="font-size: 20px; color: #333;">مبارك! 🎊</p>
-            <p style="color: #555; line-height: 1.8;">تم تفعيل باقتك بنجاح! يمكنك الآن الاستمتاع بجميع الخدمات.</p>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://tifue.com" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">ابدأ التداول الآن</a>
+              <a href="https://tifue.com" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">استكشف المنصة الآن</a>
             </div>
           </div>
           <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
@@ -166,19 +135,32 @@ export const EmailManager = () => {
       `
     },
     {
-      id: "promo",
-      name: "عرض خاص",
-      subject: "🔥 عرض حصري لك!",
+      id: "ai-analysis",
+      name: "🤖 تحليل الذكاء الاصطناعي",
+      subject: "🤖 اكتشف قوة تحليل الشارت بالذكاء الاصطناعي!",
       content: `
         <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
-          <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">🔥 عرض خاص لك!</h1>
+          <div style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">🤖 تحليل الشارت بالذكاء الاصطناعي</h1>
           </div>
           <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
             <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
-            <p style="color: #555; line-height: 1.8;">لدينا عرض حصري لك! احصل على خصم خاص على اشتراكاتنا.</p>
+            <p style="color: #555; line-height: 1.8;">هل تعلم أن منصة TIFUE SA تمتلك أحدث تقنيات الذكاء الاصطناعي لتحليل الشارتات؟</p>
+            <div style="background: #f5f3ff; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #8b5cf6;">
+              <p style="color: #5b21b6; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">✨ ما الذي يمكن للذكاء الاصطناعي فعله؟</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>📸 <strong>رفع صورة الشارت:</strong> ارفع أي صورة شارت واحصل على تحليل فوري</li>
+                <li>🔍 <strong>تحديد الأنماط:</strong> يكتشف الأنماط الفنية تلقائياً (رأس وكتفين، مثلثات، قنوات...)</li>
+                <li>📊 <strong>مستويات الدعم والمقاومة:</strong> يحدد أهم المستويات بدقة عالية</li>
+                <li>🎯 <strong>توصيات CALL/PUT:</strong> يعطيك توصية واضحة مع نسبة الثقة</li>
+                <li>⏰ <strong>أفضل وقت للدخول:</strong> يحدد التوقيت المثالي للصفقة</li>
+              </ul>
+            </div>
+            <div style="background: #ecfdf5; padding: 20px; border-radius: 12px; margin: 20px 0;">
+              <p style="color: #065f46; text-align: center; font-weight: bold; margin: 0;">💡 جرب الآن: ارفع صورة شارت واحصل على تحليل احترافي خلال ثوانٍ!</p>
+            </div>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://tifue.com/subscription" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">احصل على العرض الآن</a>
+              <a href="https://tifue.com/image-analysis" style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">جرب التحليل الذكي</a>
             </div>
           </div>
           <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
@@ -186,19 +168,448 @@ export const EmailManager = () => {
       `
     },
     {
-      id: "update",
-      name: "تحديث جديد",
-      subject: "✨ تحديث جديد في المنصة!",
+      id: "supply-demand",
+      name: "📊 محلل العرض والطلب",
+      subject: "📊 اكتشف مناطق العرض والطلب باحترافية!",
       content: `
         <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">✨ تحديث جديد!</h1>
+          <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">📊 محلل العرض والطلب</h1>
           </div>
           <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
-            <p style="font-size: 18px; color: #333;">مرحباً،</p>
-            <p style="color: #555; line-height: 1.8;">يسعدنا إعلامك بإضافة ميزات جديدة رائعة إلى المنصة!</p>
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">تعرف على أقوى أداة لتحديد مناطق العرض والطلب في المنصة!</p>
+            <div style="background: #fffbeb; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #f59e0b;">
+              <p style="color: #92400e; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">🎯 مميزات المحلل:</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>🔴 <strong>مناطق العرض (البيع):</strong> يحدد أفضل مناطق البيع بدقة</li>
+                <li>🟢 <strong>مناطق الطلب (الشراء):</strong> يكتشف مناطق الشراء القوية</li>
+                <li>💪 <strong>قوة المنطقة:</strong> يقيّم قوة كل منطقة من 1-10</li>
+                <li>📈 <strong>صفقات مقترحة:</strong> يعطيك صفقات جاهزة مع الأهداف ووقف الخسارة</li>
+                <li>🖼️ <strong>تحليل بالصورة:</strong> ارفع صورة الشارت واحصل على التحليل</li>
+              </ul>
+            </div>
+            <div style="background: #fef3c7; padding: 20px; border-radius: 12px; margin: 20px 0;">
+              <p style="color: #92400e; text-align: center; font-weight: bold; margin: 0;">⚡ نصيحة: ادمج تحليل العرض والطلب مع التحليل الفني لنتائج أفضل!</p>
+            </div>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://tifue.com" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">اكتشف الآن</a>
+              <a href="https://tifue.com/supply-demand" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">جرب المحلل الآن</a>
+            </div>
+          </div>
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+        </div>
+      `
+    },
+    {
+      id: "live-signals",
+      name: "🎯 التوصيات المباشرة",
+      subject: "🎯 توصيات تداول مباشرة من تيليجرام!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">🎯 توصيات التداول المباشرة</h1>
+          </div>
+          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">احصل على توصيات التداول فور صدورها من قناة تيليجرام مباشرة على المنصة!</p>
+            <div style="background: #ecfdf5; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #10b981;">
+              <p style="color: #065f46; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">📡 مميزات التوصيات:</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>⚡ <strong>توصيات فورية:</strong> تصلك التوصيات لحظة صدورها</li>
+                <li>🔔 <strong>تنبيهات صوتية:</strong> تنبيه صوتي عند وصول توصية جديدة</li>
+                <li>📊 <strong>سجل النتائج:</strong> تتبع نتائج كل توصية (ربح/خسارة)</li>
+                <li>📈 <strong>إحصائيات الأداء:</strong> نسبة النجاح ومعدل الربح</li>
+                <li>🤖 <strong>تنفيذ آلي:</strong> إمكانية التنفيذ الآلي على بوكت أوبشن</li>
+              </ul>
+            </div>
+            <div style="display: flex; gap: 10px; margin: 20px 0;">
+              <div style="flex: 1; background: #dcfce7; padding: 15px; border-radius: 10px; text-align: center;">
+                <p style="font-size: 24px; margin: 0; color: #16a34a;">✅</p>
+                <p style="color: #166534; font-weight: bold; margin: 5px 0 0 0;">WIN</p>
+              </div>
+              <div style="flex: 1; background: #fee2e2; padding: 15px; border-radius: 10px; text-align: center;">
+                <p style="font-size: 24px; margin: 0; color: #dc2626;">❌</p>
+                <p style="color: #991b1b; font-weight: bold; margin: 5px 0 0 0;">LOSS</p>
+              </div>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://tifue.com" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">شاهد التوصيات</a>
+            </div>
+          </div>
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+        </div>
+      `
+    },
+    {
+      id: "economic-calendar",
+      name: "📅 التقويم الاقتصادي",
+      subject: "📅 لا تفوت الأخبار الاقتصادية المهمة!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">📅 التقويم الاقتصادي</h1>
+          </div>
+          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">تابع جميع الأحداث الاقتصادية المهمة التي تؤثر على الأسواق!</p>
+            <div style="background: #eff6ff; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #2563eb;">
+              <p style="color: #1e40af; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">📊 مميزات التقويم:</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>🌍 <strong>تغطية عالمية:</strong> أحداث من جميع الدول الكبرى</li>
+                <li>⚠️ <strong>تصنيف الأهمية:</strong> عالي - متوسط - منخفض التأثير</li>
+                <li>🔔 <strong>تنبيهات مسبقة:</strong> تنبيه قبل الحدث بالوقت الذي تختاره</li>
+                <li>📈 <strong>القيم المتوقعة:</strong> التوقعات vs القيمة السابقة</li>
+                <li>🇸🇦 <strong>عربي بالكامل:</strong> جميع الأحداث مترجمة للعربية</li>
+              </ul>
+            </div>
+            <div style="background: #dbeafe; padding: 20px; border-radius: 12px; margin: 20px 0;">
+              <p style="color: #1e40af; text-align: center; font-weight: bold; margin: 0;">💡 نصيحة: تجنب التداول أثناء الأخبار عالية التأثير!</p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://tifue.com/economic-calendar" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">شاهد التقويم</a>
+            </div>
+          </div>
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+        </div>
+      `
+    },
+    {
+      id: "price-alerts",
+      name: "🔔 تنبيهات الأسعار",
+      subject: "🔔 لا تفوت أي فرصة مع تنبيهات الأسعار!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">🔔 تنبيهات الأسعار الذكية</h1>
+          </div>
+          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">أنشئ تنبيهات أسعار مخصصة ولا تفوت أي فرصة تداول!</p>
+            <div style="background: #fdf2f8; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #ec4899;">
+              <p style="color: #9d174d; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">⚡ مميزات التنبيهات:</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>📈 <strong>تنبيه عند الصعود:</strong> عندما يصل السعر لمستوى معين</li>
+                <li>📉 <strong>تنبيه عند الهبوط:</strong> عند كسر مستوى دعم</li>
+                <li>🔊 <strong>تنبيه صوتي:</strong> صوت تنبيه واضح</li>
+                <li>📱 <strong>إشعارات فورية:</strong> تنبيهات على المتصفح والهاتف</li>
+                <li>💹 <strong>جميع الأزواج:</strong> فوركس، عملات رقمية، مؤشرات</li>
+              </ul>
+            </div>
+            <div style="background: #fce7f3; padding: 20px; border-radius: 12px; margin: 20px 0;">
+              <p style="color: #9d174d; text-align: center; font-weight: bold; margin: 0;">🎯 حدد مستويات الدخول والخروج واترك المنصة تنبهك!</p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://tifue.com/markets" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">أنشئ تنبيه الآن</a>
+            </div>
+          </div>
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+        </div>
+      `
+    },
+    {
+      id: "pro-signals",
+      name: "👑 توصيات المحترفين",
+      subject: "👑 توصيات المحترفين - دقة عالية!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">👑 توصيات المحترفين</h1>
+          </div>
+          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">احصل على توصيات حصرية من فريق المحللين المحترفين!</p>
+            <div style="background: #fefce8; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #eab308;">
+              <p style="color: #854d0e; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">🏆 ما يميز توصيات المحترفين:</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>🎯 <strong>دقة عالية:</strong> تحليل معمق من خبراء متخصصين</li>
+                <li>📝 <strong>تحليل مفصل:</strong> شرح كامل لسبب التوصية</li>
+                <li>🎚️ <strong>مستوى الثقة:</strong> نسبة ثقة لكل توصية</li>
+                <li>⏱️ <strong>الإطار الزمني:</strong> M1, M5, M15, H1 وأكثر</li>
+                <li>🎯 <strong>الأهداف:</strong> سعر الدخول والهدف ووقف الخسارة</li>
+                <li>📊 <strong>سجل النتائج:</strong> تتبع نتائج كل توصية</li>
+              </ul>
+            </div>
+            <div style="display: flex; gap: 10px; margin: 20px 0;">
+              <div style="flex: 1; background: #fef9c3; padding: 15px; border-radius: 10px; text-align: center;">
+                <p style="font-size: 28px; margin: 0;">🏆</p>
+                <p style="color: #854d0e; font-weight: bold; margin: 5px 0 0 0;">خبراء معتمدون</p>
+              </div>
+              <div style="flex: 1; background: #fef9c3; padding: 15px; border-radius: 10px; text-align: center;">
+                <p style="font-size: 28px; margin: 0;">📈</p>
+                <p style="color: #854d0e; font-weight: bold; margin: 5px 0 0 0;">نسبة نجاح عالية</p>
+              </div>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://tifue.com/professional-signals" style="background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">شاهد التوصيات</a>
+            </div>
+          </div>
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+        </div>
+      `
+    },
+    {
+      id: "trading-journal",
+      name: "📓 يوميات التداول",
+      subject: "📓 سجّل صفقاتك وتابع تقدمك!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">📓 يوميات التداول الاحترافية</h1>
+          </div>
+          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">يوميات التداول هي سر نجاح المحترفين - ابدأ تسجيل صفقاتك اليوم!</p>
+            <div style="background: #f0fdfa; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #14b8a6;">
+              <p style="color: #0f766e; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">📊 مميزات اليوميات:</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>📝 <strong>تسجيل الصفقات:</strong> سجّل كل صفقة بالتفاصيل</li>
+                <li>🎯 <strong>الهدف اليومي:</strong> حدد هدفك اليومي وتابع تحقيقه</li>
+                <li>📈 <strong>إحصائيات شاملة:</strong> نسبة النجاح، متوسط الربح/الخسارة</li>
+                <li>💡 <strong>الدروس المستفادة:</strong> سجّل ملاحظاتك وتعلم من أخطائك</li>
+                <li>📅 <strong>تقرير شهري:</strong> ملخص أدائك الشهري</li>
+              </ul>
+            </div>
+            <div style="background: #ccfbf1; padding: 20px; border-radius: 12px; margin: 20px 0;">
+              <p style="color: #0f766e; text-align: center; font-weight: bold; margin: 0;">💡 "ما لا يمكن قياسه، لا يمكن تحسينه" - سجّل صفقاتك وحسّن أداءك!</p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://tifue.com" style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">ابدأ التسجيل</a>
+            </div>
+          </div>
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+        </div>
+      `
+    },
+    {
+      id: "live-chart",
+      name: "📈 الشارت المباشر",
+      subject: "📈 شارت TradingView احترافي مجاني!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">📈 شارت TradingView المباشر</h1>
+          </div>
+          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">استمتع بشارت TradingView الاحترافي مدمج في المنصة مع تحليل ذكي!</p>
+            <div style="background: #eef2ff; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #6366f1;">
+              <p style="color: #3730a3; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">✨ مميزات الشارت:</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>📊 <strong>شارت TradingView:</strong> أفضل منصة تحليل في العالم</li>
+                <li>🔧 <strong>أدوات الرسم:</strong> خطوط اتجاه، فيبوناتشي، وأكثر</li>
+                <li>📐 <strong>المؤشرات الفنية:</strong> RSI, MACD, Bollinger وغيرها</li>
+                <li>⏱️ <strong>جميع الفريمات:</strong> من 1 دقيقة إلى شهري</li>
+                <li>🤖 <strong>تحليل بالذكاء الاصطناعي:</strong> احصل على تحليل فوري</li>
+                <li>🖼️ <strong>حفظ الصورة:</strong> احفظ الشارت كصورة للمشاركة</li>
+              </ul>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://tifue.com/live-chart" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">افتح الشارت</a>
+            </div>
+          </div>
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+        </div>
+      `
+    },
+    {
+      id: "markets",
+      name: "💹 الأسواق والأسعار",
+      subject: "💹 تابع أسعار الأسواق لحظة بلحظة!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">💹 الأسواق والأسعار</h1>
+          </div>
+          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">تابع أسعار جميع الأسواق لحظة بلحظة من مكان واحد!</p>
+            <div style="background: #ecfdf5; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #059669;">
+              <p style="color: #065f46; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">📊 الأسواق المتاحة:</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>💱 <strong>الفوركس:</strong> EUR/USD, GBP/USD, USD/JPY وأكثر</li>
+                <li>₿ <strong>العملات الرقمية:</strong> BTC, ETH, XRP, DOGE</li>
+                <li>🏆 <strong>المعادن:</strong> الذهب والفضة</li>
+                <li>📈 <strong>المؤشرات:</strong> US30, NASDAQ, S&P500</li>
+                <li>⛽ <strong>السلع:</strong> النفط والغاز</li>
+              </ul>
+            </div>
+            <div style="display: flex; gap: 10px; margin: 20px 0;">
+              <div style="flex: 1; background: #d1fae5; padding: 15px; border-radius: 10px; text-align: center;">
+                <p style="color: #065f46; font-weight: bold; margin: 0;">⭐ المفضلة</p>
+                <p style="color: #555; font-size: 12px; margin: 5px 0 0 0;">أضف أزواجك المفضلة</p>
+              </div>
+              <div style="flex: 1; background: #d1fae5; padding: 15px; border-radius: 10px; text-align: center;">
+                <p style="color: #065f46; font-weight: bold; margin: 0;">🔔 التنبيهات</p>
+                <p style="color: #555; font-size: 12px; margin: 5px 0 0 0;">تنبيه عند وصول السعر</p>
+              </div>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://tifue.com/markets" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">شاهد الأسواق</a>
+            </div>
+          </div>
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+        </div>
+      `
+    },
+    {
+      id: "market-hours",
+      name: "🕐 أوقات الأسواق",
+      subject: "🕐 تعرف على أفضل أوقات التداول!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">🕐 أوقات الأسواق العالمية</h1>
+          </div>
+          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">تعرف على أوقات فتح وإغلاق الأسواق العالمية بتوقيتك المحلي!</p>
+            <div style="background: #ecfeff; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #0891b2;">
+              <p style="color: #155e75; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">🌍 الأسواق الرئيسية:</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>🇯🇵 <strong>سوق طوكيو:</strong> أول سوق يفتح في اليوم</li>
+                <li>🇬🇧 <strong>سوق لندن:</strong> أكبر سوق فوركس في العالم</li>
+                <li>🇺🇸 <strong>سوق نيويورك:</strong> أكثر الأسواق سيولة</li>
+                <li>🇦🇺 <strong>سوق سيدني:</strong> بداية أسبوع التداول</li>
+              </ul>
+            </div>
+            <div style="background: #cffafe; padding: 20px; border-radius: 12px; margin: 20px 0;">
+              <p style="color: #155e75; text-align: center; font-weight: bold; margin: 0;">⚡ أفضل وقت للتداول: تداخل سوق لندن ونيويورك!</p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://tifue.com/markets" style="background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">شاهد الأوقات</a>
+            </div>
+          </div>
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+        </div>
+      `
+    },
+    {
+      id: "community",
+      name: "👥 مجتمع المتداولين",
+      subject: "👥 انضم لمجتمع المتداولين وشارك تجربتك!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">👥 مجتمع المتداولين</h1>
+          </div>
+          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">انضم إلى مجتمع من المتداولين وتبادل الخبرات والأفكار!</p>
+            <div style="background: #f5f3ff; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #8b5cf6;">
+              <p style="color: #5b21b6; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">🤝 مميزات المجتمع:</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>📝 <strong>نشر الأفكار:</strong> شارك تحليلاتك مع المجتمع</li>
+                <li>🖼️ <strong>رفع الصور:</strong> شارك صور الشارت والتحليلات</li>
+                <li>💬 <strong>التعليقات:</strong> ناقش الأفكار مع الآخرين</li>
+                <li>❤️ <strong>الإعجابات:</strong> تفاعل مع المحتوى المفيد</li>
+                <li>👤 <strong>ملف شخصي:</strong> بناء سمعتك كمتداول</li>
+              </ul>
+            </div>
+            <div style="background: #ede9fe; padding: 20px; border-radius: 12px; margin: 20px 0;">
+              <p style="color: #5b21b6; text-align: center; font-weight: bold; margin: 0;">💡 "التداول رحلة، والمجتمع يجعلها أسهل!"</p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://tifue.com/community" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">انضم للمجتمع</a>
+            </div>
+          </div>
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+        </div>
+      `
+    },
+    {
+      id: "binary-options",
+      name: "⚡ الخيارات الثنائية",
+      subject: "⚡ تعلم أساسيات الخيارات الثنائية!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">⚡ الخيارات الثنائية</h1>
+          </div>
+          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">تعرف على قسم الخيارات الثنائية وأساسيات التداول!</p>
+            <div style="background: #fef2f2; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #dc2626;">
+              <p style="color: #991b1b; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">📚 المحتوى التعليمي:</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>📖 <strong>ما هي الخيارات الثنائية:</strong> شرح مبسط للمبتدئين</li>
+                <li>📊 <strong>كيف تعمل:</strong> آلية التداول والربح</li>
+                <li>⚠️ <strong>المخاطر:</strong> فهم المخاطر المحتملة</li>
+                <li>💡 <strong>النصائح:</strong> أفضل الممارسات للتداول</li>
+                <li>🔗 <strong>الربط بالحساب:</strong> ربط حساب بوكت أوبشن</li>
+              </ul>
+            </div>
+            <div style="background: #fee2e2; padding: 20px; border-radius: 12px; margin: 20px 0;">
+              <p style="color: #991b1b; text-align: center; font-weight: bold; margin: 0;">⚠️ تحذير: التداول ينطوي على مخاطر. لا تتداول بأموال لا تستطيع خسارتها!</p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://tifue.com/binary-options" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">تعلم المزيد</a>
+            </div>
+          </div>
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+        </div>
+      `
+    },
+    {
+      id: "auto-trade",
+      name: "🤖 التداول الآلي",
+      subject: "🤖 فعّل التداول الآلي واربح وأنت نائم!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">🤖 التداول الآلي</h1>
+          </div>
+          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">فعّل التداول الآلي وسينفذ النظام الصفقات تلقائياً بناءً على التوصيات!</p>
+            <div style="background: #f5f3ff; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #7c3aed;">
+              <p style="color: #5b21b6; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">⚙️ كيف يعمل:</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>🔗 <strong>ربط الحساب:</strong> اربط حسابك على بوكت أوبشن</li>
+                <li>💰 <strong>تحديد المبلغ:</strong> حدد مبلغ كل صفقة</li>
+                <li>✅ <strong>تفعيل الأوتو:</strong> فعّل التداول الآلي</li>
+                <li>📡 <strong>استقبال التوصيات:</strong> عند وصول توصية يتم تنفيذها تلقائياً</li>
+                <li>📊 <strong>تتبع النتائج:</strong> تابع أرباحك وخسائرك</li>
+              </ul>
+            </div>
+            <div style="background: #ede9fe; padding: 20px; border-radius: 12px; margin: 20px 0;">
+              <p style="color: #5b21b6; text-align: center; font-weight: bold; margin: 0;">💡 نصيحة: ابدأ بمبالغ صغيرة حتى تختبر الأداء!</p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://tifue.com" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">فعّل الآن</a>
+            </div>
+          </div>
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+        </div>
+      `
+    },
+    {
+      id: "pwa-install",
+      name: "📱 تثبيت التطبيق",
+      subject: "📱 ثبّت تطبيق TIFUE SA على جهازك!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">📱 ثبّت التطبيق</h1>
+          </div>
+          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">ثبّت تطبيق TIFUE SA على هاتفك أو جهازك للوصول السريع!</p>
+            <div style="background: #f0f9ff; padding: 25px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #0ea5e9;">
+              <p style="color: #0369a1; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">✨ مميزات التطبيق:</p>
+              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
+                <li>⚡ <strong>وصول سريع:</strong> افتح التطبيق من شاشتك الرئيسية</li>
+                <li>🔔 <strong>إشعارات فورية:</strong> تنبيهات التوصيات والأسعار</li>
+                <li>📴 <strong>يعمل بدون إنترنت:</strong> شاهد محتواك المحفوظ</li>
+                <li>🚀 <strong>أداء أسرع:</strong> تجربة أفضل من المتصفح</li>
+                <li>💾 <strong>مساحة صغيرة:</strong> لا يحتاج مساحة كبيرة</li>
+              </ul>
+            </div>
+            <div style="background: #e0f2fe; padding: 20px; border-radius: 12px; margin: 20px 0;">
+              <p style="color: #0369a1; font-weight: bold; margin: 0 0 10px 0;">📲 طريقة التثبيت:</p>
+              <p style="color: #555; margin: 0;">افتح المنصة من المتصفح ← اضغط على أيقونة "التثبيت" أو "إضافة للشاشة الرئيسية"</p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://tifue.com/install" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">تعلم التثبيت</a>
             </div>
           </div>
           <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
@@ -207,8 +618,8 @@ export const EmailManager = () => {
     },
     {
       id: "reminder",
-      name: "تذكير التجديد",
-      subject: "⏰ تذكير: اشتراكك ينتهي قريباً",
+      name: "⏰ تذكير التجديد",
+      subject: "⏰ تذكير: اشتراكك ينتهي قريباً!",
       content: `
         <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
           <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
@@ -218,13 +629,14 @@ export const EmailManager = () => {
             <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
             <p style="color: #555; line-height: 1.8;">نود تذكيرك بأن اشتراكك في TIFUE SA سينتهي قريباً.</p>
             <div style="background: #fef2f2; padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #ef4444;">
-              <p style="color: #991b1b; font-weight: bold; margin: 0;">⚠️ لا تفوّت توصياتنا الحصرية!</p>
+              <p style="color: #991b1b; font-weight: bold; margin: 0;">⚠️ لا تفوّت خدماتنا الحصرية!</p>
             </div>
             <p style="color: #555; line-height: 1.8;">جدد اشتراكك الآن للاستمرار في الاستفادة من:</p>
             <ul style="color: #555; line-height: 2; padding-right: 20px;">
               <li>📊 توصيات التداول المباشرة</li>
               <li>🤖 تحليل الذكاء الاصطناعي</li>
               <li>👑 توصيات المحترفين</li>
+              <li>📅 التقويم الاقتصادي</li>
             </ul>
             <div style="text-align: center; margin: 30px 0;">
               <a href="https://tifue.com" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">جدد الآن</a>
@@ -235,182 +647,8 @@ export const EmailManager = () => {
       `
     },
     {
-      id: "signal",
-      name: "توصية جديدة",
-      subject: "🎯 توصية تداول جديدة متاحة الآن!",
-      content: `
-        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
-          <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">🎯 توصية جديدة!</h1>
-          </div>
-          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
-            <p style="font-size: 18px; color: #333;">مرحباً،</p>
-            <p style="color: #555; line-height: 1.8;">لدينا توصية تداول جديدة متاحة الآن على المنصة!</p>
-            <div style="background: #eff6ff; padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #2563eb;">
-              <p style="color: #1e40af; font-weight: bold; margin: 0 0 10px 0;">📈 تفاصيل التوصية:</p>
-              <p style="color: #555; margin: 0;">سارع بالدخول إلى المنصة لمشاهدة التفاصيل الكاملة!</p>
-            </div>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="https://tifue.com" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">شاهد التوصية</a>
-            </div>
-          </div>
-          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
-        </div>
-      `
-    },
-    {
-      id: "maintenance",
-      name: "صيانة مجدولة",
-      subject: "🔧 إشعار صيانة مجدولة",
-      content: `
-        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
-          <div style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">🔧 صيانة مجدولة</h1>
-          </div>
-          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
-            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
-            <p style="color: #555; line-height: 1.8;">نود إعلامك بأننا سنقوم بإجراء صيانة مجدولة للمنصة لتحسين الأداء.</p>
-            <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #6b7280;">
-              <p style="color: #374151; font-weight: bold; margin: 0 0 10px 0;">📅 موعد الصيانة:</p>
-              <p style="color: #555; margin: 0;">[سيتم تحديد الموعد]</p>
-            </div>
-            <p style="color: #555; line-height: 1.8;">نعتذر عن أي إزعاج قد يحصل. شكراً لتفهمكم!</p>
-          </div>
-          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
-        </div>
-      `
-    },
-    {
-      id: "tips",
-      name: "نصائح تداول",
-      subject: "💡 نصائح ذهبية للتداول الناجح",
-      content: `
-        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
-          <div style="background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">💡 نصائح ذهبية للتداول</h1>
-          </div>
-          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
-            <p style="font-size: 18px; color: #333;">مرحباً،</p>
-            <p style="color: #555; line-height: 1.8;">إليك بعض النصائح الذهبية لتحسين أدائك في التداول:</p>
-            <div style="background: #fefce8; padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #eab308;">
-              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
-                <li>📌 <strong>إدارة رأس المال:</strong> لا تخاطر بأكثر من 2% في صفقة واحدة</li>
-                <li>📌 <strong>الصبر:</strong> انتظر الفرص المناسبة ولا تتسرع</li>
-                <li>📌 <strong>التحليل:</strong> اعتمد على التحليل الفني والأساسي معاً</li>
-                <li>📌 <strong>السيطرة:</strong> تحكم في عواطفك أثناء التداول</li>
-                <li>📌 <strong>التعلم:</strong> راجع صفقاتك وتعلم من أخطائك</li>
-              </ul>
-            </div>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="https://tifue.com" style="background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">ابدأ التداول</a>
-            </div>
-          </div>
-          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
-        </div>
-      `
-    },
-    {
-      id: "feedback",
-      name: "طلب رأيك",
-      subject: "📝 نريد سماع رأيك!",
-      content: `
-        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
-          <div style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">📝 نريد سماع رأيك!</h1>
-          </div>
-          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
-            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
-            <p style="color: #555; line-height: 1.8;">رأيك يهمنا! نسعى دائماً لتحسين خدماتنا لتلبية احتياجاتك.</p>
-            <div style="background: #f5f3ff; padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #8b5cf6;">
-              <p style="color: #5b21b6; font-weight: bold; margin: 0;">🌟 شاركنا تجربتك:</p>
-              <p style="color: #555; margin: 10px 0 0 0;">ما الذي يعجبك في المنصة؟ وما الذي يمكننا تحسينه؟</p>
-            </div>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="https://tifue.com" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">شارك رأيك</a>
-            </div>
-          </div>
-          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
-        </div>
-      `
-    },
-    {
-      id: "referral",
-      name: "دعوة صديق",
-      subject: "🎁 ادعُ أصدقاءك واربح!",
-      content: `
-        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
-          <div style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">🎁 ادعُ أصدقاءك واربح!</h1>
-          </div>
-          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
-            <p style="font-size: 18px; color: #333;">مرحباً،</p>
-            <p style="color: #555; line-height: 1.8;">شارك تجربتك مع أصدقائك واحصل على مكافآت حصرية!</p>
-            <div style="background: #fdf2f8; padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #ec4899;">
-              <p style="color: #9d174d; font-weight: bold; margin: 0 0 10px 0;">🎯 كيف يعمل البرنامج:</p>
-              <ul style="color: #555; line-height: 2; margin: 0; padding-right: 20px;">
-                <li>1️⃣ شارك رابط الدعوة مع أصدقائك</li>
-                <li>2️⃣ عند تسجيلهم واشتراكهم</li>
-                <li>3️⃣ احصل على مكافأتك!</li>
-              </ul>
-            </div>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="https://tifue.com" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">ابدأ الدعوة</a>
-            </div>
-          </div>
-          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
-        </div>
-      `
-    },
-    {
-      id: "holiday",
-      name: "تهنئة",
-      subject: "🌙 تهنئة بالمناسبة السعيدة!",
-      content: `
-        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
-          <div style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">🌙 تهنئة من TIFUE SA</h1>
-          </div>
-          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
-            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
-            <p style="color: #555; line-height: 1.8;">بمناسبة هذه المناسبة السعيدة، نتقدم لكم بأطيب التهاني والتمنيات.</p>
-            <div style="background: #f0fdfa; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center;">
-              <p style="color: #0f766e; font-size: 24px; font-weight: bold; margin: 0;">🎉 كل عام وأنتم بخير 🎉</p>
-            </div>
-            <p style="color: #555; line-height: 1.8; text-align: center;">نتمنى لكم دوام التوفيق والنجاح في تداولاتكم!</p>
-          </div>
-          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
-        </div>
-      `
-    },
-    {
-      id: "security",
-      name: "تنبيه أمني",
-      subject: "🔐 تنبيه أمني مهم",
-      content: `
-        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
-          <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">🔐 تنبيه أمني مهم</h1>
-          </div>
-          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
-            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
-            <p style="color: #555; line-height: 1.8;">نود تذكيرك ببعض النصائح الأمنية المهمة لحماية حسابك:</p>
-            <div style="background: #fef2f2; padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #dc2626;">
-              <ul style="color: #555; line-height: 2.2; margin: 0; padding-right: 20px;">
-                <li>🔒 لا تشارك كلمة المرور مع أي شخص</li>
-                <li>🔒 استخدم كلمة مرور قوية ومختلفة</li>
-                <li>🔒 تأكد من تسجيل الخروج بعد الانتهاء</li>
-                <li>🔒 احذر من الرسائل المشبوهة</li>
-              </ul>
-            </div>
-            <p style="color: #555; line-height: 1.8;">إذا لاحظت أي نشاط مشبوه، تواصل معنا فوراً.</p>
-          </div>
-          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
-        </div>
-      `
-    },
-    {
       id: "comeback",
-      name: "نفتقدك",
+      name: "😢 نفتقدك",
       subject: "😢 نفتقدك! عد إلينا",
       content: `
         <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
@@ -434,24 +672,39 @@ export const EmailManager = () => {
       `
     },
     {
-      id: "achievement",
-      name: "إنجاز جديد",
-      subject: "🏆 مبارك! حققت إنجازاً جديداً",
+      id: "activation",
+      name: "✅ تفعيل الباقة",
+      subject: "✅ تم تفعيل حسابك - مرحباً بك!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
+          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">تم تفعيل حسابك بنجاح! ✅</h1>
+          </div>
+          <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
+            <p style="font-size: 20px; color: #333;">مبارك! 🎊</p>
+            <p style="color: #555; line-height: 1.8;">تم تفعيل باقتك بنجاح! يمكنك الآن الاستمتاع بجميع الخدمات.</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://tifue.com" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">ابدأ التداول الآن</a>
+            </div>
+          </div>
+          <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+        </div>
+      `
+    },
+    {
+      id: "promo",
+      name: "🔥 عرض خاص",
+      subject: "🔥 عرض حصري لك!",
       content: `
         <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa;">
           <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 30px; border-radius: 15px 15px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">🏆 مبارك!</h1>
+            <h1 style="color: white; margin: 0; font-size: 28px;">🔥 عرض خاص لك!</h1>
           </div>
           <div style="background: white; padding: 40px 30px; border-radius: 0 0 15px 15px;">
-            <p style="font-size: 18px; color: #333;">عميلنا المميز،</p>
-            <p style="color: #555; line-height: 1.8;">يسعدنا إبلاغك بأنك حققت إنجازاً جديداً على المنصة!</p>
-            <div style="background: #fffbeb; padding: 30px; border-radius: 12px; margin: 20px 0; text-align: center;">
-              <p style="font-size: 48px; margin: 0;">🏆</p>
-              <p style="color: #92400e; font-weight: bold; font-size: 20px; margin: 10px 0 0 0;">متداول متميز!</p>
-            </div>
-            <p style="color: #555; line-height: 1.8; text-align: center;">استمر في التقدم والنجاح!</p>
+            <p style="font-size: 18px; color: #333;">عميلنا العزيز،</p>
+            <p style="color: #555; line-height: 1.8;">لدينا عرض حصري لك! احصل على خصم خاص على اشتراكاتنا.</p>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://tifue.com" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">شاهد إنجازاتك</a>
+              <a href="https://tifue.com" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 15px 40px; border-radius: 25px; text-decoration: none; font-weight: bold;">احصل على العرض الآن</a>
             </div>
           </div>
           <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
