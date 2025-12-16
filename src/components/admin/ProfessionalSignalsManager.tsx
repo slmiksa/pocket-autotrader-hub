@@ -625,10 +625,10 @@ export const ProfessionalSignalsManager = () => {
 
       {/* Signals List */}
       <Card>
-        <CardHeader>
-          <CardTitle>التوصيات الحالية</CardTitle>
-          <CardDescription>
-            إدارة جميع التوصيات الاحترافية
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base sm:text-lg">التوصيات الحالية</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
+            إدارة جميع التوصيات الاحترافية ({signals.length})
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -638,67 +638,51 @@ export const ProfessionalSignalsManager = () => {
               <p>لا توجد توصيات حالياً</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>الأصل</TableHead>
-                    <TableHead>الاتجاه</TableHead>
-                    <TableHead>السعر</TableHead>
-                    <TableHead>الإطار الزمني</TableHead>
-                    <TableHead>الثقة</TableHead>
-                    <TableHead>الحالة</TableHead>
-                    <TableHead>النتيجة</TableHead>
-                    <TableHead>الإجراءات</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {signals.map((signal) => (
-                    <TableRow key={signal.id}>
-                      <TableCell className="font-medium">{signal.asset}</TableCell>
-                      <TableCell>
+            <>
+              {/* Mobile Cards */}
+              <div className="block sm:hidden space-y-3">
+                {signals.map((signal) => (
+                  <Card key={signal.id} className={`${signal.is_active ? 'border-primary/30' : 'border-muted opacity-60'}`}>
+                    <CardContent className="p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm">{signal.asset}</span>
                         <Badge
-                          className={
+                          className={`text-xs ${
                             signal.direction === "CALL" || signal.direction === "BUY"
                               ? "bg-success/10 text-success"
                               : "bg-destructive/10 text-destructive"
-                          }
+                          }`}
                         >
                           {signal.direction}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {signal.entry_price && <div>دخول: {signal.entry_price}</div>}
-                        {signal.target_price && <div>هدف: {signal.target_price}</div>}
-                      </TableCell>
-                      <TableCell>{signal.timeframe}</TableCell>
-                      <TableCell>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{signal.timeframe}</span>
                         {signal.confidence_level && (
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="text-xs">
                             {signal.confidence_level === "high" ? "عالي" : 
                              signal.confidence_level === "medium" ? "متوسط" : "منخفض"}
                           </Badge>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleActive(signal.id, signal.is_active)}
-                        >
-                          {signal.is_active ? (
-                            <CheckCircle2 className="h-4 w-4 text-success" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </TableCell>
-                      <TableCell>
+                        <span className={signal.is_active ? "text-success" : "text-muted-foreground"}>
+                          {signal.is_active ? "نشط" : "غير نشط"}
+                        </span>
+                      </div>
+
+                      {(signal.entry_price || signal.target_price) && (
+                        <div className="flex gap-3 text-xs">
+                          {signal.entry_price && <span>دخول: {signal.entry_price}</span>}
+                          {signal.target_price && <span>هدف: {signal.target_price}</span>}
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between pt-1">
                         <Select
                           value={signal.result || "pending"}
                           onValueChange={(value) => handleUpdateResult(signal.id, value)}
                         >
-                          <SelectTrigger className="w-24">
+                          <SelectTrigger className="w-24 h-7 text-xs">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -708,13 +692,25 @@ export const ProfessionalSignalsManager = () => {
                             <SelectItem value="breakeven">تعادل</SelectItem>
                           </SelectContent>
                         </Select>
-                      </TableCell>
-                      <TableCell>
+                        
                         <div className="flex gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => handleToggleActive(signal.id, signal.is_active)}
+                            className="h-7 w-7 p-0"
+                          >
+                            {signal.is_active ? (
+                              <CheckCircle2 className="h-4 w-4 text-success" />
+                            ) : (
+                              <XCircle className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleEditSignal(signal)}
+                            className="h-7 w-7 p-0"
                           >
                             <Edit className="h-4 w-4 text-primary" />
                           </Button>
@@ -722,16 +718,113 @@ export const ProfessionalSignalsManager = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteSignal(signal.id)}
+                            className="h-7 w-7 p-0"
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
-                      </TableCell>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Desktop Table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>الأصل</TableHead>
+                      <TableHead>الاتجاه</TableHead>
+                      <TableHead>السعر</TableHead>
+                      <TableHead>الإطار الزمني</TableHead>
+                      <TableHead>الثقة</TableHead>
+                      <TableHead>الحالة</TableHead>
+                      <TableHead>النتيجة</TableHead>
+                      <TableHead>الإجراءات</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {signals.map((signal) => (
+                      <TableRow key={signal.id}>
+                        <TableCell className="font-medium">{signal.asset}</TableCell>
+                        <TableCell>
+                          <Badge
+                            className={
+                              signal.direction === "CALL" || signal.direction === "BUY"
+                                ? "bg-success/10 text-success"
+                                : "bg-destructive/10 text-destructive"
+                            }
+                          >
+                            {signal.direction}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {signal.entry_price && <div>دخول: {signal.entry_price}</div>}
+                          {signal.target_price && <div>هدف: {signal.target_price}</div>}
+                        </TableCell>
+                        <TableCell>{signal.timeframe}</TableCell>
+                        <TableCell>
+                          {signal.confidence_level && (
+                            <Badge variant="outline">
+                              {signal.confidence_level === "high" ? "عالي" : 
+                               signal.confidence_level === "medium" ? "متوسط" : "منخفض"}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleToggleActive(signal.id, signal.is_active)}
+                          >
+                            {signal.is_active ? (
+                              <CheckCircle2 className="h-4 w-4 text-success" />
+                            ) : (
+                              <XCircle className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={signal.result || "pending"}
+                            onValueChange={(value) => handleUpdateResult(signal.id, value)}
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">قيد الانتظار</SelectItem>
+                              <SelectItem value="win">ربح</SelectItem>
+                              <SelectItem value="loss">خسارة</SelectItem>
+                              <SelectItem value="breakeven">تعادل</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditSignal(signal)}
+                            >
+                              <Edit className="h-4 w-4 text-primary" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteSignal(signal.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

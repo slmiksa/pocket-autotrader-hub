@@ -66,7 +66,6 @@ export function ReportsManager() {
 
       if (error) throw error;
 
-      // Fetch post details for each report
       const reportsWithPosts = await Promise.all(
         (reportsData || []).map(async (report) => {
           const { data: postData } = await supabase
@@ -119,7 +118,6 @@ export function ReportsManager() {
 
     setProcessingId(reportId);
     try {
-      // Delete the post
       const { error: deleteError } = await supabase
         .from("community_posts")
         .delete()
@@ -127,7 +125,6 @@ export function ReportsManager() {
 
       if (deleteError) throw deleteError;
 
-      // Update report status
       await handleUpdateStatus(reportId, "resolved");
       
       toast.success("تم حذف المشاركة وحل البلاغ");
@@ -149,45 +146,93 @@ export function ReportsManager() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-500/10">
-                <Flag className="h-5 w-5 text-red-500" />
-              </div>
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  إدارة البلاغات
-                  {pendingCount > 0 && (
-                    <Badge variant="destructive" className="text-xs">
-                      {pendingCount} جديد
-                    </Badge>
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  مراجعة ومعالجة البلاغات المقدمة من المستخدمين
-                </CardDescription>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" onClick={fetchReports} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 ml-2 ${loading ? 'animate-spin' : ''}`} />
-              تحديث
-            </Button>
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          {pendingCount > 0 && (
+            <Badge variant="destructive" className="text-xs w-fit">
+              {pendingCount} بلاغ جديد
+            </Badge>
+          )}
+          <Button variant="outline" size="sm" onClick={fetchReports} disabled={loading} className="self-end sm:self-auto">
+            <RefreshCw className={`h-4 w-4 ml-2 ${loading ? 'animate-spin' : ''}`} />
+            تحديث
+          </Button>
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        ) : reports.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Flag className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>لا توجد بلاغات</p>
+          </div>
+        ) : (
+          <>
+            {/* Mobile Cards */}
+            <div className="block sm:hidden space-y-3">
+              {reports.map((report) => (
+                <Card key={report.id} className={`${report.status === "pending" ? "border-red-500/30 bg-red-500/5" : ""}`}>
+                  <CardContent className="p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        {report.post ? (
+                          <>
+                            <p className="font-medium text-sm truncate">{report.post.title}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {report.post.user_email?.split('@')[0] || 'مستخدم'}
+                            </p>
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground italic text-sm">المشاركة محذوفة</span>
+                        )}
+                      </div>
+                      <Badge variant={statusLabels[report.status]?.variant || "secondary"} className="text-xs shrink-0">
+                        {statusLabels[report.status]?.label || report.status}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs">
+                        {reasonLabels[report.reason] || report.reason}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(report.created_at), "dd/MM/yyyy", { locale: ar })}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button variant="ghost" size="sm" onClick={() => openDetails(report)} className="h-7 text-xs">
+                        <Eye className="h-3 w-3 ml-1" />
+                        عرض
+                      </Button>
+                      {report.status === "pending" && (
+                        <Select
+                          value={report.status}
+                          onValueChange={(value) => handleUpdateStatus(report.id, value)}
+                          disabled={processingId === report.id}
+                        >
+                          <SelectTrigger className="w-24 h-7 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">قيد المراجعة</SelectItem>
+                            <SelectItem value="resolved">تم الحل</SelectItem>
+                            <SelectItem value="dismissed">رفض</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          ) : reports.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Flag className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>لا توجد بلاغات</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
+
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -230,11 +275,7 @@ export function ReportsManager() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openDetails(report)}
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => openDetails(report)}>
                             <Eye className="h-4 w-4" />
                           </Button>
                           {report.status === "pending" && (
@@ -260,13 +301,13 @@ export function ReportsManager() {
                 </TableBody>
               </Table>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </>
+        )}
+      </div>
 
       {/* Report Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
@@ -278,53 +319,45 @@ export function ReportsManager() {
           </DialogHeader>
 
           {selectedReport && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Report Info */}
-              <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+              <div className="space-y-2 p-3 bg-muted/50 rounded-lg text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">سبب البلاغ:</span>
-                  <Badge variant="destructive">
+                  <span className="text-muted-foreground">سبب البلاغ:</span>
+                  <Badge variant="destructive" className="text-xs">
                     {reasonLabels[selectedReport.reason] || selectedReport.reason}
                   </Badge>
                 </div>
                 {selectedReport.details && (
                   <div>
-                    <span className="text-sm text-muted-foreground">تفاصيل إضافية:</span>
-                    <p className="mt-1 text-sm bg-background p-2 rounded border">
+                    <span className="text-muted-foreground">تفاصيل إضافية:</span>
+                    <p className="mt-1 text-xs bg-background p-2 rounded border">
                       {selectedReport.details}
                     </p>
                   </div>
                 )}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">تاريخ البلاغ:</span>
-                  <span className="text-sm">
+                  <span className="text-muted-foreground">تاريخ البلاغ:</span>
+                  <span className="text-xs">
                     {format(new Date(selectedReport.created_at), "dd MMMM yyyy - HH:mm", { locale: ar })}
                   </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">الحالة:</span>
-                  <Badge variant={statusLabels[selectedReport.status]?.variant || "secondary"}>
-                    {statusLabels[selectedReport.status]?.label || selectedReport.status}
-                  </Badge>
                 </div>
               </div>
 
               {/* Post Content */}
               {selectedReport.post ? (
-                <div className="space-y-3">
-                  <h4 className="font-semibold">المشاركة المُبلغ عنها:</h4>
-                  <div className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        {selectedReport.post.user_email?.split('@')[0] || 'مستخدم'}
-                      </Badge>
-                    </div>
-                    <h5 className="font-bold text-lg">{selectedReport.post.title}</h5>
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm">المشاركة المُبلغ عنها:</h4>
+                  <div className="border rounded-lg p-3 space-y-2">
+                    <Badge variant="outline" className="text-xs">
+                      {selectedReport.post.user_email?.split('@')[0] || 'مستخدم'}
+                    </Badge>
+                    <h5 className="font-bold">{selectedReport.post.title}</h5>
                     {selectedReport.post.image_url && (
                       <img
                         src={selectedReport.post.image_url}
                         alt="Post image"
-                        className="w-full max-h-48 object-cover rounded-lg"
+                        className="w-full max-h-40 object-cover rounded-lg"
                       />
                     )}
                     <p className="text-muted-foreground whitespace-pre-wrap text-sm">
@@ -333,20 +366,21 @@ export function ReportsManager() {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground border rounded-lg">
-                  <Trash2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>تم حذف هذه المشاركة</p>
+                <div className="text-center py-6 text-muted-foreground border rounded-lg">
+                  <Trash2 className="h-6 w-6 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">تم حذف هذه المشاركة</p>
                 </div>
               )}
 
               {/* Actions */}
               {selectedReport.status === "pending" && selectedReport.post && (
-                <div className="flex gap-3 pt-4 border-t">
+                <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t">
                   <Button
                     variant="destructive"
                     onClick={() => handleDeletePost(selectedReport.post_id, selectedReport.id)}
                     disabled={processingId === selectedReport.id}
-                    className="gap-2"
+                    className="gap-2 text-sm"
+                    size="sm"
                   >
                     {processingId === selectedReport.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -359,7 +393,8 @@ export function ReportsManager() {
                     variant="outline"
                     onClick={() => handleUpdateStatus(selectedReport.id, "dismissed")}
                     disabled={processingId === selectedReport.id}
-                    className="gap-2"
+                    className="gap-2 text-sm"
+                    size="sm"
                   >
                     <CheckCircle2 className="h-4 w-4" />
                     رفض البلاغ
