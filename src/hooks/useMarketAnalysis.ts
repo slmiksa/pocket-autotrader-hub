@@ -8,12 +8,15 @@ export interface MarketAnalysis {
   ema200: number;
   vwap: number;
   trend: 'bullish' | 'bearish' | 'neutral';
+  shortTermTrend: 'bullish' | 'bearish' | 'neutral';
   priceAboveEMA: boolean;
   nearVWAP: boolean;
   cvdStatus: 'rising' | 'falling' | 'flat';
   isValidSetup: boolean;
   signalType: 'BUY' | 'SELL' | 'NONE';
+  priceChange: number;
   timestamp: string;
+  dataSource: string;
 }
 
 interface UseMarketAnalysisOptions {

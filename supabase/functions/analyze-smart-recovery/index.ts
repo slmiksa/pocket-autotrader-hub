@@ -11,12 +11,15 @@ interface MarketAnalysis {
   ema200: number;
   vwap: number;
   trend: 'bullish' | 'bearish' | 'neutral';
+  shortTermTrend: 'bullish' | 'bearish' | 'neutral';
   priceAboveEMA: boolean;
   nearVWAP: boolean;
   cvdStatus: 'rising' | 'falling' | 'flat';
   isValidSetup: boolean;
   signalType: 'BUY' | 'SELL' | 'NONE';
+  priceChange: number;
   timestamp: string;
+  dataSource: string;
 }
 
 // Fetch price from Binance API
@@ -32,23 +35,6 @@ async function fetchBinancePrice(symbol: string): Promise<number | null> {
     console.error('Binance fetch error:', error);
   }
   return null;
-}
-
-// Fetch historical klines for EMA calculation
-async function fetchKlines(symbol: string, interval: string = '15m', limit: number = 250): Promise<number[]> {
-  try {
-    const binanceSymbol = symbol === 'XAUUSD' ? 'PAXGUSDT' : symbol.replace('/', '');
-    const response = await fetch(
-      `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=${limit}`
-    );
-    if (response.ok) {
-      const data = await response.json();
-      return data.map((k: any[]) => parseFloat(k[4])); // Close prices
-    }
-  } catch (error) {
-    console.error('Klines fetch error:', error);
-  }
-  return [];
 }
 
 // Calculate EMA
@@ -86,20 +72,113 @@ function calculateVWAP(klines: any[]): number {
   return cumulativeVolume > 0 ? cumulativeTPV / cumulativeVolume : 0;
 }
 
-// Analyze CVD trend (simplified using price momentum)
-function analyzeCVD(prices: number[]): 'rising' | 'falling' | 'flat' {
-  if (prices.length < 20) return 'flat';
+// Analyze short-term trend based on recent candles
+function analyzeShortTermTrend(klines: any[]): { trend: 'bullish' | 'bearish' | 'neutral'; priceChange: number } {
+  if (klines.length < 10) return { trend: 'neutral', priceChange: 0 };
   
-  const recent = prices.slice(-10);
-  const older = prices.slice(-20, -10);
+  // Look at last 10 candles for short-term trend
+  const recentKlines = klines.slice(-10);
+  const firstClose = parseFloat(recentKlines[0][4]);
+  const lastClose = parseFloat(recentKlines[recentKlines.length - 1][4]);
   
-  const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
-  const olderAvg = older.reduce((a, b) => a + b, 0) / older.length;
+  const priceChange = ((lastClose - firstClose) / firstClose) * 100;
   
-  const change = ((recentAvg - olderAvg) / olderAvg) * 100;
+  // Count bullish vs bearish candles
+  let bullishCandles = 0;
+  let bearishCandles = 0;
   
-  if (change > 0.1) return 'rising';
-  if (change < -0.1) return 'falling';
+  for (const k of recentKlines) {
+    const open = parseFloat(k[1]);
+    const close = parseFloat(k[4]);
+    if (close > open) bullishCandles++;
+    else if (close < open) bearishCandles++;
+  }
+  
+  // Also check if making higher highs and higher lows (bullish) or lower highs and lower lows (bearish)
+  const highs = recentKlines.map(k => parseFloat(k[2]));
+  const lows = recentKlines.map(k => parseFloat(k[3]));
+  
+  let higherHighs = 0;
+  let lowerLows = 0;
+  
+  for (let i = 1; i < highs.length; i++) {
+    if (highs[i] > highs[i - 1]) higherHighs++;
+    if (lows[i] < lows[i - 1]) lowerLows++;
+  }
+  
+  // Combine signals for trend determination
+  const bullishScore = bullishCandles + higherHighs + (priceChange > 0.1 ? 2 : 0);
+  const bearishScore = bearishCandles + lowerLows + (priceChange < -0.1 ? 2 : 0);
+  
+  if (bullishScore > bearishScore + 2) return { trend: 'bullish', priceChange };
+  if (bearishScore > bullishScore + 2) return { trend: 'bearish', priceChange };
+  return { trend: 'neutral', priceChange };
+}
+
+// Analyze CVD trend using volume and price action
+function analyzeCVD(klines: any[]): 'rising' | 'falling' | 'flat' {
+  if (klines.length < 20) return 'flat';
+  
+  const recentKlines = klines.slice(-20);
+  
+  // Simulate CVD by looking at buy/sell pressure
+  let buyPressure = 0;
+  let sellPressure = 0;
+  
+  for (const k of recentKlines) {
+    const open = parseFloat(k[1]);
+    const high = parseFloat(k[2]);
+    const low = parseFloat(k[3]);
+    const close = parseFloat(k[4]);
+    const volume = parseFloat(k[5]);
+    
+    // Calculate buy/sell pressure based on candle structure
+    const range = high - low;
+    if (range > 0) {
+      const buyVolume = ((close - low) / range) * volume;
+      const sellVolume = ((high - close) / range) * volume;
+      buyPressure += buyVolume;
+      sellPressure += sellVolume;
+    }
+  }
+  
+  // Compare recent CVD (last 10) vs older (first 10)
+  const recent10 = recentKlines.slice(-10);
+  const older10 = recentKlines.slice(0, 10);
+  
+  let recentBuy = 0, recentSell = 0, olderBuy = 0, olderSell = 0;
+  
+  for (const k of recent10) {
+    const open = parseFloat(k[1]);
+    const high = parseFloat(k[2]);
+    const low = parseFloat(k[3]);
+    const close = parseFloat(k[4]);
+    const volume = parseFloat(k[5]);
+    const range = high - low;
+    if (range > 0) {
+      recentBuy += ((close - low) / range) * volume;
+      recentSell += ((high - close) / range) * volume;
+    }
+  }
+  
+  for (const k of older10) {
+    const open = parseFloat(k[1]);
+    const high = parseFloat(k[2]);
+    const low = parseFloat(k[3]);
+    const close = parseFloat(k[4]);
+    const volume = parseFloat(k[5]);
+    const range = high - low;
+    if (range > 0) {
+      olderBuy += ((close - low) / range) * volume;
+      olderSell += ((high - close) / range) * volume;
+    }
+  }
+  
+  const recentDelta = recentBuy - recentSell;
+  const olderDelta = olderBuy - olderSell;
+  
+  if (recentDelta > olderDelta * 1.1) return 'rising';
+  if (recentDelta < olderDelta * 0.9) return 'falling';
   return 'flat';
 }
 
@@ -135,24 +214,32 @@ serve(async (req) => {
     // Calculate indicators
     const ema200 = calculateEMA(closePrices, 200);
     const vwap = calculateVWAP(klines.slice(-50)); // Last 50 candles for daily VWAP approximation
-    const cvdStatus = analyzeCVD(closePrices);
+    const cvdStatus = analyzeCVD(klines);
+    
+    // Analyze short-term trend (THIS IS THE KEY FIX)
+    const shortTermAnalysis = analyzeShortTermTrend(klines);
 
-    // Determine trend
+    // Determine EMA-based trend (long-term structure)
     const priceAboveEMA = currentPrice > ema200;
-    const trend = priceAboveEMA ? 'bullish' : currentPrice < ema200 ? 'bearish' : 'neutral';
+    
+    // Use SHORT-TERM trend for signal generation (more responsive)
+    const trend = shortTermAnalysis.trend;
 
-    // Check if price is near VWAP (within 0.2%)
+    // Check if price is near VWAP (within 0.5%)
     const vwapDistance = Math.abs((currentPrice - vwap) / vwap) * 100;
     const nearVWAP = vwapDistance <= 0.5;
 
-    // Determine if setup is valid
+    // Determine if setup is valid - now using short-term trend
     let isValidSetup = false;
     let signalType: 'BUY' | 'SELL' | 'NONE' = 'NONE';
 
+    // BUY: Short-term bullish, near VWAP, CVD rising or flat
     if (trend === 'bullish' && nearVWAP && (cvdStatus === 'rising' || cvdStatus === 'flat')) {
       isValidSetup = true;
       signalType = 'BUY';
-    } else if (trend === 'bearish' && nearVWAP && (cvdStatus === 'falling' || cvdStatus === 'flat')) {
+    } 
+    // SELL: Short-term bearish, near VWAP, CVD falling or flat
+    else if (trend === 'bearish' && nearVWAP && (cvdStatus === 'falling' || cvdStatus === 'flat')) {
       isValidSetup = true;
       signalType = 'SELL';
     }
@@ -162,13 +249,16 @@ serve(async (req) => {
       currentPrice,
       ema200,
       vwap,
-      trend,
+      trend, // Now reflects short-term trend
+      shortTermTrend: shortTermAnalysis.trend,
       priceAboveEMA,
       nearVWAP,
       cvdStatus,
       isValidSetup,
       signalType,
-      timestamp: new Date().toISOString()
+      priceChange: shortTermAnalysis.priceChange,
+      timestamp: new Date().toISOString(),
+      dataSource: symbol === 'XAUUSD' ? 'PAXG/USDT (Binance proxy)' : binanceSymbol
     };
 
     console.log('Analysis result:', analysis);
