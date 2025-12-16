@@ -34,7 +34,6 @@ const SmartRecoverySystem = () => {
   const [soundEnabled, setSoundEnabled] = useState(false); // Disabled by default
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [lastSignalTime, setLastSignalTime] = useState<number>(0);
 
   // Check authentication
   useEffect(() => {
@@ -58,12 +57,10 @@ const SmartRecoverySystem = () => {
     }
   }, [notificationsEnabled]);
 
-  const handleSignalDetected = (analysis: MarketAnalysis) => {
-    const now = Date.now();
-    // Prevent notifications more than once per 5 minutes
-    if (now - lastSignalTime < 300000) return;
-    setLastSignalTime(now);
-
+  // Manual alert trigger - user controls when to get notified
+  const triggerManualAlert = () => {
+    if (!analysis) return;
+    
     if (soundEnabled) {
       if (analysis.signalType === 'BUY') {
         playBuySignalAlert();
@@ -74,14 +71,13 @@ const SmartRecoverySystem = () => {
 
     if (notificationsEnabled) {
       sendBrowserNotification(
-        `إشارة ${analysis.signalType === 'BUY' ? 'شراء' : 'بيع'} - ${analysis.symbol}`,
+        `${analysis.signalType === 'BUY' ? '🟢 شراء' : '🔴 بيع'} - ${analysis.symbol}`,
         `السعر: ${analysis.currentPrice.toFixed(2)}`
       );
     }
 
-    // Shorter toast duration and less intrusive
-    toast(`إشارة ${analysis.signalType === 'BUY' ? '📈 شراء' : '📉 بيع'} - ${analysis.symbol}`, {
-      duration: 3000,
+    toast.success(`${analysis.signalType === 'BUY' ? '🟢 شراء' : '🔴 بيع'} - ${analysis.symbol}`, {
+      duration: 2000,
     });
   };
 
@@ -89,8 +85,7 @@ const SmartRecoverySystem = () => {
     symbol: selectedSymbol,
     timeframe: selectedTimeframe,
     autoRefresh: true,
-    refreshInterval: 60000, // Increased to 60 seconds
-    onSignalDetected: handleSignalDetected
+    refreshInterval: 60000,
   });
 
   const { trades, loading: tradesLoading, deleteTrade, getStats } = useSmartRecoveryTrades();
@@ -162,12 +157,15 @@ const SmartRecoverySystem = () => {
                 <p className="text-xs text-slate-400">نظام توصيات ذكي - MT5</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                className="h-9 w-9 bg-slate-800/50 hover:bg-slate-700/50"
+                onClick={() => {
+                  setNotificationsEnabled(!notificationsEnabled);
+                  if (!notificationsEnabled) requestNotificationPermission();
+                }}
+                className={`h-8 w-8 ${notificationsEnabled ? 'bg-primary/20' : 'bg-slate-800/50'} hover:bg-slate-700/50`}
               >
                 <Bell className={`h-4 w-4 ${notificationsEnabled ? 'text-primary' : 'text-slate-500'}`} />
               </Button>
@@ -175,14 +173,10 @@ const SmartRecoverySystem = () => {
                 variant="ghost"
                 size="icon"
                 onClick={() => setSoundEnabled(!soundEnabled)}
-                className="h-9 w-9 bg-slate-800/50 hover:bg-slate-700/50"
+                className={`h-8 w-8 ${soundEnabled ? 'bg-primary/20' : 'bg-slate-800/50'} hover:bg-slate-700/50`}
               >
-                {soundEnabled ? <Volume2 className="h-4 w-4 text-slate-300" /> : <VolumeX className="h-4 w-4 text-slate-500" />}
+                {soundEnabled ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4 text-slate-500" />}
               </Button>
-              <Badge className="bg-primary/20 text-primary border-primary/40 px-3">
-                <Shield className="w-3 h-3 ml-1" />
-                توصيات
-              </Badge>
             </div>
           </div>
         </div>
@@ -228,127 +222,92 @@ const SmartRecoverySystem = () => {
 
         {/* Market Status Dashboard */}
         <Card className="bg-gradient-to-br from-slate-900/80 to-slate-900/50 border-slate-800/50 overflow-hidden">
-          <CardHeader className="pb-3 border-b border-slate-800/50">
-            <CardTitle className="text-base flex items-center gap-2 text-white">
-              <BarChart3 className="w-5 h-5 text-primary" />
-              لوحة حالة السوق - {selectedSymbol}
-              {analysisLoading && <RefreshCw className="w-4 h-4 animate-spin text-slate-500" />}
-            </CardTitle>
+          <CardHeader className="pb-2 border-b border-slate-800/50">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2 text-white">
+                <BarChart3 className="w-4 h-4 text-primary" />
+                {selectedSymbol}
+                {analysisLoading && <RefreshCw className="w-3 h-3 animate-spin text-slate-500" />}
+              </CardTitle>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-5 pt-5">
+          <CardContent className="space-y-3 pt-3">
             {analysis ? (
               <>
-                {/* Main Status Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/30">
-                    <div className="text-xs text-slate-500 mb-2">الاتجاه الحالي</div>
-                    <div className={`flex items-center gap-2 ${getTrendColor(analysis.trend)}`}>
-                      {getTrendIcon(analysis.trend)}
-                      <div>
-                        <span className="font-bold text-sm block">
-                          {analysis.trend === 'bullish' ? 'صاعد' : analysis.trend === 'bearish' ? 'هابط' : 'عرضي'}
-                        </span>
-                        {analysis.priceChange !== undefined && (
-                          <span className={`text-xs ${analysis.priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                            {analysis.priceChange >= 0 ? '+' : ''}{analysis.priceChange.toFixed(2)}%
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/30">
-                    <div className="text-xs text-slate-500 mb-2">حالة CVD</div>
-                    <Badge className={`${getCVDStatusColor(analysis.cvdStatus)} font-medium`}>
-                      {analysis.cvdStatus === 'rising' ? 'صاعد' : analysis.cvdStatus === 'falling' ? 'هابط' : 'ثابت'}
-                    </Badge>
-                  </div>
-
-                  <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/30">
-                    <div className="text-xs text-slate-500 mb-2">EMA 200</div>
-                    <div className="flex items-center gap-2">
-                      {analysis.priceAboveEMA ? (
-                        <CheckCircle className="w-4 h-4 text-emerald-400" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-red-400" />
-                      )}
-                      <span className={`text-sm font-bold ${analysis.priceAboveEMA ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {analysis.priceAboveEMA ? 'فوق' : 'تحت'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/30">
-                    <div className="text-xs text-slate-500 mb-2">VWAP</div>
-                    <div className="flex items-center gap-2">
-                      {analysis.nearVWAP ? (
-                        <CheckCircle className="w-4 h-4 text-emerald-400" />
-                      ) : (
-                        <AlertTriangle className="w-4 h-4 text-amber-400" />
-                      )}
-                      <span className={`text-sm font-bold ${analysis.nearVWAP ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {analysis.nearVWAP ? 'قريب' : 'بعيد'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Signal Recommendation */}
-                <div className={`rounded-xl p-5 border-2 ${
-                  analysis.isValidSetup 
-                    ? 'bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 border-emerald-500/40' 
-                    : 'bg-gradient-to-r from-red-500/10 to-red-500/5 border-red-500/40'
-                }`}>
-                  <div className="flex items-center justify-between flex-wrap gap-3">
-                    <div className="flex items-center gap-3">
-                      {analysis.isValidSetup ? (
-                        <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                          <CheckCircle className="w-6 h-6 text-emerald-400" />
-                        </div>
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
-                          <XCircle className="w-6 h-6 text-red-400" />
-                        </div>
-                      )}
-                      <div>
-                        <div className="font-bold text-base text-white">
-                          {analysis.isValidSetup ? 'توصية متاحة' : 'لا توجد توصية حالياً'}
-                        </div>
-                        <div className="text-sm text-slate-400">
-                          {analysis.isValidSetup ? 'جميع شروط الدخول متحققة' : 'انتظر تحقق شروط الدخول'}
-                        </div>
-                      </div>
-                    </div>
-                    {analysis.isValidSetup && (
-                      <div className="flex items-center gap-3">
-                        <Badge className={`text-base px-4 py-2 ${analysis.signalType === 'BUY' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
-                          {analysis.signalType === 'BUY' ? '📈 توصية شراء' : '📉 توصية بيع'}
-                        </Badge>
-                      </div>
+                {/* Main Signal - BUY or SELL */}
+                <div 
+                  className={`rounded-xl p-4 text-center cursor-pointer transition-all active:scale-95 ${
+                    analysis.signalType === 'BUY' 
+                      ? 'bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 border-2 border-emerald-500/50' 
+                      : 'bg-gradient-to-br from-red-500/30 to-red-600/20 border-2 border-red-500/50'
+                  }`}
+                  onClick={triggerManualAlert}
+                >
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    {analysis.signalType === 'BUY' ? (
+                      <TrendingUp className="w-8 h-8 text-emerald-400" />
+                    ) : (
+                      <TrendingDown className="w-8 h-8 text-red-400" />
                     )}
+                    <span className={`text-3xl font-black ${analysis.signalType === 'BUY' ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {analysis.signalType === 'BUY' ? 'شراء' : 'بيع'}
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-white mb-1">
+                    {analysis.currentPrice.toFixed(analysis.currentPrice > 100 ? 1 : 4)}
+                  </div>
+                  {analysis.priceChange !== undefined && (
+                    <div className={`text-sm font-medium ${analysis.priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {analysis.priceChange >= 0 ? '▲' : '▼'} {Math.abs(analysis.priceChange).toFixed(2)}%
+                    </div>
+                  )}
+                  <div className="text-[10px] text-slate-500 mt-2">اضغط للتنبيه الصوتي</div>
+                </div>
+
+                {/* Compact Status Grid */}
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="bg-slate-800/50 rounded-lg p-2 text-center border border-slate-700/30">
+                    <div className="text-[10px] text-slate-500">الاتجاه</div>
+                    <div className={`text-xs font-bold ${getTrendColor(analysis.trend)}`}>
+                      {analysis.trend === 'bullish' ? '↑' : analysis.trend === 'bearish' ? '↓' : '→'}
+                    </div>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-lg p-2 text-center border border-slate-700/30">
+                    <div className="text-[10px] text-slate-500">CVD</div>
+                    <div className={`text-xs font-bold ${analysis.cvdStatus === 'rising' ? 'text-emerald-400' : analysis.cvdStatus === 'falling' ? 'text-red-400' : 'text-amber-400'}`}>
+                      {analysis.cvdStatus === 'rising' ? '↑' : analysis.cvdStatus === 'falling' ? '↓' : '→'}
+                    </div>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-lg p-2 text-center border border-slate-700/30">
+                    <div className="text-[10px] text-slate-500">EMA</div>
+                    <div className={`text-xs font-bold ${analysis.priceAboveEMA ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {analysis.priceAboveEMA ? 'فوق' : 'تحت'}
+                    </div>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-lg p-2 text-center border border-slate-700/30">
+                    <div className="text-[10px] text-slate-500">VWAP</div>
+                    <div className={`text-xs font-bold ${analysis.nearVWAP ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {analysis.nearVWAP ? 'قريب' : 'بعيد'}
+                    </div>
                   </div>
                 </div>
 
-                {/* Price Levels */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-slate-800/40 rounded-xl p-4 text-center border border-slate-700/30">
-                    <div className="text-xs text-slate-500 mb-1">السعر الحالي</div>
-                    <div className="font-bold text-lg text-primary">${analysis.currentPrice.toFixed(2)}</div>
+                {/* Price Levels - Compact */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-slate-800/40 rounded-lg p-2 text-center border border-slate-700/30">
+                    <div className="text-[10px] text-slate-500">EMA 200</div>
+                    <div className="font-bold text-sm text-white">{analysis.ema200.toFixed(analysis.ema200 > 100 ? 1 : 4)}</div>
                   </div>
-                  <div className="bg-slate-800/40 rounded-xl p-4 text-center border border-slate-700/30">
-                    <div className="text-xs text-slate-500 mb-1">EMA 200</div>
-                    <div className="font-bold text-lg text-white">${analysis.ema200.toFixed(2)}</div>
-                  </div>
-                  <div className="bg-slate-800/40 rounded-xl p-4 text-center border border-slate-700/30">
-                    <div className="text-xs text-slate-500 mb-1">VWAP</div>
-                    <div className="font-bold text-lg text-white">${analysis.vwap.toFixed(2)}</div>
+                  <div className="bg-slate-800/40 rounded-lg p-2 text-center border border-slate-700/30">
+                    <div className="text-[10px] text-slate-500">VWAP</div>
+                    <div className="font-bold text-sm text-white">{analysis.vwap.toFixed(analysis.vwap > 100 ? 1 : 4)}</div>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="text-center py-12">
-                <RefreshCw className="w-10 h-10 mx-auto mb-3 animate-spin text-primary/50" />
-                <p className="text-slate-400">جاري تحليل السوق...</p>
+              <div className="text-center py-8">
+                <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin text-primary/50" />
+                <p className="text-slate-400 text-sm">جاري التحليل...</p>
               </div>
             )}
           </CardContent>
