@@ -8,7 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Send, Users, Search, CheckCircle2, Loader2, UserCheck, UserX } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Mail, Send, Users, Search, CheckCircle2, Loader2, UserCheck, UserX, Eye, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -34,6 +35,7 @@ export const EmailManager = () => {
   const [subject, setSubject] = useState("");
   const [emailContent, setEmailContent] = useState("");
   const [useTemplate, setUseTemplate] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -574,7 +576,19 @@ export const EmailManager = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="content">محتوى الإيميل (HTML)</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="content">محتوى الإيميل (HTML)</Label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPreview(true)}
+                    disabled={!emailContent}
+                    className="gap-2"
+                  >
+                    <Eye className="h-4 w-4" />
+                    معاينة
+                  </Button>
+                </div>
                 <Textarea
                   id="content"
                   value={emailContent}
@@ -584,6 +598,75 @@ export const EmailManager = () => {
                 />
               </div>
             </div>
+
+            {/* Preview Dialog */}
+            <Dialog open={showPreview} onOpenChange={setShowPreview}>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Eye className="h-5 w-5" />
+                    معاينة البريد الإلكتروني
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+                  {/* Email Header Preview */}
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-semibold text-muted-foreground">من:</span>
+                      <span>TIFUE SA &lt;noreply@tifue.com&gt;</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-semibold text-muted-foreground">إلى:</span>
+                      <span>{selectedUsers.length > 0 ? `${selectedUsers.length} مستلم` : "لم يتم تحديد مستلمين"}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-semibold text-muted-foreground">الموضوع:</span>
+                      <span className="font-medium">{subject || "بدون عنوان"}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Email Body Preview */}
+                  <div className="flex-1 border rounded-lg overflow-hidden bg-white">
+                    <div className="bg-muted/30 px-4 py-2 border-b text-xs text-muted-foreground">
+                      كيف سيظهر البريد للمستلم
+                    </div>
+                    <div className="overflow-auto h-[400px]">
+                      {emailContent ? (
+                        <iframe
+                          srcDoc={emailContent}
+                          className="w-full h-full border-0"
+                          title="Email Preview"
+                          sandbox="allow-same-origin"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                          لا يوجد محتوى للمعاينة
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 justify-end pt-2">
+                    <Button variant="outline" onClick={() => setShowPreview(false)}>
+                      إغلاق
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setShowPreview(false);
+                        if (selectedUsers.length > 0) {
+                          sendEmails();
+                        }
+                      }}
+                      disabled={selectedUsers.length === 0 || !subject || !emailContent}
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      إرسال الآن
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {/* User Selection */}
             <div className="space-y-4">
