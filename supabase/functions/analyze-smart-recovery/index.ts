@@ -22,18 +22,55 @@ interface MarketAnalysis {
   dataSource: string;
 }
 
-// Fetch price from Binance API
-async function fetchBinancePrice(symbol: string): Promise<number | null> {
-  try {
-    const binanceSymbol = symbol === 'XAUUSD' ? 'PAXGUSDT' : symbol.replace('/', '');
-    const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`);
-    if (response.ok) {
-      const data = await response.json();
-      return parseFloat(data.price);
+// Fetch price from Binance API with retry
+async function fetchBinancePrice(symbol: string, retries = 3): Promise<number | null> {
+  const binanceSymbol = symbol === 'XAUUSD' ? 'PAXGUSDT' : symbol.replace('/', '');
+  
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      // Add delay between retries to avoid rate limiting
+      if (attempt > 0) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+      
+      const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`, {
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return parseFloat(data.price);
+      }
+      
+      // If rate limited, wait longer
+      if (response.status === 429) {
+        console.log('Rate limited, waiting...');
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        continue;
+      }
+      
+      console.error(`Binance API error: ${response.status}`);
+    } catch (error) {
+      console.error(`Binance fetch error (attempt ${attempt + 1}):`, error);
     }
-  } catch (error) {
-    console.error('Binance fetch error:', error);
   }
+  
+  // Fallback: try CoinGecko for crypto
+  if (symbol === 'BTCUSDT' || symbol === 'ETHUSDT') {
+    try {
+      const id = symbol === 'BTCUSDT' ? 'bitcoin' : 'ethereum';
+      const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`);
+      if (response.ok) {
+        const data = await response.json();
+        return data[id]?.usd || null;
+      }
+    } catch (error) {
+      console.error('CoinGecko fallback error:', error);
+    }
+  }
+  
   return null;
 }
 
