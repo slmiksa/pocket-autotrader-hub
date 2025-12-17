@@ -18,10 +18,10 @@ const navItems = [{
   path: "/",
   color: "default"
 }, {
-  label: "Smart Recovery",
+  label: "نظام الصيّاد الهادئ",
   icon: Target,
   path: "/smart-recovery",
-  color: "purple"
+  color: "default"
 }, {
   label: "التقويم الاقتصادي",
   icon: Calendar,
@@ -76,7 +76,7 @@ const headerNavItems = [{
   icon: Home,
   path: "/"
 }, {
-  label: "Smart Recovery",
+  label: "نظام الصيّاد الهادئ",
   icon: Target,
   path: "/smart-recovery"
 }, {
