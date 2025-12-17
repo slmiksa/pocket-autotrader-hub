@@ -62,6 +62,7 @@ export const useMarketAnalysis = (options: UseMarketAnalysisOptions = {}) => {
       const message = err instanceof Error ? err.message : 'خطأ في تحليل السوق';
       if (mountedRef.current) {
         setError(message);
+        setAnalysis(null); // لا تعرض بيانات قديمة عند فشل التحليل
       }
       console.error('Market analysis error:', err);
       return null;

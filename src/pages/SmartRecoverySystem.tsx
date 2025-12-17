@@ -317,27 +317,41 @@ const SmartRecoverySystem = () => {
 
             {/* Symbols Grid */}
             <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
-              {filteredSymbols.map((sym) => (
-                <Button
-                  key={sym.symbol}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedSymbol(sym.symbol);
-                    setSearchQuery('');
-                  }}
-                  className={`justify-start h-auto py-2 px-3 ${
-                    selectedSymbol === sym.symbol 
-                      ? 'bg-primary/20 border border-primary/50 text-primary' 
-                      : 'bg-slate-800/50 hover:bg-slate-700/50 text-white border border-slate-700/30'
-                  }`}
-                >
-                  <div className="text-right w-full">
-                    <div className="font-bold text-xs">{sym.symbol}</div>
-                    <div className="text-[10px] text-slate-400">{sym.name}</div>
-                  </div>
-                </Button>
-              ))}
+              {filteredSymbols.map((sym) => {
+                const isSupported = sym.symbol === 'XAUUSD' || sym.symbol.endsWith('USDT');
+
+                return (
+                  <Button
+                    key={sym.symbol}
+                    variant="ghost"
+                    size="sm"
+                    disabled={!isSupported}
+                    onClick={() => {
+                      if (!isSupported) {
+                        toast.error('هذا السوق غير مدعوم حالياً في Smart Recovery');
+                        return;
+                      }
+                      setSelectedSymbol(sym.symbol);
+                      setSearchQuery('');
+                    }}
+                    className={`justify-start h-auto py-2 px-3 ${
+                      selectedSymbol === sym.symbol
+                        ? 'bg-primary/20 border border-primary/50 text-primary'
+                        : 'bg-slate-800/50 hover:bg-slate-700/50 text-white border border-slate-700/30'
+                    } ${!isSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <div className="text-right w-full">
+                      <div className="font-bold text-xs flex items-center justify-between gap-2">
+                        <span>{sym.symbol}</span>
+                        {!isSupported && (
+                          <span className="text-[9px] text-slate-400">غير مدعوم</span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-slate-400">{sym.name}</div>
+                    </div>
+                  </Button>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
