@@ -234,11 +234,11 @@ const SmartRecoverySystem = () => {
                 <ArrowLeft className="h-5 w-5 text-slate-300" />
               </Button>
               <div>
-                <h1 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
+                <h1 className="md:text-xl font-bold text-white flex items-center gap-2 mx-0 my-0 px-0 py-0 text-base">
                   <Eye className="w-5 h-5 text-primary" />
                   نظام الصيّاد الهادئ للذهب والعملات  
                 </h1>
-                <p className="text-xs text-slate-400">نظام التوصيات الذكي - MT5</p>
+                
               </div>
             </div>
             <div className="flex items-center gap-1">
