@@ -403,10 +403,9 @@ const SmartRecoverySystem = () => {
                               <span className="text-xs text-purple-300">احتمال الانفجار</span>
                               <div className="flex items-center gap-2">
                                 <div className="w-20 h-2 bg-purple-950 rounded-full overflow-hidden">
-                                  <div 
-                                    className="h-full bg-gradient-to-r from-purple-600 to-pink-500 transition-all"
-                                    style={{ width: `${(analysis as any).accumulation.breakoutProbability}%` }}
-                                  />
+                                  <div className="h-full bg-gradient-to-r from-purple-600 to-pink-500 transition-all" style={{
+                            width: `${(analysis as any).accumulation.breakoutProbability}%`
+                          }} />
                                 </div>
                                 <span className="text-sm font-bold text-purple-200">
                                   {(analysis as any).accumulation.breakoutProbability}%
@@ -414,45 +413,33 @@ const SmartRecoverySystem = () => {
                               </div>
                             </div>
                             
-                            {(analysis as any).accumulation.expectedDirection !== 'unknown' && (
-                              <div className="flex items-center justify-between bg-purple-900/50 rounded-lg p-2">
+                            {(analysis as any).accumulation.expectedDirection !== 'unknown' && <div className="flex items-center justify-between bg-purple-900/50 rounded-lg p-2">
                                 <span className="text-xs text-purple-300">الاتجاه المتوقع</span>
                                 <span className={`text-sm font-bold ${(analysis as any).accumulation.expectedDirection === 'up' ? 'text-green-400' : 'text-red-400'}`}>
                                   {(analysis as any).accumulation.expectedDirection === 'up' ? '📈 صعود' : '📉 هبوط'}
                                 </span>
-                              </div>
-                            )}
+                              </div>}
                             
                             <div className="flex flex-wrap gap-1.5 mt-2">
-                              {(analysis as any).accumulation.reasons.map((reason: string, idx: number) => (
-                                <span key={idx} className="text-[10px] px-2 py-1 rounded-full bg-purple-800/50 text-purple-200 border border-purple-500/30">
+                              {(analysis as any).accumulation.reasons.map((reason: string, idx: number) => <span key={idx} className="text-[10px] px-2 py-1 rounded-full bg-purple-800/50 text-purple-200 border border-purple-500/30">
                                   {reason}
-                                </span>
-                              ))}
+                                </span>)}
                             </div>
                           </div>
                         </div>}
 
                       {/* Squeeze/Volume/Consolidation Mini Indicators */}
-                      {((analysis as any).bollingerSqueeze || (analysis as any).volumeSpike || (analysis as any).priceConsolidation) && (
-                        <div className="flex gap-2 flex-wrap">
-                          {(analysis as any).bollingerSqueeze && (
-                            <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/40 animate-pulse">
+                      {((analysis as any).bollingerSqueeze || (analysis as any).volumeSpike || (analysis as any).priceConsolidation) && <div className="flex gap-2 flex-wrap">
+                          {(analysis as any).bollingerSqueeze && <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/40 animate-pulse">
                               🔥 ضغط بولينجر
-                            </Badge>
-                          )}
-                          {(analysis as any).volumeSpike && (
-                            <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/40">
+                            </Badge>}
+                          {(analysis as any).volumeSpike && <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/40">
                               📊 ارتفاع الحجم
-                            </Badge>
-                          )}
-                          {(analysis as any).priceConsolidation && (
-                            <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/40">
+                            </Badge>}
+                          {(analysis as any).priceConsolidation && <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/40">
                               📍 تجميع سعري
-                            </Badge>
-                          )}
-                        </div>
-                      )}
+                            </Badge>}
+                        </div>}
 
                       {/* Entry, Target, Stop Loss - Only show for BUY/SELL signals */}
                       {!isWait && <div className="grid grid-cols-3 gap-2">
@@ -557,101 +544,10 @@ const SmartRecoverySystem = () => {
         </Card>
 
         {/* Statistics */}
-        {user && <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card className="bg-slate-800 border-slate-600">
-              <CardContent className="p-4 text-center">
-                <div className="text-3xl font-black text-cyan-400">{stats.total}</div>
-                <div className="text-xs text-slate-400 mt-1 font-medium">إجمالي التوصيات</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-slate-800 border-slate-600">
-              <CardContent className="p-4 text-center">
-                <div className="text-3xl font-black text-green-400">{stats.winRate}%</div>
-                <div className="text-xs text-slate-400 mt-1 font-medium">نسبة النجاح</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-slate-800 border-slate-600">
-              <CardContent className="p-4 text-center">
-                <div className={`text-3xl font-black ${stats.totalProfitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  ${stats.totalProfitLoss.toFixed(2)}
-                </div>
-                <div className="text-xs text-slate-400 mt-1 font-medium">إجمالي النتائج</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-slate-800 border-slate-600">
-              <CardContent className="p-4 text-center">
-                <div className="text-3xl font-black text-purple-400">{stats.openTrades}</div>
-                <div className="text-xs text-slate-400 mt-1 font-medium">توصيات نشطة</div>
-              </CardContent>
-            </Card>
-          </div>}
+        {user}
 
         {/* Signals Log */}
-        <Collapsible open={openSections.log} onOpenChange={() => toggleSection('log')}>
-          <Card className="bg-slate-900/50 border-slate-800/50">
-            <CollapsibleTrigger className="w-full">
-              <CardHeader className="pb-3 border-b border-slate-800/50">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base flex items-center gap-2 text-white">
-                    <BookOpen className="w-5 h-5 text-primary" />
-                    سجل التوصيات
-                    {stats.openTrades > 0 && <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/40 mr-2">{stats.openTrades} نشطة</Badge>}
-                  </CardTitle>
-                  <ChevronDown className={`w-5 h-5 text-slate-500 transition-transform ${openSections.log ? 'rotate-180' : ''}`} />
-                </div>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent className="pt-4">
-                {!user ? <div className="text-center py-10">
-                    <Shield className="w-14 h-14 mx-auto mb-3 text-slate-700" />
-                    <p className="text-slate-400 text-sm mb-3">يجب تسجيل الدخول لعرض السجل</p>
-                    <Button variant="outline" className="bg-slate-800/50 border-slate-700/50" onClick={() => navigate('/auth')}>
-                      تسجيل الدخول
-                    </Button>
-                  </div> : tradesLoading ? <div className="text-center py-10">
-                    <RefreshCw className="w-8 h-8 mx-auto animate-spin text-slate-600" />
-                  </div> : trades.length === 0 ? <div className="text-center py-10">
-                    <BookOpen className="w-14 h-14 mx-auto mb-3 text-slate-700" />
-                    <p className="text-slate-400 text-sm">لا توجد توصيات مسجلة بعد</p>
-                  </div> : <div className="space-y-3">
-                    {trades.slice(0, 10).map(trade => <div key={trade.id} className={`p-4 rounded-xl border ${trade.status === 'open' ? 'bg-blue-500/5 border-blue-500/30' : 'bg-slate-800/30 border-slate-700/30'}`}>
-                        <div className="flex items-center justify-between flex-wrap gap-3">
-                          <div className="flex items-center gap-4">
-                            <Badge className={`text-sm px-3 py-1 ${trade.direction === 'BUY' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                              {trade.direction === 'BUY' ? '📈 شراء' : '📉 بيع'}
-                            </Badge>
-                            <div>
-                              <div className="font-bold text-white">{trade.symbol}</div>
-                              <div className="text-xs text-slate-500">
-                                سعر الدخول: ${trade.entry_price.toFixed(2)}
-                                {trade.exit_price && ` | الخروج: $${trade.exit_price.toFixed(2)}`}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            {trade.status === 'open' ? <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/40">
-                                نشطة
-                              </Badge> : <>
-                                {getResultBadge(trade.result)}
-                                {trade.profit_loss !== null && <span className={`text-sm font-bold ${trade.profit_loss >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                    ${trade.profit_loss.toFixed(2)}
-                                  </span>}
-                              </>}
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-red-500/20" onClick={() => deleteTrade(trade.id)}>
-                              <Trash2 className="w-4 h-4 text-red-400" />
-                            </Button>
-                          </div>
-                        </div>
-                        {trade.was_reinforced && <div className="mt-3 text-xs text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-lg inline-block">
-                            ✓ تم التعزيز عند ${trade.reinforcement_price?.toFixed(2)}
-                          </div>}
-                      </div>)}
-                  </div>}
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
+        
 
         {/* System Overview */}
         <Collapsible open={openSections.overview} onOpenChange={() => toggleSection('overview')}>
@@ -709,20 +605,7 @@ const SmartRecoverySystem = () => {
 
         {/* Important Note */}
         <Card className="bg-amber-500/5 border-amber-500/30">
-          <CardContent className="py-5">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                <AlertTriangle className="w-5 h-5 text-amber-400" />
-              </div>
-              <div>
-                <h4 className="font-bold text-amber-400 text-sm mb-1">تنبيه مهم</h4>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  هذا نظام توصيات فقط وليس تنفيذ تلقائي. التحليل يعتمد على الاتجاه القصير المدى (آخر 10 شموع).
-                  للذهب XAUUSD نستخدم PAXG/USDT من Binance كبديل وقد يختلف السعر قليلاً عن السعر الفعلي في MT5.
-                </p>
-              </div>
-            </div>
-          </CardContent>
+          
         </Card>
       </div>
     </div>;
