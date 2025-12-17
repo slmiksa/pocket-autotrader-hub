@@ -386,6 +386,74 @@ const SmartRecoverySystem = () => {
                           </div>
                         </div>}
 
+                      {/* Accumulation Zone Alert - Institutional Activity Detection */}
+                      {(analysis as any).accumulation?.detected && <div className="bg-gradient-to-br from-purple-900/80 to-purple-800/60 rounded-xl p-4 border-2 border-purple-400 animate-pulse shadow-lg shadow-purple-500/20">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-purple-400 rounded-full animate-ping" />
+                              <span className="text-base font-black text-purple-200">🔮 تنبيه تجميع مؤسسي!</span>
+                            </div>
+                            <Badge className="bg-purple-500/30 text-purple-200 border-purple-400">
+                              قوة: {(analysis as any).accumulation.strength}%
+                            </Badge>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between bg-purple-900/50 rounded-lg p-2">
+                              <span className="text-xs text-purple-300">احتمال الانفجار</span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-20 h-2 bg-purple-950 rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-gradient-to-r from-purple-600 to-pink-500 transition-all"
+                                    style={{ width: `${(analysis as any).accumulation.breakoutProbability}%` }}
+                                  />
+                                </div>
+                                <span className="text-sm font-bold text-purple-200">
+                                  {(analysis as any).accumulation.breakoutProbability}%
+                                </span>
+                              </div>
+                            </div>
+                            
+                            {(analysis as any).accumulation.expectedDirection !== 'unknown' && (
+                              <div className="flex items-center justify-between bg-purple-900/50 rounded-lg p-2">
+                                <span className="text-xs text-purple-300">الاتجاه المتوقع</span>
+                                <span className={`text-sm font-bold ${(analysis as any).accumulation.expectedDirection === 'up' ? 'text-green-400' : 'text-red-400'}`}>
+                                  {(analysis as any).accumulation.expectedDirection === 'up' ? '📈 صعود' : '📉 هبوط'}
+                                </span>
+                              </div>
+                            )}
+                            
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              {(analysis as any).accumulation.reasons.map((reason: string, idx: number) => (
+                                <span key={idx} className="text-[10px] px-2 py-1 rounded-full bg-purple-800/50 text-purple-200 border border-purple-500/30">
+                                  {reason}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>}
+
+                      {/* Squeeze/Volume/Consolidation Mini Indicators */}
+                      {((analysis as any).bollingerSqueeze || (analysis as any).volumeSpike || (analysis as any).priceConsolidation) && (
+                        <div className="flex gap-2 flex-wrap">
+                          {(analysis as any).bollingerSqueeze && (
+                            <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/40 animate-pulse">
+                              🔥 ضغط بولينجر
+                            </Badge>
+                          )}
+                          {(analysis as any).volumeSpike && (
+                            <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/40">
+                              📊 ارتفاع الحجم
+                            </Badge>
+                          )}
+                          {(analysis as any).priceConsolidation && (
+                            <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/40">
+                              📍 تجميع سعري
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+
                       {/* Entry, Target, Stop Loss - Only show for BUY/SELL signals */}
                       {!isWait && <div className="grid grid-cols-3 gap-2">
                           <div className="bg-gradient-to-br from-blue-900/50 to-blue-800/30 rounded-xl p-3 text-center border border-blue-500/40">
