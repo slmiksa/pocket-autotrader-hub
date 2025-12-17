@@ -26,25 +26,33 @@ interface MarketAnalysis {
   dataSource: string;
 }
 
+// Map our app symbols to a supported Binance symbol (or null if unsupported)
+function getBinanceSymbol(symbol: string): string | null {
+  if (symbol === 'XAUUSD') return 'PAXGUSDT';
+  if (symbol.endsWith('USDT')) return symbol;
+  return null;
+}
+
 // Fetch price from Binance API with retry
 async function fetchBinancePrice(symbol: string, retries = 3): Promise<number | null> {
-  const binanceSymbol = symbol === 'XAUUSD' ? 'PAXGUSDT' : symbol.replace('/', '');
-  
+  const binanceSymbol = getBinanceSymbol(symbol);
+  if (!binanceSymbol) return null;
+
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
       if (attempt > 0) {
         await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
-      
+
       const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`, {
         headers: { 'Accept': 'application/json' }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         return parseFloat(data.price);
       }
-      
+
       if (response.status === 429) {
         await new Promise(resolve => setTimeout(resolve, 5000));
         continue;
@@ -53,7 +61,7 @@ async function fetchBinancePrice(symbol: string, retries = 3): Promise<number | 
       console.error(`Binance fetch error (attempt ${attempt + 1}):`, error);
     }
   }
-  
+
   return null;
 }
 
@@ -300,17 +308,19 @@ function calculateSignalConfidence(
   const maxScore = Math.max(buyScore, sellScore);
   const scoreDifference = Math.abs(buyScore - sellScore);
 
-  // Only give signal if there's clear direction (>15 points difference) and minimum confidence (>40)
-  if (scoreDifference >= 15 && maxScore >= 40) {
+  // Tighten rules to reduce false/reversed entries:
+  // - require clearer separation (>= 20)
+  // - require higher minimum score (>= 55)
+  if (scoreDifference >= 20 && maxScore >= 55) {
     if (buyScore > sellScore) {
-      return { confidence: buyScore, signalType: 'BUY', reasons };
+      return { confidence: Math.min(100, Math.round(buyScore)), signalType: 'BUY', reasons };
     } else {
-      return { confidence: sellScore, signalType: 'SELL', reasons };
+      return { confidence: Math.min(100, Math.round(sellScore)), signalType: 'SELL', reasons };
     }
   }
 
-  reasons.push('الإشارات متضاربة - انتظر تأكيد');
-  return { confidence: maxScore, signalType: 'WAIT', reasons };
+  reasons.push('الإشارات متضاربة/غير كافية - انتظر تأكيد');
+  return { confidence: Math.min(100, Math.round(maxScore)), signalType: 'WAIT', reasons };
 }
 
 serve(async (req) => {
@@ -320,7 +330,29 @@ serve(async (req) => {
 
   try {
     const { symbol = 'XAUUSD', timeframe = '15m' } = await req.json();
-    
+
+    const binanceSymbol = getBinanceSymbol(symbol);
+    if (!binanceSymbol) {
+      return new Response(
+        JSON.stringify({
+          error: 'هذا الرمز غير مدعوم حالياً في Smart Recovery',
+          supported: ['XAUUSD', '*USDT'],
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    const allowedIntervals = new Set(['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '8h', '12h', '1d']);
+    if (!allowedIntervals.has(timeframe)) {
+      return new Response(JSON.stringify({ error: 'إطار زمني غير مدعوم' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     console.log(`Analyzing ${symbol} on ${timeframe} timeframe`);
 
     const currentPrice = await fetchBinancePrice(symbol);
@@ -328,11 +360,10 @@ serve(async (req) => {
       throw new Error('Could not fetch current price');
     }
 
-    const binanceSymbol = symbol === 'XAUUSD' ? 'PAXGUSDT' : symbol.replace('/', '');
     const klinesResponse = await fetch(
       `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${timeframe}&limit=250`
     );
-    
+
     let klines: any[] = [];
     if (klinesResponse.ok) {
       klines = await klinesResponse.json();
@@ -364,7 +395,7 @@ serve(async (req) => {
       priceAboveEMA
     );
 
-    const isValidSetup = signalType !== 'WAIT' && confidence >= 50;
+    const isValidSetup = signalType !== 'WAIT' && confidence >= 60;
 
     const analysis: MarketAnalysis = {
       symbol,
