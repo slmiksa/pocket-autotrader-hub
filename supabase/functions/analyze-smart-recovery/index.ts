@@ -5,6 +5,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface AccumulationZone {
+  detected: boolean;
+  type: 'institutional_buy' | 'institutional_sell' | 'none';
+  strength: number; // 0-100
+  reasons: string[];
+  breakoutProbability: number; // 0-100
+  expectedDirection: 'up' | 'down' | 'unknown';
+}
+
 interface MarketAnalysis {
   symbol: string;
   currentPrice: number;
@@ -24,6 +33,11 @@ interface MarketAnalysis {
   priceChange: number;
   timestamp: string;
   dataSource: string;
+  // Accumulation Zone Detection
+  accumulation: AccumulationZone;
+  bollingerSqueeze: boolean;
+  volumeSpike: boolean;
+  priceConsolidation: boolean;
 }
 
 // Map our app symbols to a supported Binance symbol (or null if unsupported)
@@ -234,6 +248,171 @@ function analyzeCVD(klines: any[]): 'rising' | 'falling' | 'flat' {
   return 'flat';
 }
 
+// Calculate Bollinger Bands and detect squeeze
+function detectBollingerSqueeze(prices: number[], period: number = 20, stdMultiplier: number = 2): { squeeze: boolean; bandWidth: number } {
+  if (prices.length < period) return { squeeze: false, bandWidth: 0 };
+  
+  const recentPrices = prices.slice(-period);
+  const sma = recentPrices.reduce((a, b) => a + b, 0) / period;
+  const squaredDiffs = recentPrices.map(p => Math.pow(p - sma, 2));
+  const variance = squaredDiffs.reduce((a, b) => a + b, 0) / period;
+  const stdDev = Math.sqrt(variance);
+  
+  const upperBand = sma + (stdDev * stdMultiplier);
+  const lowerBand = sma - (stdDev * stdMultiplier);
+  const bandWidth = ((upperBand - lowerBand) / sma) * 100;
+  
+  // Calculate historical band width to compare
+  const historicalBandWidths: number[] = [];
+  for (let i = period; i < prices.length; i++) {
+    const histPrices = prices.slice(i - period, i);
+    const histSma = histPrices.reduce((a, b) => a + b, 0) / period;
+    const histSquaredDiffs = histPrices.map(p => Math.pow(p - histSma, 2));
+    const histVariance = histSquaredDiffs.reduce((a, b) => a + b, 0) / period;
+    const histStdDev = Math.sqrt(histVariance);
+    const histUpper = histSma + (histStdDev * stdMultiplier);
+    const histLower = histSma - (histStdDev * stdMultiplier);
+    historicalBandWidths.push(((histUpper - histLower) / histSma) * 100);
+  }
+  
+  if (historicalBandWidths.length < 10) return { squeeze: false, bandWidth };
+  
+  const avgBandWidth = historicalBandWidths.reduce((a, b) => a + b, 0) / historicalBandWidths.length;
+  // Squeeze detected when current band width is significantly lower than average
+  const squeeze = bandWidth < avgBandWidth * 0.6;
+  
+  return { squeeze, bandWidth };
+}
+
+// Detect volume spike (institutional activity)
+function detectVolumeSpike(klines: any[]): { spike: boolean; ratio: number } {
+  if (klines.length < 30) return { spike: false, ratio: 1 };
+  
+  const volumes = klines.map(k => parseFloat(k[5]));
+  const recent5Volumes = volumes.slice(-5);
+  const older25Volumes = volumes.slice(-30, -5);
+  
+  const recentAvgVolume = recent5Volumes.reduce((a, b) => a + b, 0) / 5;
+  const olderAvgVolume = older25Volumes.reduce((a, b) => a + b, 0) / 25;
+  
+  const ratio = recentAvgVolume / olderAvgVolume;
+  // Volume spike detected when recent volume is significantly higher
+  const spike = ratio > 1.8;
+  
+  return { spike, ratio };
+}
+
+// Detect price consolidation (tight range)
+function detectPriceConsolidation(klines: any[]): { consolidation: boolean; rangePercent: number } {
+  if (klines.length < 20) return { consolidation: false, rangePercent: 0 };
+  
+  const recent20 = klines.slice(-20);
+  const highs = recent20.map(k => parseFloat(k[2]));
+  const lows = recent20.map(k => parseFloat(k[3]));
+  
+  const highestHigh = Math.max(...highs);
+  const lowestLow = Math.min(...lows);
+  const midPrice = (highestHigh + lowestLow) / 2;
+  const rangePercent = ((highestHigh - lowestLow) / midPrice) * 100;
+  
+  // Consolidation detected when price range is very tight (< 1.5%)
+  const consolidation = rangePercent < 1.5;
+  
+  return { consolidation, rangePercent };
+}
+
+// Detect institutional accumulation/distribution
+function detectAccumulationZone(
+  klines: any[],
+  cvdStatus: string,
+  bollingerSqueeze: boolean,
+  volumeSpike: boolean,
+  priceConsolidation: boolean,
+  rsi: number,
+  macd: { macd: number; signal: number; histogram: number }
+): AccumulationZone {
+  const reasons: string[] = [];
+  let buySignals = 0;
+  let sellSignals = 0;
+  let strength = 0;
+
+  // 1. Bollinger Squeeze - main breakout indicator
+  if (bollingerSqueeze) {
+    strength += 30;
+    reasons.push('🔥 ضغط بولينجر - انفجار سعري وشيك');
+  }
+
+  // 2. Volume Spike with price consolidation - institutional activity
+  if (volumeSpike && priceConsolidation) {
+    strength += 35;
+    reasons.push('📊 تجميع مؤسسي - حجم عالي مع سعر ثابت');
+  } else if (volumeSpike) {
+    strength += 15;
+    reasons.push('📈 ارتفاع غير عادي في الحجم');
+  } else if (priceConsolidation) {
+    strength += 10;
+    reasons.push('📍 السعر في نطاق ضيق');
+  }
+
+  // 3. CVD analysis for direction
+  if (cvdStatus === 'rising') {
+    buySignals += 2;
+    reasons.push('💚 تدفق شراء مؤسسي');
+  } else if (cvdStatus === 'falling') {
+    sellSignals += 2;
+    reasons.push('🔴 تدفق بيع مؤسسي');
+  }
+
+  // 4. RSI divergence
+  if (rsi < 35 && cvdStatus === 'rising') {
+    buySignals += 2;
+    strength += 15;
+    reasons.push('⚡ تجميع في قاع RSI');
+  } else if (rsi > 65 && cvdStatus === 'falling') {
+    sellSignals += 2;
+    strength += 15;
+    reasons.push('⚡ توزيع في قمة RSI');
+  }
+
+  // 5. MACD momentum
+  if (macd.histogram > 0 && macd.histogram > macd.signal * 0.1) {
+    buySignals += 1;
+  } else if (macd.histogram < 0 && macd.histogram < macd.signal * -0.1) {
+    sellSignals += 1;
+  }
+
+  // Determine accumulation type
+  const detected = strength >= 40;
+  let type: 'institutional_buy' | 'institutional_sell' | 'none' = 'none';
+  let expectedDirection: 'up' | 'down' | 'unknown' = 'unknown';
+
+  if (detected) {
+    if (buySignals > sellSignals) {
+      type = 'institutional_buy';
+      expectedDirection = 'up';
+    } else if (sellSignals > buySignals) {
+      type = 'institutional_sell';
+      expectedDirection = 'down';
+    }
+  }
+
+  // Calculate breakout probability
+  let breakoutProbability = 0;
+  if (bollingerSqueeze) breakoutProbability += 40;
+  if (volumeSpike && priceConsolidation) breakoutProbability += 35;
+  if (cvdStatus !== 'flat') breakoutProbability += 15;
+  if (Math.abs(buySignals - sellSignals) >= 2) breakoutProbability += 10;
+
+  return {
+    detected,
+    type,
+    strength: Math.min(100, strength),
+    reasons,
+    breakoutProbability: Math.min(100, breakoutProbability),
+    expectedDirection
+  };
+}
+
 // Calculate signal confidence and reasons
 function calculateSignalConfidence(
   trend: string,
@@ -379,6 +558,20 @@ serve(async (req) => {
     const cvdStatus = analyzeCVD(klines);
     const shortTermAnalysis = analyzeShortTermTrend(klines);
 
+    // Accumulation detection
+    const { squeeze: bollingerSqueeze } = detectBollingerSqueeze(closePrices);
+    const { spike: volumeSpike } = detectVolumeSpike(klines);
+    const { consolidation: priceConsolidation } = detectPriceConsolidation(klines);
+    const accumulation = detectAccumulationZone(
+      klines,
+      cvdStatus,
+      bollingerSqueeze,
+      volumeSpike,
+      priceConsolidation,
+      rsi,
+      macd
+    );
+
     const priceAboveEMA = currentPrice > ema200;
     const trend = shortTermAnalysis.trend;
     
@@ -415,7 +608,12 @@ serve(async (req) => {
       signalReasons: reasons,
       priceChange: shortTermAnalysis.priceChange,
       timestamp: new Date().toISOString(),
-      dataSource: symbol === 'XAUUSD' ? 'PAXG/USDT (Binance proxy)' : binanceSymbol
+      dataSource: symbol === 'XAUUSD' ? 'PAXG/USDT (Binance proxy)' : binanceSymbol,
+      // Accumulation zone data
+      accumulation,
+      bollingerSqueeze,
+      volumeSpike,
+      priceConsolidation
     };
 
     console.log('Analysis result:', analysis);
