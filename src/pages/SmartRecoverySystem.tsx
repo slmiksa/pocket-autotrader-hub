@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, XCircle, Activity, BarChart3, Clock, Target, Shield, BookOpen, RefreshCw, Volume2, VolumeX, Trash2, Bell, Eye, Search, Coins, DollarSign, BarChart2, Gem } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, XCircle, Activity, BarChart3, Clock, Target, Shield, BookOpen, RefreshCw, Volume2, VolumeX, Trash2, Bell, Eye, Search, Coins, Gem } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,16 +24,6 @@ import { GlobalHeader } from '@/components/GlobalHeader';
 
 // Market symbols organized by category
 const MARKET_SYMBOLS = {
-  forex: [
-    { symbol: 'EURUSD', name: 'يورو/دولار', nameEn: 'EUR/USD' },
-    { symbol: 'GBPUSD', name: 'جنيه/دولار', nameEn: 'GBP/USD' },
-    { symbol: 'USDJPY', name: 'دولار/ين', nameEn: 'USD/JPY' },
-    { symbol: 'AUDUSD', name: 'استرالي/دولار', nameEn: 'AUD/USD' },
-    { symbol: 'USDCAD', name: 'دولار/كندي', nameEn: 'USD/CAD' },
-    { symbol: 'USDCHF', name: 'دولار/فرنك', nameEn: 'USD/CHF' },
-    { symbol: 'NZDUSD', name: 'نيوزلندي/دولار', nameEn: 'NZD/USD' },
-    { symbol: 'EURGBP', name: 'يورو/جنيه', nameEn: 'EUR/GBP' },
-  ],
   crypto: [
     { symbol: 'BTCUSDT', name: 'بيتكوين', nameEn: 'Bitcoin' },
     { symbol: 'ETHUSDT', name: 'ايثريوم', nameEn: 'Ethereum' },
@@ -46,25 +36,12 @@ const MARKET_SYMBOLS = {
   ],
   commodities: [
     { symbol: 'XAUUSD', name: 'الذهب', nameEn: 'Gold' },
-    { symbol: 'XAGUSD', name: 'الفضة', nameEn: 'Silver' },
-    { symbol: 'WTIUSD', name: 'النفط', nameEn: 'Crude Oil' },
-  ],
-  stocks: [
-    { symbol: 'AAPL', name: 'أبل', nameEn: 'Apple' },
-    { symbol: 'GOOGL', name: 'جوجل', nameEn: 'Google' },
-    { symbol: 'MSFT', name: 'مايكروسوفت', nameEn: 'Microsoft' },
-    { symbol: 'AMZN', name: 'أمازون', nameEn: 'Amazon' },
-    { symbol: 'TSLA', name: 'تسلا', nameEn: 'Tesla' },
-    { symbol: 'META', name: 'ميتا', nameEn: 'Meta' },
-    { symbol: 'NVDA', name: 'انفيديا', nameEn: 'Nvidia' },
   ],
 };
 
 const CATEGORY_INFO = {
-  forex: { label: 'فوركس', icon: DollarSign, color: 'text-blue-400' },
   crypto: { label: 'عملات رقمية', icon: Coins, color: 'text-amber-400' },
   commodities: { label: 'معادن', icon: Gem, color: 'text-yellow-400' },
-  stocks: { label: 'أسهم', icon: BarChart2, color: 'text-purple-400' },
 };
 
 const SmartRecoverySystem = () => {
