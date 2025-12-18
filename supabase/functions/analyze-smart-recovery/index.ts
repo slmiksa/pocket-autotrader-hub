@@ -494,93 +494,154 @@ function detectAccumulationZone(
   };
 }
 
-// Calculate signal confidence and reasons
+// IMPROVED: Calculate signal confidence with stricter multi-confirmation logic
 function calculateSignalConfidence(
   trend: string,
   rsi: number,
   macd: { macd: number; signal: number; histogram: number },
   cvdStatus: string,
   nearVWAP: boolean,
-  priceAboveEMA: boolean
+  priceAboveEMA: boolean,
+  ema50?: number,
+  ema200?: number,
+  currentPrice?: number,
+  prevHistogram?: number
 ): { confidence: number; signalType: 'BUY' | 'SELL' | 'WAIT'; reasons: string[] } {
-  let buyScore = 0;
-  let sellScore = 0;
   const reasons: string[] = [];
 
-  // Trend analysis (weight: 25%)
+  // ========== MULTI-CONFIRMATION SYSTEM ==========
+  // Each confirmation adds to the signal. We require at least 3 aligned confirmations.
+  let buyConfirmations = 0;
+  let sellConfirmations = 0;
+  let conflictPenalty = 0;
+
+  // ----- 1. Higher Timeframe Trend Filter (EMA50 vs EMA200) -----
+  const htfBullish = ema50 && ema200 && ema50 > ema200;
+  const htfBearish = ema50 && ema200 && ema50 < ema200;
+
+  if (htfBullish) {
+    buyConfirmations += 1;
+    reasons.push('✅ الاتجاه العام صاعد (EMA50 > EMA200)');
+  } else if (htfBearish) {
+    sellConfirmations += 1;
+    reasons.push('✅ الاتجاه العام هابط (EMA50 < EMA200)');
+  }
+
+  // ----- 2. Short-Term Trend -----
   if (trend === 'bullish') {
-    buyScore += 25;
-    reasons.push('الاتجاه صاعد');
+    buyConfirmations += 1;
+    reasons.push('✅ الاتجاه القصير صاعد');
   } else if (trend === 'bearish') {
-    sellScore += 25;
-    reasons.push('الاتجاه هابط');
+    sellConfirmations += 1;
+    reasons.push('✅ الاتجاه القصير هابط');
   }
 
-  // RSI analysis (weight: 25%)
-  if (rsi < 30) {
-    buyScore += 25;
-    reasons.push('RSI في منطقة ذروة البيع');
-  } else if (rsi < 40) {
-    buyScore += 15;
-    reasons.push('RSI قريب من ذروة البيع');
-  } else if (rsi > 70) {
-    sellScore += 25;
-    reasons.push('RSI في منطقة ذروة الشراء');
-  } else if (rsi > 60) {
-    sellScore += 15;
-    reasons.push('RSI قريب من ذروة الشراء');
+  // ----- 3. RSI Confirmation (strict zones) -----
+  // BUY: RSI recovering from oversold (<35) but not extreme (<20 = wait for bounce)
+  // SELL: RSI dropping from overbought (>65) but not extreme (>80 = wait for pullback)
+  if (rsi >= 20 && rsi < 35) {
+    buyConfirmations += 1;
+    reasons.push('✅ RSI في منطقة ذروة البيع مع احتمال ارتداد');
+  } else if (rsi > 65 && rsi <= 80) {
+    sellConfirmations += 1;
+    reasons.push('✅ RSI في منطقة ذروة الشراء مع احتمال تراجع');
+  } else if (rsi < 20) {
+    reasons.push('⚠️ RSI متطرف (ذروة بيع شديدة) - انتظر ارتداد');
+    conflictPenalty += 1;
+  } else if (rsi > 80) {
+    reasons.push('⚠️ RSI متطرف (ذروة شراء شديدة) - انتظر تصحيح');
+    conflictPenalty += 1;
   }
 
-  // MACD analysis (weight: 20%)
-  if (macd.histogram > 0 && macd.macd > macd.signal) {
-    buyScore += 20;
-    reasons.push('MACD إيجابي ومتقاطع للأعلى');
-  } else if (macd.histogram < 0 && macd.macd < macd.signal) {
-    sellScore += 20;
-    reasons.push('MACD سلبي ومتقاطع للأسفل');
-  }
+  // ----- 4. MACD Confirmation (crossover + momentum) -----
+  const macdBullishCross = macd.macd > macd.signal && macd.histogram > 0;
+  const macdBearishCross = macd.macd < macd.signal && macd.histogram < 0;
+  const histogramGrowing = prevHistogram !== undefined && Math.abs(macd.histogram) > Math.abs(prevHistogram);
 
-  // CVD analysis (weight: 15%)
-  if (cvdStatus === 'rising') {
-    buyScore += 15;
-    reasons.push('ضغط شراء متزايد');
-  } else if (cvdStatus === 'falling') {
-    sellScore += 15;
-    reasons.push('ضغط بيع متزايد');
-  }
-
-  // VWAP proximity (weight: 10%)
-  if (nearVWAP) {
-    reasons.push('السعر قريب من VWAP');
-    // Near VWAP is good for entry
-    buyScore += 5;
-    sellScore += 5;
-  }
-
-  // EMA position (weight: 5%)
-  if (priceAboveEMA) {
-    buyScore += 5;
-  } else {
-    sellScore += 5;
-  }
-
-  // Determine signal type and confidence
-  const maxScore = Math.max(buyScore, sellScore);
-  const scoreDifference = Math.abs(buyScore - sellScore);
-
-  // Tighten rules to reduce false/reversed entries:
-  // - require clearer separation (>= 20)
-  // - require higher minimum score (>= 55)
-  if (scoreDifference >= 20 && maxScore >= 55) {
-    if (buyScore > sellScore) {
-      return { confidence: Math.min(100, Math.round(buyScore)), signalType: 'BUY', reasons };
+  if (macdBullishCross) {
+    buyConfirmations += 1;
+    if (histogramGrowing && macd.histogram > 0) {
+      buyConfirmations += 0.5; // Extra weight for growing momentum
+      reasons.push('✅ MACD صاعد مع زخم متزايد');
     } else {
-      return { confidence: Math.min(100, Math.round(sellScore)), signalType: 'SELL', reasons };
+      reasons.push('✅ MACD متقاطع للأعلى');
+    }
+  } else if (macdBearishCross) {
+    sellConfirmations += 1;
+    if (histogramGrowing && macd.histogram < 0) {
+      sellConfirmations += 0.5;
+      reasons.push('✅ MACD هابط مع زخم متزايد');
+    } else {
+      reasons.push('✅ MACD متقاطع للأسفل');
     }
   }
 
-  reasons.push('الإشارات متضاربة/غير كافية - انتظر تأكيد');
-  return { confidence: Math.min(100, Math.round(maxScore)), signalType: 'WAIT', reasons };
+  // ----- 5. CVD (Volume Delta) Confirmation -----
+  if (cvdStatus === 'rising') {
+    buyConfirmations += 1;
+    reasons.push('✅ ضغط شراء صافي متزايد');
+  } else if (cvdStatus === 'falling') {
+    sellConfirmations += 1;
+    reasons.push('✅ ضغط بيع صافي متزايد');
+  }
+
+  // ----- 6. Price Position vs EMA200 -----
+  if (priceAboveEMA) {
+    buyConfirmations += 0.5;
+    reasons.push('📍 السعر فوق EMA200');
+  } else {
+    sellConfirmations += 0.5;
+    reasons.push('📍 السعر تحت EMA200');
+  }
+
+  // ----- 7. VWAP Entry Quality -----
+  if (nearVWAP) {
+    reasons.push('📍 السعر قريب من VWAP (نقطة دخول جيدة)');
+    // Good entry zone, slight bonus
+    buyConfirmations += 0.25;
+    sellConfirmations += 0.25;
+  }
+
+  // ========== CONFLICT DETECTION ==========
+  // Penalize when signals are mixed (e.g., bullish trend but RSI overbought)
+  if (buyConfirmations > 0 && sellConfirmations > 0) {
+    const mixRatio = Math.min(buyConfirmations, sellConfirmations) / Math.max(buyConfirmations, sellConfirmations);
+    if (mixRatio > 0.5) {
+      conflictPenalty += 1;
+      reasons.push('⚠️ إشارات متضاربة - توخّ الحذر');
+    }
+  }
+
+  // ========== FINAL DECISION ==========
+  const netBuy = buyConfirmations - (sellConfirmations * 0.3) - conflictPenalty;
+  const netSell = sellConfirmations - (buyConfirmations * 0.3) - conflictPenalty;
+
+  // Calculate confidence (0-100)
+  const maxConfirmations = 5.25; // theoretical max
+  const rawConfidence = (Math.max(netBuy, netSell) / maxConfirmations) * 100;
+  const confidence = Math.min(100, Math.max(0, Math.round(rawConfidence)));
+
+  // STRICT ENTRY RULES:
+  // - Need at least 3 aligned confirmations
+  // - Net score must be >= 2.5 (clear direction)
+  // - No high conflict penalty
+  const minConfirmationsRequired = 3;
+  const minNetScore = 2.5;
+
+  if (netBuy >= minNetScore && buyConfirmations >= minConfirmationsRequired && conflictPenalty < 2) {
+    reasons.unshift('🟢 إشارة شراء مؤكدة');
+    return { confidence: Math.max(60, confidence), signalType: 'BUY', reasons };
+  }
+
+  if (netSell >= minNetScore && sellConfirmations >= minConfirmationsRequired && conflictPenalty < 2) {
+    reasons.unshift('🔴 إشارة بيع مؤكدة');
+    return { confidence: Math.max(60, confidence), signalType: 'SELL', reasons };
+  }
+
+  // Not enough confirmations or conflicting signals
+  reasons.unshift('⏳ انتظر تأكيد أوضح');
+  reasons.push(`تأكيدات الشراء: ${buyConfirmations.toFixed(1)} | البيع: ${sellConfirmations.toFixed(1)}`);
+  return { confidence: Math.min(50, confidence), signalType: 'WAIT', reasons };
 }
 
 serve(async (req) => {
@@ -657,12 +718,20 @@ serve(async (req) => {
     const closePrices = klines.map((k: any[]) => parseFloat(k[4]));
 
     // Calculate all indicators
+    const ema50 = calculateEMA(closePrices, 50);
     const ema200 = calculateEMA(closePrices, 200);
     const vwap = calculateVWAP(klines.slice(-50));
     const rsi = calculateRSI(closePrices, 14);
     const macd = calculateMACD(closePrices);
     const cvdStatus = analyzeCVD(klines);
     const shortTermAnalysis = analyzeShortTermTrend(klines);
+
+    // Calculate previous MACD histogram for momentum detection
+    let prevHistogram: number | undefined;
+    if (closePrices.length > 10) {
+      const prevMacd = calculateMACD(closePrices.slice(0, -5));
+      prevHistogram = prevMacd.histogram;
+    }
 
     // Accumulation detection
     const { squeeze: bollingerSqueeze } = detectBollingerSqueeze(closePrices);
@@ -684,14 +753,18 @@ serve(async (req) => {
     const vwapDistance = Math.abs((currentPrice - vwap) / vwap) * 100;
     const nearVWAP = vwapDistance <= 0.8;
 
-    // Calculate confidence-based signal
+    // Calculate confidence-based signal with improved multi-confirmation
     const { confidence, signalType, reasons } = calculateSignalConfidence(
       trend,
       rsi,
       macd,
       cvdStatus,
       nearVWAP,
-      priceAboveEMA
+      priceAboveEMA,
+      ema50,
+      ema200,
+      currentPrice,
+      prevHistogram
     );
 
     const isValidSetup = signalType !== 'WAIT' && confidence >= 60;
