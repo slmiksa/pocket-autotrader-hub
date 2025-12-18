@@ -543,9 +543,6 @@ const SmartRecoverySystem = () => {
           </CardContent>
         </Card>
 
-        {/* Statistics */}
-        {user}
-
         {/* Signals Log */}
         
 
