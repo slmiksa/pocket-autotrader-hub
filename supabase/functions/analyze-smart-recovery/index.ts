@@ -42,8 +42,63 @@ interface MarketAnalysis {
 
 // Map our app symbols to a supported Binance symbol (or null if unsupported)
 function getBinanceSymbol(symbol: string): string | null {
-  if (symbol === 'XAUUSD') return 'PAXGUSDT';
+  // Gold and commodities should use different API
+  if (symbol === 'XAUUSD' || symbol === 'XAGUSD') return null;
   if (symbol.endsWith('USDT')) return symbol;
+  return null;
+}
+
+// Fetch real gold price from Yahoo Finance
+async function fetchGoldPrice(): Promise<{ price: number; change: number } | null> {
+  try {
+    // Try Yahoo Finance for real gold price (GC=F is gold futures)
+    const response = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1m&range=1d', {
+      headers: { 
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0'
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      const quote = data.chart?.result?.[0]?.meta;
+      if (quote?.regularMarketPrice) {
+        const prevClose = quote.chartPreviousClose || quote.previousClose || quote.regularMarketPrice;
+        const change = ((quote.regularMarketPrice - prevClose) / prevClose) * 100;
+        return { 
+          price: quote.regularMarketPrice,
+          change: change
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Yahoo Finance gold fetch error:', error);
+  }
+  
+  // Fallback: Try alternative endpoint
+  try {
+    const response = await fetch('https://query2.finance.yahoo.com/v10/finance/quoteSummary/GC=F?modules=price', {
+      headers: { 
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0'
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      const price = data.quoteSummary?.result?.[0]?.price;
+      if (price?.regularMarketPrice?.raw) {
+        const change = price.regularMarketChangePercent?.raw || 0;
+        return { 
+          price: price.regularMarketPrice.raw,
+          change: change * 100
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Yahoo Finance fallback error:', error);
+  }
+  
   return null;
 }
 
@@ -510,20 +565,6 @@ serve(async (req) => {
   try {
     const { symbol = 'XAUUSD', timeframe = '15m' } = await req.json();
 
-    const binanceSymbol = getBinanceSymbol(symbol);
-    if (!binanceSymbol) {
-      return new Response(
-        JSON.stringify({
-          error: 'هذا الرمز غير مدعوم حالياً في Smart Recovery',
-          supported: ['XAUUSD', '*USDT'],
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
     const allowedIntervals = new Set(['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '8h', '12h', '1d']);
     if (!allowedIntervals.has(timeframe)) {
       return new Response(JSON.stringify({ error: 'إطار زمني غير مدعوم' }), {
@@ -534,18 +575,56 @@ serve(async (req) => {
 
     console.log(`Analyzing ${symbol} on ${timeframe} timeframe`);
 
-    const currentPrice = await fetchBinancePrice(symbol);
-    if (!currentPrice) {
-      throw new Error('Could not fetch current price');
+    let currentPrice: number | null = null;
+    let priceChangePercent = 0;
+    let dataSource = '';
+    let klines: any[] = [];
+
+    // Handle Gold (XAUUSD) separately using Yahoo Finance
+    if (symbol === 'XAUUSD') {
+      const goldData = await fetchGoldPrice();
+      if (goldData) {
+        currentPrice = goldData.price;
+        priceChangePercent = goldData.change;
+        dataSource = 'Yahoo Finance (Gold Futures GC=F)';
+      }
+      
+      // Fetch klines from PAXG as technical indicator proxy (not for price)
+      const klinesResponse = await fetch(
+        `https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=${timeframe}&limit=250`
+      );
+      if (klinesResponse.ok) {
+        klines = await klinesResponse.json();
+      }
+    } else {
+      // For crypto, use Binance
+      const binanceSymbol = getBinanceSymbol(symbol);
+      if (!binanceSymbol) {
+        return new Response(
+          JSON.stringify({
+            error: 'هذا الرمز غير مدعوم حالياً في Smart Recovery',
+            supported: ['XAUUSD', '*USDT'],
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      
+      currentPrice = await fetchBinancePrice(symbol);
+      dataSource = binanceSymbol;
+      
+      const klinesResponse = await fetch(
+        `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${timeframe}&limit=250`
+      );
+      if (klinesResponse.ok) {
+        klines = await klinesResponse.json();
+      }
     }
 
-    const klinesResponse = await fetch(
-      `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${timeframe}&limit=250`
-    );
-
-    let klines: any[] = [];
-    if (klinesResponse.ok) {
-      klines = await klinesResponse.json();
+    if (!currentPrice) {
+      throw new Error('Could not fetch current price');
     }
 
     const closePrices = klines.map((k: any[]) => parseFloat(k[4]));
@@ -606,9 +685,9 @@ serve(async (req) => {
       signalType,
       confidence,
       signalReasons: reasons,
-      priceChange: shortTermAnalysis.priceChange,
+      priceChange: symbol === 'XAUUSD' ? priceChangePercent : shortTermAnalysis.priceChange,
       timestamp: new Date().toISOString(),
-      dataSource: symbol === 'XAUUSD' ? 'PAXG/USDT (Binance proxy)' : binanceSymbol,
+      dataSource,
       // Accumulation zone data
       accumulation,
       bollingerSqueeze,
