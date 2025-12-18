@@ -12,7 +12,7 @@ export interface MarketAnalysis {
   nearVWAP: boolean;
   cvdStatus: 'rising' | 'falling' | 'flat';
   isValidSetup: boolean;
-  signalType: 'BUY' | 'SELL' | 'NONE';
+  signalType: 'BUY' | 'SELL' | 'WAIT' | 'NONE';
   priceChange: number;
   timestamp: string;
   dataSource: string;
@@ -23,6 +23,7 @@ interface UseMarketAnalysisOptions {
   timeframe?: string;
   autoRefresh?: boolean;
   refreshInterval?: number;
+  priceSource?: 'spot' | 'futures';
 }
 
 export const useMarketAnalysis = (options: UseMarketAnalysisOptions = {}) => {
@@ -31,6 +32,7 @@ export const useMarketAnalysis = (options: UseMarketAnalysisOptions = {}) => {
     timeframe = '15m',
     autoRefresh = false,
     refreshInterval = 60000,
+    priceSource,
   } = options;
 
   const [analysis, setAnalysis] = useState<MarketAnalysis | null>(null);
@@ -48,7 +50,7 @@ export const useMarketAnalysis = (options: UseMarketAnalysisOptions = {}) => {
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('analyze-smart-recovery', {
-        body: { symbol, timeframe }
+        body: { symbol, timeframe, priceSource },
       });
 
       if (fnError) throw fnError;
@@ -72,7 +74,7 @@ export const useMarketAnalysis = (options: UseMarketAnalysisOptions = {}) => {
         setLoading(false);
       }
     }
-  }, [symbol, timeframe]);
+  }, [symbol, timeframe, priceSource]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -87,12 +89,12 @@ export const useMarketAnalysis = (options: UseMarketAnalysisOptions = {}) => {
       mountedRef.current = false;
       if (interval) clearInterval(interval);
     };
-  }, [symbol, timeframe, autoRefresh, refreshInterval]);
+  }, [symbol, timeframe, priceSource, autoRefresh, refreshInterval, fetchAnalysis]);
 
   return {
     analysis,
     loading,
     error,
-    refetch: fetchAnalysis
+    refetch: fetchAnalysis,
   };
 };

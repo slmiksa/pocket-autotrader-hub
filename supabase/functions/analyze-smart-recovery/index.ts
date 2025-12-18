@@ -48,57 +48,83 @@ function getBinanceSymbol(symbol: string): string | null {
   return null;
 }
 
-// Fetch real gold price from Yahoo Finance
-async function fetchGoldPrice(): Promise<{ price: number; change: number } | null> {
+// Fetch gold price from Yahoo Finance (spot or futures)
+type GoldPriceSource = 'spot' | 'futures';
+
+async function fetchGoldPrice(source: GoldPriceSource = 'spot'): Promise<
+  { price: number; change: number; sourceLabel: string } | null
+> {
+  const ticker = source === 'spot' ? 'XAUUSD=X' : 'GC=F';
+  const sourceLabel = source === 'spot'
+    ? 'Yahoo Finance (Gold Spot XAUUSD=X)'
+    : 'Yahoo Finance (Gold Futures GC=F)';
+
+  // Primary: chart endpoint (lets us compute % change reliably)
   try {
-    // Try Yahoo Finance for real gold price (GC=F is gold futures)
-    const response = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1m&range=1d', {
-      headers: { 
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0'
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1m&range=1d`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0'
+        }
       }
-    });
-    
+    );
+
     if (response.ok) {
       const data = await response.json();
-      const quote = data.chart?.result?.[0]?.meta;
-      if (quote?.regularMarketPrice) {
-        const prevClose = quote.chartPreviousClose || quote.previousClose || quote.regularMarketPrice;
-        const change = ((quote.regularMarketPrice - prevClose) / prevClose) * 100;
-        return { 
-          price: quote.regularMarketPrice,
-          change: change
+      const meta = data.chart?.result?.[0]?.meta;
+      if (meta?.regularMarketPrice) {
+        const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
+        const change = prevClose
+          ? ((meta.regularMarketPrice - prevClose) / prevClose) * 100
+          : 0;
+
+        return {
+          price: meta.regularMarketPrice,
+          change,
+          sourceLabel,
         };
       }
     }
   } catch (error) {
-    console.error('Yahoo Finance gold fetch error:', error);
+    console.error('Yahoo Finance gold chart fetch error:', error);
   }
-  
-  // Fallback: Try alternative endpoint
+
+  // Fallback: quoteSummary endpoint
   try {
-    const response = await fetch('https://query2.finance.yahoo.com/v10/finance/quoteSummary/GC=F?modules=price', {
-      headers: { 
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0'
+    const response = await fetch(
+      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=price`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0'
+        }
       }
-    });
-    
+    );
+
     if (response.ok) {
       const data = await response.json();
       const price = data.quoteSummary?.result?.[0]?.price;
-      if (price?.regularMarketPrice?.raw) {
-        const change = price.regularMarketChangePercent?.raw || 0;
-        return { 
-          price: price.regularMarketPrice.raw,
-          change: change * 100
-        };
+      const rawPrice = price?.regularMarketPrice?.raw;
+      const rawChangePct = price?.regularMarketChangePercent?.raw;
+
+      if (typeof rawPrice === 'number') {
+        let change = 0;
+        if (typeof rawChangePct === 'number') {
+          // Yahoo can return either 0.23 (percent) or 0.0023 (fraction). Normalize.
+          change = Math.abs(rawChangePct) <= 1 ? rawChangePct * 100 : rawChangePct;
+        }
+        return { price: rawPrice, change, sourceLabel };
       }
     }
   } catch (error) {
-    console.error('Yahoo Finance fallback error:', error);
+    console.error('Yahoo Finance gold quoteSummary fetch error:', error);
   }
-  
+
+  // Last resort: try futures if spot failed (or vice versa)
+  if (source === 'spot') return await fetchGoldPrice('futures');
+
   return null;
 }
 
@@ -563,7 +589,7 @@ serve(async (req) => {
   }
 
   try {
-    const { symbol = 'XAUUSD', timeframe = '15m' } = await req.json();
+    const { symbol = 'XAUUSD', timeframe = '15m', priceSource } = await req.json();
 
     const allowedIntervals = new Set(['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '8h', '12h', '1d']);
     if (!allowedIntervals.has(timeframe)) {
@@ -582,11 +608,12 @@ serve(async (req) => {
 
     // Handle Gold (XAUUSD) separately using Yahoo Finance
     if (symbol === 'XAUUSD') {
-      const goldData = await fetchGoldPrice();
+      const goldSource: GoldPriceSource = priceSource === 'futures' ? 'futures' : 'spot';
+      const goldData = await fetchGoldPrice(goldSource);
       if (goldData) {
         currentPrice = goldData.price;
         priceChangePercent = goldData.change;
-        dataSource = 'Yahoo Finance (Gold Futures GC=F)';
+        dataSource = goldData.sourceLabel;
       }
       
       // Fetch klines from PAXG as technical indicator proxy (not for price)

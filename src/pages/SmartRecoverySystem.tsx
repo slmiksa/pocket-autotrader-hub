@@ -80,6 +80,7 @@ const SmartRecoverySystem = () => {
   });
   const [selectedSymbol, setSelectedSymbol] = useState('XAUUSD');
   const [selectedTimeframe, setSelectedTimeframe] = useState('15m');
+  const [xauPriceSource, setXauPriceSource] = useState<'spot' | 'futures'>('spot');
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -135,6 +136,7 @@ const SmartRecoverySystem = () => {
   } = useMarketAnalysis({
     symbol: selectedSymbol,
     timeframe: selectedTimeframe,
+    priceSource: selectedSymbol === 'XAUUSD' ? xauPriceSource : undefined,
     autoRefresh: true,
     refreshInterval: 5000 // تحديث فوري كل 5 ثواني
   });
@@ -276,6 +278,17 @@ const SmartRecoverySystem = () => {
                   <SelectItem value="1h">H1</SelectItem>
                 </SelectContent>
               </Select>
+
+              {selectedSymbol === 'XAUUSD' && <Select value={xauPriceSource} onValueChange={v => setXauPriceSource(v as 'spot' | 'futures')}>
+                  <SelectTrigger className="w-[120px] bg-slate-800/80 border-slate-600 text-white">
+                    <SelectValue placeholder="مصدر السعر" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectItem value="spot">Spot (أقرب للشارت)</SelectItem>
+                    <SelectItem value="futures">Futures (GC)</SelectItem>
+                  </SelectContent>
+                </Select>}
+
               <Button variant="outline" size="icon" onClick={() => refetchAnalysis()} disabled={analysisLoading} className="bg-slate-800/50 border-slate-600 text-slate-300 hover:bg-slate-700">
                 <RefreshCw className={`h-4 w-4 ${analysisLoading ? 'animate-spin' : ''}`} />
               </Button>
@@ -373,6 +386,15 @@ const SmartRecoverySystem = () => {
                         {analysis.priceChange !== undefined && <div className={`inline-flex items-center gap-1 text-lg font-bold px-3 py-1 rounded-full ${analysis.priceChange >= 0 ? 'bg-green-400/30 text-green-200' : 'bg-red-400/30 text-red-200'}`}>
                             {analysis.priceChange >= 0 ? '▲' : '▼'} {Math.abs(analysis.priceChange).toFixed(2)}%
                           </div>}
+
+                        <div className="mt-3 text-[11px] text-white/75">
+                          مصدر السعر: <span className="font-semibold">{analysis.dataSource}</span> • آخر تحديث: {new Date(analysis.timestamp).toLocaleTimeString('ar-SA', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                        </div>
+                        {selectedSymbol === 'XAUUSD' && <div className="text-[10px] text-white/60 mt-1">قد يختلف عن TradingView حسب مزوّد البيانات/السبريد.</div>}
+
                         {isWait ? <div className="text-xs text-white/80 mt-3">⏳ الإشارات متضاربة - انتظر تأكيد واضح</div> : <div className="text-xs text-white/70 mt-3">🔔 اضغط للتنبيه الصوتي</div>}
                       </div>
 
