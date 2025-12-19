@@ -1,7 +1,8 @@
+import { useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, AlertTriangle, Clock, Target, TrendingUp, TrendingDown } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Clock, Target, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
 
 interface MarketAnalysis {
   signalType: 'BUY' | 'SELL' | 'WAIT' | 'NONE';
@@ -21,7 +22,19 @@ interface TradeRecommendationProps {
 }
 
 export const TradeRecommendation = ({ analysis, symbol, loading }: TradeRecommendationProps) => {
-  if (loading || !analysis) {
+  // Keep last valid analysis to show during loading
+  const lastAnalysisRef = useRef<MarketAnalysis | null>(null);
+  
+  useEffect(() => {
+    if (analysis) {
+      lastAnalysisRef.current = analysis;
+    }
+  }, [analysis]);
+
+  const displayAnalysis = analysis || lastAnalysisRef.current;
+
+  // Only show full loading state if we have no data at all
+  if (!displayAnalysis) {
     return (
       <Card className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-slate-600">
         <CardContent className="p-4 text-center">
@@ -34,8 +47,8 @@ export const TradeRecommendation = ({ analysis, symbol, loading }: TradeRecommen
     );
   }
 
-  const confidence = analysis.confidence || 0;
-  const signalType = analysis.signalType;
+  const confidence = displayAnalysis.confidence || 0;
+  const signalType = displayAnalysis.signalType;
   const isWait = signalType === 'WAIT' || signalType === 'NONE';
   const isBuy = signalType === 'BUY';
 
@@ -57,16 +70,16 @@ export const TradeRecommendation = ({ analysis, symbol, loading }: TradeRecommen
     }
 
     // Trend alignment (20%)
-    if ((isBuy && analysis.trend === 'bullish') || (!isBuy && !isWait && analysis.trend === 'bearish')) {
+    if ((isBuy && displayAnalysis.trend === 'bullish') || (!isBuy && !isWait && displayAnalysis.trend === 'bearish')) {
       score += 20;
       reasons.push('متوافق مع الاتجاه العام');
-    } else if (analysis.trend === 'sideways') {
+    } else if (displayAnalysis.trend === 'sideways') {
       score += 10;
       reasons.push('سوق عرضي');
     }
 
     // RSI confirmation (15%)
-    const rsi = analysis.rsi || 50;
+    const rsi = displayAnalysis.rsi || 50;
     if (isBuy && rsi < 35) {
       score += 15;
       reasons.push('RSI في منطقة ذروة البيع');
@@ -78,15 +91,15 @@ export const TradeRecommendation = ({ analysis, symbol, loading }: TradeRecommen
     }
 
     // CVD/Momentum (15%)
-    if ((isBuy && analysis.cvdStatus === 'rising') || (!isBuy && !isWait && analysis.cvdStatus === 'falling')) {
+    if ((isBuy && displayAnalysis.cvdStatus === 'rising') || (!isBuy && !isWait && displayAnalysis.cvdStatus === 'falling')) {
       score += 15;
       reasons.push('الزخم يدعم الاتجاه');
-    } else if (analysis.cvdStatus === 'stable') {
+    } else if (displayAnalysis.cvdStatus === 'stable') {
       score += 7;
     }
 
     // EMA alignment (10%)
-    if ((isBuy && analysis.priceAboveEMA) || (!isBuy && !isWait && !analysis.priceAboveEMA)) {
+    if ((isBuy && displayAnalysis.priceAboveEMA) || (!isBuy && !isWait && !displayAnalysis.priceAboveEMA)) {
       score += 10;
       reasons.push('موقع جيد من EMA200');
     }
@@ -145,7 +158,13 @@ export const TradeRecommendation = ({ analysis, symbol, loading }: TradeRecommen
   const Icon = recommendation.icon;
 
   return (
-    <Card className={`${recommendation.color} border-2 shadow-lg`}>
+    <Card className={`${recommendation.color} border-2 shadow-lg relative transition-all duration-300`}>
+      {/* Loading indicator overlay */}
+      {loading && (
+        <div className="absolute top-2 left-2 z-10">
+          <RefreshCw className="w-4 h-4 text-cyan-400 animate-spin" />
+        </div>
+      )}
       <CardContent className="p-4 space-y-3">
         {/* Main Recommendation */}
         <div className="flex items-center justify-between">
@@ -206,25 +225,25 @@ export const TradeRecommendation = ({ analysis, symbol, loading }: TradeRecommen
             <div className="text-center">
               <div className="text-[10px] text-cyan-400">الدخول</div>
               <div className="font-bold text-white text-sm">
-                {analysis.currentPrice.toFixed(analysis.currentPrice > 100 ? 2 : 4)}
+                {displayAnalysis.currentPrice.toFixed(displayAnalysis.currentPrice > 100 ? 2 : 4)}
               </div>
             </div>
             <div className="text-center">
               <div className="text-[10px] text-green-400">الهدف</div>
               <div className="font-bold text-green-300 text-sm">
                 {(isBuy 
-                  ? analysis.currentPrice * 1.01 
-                  : analysis.currentPrice * 0.99
-                ).toFixed(analysis.currentPrice > 100 ? 2 : 4)}
+                  ? displayAnalysis.currentPrice * 1.01 
+                  : displayAnalysis.currentPrice * 0.99
+                ).toFixed(displayAnalysis.currentPrice > 100 ? 2 : 4)}
               </div>
             </div>
             <div className="text-center">
               <div className="text-[10px] text-red-400">الوقف</div>
               <div className="font-bold text-red-300 text-sm">
                 {(isBuy 
-                  ? analysis.currentPrice * 0.995 
-                  : analysis.currentPrice * 1.005
-                ).toFixed(analysis.currentPrice > 100 ? 2 : 4)}
+                  ? displayAnalysis.currentPrice * 0.995 
+                  : displayAnalysis.currentPrice * 1.005
+                ).toFixed(displayAnalysis.currentPrice > 100 ? 2 : 4)}
               </div>
             </div>
           </div>
