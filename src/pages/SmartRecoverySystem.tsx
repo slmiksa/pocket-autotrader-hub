@@ -15,6 +15,7 @@ import { playBuySignalAlert, playSellSignalAlert, initializeAudio, requestNotifi
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { GlobalHeader } from '@/components/GlobalHeader';
+import { TradeRecommendation } from '@/components/trading/TradeRecommendation';
 
 // Market symbols organized by category
 const MARKET_SYMBOLS = {
@@ -564,6 +565,22 @@ const SmartRecoverySystem = () => {
               </div>}
           </CardContent>
         </Card>
+
+        {/* Trade Recommendation - Should I Enter Now? */}
+        <TradeRecommendation 
+          analysis={analysis ? {
+            signalType: analysis.signalType as 'BUY' | 'SELL' | 'WAIT' | 'NONE',
+            confidence: (analysis as any).confidence,
+            currentPrice: analysis.currentPrice,
+            trend: analysis.trend,
+            rsi: (analysis as any).rsi,
+            cvdStatus: analysis.cvdStatus,
+            priceAboveEMA: analysis.priceAboveEMA,
+            signalReasons: (analysis as any).signalReasons
+          } : null}
+          symbol={selectedSymbol}
+          loading={analysisLoading}
+        />
 
         {/* Signals Log */}
         

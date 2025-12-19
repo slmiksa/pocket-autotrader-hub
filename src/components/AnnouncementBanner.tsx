@@ -71,12 +71,15 @@ export const AnnouncementBanner = () => {
     }
   };
 
+  const bgColor = announcement.background_color || '#1e40af';
+  const txtColor = announcement.text_color || '#ffffff';
+
   return (
     <div 
       className="relative overflow-hidden py-3 px-4 shadow-md"
       style={{ 
-        backgroundColor: announcement.background_color,
-        color: announcement.text_color
+        backgroundColor: bgColor,
+        color: txtColor
       }}
     >
       <div className="container mx-auto">
@@ -85,7 +88,7 @@ export const AnnouncementBanner = () => {
           <button
             onClick={() => setIsVisible(false)}
             className="p-1.5 hover:opacity-70 transition-opacity rounded-md shrink-0"
-            style={{ color: announcement.text_color }}
+            style={{ color: txtColor }}
           >
             <X className="h-4 w-4" />
           </button>
@@ -114,8 +117,8 @@ export const AnnouncementBanner = () => {
                 className="gap-2"
                 style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  color: announcement.text_color,
-                  borderColor: announcement.text_color
+                  color: txtColor,
+                  borderColor: txtColor
                 }}
                 variant="outline"
               >
@@ -133,8 +136,8 @@ export const AnnouncementBanner = () => {
                 className="gap-2"
                 style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  color: announcement.text_color,
-                  borderColor: announcement.text_color
+                  color: txtColor,
+                  borderColor: txtColor
                 }}
                 variant="outline"
               >
