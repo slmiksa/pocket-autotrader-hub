@@ -710,6 +710,90 @@ export const EmailManager = () => {
           <p style="text-align: center; color: #999; font-size: 12px; margin-top: 20px;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
         </div>
       `
+    },
+    {
+      id: "smart-recovery",
+      name: "🎯 نظام الصياد الهادئ",
+      subject: "🎯 اكتشف نظام الصياد الهادئ - Smart Recovery System!",
+      content: `
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+          <div style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%); padding: 50px 30px; border-radius: 20px 20px 0 0; text-align: center;">
+            <div style="font-size: 60px; margin-bottom: 15px;">🎯</div>
+            <h1 style="color: white; margin: 0; font-size: 32px; font-weight: 800;">نظام الصياد الهادئ</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 18px;">Smart Recovery System</p>
+          </div>
+          <div style="background: #1e293b; padding: 40px 30px; border-radius: 0 0 20px 20px;">
+            <p style="font-size: 18px; color: #f1f5f9; margin-bottom: 20px;">مرحباً بك في أقوى نظام تداول ذكي! 👋</p>
+            <p style="color: #94a3b8; line-height: 1.9; font-size: 15px;">نظام <strong style="color: #06b6d4;">الصياد الهادئ</strong> هو نظام تحليل متقدم يعتمد على خوارزميات ذكية متعددة التأكيدات لإعطائك توصيات دخول دقيقة مع نسبة ثقة محسوبة.</p>
+            
+            <div style="background: linear-gradient(135deg, #0f172a 0%, #1a202c 100%); padding: 30px; border-radius: 16px; margin: 25px 0; border: 1px solid #334155;">
+              <p style="color: #06b6d4; font-weight: bold; margin: 0 0 20px 0; font-size: 20px;">⚡ المميزات الأساسية</p>
+              <table style="width: 100%; border-collapse: separate; border-spacing: 0 12px;">
+                <tr><td style="background: #1e293b; padding: 15px 20px; border-radius: 10px; border-right: 3px solid #10b981;"><span style="color: #10b981; font-weight: bold;">✅ تأكيدات متعددة:</span><span style="color: #cbd5e1;"> يجمع بين RSI، MACD، EMA، وCVD للتأكد من قوة الإشارة</span></td></tr>
+                <tr><td style="background: #1e293b; padding: 15px 20px; border-radius: 10px; border-right: 3px solid #f59e0b;"><span style="color: #f59e0b; font-weight: bold;">📊 نسبة الثقة:</span><span style="color: #cbd5e1;"> يحسب نسبة ثقة من 0-100% لكل توصية</span></td></tr>
+                <tr><td style="background: #1e293b; padding: 15px 20px; border-radius: 10px; border-right: 3px solid #8b5cf6;"><span style="color: #8b5cf6; font-weight: bold;">🎯 توصية دخول واضحة:</span><span style="color: #cbd5e1;"> يخبرك ادخل الآن أو انتظر مع الأسباب</span></td></tr>
+                <tr><td style="background: #1e293b; padding: 15px 20px; border-radius: 10px; border-right: 3px solid #ec4899;"><span style="color: #ec4899; font-weight: bold;">🔮 كشف التجميع المؤسسي:</span><span style="color: #cbd5e1;"> يكتشف دخول المؤسسات الكبرى قبل الانفجار</span></td></tr>
+                <tr><td style="background: #1e293b; padding: 15px 20px; border-radius: 10px; border-right: 3px solid #06b6d4;"><span style="color: #06b6d4; font-weight: bold;">📈 تحديث لحظي:</span><span style="color: #cbd5e1;"> البيانات تتحدث كل 5 ثواني بدون تأخير</span></td></tr>
+              </table>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); padding: 25px; border-radius: 16px; margin: 25px 0; border: 1px solid #10b981;">
+              <p style="color: #34d399; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">🧠 كيف يعمل النظام؟</p>
+              <ol style="color: #d1fae5; line-height: 2.2; margin: 0; padding-right: 25px;">
+                <li><strong>يحلل الاتجاه العام</strong> باستخدام EMA50 و EMA200</li>
+                <li><strong>يفحص مؤشر RSI</strong> للتأكد من عدم وجود تشبع</li>
+                <li><strong>يتحقق من MACD</strong> لقياس زخم السوق</li>
+                <li><strong>يراقب CVD</strong> لاكتشاف دخول الأموال الذكية</li>
+                <li><strong>يحسب نقاط التوصية</strong> من 0-100 بناءً على التأكيدات</li>
+                <li><strong>يعطيك توصية واضحة</strong>: شراء / بيع / انتظر</li>
+              </ol>
+            </div>
+            
+            <table style="width: 100%; border-collapse: separate; border-spacing: 10px; margin: 25px 0;">
+              <tr>
+                <td style="background: linear-gradient(135deg, #14532d 0%, #166534 100%); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #22c55e; width: 33%;">
+                  <p style="font-size: 36px; margin: 0;">✅</p>
+                  <p style="color: #4ade80; font-weight: bold; margin: 10px 0 5px 0;">شراء مؤكد</p>
+                  <p style="color: #86efac; font-size: 12px; margin: 0;">جميع المؤشرات متوافقة</p>
+                </td>
+                <td style="background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #ef4444; width: 33%;">
+                  <p style="font-size: 36px; margin: 0;">🔴</p>
+                  <p style="color: #f87171; font-weight: bold; margin: 10px 0 5px 0;">بيع مؤكد</p>
+                  <p style="color: #fca5a5; font-size: 12px; margin: 0;">إشارة هبوط قوية</p>
+                </td>
+                <td style="background: linear-gradient(135deg, #78350f 0%, #92400e 100%); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #f59e0b; width: 33%;">
+                  <p style="font-size: 36px; margin: 0;">⏳</p>
+                  <p style="color: #fbbf24; font-weight: bold; margin: 10px 0 5px 0;">انتظر</p>
+                  <p style="color: #fcd34d; font-size: 12px; margin: 0;">إشارات متضاربة</p>
+                </td>
+              </tr>
+            </table>
+            
+            <div style="background: #0f172a; padding: 25px; border-radius: 16px; margin: 25px 0; border: 1px solid #334155;">
+              <p style="color: #f1f5f9; font-weight: bold; margin: 0 0 15px 0; font-size: 18px;">💹 الأسواق المدعومة:</p>
+              <p style="margin: 0;">
+                <span style="background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #1e293b; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; display: inline-block; margin: 5px;">🥇 الذهب XAUUSD</span>
+                <span style="background: linear-gradient(135deg, #f7931a, #e9782d); color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; display: inline-block; margin: 5px;">₿ بيتكوين</span>
+                <span style="background: linear-gradient(135deg, #627eea, #4f5bd5); color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; display: inline-block; margin: 5px;">⟠ إيثريوم</span>
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin: 35px 0 20px 0;">
+              <a href="https://tifue.com/smart-recovery" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%); color: white; padding: 18px 50px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 18px; display: inline-block; box-shadow: 0 10px 30px rgba(6, 182, 212, 0.4);">
+                🎯 جرب الصياد الهادئ الآن
+              </a>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; padding-top: 25px; border-top: 1px solid #334155;">
+              <p style="color: #06b6d4; font-style: italic; font-size: 16px; margin: 0;">الصياد الهادئ ينتظر الفرصة المثالية... ثم يضرب بدقة!</p>
+              <p style="color: #64748b; font-size: 12px; margin-top: 10px;">— فلسفة النظام</p>
+            </div>
+          </div>
+          <div style="text-align: center; padding: 20px;">
+            <p style="color: #64748b; font-size: 12px; margin: 0;">© 2024 TIFUE SA. جميع الحقوق محفوظة.</p>
+          </div>
+        </div>
+      `
     }
   ];
 
