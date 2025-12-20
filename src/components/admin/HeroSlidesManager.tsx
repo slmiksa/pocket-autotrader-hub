@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, Image, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Save, Image, ExternalLink, Upload, Loader2 } from "lucide-react";
 
 interface HeroSlide {
   id: string;
@@ -26,6 +26,50 @@ export const HeroSlidesManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [customLinks, setCustomLinks] = useState<Record<string, string>>({});
+  const [uploadingSlide, setUploadingSlide] = useState<string | null>(null);
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const handleImageUpload = async (slideId: string, file: File) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("الرجاء اختيار ملف صورة صالح");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("حجم الصورة يجب أن يكون أقل من 5 ميجابايت");
+      return;
+    }
+
+    setUploadingSlide(slideId);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${slideId}-${Date.now()}.${fileExt}`;
+      const filePath = `slides/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('hero-slides')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('hero-slides')
+        .getPublicUrl(filePath);
+
+      updateSlide(slideId, "image_url", urlData.publicUrl);
+      toast.success("تم رفع الصورة بنجاح");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast.error("فشل في رفع الصورة");
+    } finally {
+      setUploadingSlide(null);
+    }
+  };
 
   const gradientOptions = [
     { value: "primary", label: "أزرق (الرئيسي)" },
@@ -305,14 +349,58 @@ export const HeroSlidesManager = () => {
                     </Select>
                   </div>
                   
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">رابط الصورة</Label>
-                    <Input
-                      value={slide.image_url || ""}
-                      onChange={(e) => updateSlide(slide.id, "image_url", e.target.value || null)}
-                      placeholder="https://..."
-                      className="h-9 text-sm"
-                    />
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label className="text-xs flex items-center gap-1">
+                      <Image className="h-3 w-3" />
+                      صورة الشريحة
+                    </Label>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <Input
+                          value={slide.image_url || ""}
+                          onChange={(e) => updateSlide(slide.id, "image_url", e.target.value || null)}
+                          placeholder="https://... أو ارفع من جهازك"
+                          className="h-9 text-sm flex-1"
+                          dir="ltr"
+                        />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          ref={(el) => { fileInputRefs.current[slide.id] = el; }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageUpload(slide.id, file);
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-9 px-3"
+                          disabled={uploadingSlide === slide.id}
+                          onClick={() => fileInputRefs.current[slide.id]?.click()}
+                        >
+                          {uploadingSlide === slide.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                      {slide.image_url && (
+                        <div className="relative w-full h-24 rounded-md overflow-hidden bg-muted/50">
+                          <img
+                            src={slide.image_url}
+                            alt={slide.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
