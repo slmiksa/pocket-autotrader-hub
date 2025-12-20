@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, XCircle, Activity, BarChart3, Clock, Target, Shield, BookOpen, RefreshCw, Volume2, VolumeX, Trash2, Bell, Eye, Search, Coins, Gem } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, XCircle, Activity, BarChart3, Clock, Target, Shield, BookOpen, RefreshCw, Volume2, VolumeX, Trash2, Bell, Eye, Search, Coins, Gem, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,47 @@ import { TradeRecommendation } from '@/components/trading/TradeRecommendation';
 
 // Market symbols organized by category
 const MARKET_SYMBOLS = {
+  forex: [{
+    symbol: 'EURUSD',
+    name: 'يورو/دولار',
+    nameEn: 'EUR/USD'
+  }, {
+    symbol: 'GBPUSD',
+    name: 'استرليني/دولار',
+    nameEn: 'GBP/USD'
+  }, {
+    symbol: 'USDJPY',
+    name: 'دولار/ين',
+    nameEn: 'USD/JPY'
+  }, {
+    symbol: 'USDCHF',
+    name: 'دولار/فرنك',
+    nameEn: 'USD/CHF'
+  }, {
+    symbol: 'AUDUSD',
+    name: 'أسترالي/دولار',
+    nameEn: 'AUD/USD'
+  }, {
+    symbol: 'USDCAD',
+    name: 'دولار/كندي',
+    nameEn: 'USD/CAD'
+  }, {
+    symbol: 'NZDUSD',
+    name: 'نيوزلندي/دولار',
+    nameEn: 'NZD/USD'
+  }, {
+    symbol: 'EURGBP',
+    name: 'يورو/استرليني',
+    nameEn: 'EUR/GBP'
+  }, {
+    symbol: 'EURJPY',
+    name: 'يورو/ين',
+    nameEn: 'EUR/JPY'
+  }, {
+    symbol: 'GBPJPY',
+    name: 'استرليني/ين',
+    nameEn: 'GBP/JPY'
+  }],
   crypto: [{
     symbol: 'BTCUSDT',
     name: 'بيتكوين',
@@ -59,6 +100,11 @@ const MARKET_SYMBOLS = {
   }]
 };
 const CATEGORY_INFO = {
+  forex: {
+    label: 'فوركس',
+    icon: DollarSign,
+    color: 'text-blue-400'
+  },
   crypto: {
     label: 'عملات رقمية',
     icon: Coins,
@@ -79,14 +125,14 @@ const SmartRecoverySystem = () => {
     rules: false,
     log: true
   });
-  const [selectedSymbol, setSelectedSymbol] = useState('XAUUSD');
+  const [selectedSymbol, setSelectedSymbol] = useState('EURUSD');
   const [selectedTimeframe, setSelectedTimeframe] = useState('15m');
   const [xauPriceSource, setXauPriceSource] = useState<'spot' | 'futures'>('spot');
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string>('commodities');
+  const [activeCategory, setActiveCategory] = useState<string>('forex');
   const [showSymbolPicker, setShowSymbolPicker] = useState(false);
 
   // Check authentication
@@ -311,7 +357,9 @@ const SmartRecoverySystem = () => {
             {/* Symbols Grid */}
             <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
               {filteredSymbols.map(sym => {
-              const isSupported = sym.symbol === 'XAUUSD' || sym.symbol.endsWith('USDT');
+              // Forex pairs, Gold, and crypto are supported
+              const forexPairs = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'EURGBP', 'EURJPY', 'GBPJPY'];
+              const isSupported = sym.symbol === 'XAUUSD' || sym.symbol.endsWith('USDT') || forexPairs.includes(sym.symbol);
               return <Button key={sym.symbol} variant="ghost" size="sm" disabled={!isSupported} onClick={() => {
                 if (!isSupported) {
                   toast.error('هذا السوق غير مدعوم حالياً في Smart Recovery');

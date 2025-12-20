@@ -42,10 +42,157 @@ interface MarketAnalysis {
 
 // Map our app symbols to a supported Binance symbol (or null if unsupported)
 function getBinanceSymbol(symbol: string): string | null {
-  // Gold and commodities should use different API
+  // Gold, commodities, and Forex should use different API
   if (symbol === 'XAUUSD' || symbol === 'XAGUSD') return null;
+  // Forex pairs use Yahoo Finance
+  if (isForexPair(symbol)) return null;
   if (symbol.endsWith('USDT')) return symbol;
   return null;
+}
+
+// Check if symbol is a Forex pair
+function isForexPair(symbol: string): boolean {
+  const forexPairs = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'EURGBP', 'EURJPY', 'GBPJPY'];
+  return forexPairs.includes(symbol);
+}
+
+// Map Forex symbol to Yahoo Finance ticker
+function getYahooForexTicker(symbol: string): string {
+  // Yahoo Finance uses format like EURUSD=X
+  return `${symbol}=X`;
+}
+
+// Fetch Forex price from Yahoo Finance
+async function fetchForexPrice(symbol: string): Promise<
+  { price: number; change: number; sourceLabel: string } | null
+> {
+  const ticker = getYahooForexTicker(symbol);
+  const sourceLabel = `Yahoo Finance (${symbol})`;
+
+  // Primary: chart endpoint
+  try {
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1m&range=1d`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0'
+        }
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      const meta = data.chart?.result?.[0]?.meta;
+      if (meta?.regularMarketPrice) {
+        const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
+        const change = prevClose
+          ? ((meta.regularMarketPrice - prevClose) / prevClose) * 100
+          : 0;
+
+        return {
+          price: meta.regularMarketPrice,
+          change,
+          sourceLabel,
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Yahoo Finance forex chart fetch error:', error);
+  }
+
+  // Fallback: quoteSummary endpoint
+  try {
+    const response = await fetch(
+      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=price`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0'
+        }
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      const price = data.quoteSummary?.result?.[0]?.price;
+      const rawPrice = price?.regularMarketPrice?.raw;
+      const rawChangePct = price?.regularMarketChangePercent?.raw;
+
+      if (typeof rawPrice === 'number') {
+        let change = 0;
+        if (typeof rawChangePct === 'number') {
+          change = Math.abs(rawChangePct) <= 1 ? rawChangePct * 100 : rawChangePct;
+        }
+        return { price: rawPrice, change, sourceLabel };
+      }
+    }
+  } catch (error) {
+    console.error('Yahoo Finance forex quoteSummary fetch error:', error);
+  }
+
+  return null;
+}
+
+// Fetch Forex klines from Yahoo Finance
+async function fetchForexKlines(symbol: string, timeframe: string): Promise<any[]> {
+  const ticker = getYahooForexTicker(symbol);
+  
+  // Map timeframe to Yahoo Finance interval
+  const intervalMap: Record<string, string> = {
+    '1m': '1m',
+    '5m': '5m',
+    '15m': '15m',
+    '30m': '30m',
+    '1h': '60m',
+    '4h': '60m', // Yahoo doesn't support 4h, use 1h
+    '1d': '1d'
+  };
+  
+  const interval = intervalMap[timeframe] || '15m';
+  const range = interval === '1d' ? '1y' : interval === '60m' ? '5d' : '1d';
+  
+  try {
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${interval}&range=${range}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0'
+        }
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      const result = data.chart?.result?.[0];
+      if (result) {
+        const timestamps = result.timestamp || [];
+        const quotes = result.indicators?.quote?.[0] || {};
+        const { open, high, low, close, volume } = quotes;
+        
+        // Convert to Binance-like kline format for compatibility
+        const klines: any[] = [];
+        for (let i = 0; i < timestamps.length; i++) {
+          if (open[i] && high[i] && low[i] && close[i]) {
+            klines.push([
+              timestamps[i] * 1000, // Open time
+              open[i].toString(),   // Open
+              high[i].toString(),   // High
+              low[i].toString(),    // Low
+              close[i].toString(),  // Close
+              (volume?.[i] || 1000000).toString() // Volume (use default for forex)
+            ]);
+          }
+        }
+        return klines;
+      }
+    }
+  } catch (error) {
+    console.error('Yahoo Finance forex klines fetch error:', error);
+  }
+  
+  return [];
 }
 
 // Fetch gold price from Yahoo Finance (spot or futures)
@@ -684,6 +831,19 @@ serve(async (req) => {
       if (klinesResponse.ok) {
         klines = await klinesResponse.json();
       }
+    } else if (isForexPair(symbol)) {
+      // Handle Forex pairs using Yahoo Finance
+      console.log(`Fetching Forex data for ${symbol}`);
+      const forexData = await fetchForexPrice(symbol);
+      if (forexData) {
+        currentPrice = forexData.price;
+        priceChangePercent = forexData.change;
+        dataSource = forexData.sourceLabel;
+      }
+      
+      // Fetch klines from Yahoo Finance
+      klines = await fetchForexKlines(symbol, timeframe);
+      console.log(`Fetched ${klines.length} klines for ${symbol}`);
     } else {
       // For crypto, use Binance
       const binanceSymbol = getBinanceSymbol(symbol);
@@ -691,7 +851,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({
             error: 'هذا الرمز غير مدعوم حالياً في Smart Recovery',
-            supported: ['XAUUSD', '*USDT'],
+            supported: ['XAUUSD', 'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'EURGBP', 'EURJPY', 'GBPJPY', '*USDT'],
           }),
           {
             status: 400,
