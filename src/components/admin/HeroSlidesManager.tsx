@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, Image } from "lucide-react";
+import { Plus, Trash2, Save, Image, ExternalLink } from "lucide-react";
 
 interface HeroSlide {
   id: string;
@@ -25,6 +25,7 @@ export const HeroSlidesManager = () => {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [customLinks, setCustomLinks] = useState<Record<string, string>>({});
 
   const gradientOptions = [
     { value: "primary", label: "أزرق (الرئيسي)" },
@@ -36,13 +37,24 @@ export const HeroSlidesManager = () => {
   ];
 
   const linkOptions = [
+    { value: "/", label: "الصفحة الرئيسية" },
     { value: "/binary-options", label: "توصيات الخيارات الثنائية" },
     { value: "/supply-demand", label: "محلل العرض والطلب" },
     { value: "/markets", label: "الأسواق المالية" },
-    { value: "/news", label: "أخبار الأسواق" },
+    { value: "/economic-calendar", label: "التقويم الاقتصادي" },
     { value: "/live-chart", label: "الشارت المباشر" },
     { value: "/professional-signals", label: "توصيات المحترفين" },
+    { value: "/smart-recovery", label: "نظام الصياد الهادئ" },
+    { value: "/image-analysis", label: "تحليل الصور بالذكاء" },
+    { value: "/community", label: "مجتمع المتداولين" },
+    { value: "/profile", label: "الملف الشخصي" },
+    { value: "/about", label: "عن التطبيق" },
+    { value: "external", label: "🔗 رابط خارجي (أدخل يدوياً)" },
   ];
+
+  const isExternalLink = (link: string) => {
+    return link.startsWith("http://") || link.startsWith("https://");
+  };
 
   useEffect(() => {
     fetchSlides();
@@ -231,13 +243,29 @@ export const HeroSlidesManager = () => {
                   </div>
                   
                   <div className="space-y-1.5">
-                    <Label className="text-xs">رابط الزر</Label>
+                    <Label className="text-xs flex items-center gap-1">
+                      رابط الزر
+                      {isExternalLink(slide.button_link) && (
+                        <ExternalLink className="h-3 w-3 text-primary" />
+                      )}
+                    </Label>
                     <Select
-                      value={slide.button_link}
-                      onValueChange={(value) => updateSlide(slide.id, "button_link", value)}
+                      value={isExternalLink(slide.button_link) ? "external" : slide.button_link}
+                      onValueChange={(value) => {
+                        if (value === "external") {
+                          setCustomLinks(prev => ({ ...prev, [slide.id]: slide.button_link.startsWith("http") ? slide.button_link : "" }));
+                          updateSlide(slide.id, "button_link", customLinks[slide.id] || "https://");
+                        } else {
+                          updateSlide(slide.id, "button_link", value);
+                        }
+                      }}
                     >
                       <SelectTrigger className="h-9 text-sm">
-                        <SelectValue />
+                        <SelectValue>
+                          {isExternalLink(slide.button_link) 
+                            ? "🔗 رابط خارجي" 
+                            : linkOptions.find(o => o.value === slide.button_link)?.label || slide.button_link}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {linkOptions.map(option => (
@@ -247,6 +275,15 @@ export const HeroSlidesManager = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    {isExternalLink(slide.button_link) && (
+                      <Input
+                        value={slide.button_link}
+                        onChange={(e) => updateSlide(slide.id, "button_link", e.target.value)}
+                        placeholder="https://example.com"
+                        className="h-9 text-sm mt-1.5"
+                        dir="ltr"
+                      />
+                    )}
                   </div>
                   
                   <div className="space-y-1.5">
