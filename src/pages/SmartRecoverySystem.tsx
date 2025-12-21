@@ -439,9 +439,9 @@ const SmartRecoverySystem = () => {
 
                         <div className="mt-3 text-[11px] text-white/75">
                           مصدر السعر: <span className="font-semibold">{analysis.dataSource}</span> • آخر تحديث: {new Date(analysis.timestamp).toLocaleTimeString('ar-SA', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
                         </div>
                         {selectedSymbol === 'XAUUSD' && <div className="text-[10px] text-white/60 mt-1">قد يختلف عن TradingView حسب مزوّد البيانات/السبريد.</div>}
 
@@ -654,20 +654,16 @@ const SmartRecoverySystem = () => {
         </Card>
 
         {/* Trade Recommendation - Should I Enter Now? */}
-        <TradeRecommendation 
-          analysis={analysis ? {
-            signalType: analysis.signalType as 'BUY' | 'SELL' | 'WAIT' | 'NONE',
-            confidence: (analysis as any).confidence,
-            currentPrice: analysis.currentPrice,
-            trend: analysis.trend,
-            rsi: (analysis as any).rsi,
-            cvdStatus: analysis.cvdStatus,
-            priceAboveEMA: analysis.priceAboveEMA,
-            signalReasons: (analysis as any).signalReasons
-          } : null}
-          symbol={selectedSymbol}
-          loading={analysisLoading}
-        />
+        <TradeRecommendation analysis={analysis ? {
+        signalType: analysis.signalType as 'BUY' | 'SELL' | 'WAIT' | 'NONE',
+        confidence: (analysis as any).confidence,
+        currentPrice: analysis.currentPrice,
+        trend: analysis.trend,
+        rsi: (analysis as any).rsi,
+        cvdStatus: analysis.cvdStatus,
+        priceAboveEMA: analysis.priceAboveEMA,
+        signalReasons: (analysis as any).signalReasons
+      } : null} symbol={selectedSymbol} loading={analysisLoading} />
 
         {/* Signals Log */}
         
@@ -689,26 +685,7 @@ const SmartRecoverySystem = () => {
             <CollapsibleContent>
               <CardContent className="pt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/30">
-                    <h4 className="font-bold text-sm flex items-center gap-2 text-white mb-3">
-                      <Target className="w-4 h-4 text-emerald-400" />
-                      الأهداف الرئيسية
-                    </h4>
-                    <ul className="text-sm text-slate-400 space-y-2 mr-6">
-                      <li className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                        استرجاع رأس المال
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                        تحقيق ربح بسيط (0.5% - 1%)
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                        توصيات عالية الاحتمالية
-                      </li>
-                    </ul>
-                  </div>
+                  
                   <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/30">
                     <h4 className="font-bold text-sm flex items-center gap-2 text-white mb-3">
                       <Clock className="w-4 h-4 text-blue-400" />
