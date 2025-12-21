@@ -268,7 +268,7 @@ const SmartRecoverySystem = () => {
         return null;
     }
   };
-  return <div className="min-h-screen bg-[#0a0a0f]" dir="rtl">
+  return <div className="dark min-h-screen bg-[#0a0a0f]" dir="rtl">
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <GlobalHeader />
