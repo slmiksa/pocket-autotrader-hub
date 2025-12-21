@@ -11,7 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import heroTrading1 from "@/assets/hero-trading-1.jpg";
 import heroTrading2 from "@/assets/hero-trading-2.jpg";
 import heroTrading3 from "@/assets/hero-trading-3.jpg";
-
 interface HeroSlide {
   id: string;
   title: string;
@@ -23,48 +22,41 @@ interface HeroSlide {
   is_active: boolean;
   display_order: number;
 }
-
 const defaultImages = [heroTrading1, heroTrading2, heroTrading3];
-
 const gradientMap: Record<string, string> = {
   primary: "from-primary/40 via-primary/20 to-transparent",
   blue: "from-blue-500/40 via-blue-500/20 to-transparent",
   purple: "from-purple-500/40 via-purple-500/20 to-transparent",
   emerald: "from-emerald-500/40 via-emerald-500/20 to-transparent",
   amber: "from-amber-500/40 via-amber-500/20 to-transparent",
-  red: "from-red-500/40 via-red-500/20 to-transparent",
+  red: "from-red-500/40 via-red-500/20 to-transparent"
 };
-
 const iconMap: Record<string, any> = {
   "/binary-options": Target,
   "/supply-demand": BarChart3,
-  
   "/markets": LineChart,
   "/live-chart": LineChart,
-  "/professional-signals": Star,
+  "/professional-signals": Star
 };
-
 export const HomeContent = () => {
   const navigate = useNavigate();
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  const plugin = useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true })
-  );
-
+  const plugin = useRef(Autoplay({
+    delay: 4000,
+    stopOnInteraction: true
+  }));
   useEffect(() => {
     fetchSlides();
   }, []);
-
   const fetchSlides = async () => {
     try {
-      const { data, error } = await supabase
-        .from("hero_slides")
-        .select("*")
-        .eq("is_active", true)
-        .order("display_order", { ascending: true });
-
+      const {
+        data,
+        error
+      } = await supabase.from("hero_slides").select("*").eq("is_active", true).order("display_order", {
+        ascending: true
+      });
       if (error) throw error;
       setHeroSlides(data || []);
     } catch (error) {
@@ -73,7 +65,6 @@ export const HomeContent = () => {
       setLoading(false);
     }
   };
-
   const features = [{
     icon: Target,
     title: "توصيات الخيارات الثنائية",
@@ -120,7 +111,6 @@ export const HomeContent = () => {
     iconColor: "text-purple-400",
     borderColor: "border-purple-500/30"
   }];
-
   const platformFeatures = [{
     icon: Zap,
     title: "توصيات فورية",
@@ -138,42 +128,26 @@ export const HomeContent = () => {
     title: "دعم متواصل",
     description: "فريق دعم فني على مدار الساعة"
   }];
-
-  const tradingTips = [
-    "إدارة رأس المال هي مفتاح النجاح - لا تخاطر بأكثر من 1-2% من رأس مالك في صفقة واحدة",
-    "التزم بالتوصيات واتبع الخطة - لا تدخل صفقات عشوائية",
-    "راقب الأخبار الاقتصادية قبل التداول - الأحداث الكبرى تؤثر على السوق",
-    "تعلم من الخسائر وحلل أخطاءك - كل خسارة هي درس للمستقبل"
-  ];
-
-  return (
-    <div className="space-y-8">
+  const tradingTips = ["إدارة رأس المال هي مفتاح النجاح - لا تخاطر بأكثر من 1-2% من رأس مالك في صفقة واحدة", "التزم بالتوصيات واتبع الخطة - لا تدخل صفقات عشوائية", "راقب الأخبار الاقتصادية قبل التداول - الأحداث الكبرى تؤثر على السوق", "تعلم من الخسائر وحلل أخطاءك - كل خسارة هي درس للمستقبل"];
+  return <div className="space-y-8">
       {/* Hero Slider - Only show if there are active slides */}
-      {heroSlides.length > 0 && (
-        <div className="relative">
-          <Carousel
-            plugins={[plugin.current]}
-            className="w-full"
-            opts={{
-              align: "start",
-              loop: true,
-              direction: "rtl"
-            }}
-          >
+      {heroSlides.length > 0 && <div className="relative">
+          <Carousel plugins={[plugin.current]} className="w-full" opts={{
+        align: "start",
+        loop: true,
+        direction: "rtl"
+      }}>
             <CarouselContent>
               {heroSlides.map((slide, index) => {
-              const SlideIcon = iconMap[slide.button_link] || Sparkles;
-              const bgImage = slide.image_url || defaultImages[index % defaultImages.length];
-              const gradient = gradientMap[slide.gradient_color] || gradientMap.primary;
-              
-              return (
-                <CarouselItem key={slide.id}>
+            const SlideIcon = iconMap[slide.button_link] || Sparkles;
+            const bgImage = slide.image_url || defaultImages[index % defaultImages.length];
+            const gradient = gradientMap[slide.gradient_color] || gradientMap.primary;
+            return <CarouselItem key={slide.id}>
                   <Card className="relative overflow-hidden border-0 min-h-[300px] md:min-h-[350px]">
                     {/* Background Image */}
-                    <div 
-                      className="absolute inset-0 bg-cover bg-center"
-                      style={{ backgroundImage: `url(${bgImage})` }}
-                    />
+                    <div className="absolute inset-0 bg-cover bg-center" style={{
+                  backgroundImage: `url(${bgImage})`
+                }} />
                     
                     {/* Gradient Overlay */}
                     <div className={`absolute inset-0 bg-gradient-to-l ${gradient}`} />
@@ -192,11 +166,7 @@ export const HomeContent = () => {
                           <p className="text-lg text-foreground/90 max-w-xl drop-shadow">
                             {slide.subtitle}
                           </p>
-                          <Button 
-                            size="lg" 
-                            className="mt-4 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25"
-                            onClick={() => navigate(slide.button_link)}
-                          >
+                          <Button size="lg" className="mt-4 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25" onClick={() => navigate(slide.button_link)}>
                             {slide.button_text}
                             <ArrowUpRight className="h-4 w-4" />
                           </Button>
@@ -214,9 +184,8 @@ export const HomeContent = () => {
                       </div>
                     </CardContent>
                   </Card>
-                </CarouselItem>
-              );
-            })}
+                </CarouselItem>;
+          })}
           </CarouselContent>
           
           {/* Custom Navigation */}
@@ -225,8 +194,7 @@ export const HomeContent = () => {
             <CarouselNext className="relative inset-auto translate-y-0 bg-card/50 border-border/50 hover:bg-card backdrop-blur-sm" />
           </div>
         </Carousel>
-        </div>
-      )}
+        </div>}
 
       {/* Quick Access Features */}
       <div>
@@ -240,12 +208,7 @@ export const HomeContent = () => {
         </div>
         
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
-          {features.map((feature) => (
-            <Card 
-              key={feature.path} 
-              className={`group cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/10 bg-gradient-to-br ${feature.gradient} border ${feature.borderColor} backdrop-blur-sm overflow-hidden`}
-              onClick={() => navigate(feature.path)}
-            >
+          {features.map(feature => <Card key={feature.path} className={`group cursor-pointer transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/10 bg-gradient-to-br ${feature.gradient} border ${feature.borderColor} backdrop-blur-sm overflow-hidden`} onClick={() => navigate(feature.path)}>
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
               </div>
@@ -256,17 +219,14 @@ export const HomeContent = () => {
                     <div className={`rounded-xl ${feature.iconBg} p-3 ring-1 ring-white/10`}>
                       <feature.icon className={`h-6 w-6 ${feature.iconColor}`} />
                     </div>
-                    {feature.path === "/binary-options" && (
-                      <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md">Pocket Option</span>
-                    )}
+                    {feature.path === "/binary-options" && <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md">Pocket Option</span>}
                   </div>
                   <ArrowUpRight className={`h-5 w-5 ${feature.iconColor} opacity-50 group-hover:opacity-100 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300`} />
                 </div>
                 <h4 className="font-bold text-foreground mt-4 text-lg">{feature.title}</h4>
                 <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{feature.description}</p>
               </CardContent>
-            </Card>
-          ))}
+            </Card>)}
         </div>
       </div>
 
@@ -286,11 +246,7 @@ export const HomeContent = () => {
         </CardHeader>
         <CardContent className="relative">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {platformFeatures.map((feature, index) => (
-              <div 
-                key={index} 
-                className="group flex items-start gap-4 p-4 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all duration-300"
-              >
+            {platformFeatures.map((feature, index) => <div key={index} className="group flex items-start gap-4 p-4 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all duration-300">
                 <div className="rounded-full bg-primary/10 p-3 group-hover:bg-primary/20 transition-colors">
                   <feature.icon className="h-5 w-5 text-primary" />
                 </div>
@@ -298,8 +254,7 @@ export const HomeContent = () => {
                   <h4 className="font-semibold text-foreground">{feature.title}</h4>
                   <p className="text-sm text-muted-foreground mt-1">{feature.description}</p>
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </CardContent>
       </Card>
@@ -320,17 +275,12 @@ export const HomeContent = () => {
         </CardHeader>
         <CardContent className="relative">
           <div className="grid gap-3 sm:grid-cols-2">
-            {tradingTips.map((tip, index) => (
-              <div 
-                key={index} 
-                className="flex items-start gap-3 p-4 rounded-xl bg-background/50 border border-amber-500/20 hover:border-amber-500/40 transition-colors"
-              >
+            {tradingTips.map((tip, index) => <div key={index} className="flex items-start gap-3 p-4 rounded-xl bg-background/50 border border-amber-500/20 hover:border-amber-500/40 transition-colors">
                 <div className="rounded-full bg-amber-500/20 p-2 shrink-0">
                   <CheckCircle2 className="h-4 w-4 text-amber-400" />
                 </div>
                 <p className="text-sm text-foreground leading-relaxed">{tip}</p>
-              </div>
-            ))}
+              </div>)}
           </div>
         </CardContent>
       </Card>
@@ -338,10 +288,7 @@ export const HomeContent = () => {
       {/* Quick Links */}
       <div className="grid gap-4 sm:grid-cols-2">
 
-        <Card 
-          className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:bg-primary/5 transition-all duration-300" 
-          onClick={() => navigate("/live-chart")}
-        >
+        <Card className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:bg-primary/5 transition-all duration-300" onClick={() => navigate("/live-chart")}>
           <CardContent className="p-5 flex items-center gap-4">
             <div className="rounded-xl bg-primary/20 p-4 group-hover:bg-primary/30 transition-colors">
               <LineChart className="h-7 w-7 text-primary" />
@@ -354,10 +301,7 @@ export const HomeContent = () => {
           </CardContent>
         </Card>
 
-        <Card 
-          className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300" 
-          onClick={() => navigate("/about")}
-        >
+        <Card className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-300" onClick={() => navigate("/about")}>
           <CardContent className="p-5 flex items-center gap-4">
             <div className="rounded-xl bg-emerald-500/20 p-4 group-hover:bg-emerald-500/30 transition-colors">
               <Users className="h-7 w-7 text-emerald-400" />
@@ -370,10 +314,7 @@ export const HomeContent = () => {
           </CardContent>
         </Card>
 
-        <Card 
-          className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300" 
-          onClick={() => navigate("/economic-calendar")}
-        >
+        <Card className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300" onClick={() => navigate("/economic-calendar")}>
           <CardContent className="p-5 flex items-center gap-4">
             <div className="rounded-xl bg-blue-500/20 p-4 group-hover:bg-blue-500/30 transition-colors">
               <Calendar className="h-7 w-7 text-blue-400" />
@@ -386,22 +327,18 @@ export const HomeContent = () => {
           </CardContent>
         </Card>
 
-        <Card 
-          className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-all duration-300" 
-          onClick={() => navigate("/smart-recovery")}
-        >
+        <Card className="group cursor-pointer border-border/50 bg-card/50 backdrop-blur-sm hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-all duration-300" onClick={() => navigate("/smart-recovery")}>
           <CardContent className="p-5 flex items-center gap-4">
             <div className="rounded-xl bg-cyan-500/20 p-4 group-hover:bg-cyan-500/30 transition-colors">
               <Brain className="h-7 w-7 text-cyan-400" />
             </div>
             <div className="flex-1">
-              <h4 className="font-bold text-foreground text-lg">Smart Recovery System</h4>
-              <p className="text-sm text-muted-foreground mt-1">نظام تداول محافظ لاسترجاع رأس المال - MT5</p>
+              <h4 className="font-bold text-foreground text-lg">نظام الصياد الهادئ</h4>
+              <p className="text-sm text-muted-foreground mt-1">عزز من قوة صفقاتك</p>
             </div>
             <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-cyan-400 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
