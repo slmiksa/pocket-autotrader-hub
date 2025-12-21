@@ -12,6 +12,10 @@ interface AccumulationZone {
   reasons: string[];
   breakoutProbability: number; // 0-100
   expectedDirection: 'up' | 'down' | 'unknown';
+  // NEW: Real-time metrics
+  volumeRatio: number; // Current volume vs average
+  priceRange: number; // Price range %
+  compressionLevel: number; // Volatility compression level
 }
 
 interface MarketAnalysis {
@@ -38,6 +42,15 @@ interface MarketAnalysis {
   bollingerSqueeze: boolean;
   volumeSpike: boolean;
   priceConsolidation: boolean;
+  // NEW: Real data metrics for display
+  realTimeMetrics: {
+    avgVolume24h: number;
+    currentVolume: number;
+    volumeChangePercent: number;
+    volatilityIndex: number;
+    priceRangePercent: number;
+    bollingerWidth: number;
+  };
 }
 
 // Map our app symbols to a supported Binance symbol (or null if unsupported)
@@ -512,9 +525,9 @@ function detectBollingerSqueeze(prices: number[], period: number = 20, stdMultip
   return { squeeze, bandWidth };
 }
 
-// Detect volume spike (institutional activity)
-function detectVolumeSpike(klines: any[]): { spike: boolean; ratio: number } {
-  if (klines.length < 30) return { spike: false, ratio: 1 };
+// Detect volume spike (institutional activity) - IMPROVED with real volume analysis
+function detectVolumeSpike(klines: any[]): { spike: boolean; ratio: number; avgVolume: number; recentVolume: number } {
+  if (klines.length < 30) return { spike: false, ratio: 1, avgVolume: 0, recentVolume: 0 };
   
   const volumes = klines.map(k => parseFloat(k[5]));
   const recent5Volumes = volumes.slice(-5);
@@ -523,18 +536,19 @@ function detectVolumeSpike(klines: any[]): { spike: boolean; ratio: number } {
   const recentAvgVolume = recent5Volumes.reduce((a, b) => a + b, 0) / 5;
   const olderAvgVolume = older25Volumes.reduce((a, b) => a + b, 0) / 25;
   
-  const ratio = recentAvgVolume / olderAvgVolume;
-  // Volume spike detected when recent volume is significantly higher
-  const spike = ratio > 1.8;
+  const ratio = olderAvgVolume > 0 ? recentAvgVolume / olderAvgVolume : 1;
+  // Volume spike detected when recent volume is significantly higher (2x or more)
+  const spike = ratio > 2.0;
   
-  return { spike, ratio };
+  return { spike, ratio: Math.round(ratio * 100) / 100, avgVolume: Math.round(olderAvgVolume), recentVolume: Math.round(recentAvgVolume) };
 }
 
-// Detect price consolidation (tight range)
-function detectPriceConsolidation(klines: any[]): { consolidation: boolean; rangePercent: number } {
-  if (klines.length < 20) return { consolidation: false, rangePercent: 0 };
+// Detect price consolidation (tight range) - IMPROVED with ATR comparison
+function detectPriceConsolidation(klines: any[]): { consolidation: boolean; rangePercent: number; atrPercent: number; compressionRatio: number } {
+  if (klines.length < 30) return { consolidation: false, rangePercent: 0, atrPercent: 0, compressionRatio: 1 };
   
   const recent20 = klines.slice(-20);
+  const older20 = klines.slice(-40, -20);
   const highs = recent20.map(k => parseFloat(k[2]));
   const lows = recent20.map(k => parseFloat(k[3]));
   
@@ -543,93 +557,145 @@ function detectPriceConsolidation(klines: any[]): { consolidation: boolean; rang
   const midPrice = (highestHigh + lowestLow) / 2;
   const rangePercent = ((highestHigh - lowestLow) / midPrice) * 100;
   
-  // Consolidation detected when price range is very tight (< 1.5%)
-  const consolidation = rangePercent < 1.5;
+  // Calculate ATR for recent 20 candles
+  let atrSum = 0;
+  for (const k of recent20) {
+    const high = parseFloat(k[2]);
+    const low = parseFloat(k[3]);
+    atrSum += high - low;
+  }
+  const recentATR = atrSum / recent20.length;
   
-  return { consolidation, rangePercent };
+  // Calculate ATR for older 20 candles
+  let olderAtrSum = 0;
+  for (const k of older20) {
+    const high = parseFloat(k[2]);
+    const low = parseFloat(k[3]);
+    olderAtrSum += high - low;
+  }
+  const olderATR = olderAtrSum / older20.length;
+  
+  const atrPercent = (recentATR / midPrice) * 100;
+  const compressionRatio = olderATR > 0 ? recentATR / olderATR : 1;
+  
+  // Consolidation detected when:
+  // 1. Price range is tight (< 1.2%)
+  // 2. AND ATR compression (current ATR < 60% of historical ATR)
+  const consolidation = rangePercent < 1.2 && compressionRatio < 0.6;
+  
+  return { 
+    consolidation, 
+    rangePercent: Math.round(rangePercent * 100) / 100, 
+    atrPercent: Math.round(atrPercent * 100) / 100,
+    compressionRatio: Math.round(compressionRatio * 100) / 100
+  };
 }
 
-// Detect institutional accumulation/distribution
+// IMPROVED: Detect institutional accumulation/distribution with real metrics
 function detectAccumulationZone(
   klines: any[],
   cvdStatus: string,
   bollingerSqueeze: boolean,
-  volumeSpike: boolean,
-  priceConsolidation: boolean,
+  volumeData: { spike: boolean; ratio: number; avgVolume: number; recentVolume: number },
+  consolidationData: { consolidation: boolean; rangePercent: number; compressionRatio: number },
   rsi: number,
-  macd: { macd: number; signal: number; histogram: number }
+  macd: { macd: number; signal: number; histogram: number },
+  bandWidth: number
 ): AccumulationZone {
   const reasons: string[] = [];
   let buySignals = 0;
   let sellSignals = 0;
   let strength = 0;
 
-  // 1. Bollinger Squeeze - main breakout indicator
-  if (bollingerSqueeze) {
-    strength += 30;
-    reasons.push('🔥 ضغط بولينجر - انفجار سعري وشيك');
+  const { spike: volumeSpike, ratio: volumeRatio, avgVolume, recentVolume } = volumeData;
+  const { consolidation: priceConsolidation, rangePercent, compressionRatio } = consolidationData;
+
+  // 1. Bollinger Squeeze - STRICT: real squeeze detection
+  if (bollingerSqueeze && bandWidth < 2.0) {
+    strength += 35;
+    reasons.push(`🔥 ضغط بولينجر شديد (${bandWidth.toFixed(1)}%) - انفجار وشيك`);
+  } else if (bollingerSqueeze) {
+    strength += 20;
+    reasons.push(`📊 ضغط بولينجر (${bandWidth.toFixed(1)}%)`);
   }
 
-  // 2. Volume Spike with price consolidation - institutional activity
+  // 2. Volume Analysis - REAL DATA
   if (volumeSpike && priceConsolidation) {
-    strength += 35;
-    reasons.push('📊 تجميع مؤسسي - حجم عالي مع سعر ثابت');
+    strength += 40;
+    reasons.push(`📊 تجميع مؤسسي قوي (حجم ${volumeRatio}x مع سعر ثابت)`);
+  } else if (volumeSpike && volumeRatio > 2.5) {
+    strength += 25;
+    reasons.push(`📈 حجم استثنائي (${volumeRatio}x المتوسط)`);
   } else if (volumeSpike) {
     strength += 15;
-    reasons.push('📈 ارتفاع غير عادي في الحجم');
+    reasons.push(`📈 ارتفاع الحجم (${volumeRatio}x)`);
+  }
+
+  // 3. Price Consolidation - ATR based
+  if (priceConsolidation && compressionRatio < 0.5) {
+    strength += 20;
+    reasons.push(`📍 ضغط سعري شديد (${rangePercent.toFixed(2)}%)`);
   } else if (priceConsolidation) {
     strength += 10;
-    reasons.push('📍 السعر في نطاق ضيق');
+    reasons.push(`📍 نطاق سعري ضيق (${rangePercent.toFixed(2)}%)`);
   }
 
-  // 3. CVD analysis for direction
+  // 4. CVD analysis for direction - IMPORTANT
   if (cvdStatus === 'rising') {
-    buySignals += 2;
-    reasons.push('💚 تدفق شراء مؤسسي');
+    buySignals += 3;
+    reasons.push('💚 تدفق شراء مؤسسي نشط');
   } else if (cvdStatus === 'falling') {
-    sellSignals += 2;
-    reasons.push('🔴 تدفق بيع مؤسسي');
+    sellSignals += 3;
+    reasons.push('🔴 تدفق بيع مؤسسي نشط');
   }
 
-  // 4. RSI divergence
-  if (rsi < 35 && cvdStatus === 'rising') {
-    buySignals += 2;
-    strength += 15;
-    reasons.push('⚡ تجميع في قاع RSI');
-  } else if (rsi > 65 && cvdStatus === 'falling') {
-    sellSignals += 2;
-    strength += 15;
-    reasons.push('⚡ توزيع في قمة RSI');
+  // 5. RSI divergence with CVD confirmation
+  if (rsi < 30 && cvdStatus === 'rising') {
+    buySignals += 3;
+    strength += 20;
+    reasons.push('⚡ تباعد إيجابي: RSI منخفض + شراء مؤسسي');
+  } else if (rsi > 70 && cvdStatus === 'falling') {
+    sellSignals += 3;
+    strength += 20;
+    reasons.push('⚡ تباعد سلبي: RSI مرتفع + بيع مؤسسي');
+  } else if (rsi < 35) {
+    reasons.push(`📉 RSI منخفض (${rsi.toFixed(0)})`);
+  } else if (rsi > 65) {
+    reasons.push(`📈 RSI مرتفع (${rsi.toFixed(0)})`);
   }
 
-  // 5. MACD momentum
-  if (macd.histogram > 0 && macd.histogram > macd.signal * 0.1) {
+  // 6. MACD momentum confirmation
+  if (macd.histogram > 0 && macd.macd > macd.signal) {
     buySignals += 1;
-  } else if (macd.histogram < 0 && macd.histogram < macd.signal * -0.1) {
+  } else if (macd.histogram < 0 && macd.macd < macd.signal) {
     sellSignals += 1;
   }
 
-  // Determine accumulation type
-  const detected = strength >= 40;
+  // Determine accumulation type - STRICT
+  const detected = strength >= 45;
   let type: 'institutional_buy' | 'institutional_sell' | 'none' = 'none';
   let expectedDirection: 'up' | 'down' | 'unknown' = 'unknown';
 
   if (detected) {
-    if (buySignals > sellSignals) {
+    if (buySignals > sellSignals + 1) {
       type = 'institutional_buy';
       expectedDirection = 'up';
-    } else if (sellSignals > buySignals) {
+    } else if (sellSignals > buySignals + 1) {
       type = 'institutional_sell';
       expectedDirection = 'down';
     }
   }
 
-  // Calculate breakout probability
+  // Calculate breakout probability - MORE ACCURATE
   let breakoutProbability = 0;
-  if (bollingerSqueeze) breakoutProbability += 40;
+  if (bollingerSqueeze && bandWidth < 2.0) breakoutProbability += 45;
+  else if (bollingerSqueeze) breakoutProbability += 30;
+  
   if (volumeSpike && priceConsolidation) breakoutProbability += 35;
-  if (cvdStatus !== 'flat') breakoutProbability += 15;
-  if (Math.abs(buySignals - sellSignals) >= 2) breakoutProbability += 10;
+  else if (volumeSpike && volumeRatio > 2.5) breakoutProbability += 25;
+  
+  if (cvdStatus !== 'flat') breakoutProbability += 10;
+  if (Math.abs(buySignals - sellSignals) >= 3) breakoutProbability += 10;
 
   return {
     detected,
@@ -637,7 +703,10 @@ function detectAccumulationZone(
     strength: Math.min(100, strength),
     reasons,
     breakoutProbability: Math.min(100, breakoutProbability),
-    expectedDirection
+    expectedDirection,
+    volumeRatio,
+    priceRange: rangePercent,
+    compressionLevel: compressionRatio
   };
 }
 
@@ -893,18 +962,20 @@ serve(async (req) => {
       prevHistogram = prevMacd.histogram;
     }
 
-    // Accumulation detection
-    const { squeeze: bollingerSqueeze } = detectBollingerSqueeze(closePrices);
-    const { spike: volumeSpike } = detectVolumeSpike(klines);
-    const { consolidation: priceConsolidation } = detectPriceConsolidation(klines);
+    // Accumulation detection - with REAL DATA
+    const bollingerResult = detectBollingerSqueeze(closePrices);
+    const volumeData = detectVolumeSpike(klines);
+    const consolidationData = detectPriceConsolidation(klines);
+    
     const accumulation = detectAccumulationZone(
       klines,
       cvdStatus,
-      bollingerSqueeze,
-      volumeSpike,
-      priceConsolidation,
+      bollingerResult.squeeze,
+      volumeData,
+      consolidationData,
       rsi,
-      macd
+      macd,
+      bollingerResult.bandWidth
     );
 
     const priceAboveEMA = currentPrice > ema200;
@@ -929,6 +1000,16 @@ serve(async (req) => {
 
     const isValidSetup = signalType !== 'WAIT' && confidence >= 60;
 
+    // Calculate real-time metrics for display
+    const realTimeMetrics = {
+      avgVolume24h: volumeData.avgVolume,
+      currentVolume: volumeData.recentVolume,
+      volumeChangePercent: Math.round((volumeData.ratio - 1) * 100),
+      volatilityIndex: Math.round(consolidationData.compressionRatio * 100),
+      priceRangePercent: consolidationData.rangePercent,
+      bollingerWidth: Math.round(bollingerResult.bandWidth * 100) / 100
+    };
+
     const analysis: MarketAnalysis = {
       symbol,
       currentPrice,
@@ -950,9 +1031,10 @@ serve(async (req) => {
       dataSource,
       // Accumulation zone data
       accumulation,
-      bollingerSqueeze,
-      volumeSpike,
-      priceConsolidation
+      bollingerSqueeze: bollingerResult.squeeze,
+      volumeSpike: volumeData.spike,
+      priceConsolidation: consolidationData.consolidation,
+      realTimeMetrics
     };
 
     console.log('Analysis result:', analysis);
