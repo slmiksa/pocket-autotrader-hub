@@ -459,7 +459,7 @@ const SmartRecoverySystem = () => {
                         </div>}
 
                       {/* Accumulation Zone Alert - Institutional Activity Detection */}
-                      {(analysis as any).accumulation?.detected && <div className="bg-gradient-to-br from-purple-900/80 to-purple-800/60 rounded-xl p-4 border-2 border-purple-400 animate-pulse shadow-lg shadow-purple-500/20">
+                      {(analysis as any).accumulation?.detected && <div className="bg-gradient-to-br from-purple-900/80 to-purple-800/60 rounded-xl p-4 border-2 border-purple-400 shadow-lg shadow-purple-500/20">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                               <div className="w-3 h-3 bg-purple-400 rounded-full animate-ping" />
@@ -471,6 +471,28 @@ const SmartRecoverySystem = () => {
                           </div>
                           
                           <div className="space-y-2">
+                            {/* Real-time Volume Data */}
+                            {(analysis as any).realTimeMetrics && <div className="grid grid-cols-2 gap-2 mb-3">
+                              <div className="bg-purple-900/50 rounded-lg p-2 text-center">
+                                <div className="text-[9px] text-purple-300 font-medium">الحجم الحالي</div>
+                                <div className="text-sm font-bold text-purple-100">
+                                  {((analysis as any).realTimeMetrics.currentVolume / 1000).toFixed(1)}K
+                                </div>
+                                <div className={`text-[9px] font-medium ${(analysis as any).realTimeMetrics.volumeChangePercent > 50 ? 'text-green-400' : 'text-purple-300'}`}>
+                                  {(analysis as any).realTimeMetrics.volumeChangePercent > 0 ? '+' : ''}{(analysis as any).realTimeMetrics.volumeChangePercent}% من المتوسط
+                                </div>
+                              </div>
+                              <div className="bg-purple-900/50 rounded-lg p-2 text-center">
+                                <div className="text-[9px] text-purple-300 font-medium">عرض بولينجر</div>
+                                <div className="text-sm font-bold text-purple-100">
+                                  {(analysis as any).realTimeMetrics.bollingerWidth}%
+                                </div>
+                                <div className={`text-[9px] font-medium ${(analysis as any).realTimeMetrics.bollingerWidth < 2 ? 'text-orange-400' : 'text-purple-300'}`}>
+                                  {(analysis as any).realTimeMetrics.bollingerWidth < 2 ? 'ضغط شديد!' : 'طبيعي'}
+                                </div>
+                              </div>
+                            </div>}
+                            
                             <div className="flex items-center justify-between bg-purple-900/50 rounded-lg p-2">
                               <span className="text-xs text-purple-300">احتمال الانفجار</span>
                               <div className="flex items-center gap-2">
@@ -491,6 +513,22 @@ const SmartRecoverySystem = () => {
                                   {(analysis as any).accumulation.expectedDirection === 'up' ? '📈 صعود' : '📉 هبوط'}
                                 </span>
                               </div>}
+
+                            {/* Volume Ratio & Compression Display */}
+                            {(analysis as any).accumulation.volumeRatio && <div className="grid grid-cols-2 gap-2">
+                              <div className="flex items-center justify-between bg-purple-900/40 rounded-lg p-2">
+                                <span className="text-[10px] text-purple-300">نسبة الحجم</span>
+                                <span className={`text-xs font-bold ${(analysis as any).accumulation.volumeRatio > 2 ? 'text-green-400' : 'text-purple-200'}`}>
+                                  {(analysis as any).accumulation.volumeRatio}x
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between bg-purple-900/40 rounded-lg p-2">
+                                <span className="text-[10px] text-purple-300">نطاق السعر</span>
+                                <span className={`text-xs font-bold ${(analysis as any).accumulation.priceRange < 1 ? 'text-orange-400' : 'text-purple-200'}`}>
+                                  {(analysis as any).accumulation.priceRange?.toFixed(2)}%
+                                </span>
+                              </div>
+                            </div>}
                             
                             <div className="flex flex-wrap gap-1.5 mt-2">
                               {(analysis as any).accumulation.reasons.map((reason: string, idx: number) => <span key={idx} className="text-[10px] px-2 py-1 rounded-full bg-purple-800/50 text-purple-200 border border-purple-500/30">
@@ -506,7 +544,7 @@ const SmartRecoverySystem = () => {
                               🔥 ضغط بولينجر
                             </Badge>}
                           {(analysis as any).volumeSpike && <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/40">
-                              📊 ارتفاع الحجم
+                              📊 ارتفاع الحجم {(analysis as any).realTimeMetrics?.volumeChangePercent > 0 ? `+${(analysis as any).realTimeMetrics.volumeChangePercent}%` : ''}
                             </Badge>}
                           {(analysis as any).priceConsolidation && <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/40">
                               📍 تجميع سعري
