@@ -319,7 +319,8 @@ const SmartRecoverySystem = () => {
                 <SelectTrigger className="w-[80px] bg-slate-800/80 border-slate-600 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-600">
+                {/* Radix Select content is rendered in a Portal (outside this page tree), so we add `dark` here */}
+                <SelectContent className="dark bg-slate-800 border-slate-600">
                   <SelectItem value="15m">M15</SelectItem>
                   <SelectItem value="30m">M30</SelectItem>
                   <SelectItem value="1h">H1</SelectItem>
@@ -330,7 +331,7 @@ const SmartRecoverySystem = () => {
                   <SelectTrigger className="w-[120px] bg-slate-800/80 border-slate-600 text-white">
                     <SelectValue placeholder="مصدر السعر" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-600">
+                  <SelectContent className="dark bg-slate-800 border-slate-600">
                     <SelectItem value="spot">Spot (أقرب للشارت)</SelectItem>
                     <SelectItem value="futures">Futures (GC)</SelectItem>
                   </SelectContent>
