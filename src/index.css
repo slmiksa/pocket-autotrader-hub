@@ -76,7 +76,7 @@ All colors MUST be HSL.
     --foreground: 210 40% 98%;
     --card: 224 47% 9%;
     --card-foreground: 210 40% 98%;
-    --popover: 224 47% 9%;
+    --popover: 224 47% 12%;
     --popover-foreground: 210 40% 98%;
     --primary: 220 90% 56%;
     --primary-foreground: 0 0% 100%;
@@ -84,11 +84,11 @@ All colors MUST be HSL.
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 220 70% 45%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 217 33% 17%;
+    --border: 217 33% 22%;
     --input: 217 33% 17%;
     --ring: 220 90% 56%;
     
