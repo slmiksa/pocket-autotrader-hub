@@ -16,6 +16,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { GlobalHeader } from '@/components/GlobalHeader';
 import { TradeRecommendation } from '@/components/trading/TradeRecommendation';
+import { ExplosionHistoryChart } from '@/components/trading/ExplosionHistoryChart';
+import { ExplosionCountdown } from '@/components/trading/ExplosionCountdown';
 
 // Market symbols organized by category
 const MARKET_SYMBOLS = {
@@ -664,6 +666,21 @@ const SmartRecoverySystem = () => {
         priceAboveEMA: analysis.priceAboveEMA,
         signalReasons: (analysis as any).signalReasons
       } : null} symbol={selectedSymbol} loading={analysisLoading} />
+
+        {/* Explosion Countdown Timer */}
+        <ExplosionCountdown 
+          accumulation={(analysis as any)?.accumulation}
+          bollingerWidth={(analysis as any)?.realTimeMetrics?.bollingerWidth}
+          priceConsolidation={(analysis as any)?.priceConsolidation}
+          bollingerSqueeze={(analysis as any)?.bollingerSqueeze}
+        />
+
+        {/* Explosion History Chart */}
+        <ExplosionHistoryChart 
+          symbol={selectedSymbol}
+          accumulation={(analysis as any)?.accumulation}
+          bollingerWidth={(analysis as any)?.realTimeMetrics?.bollingerWidth}
+        />
 
         {/* Signals Log */}
         
