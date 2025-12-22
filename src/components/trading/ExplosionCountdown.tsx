@@ -1,88 +1,143 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Timer, Zap, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import { Timer, Zap, AlertTriangle, TrendingUp, TrendingDown, Activity, BarChart3 } from 'lucide-react';
+
+interface RealTimeMetrics {
+  avgVolume24h: number;
+  currentVolume: number;
+  volumeChangePercent: number;
+  volatilityIndex: number;
+  priceRangePercent: number;
+  bollingerWidth: number;
+}
+
+interface AccumulationData {
+  detected: boolean;
+  compressionLevel: number;
+  priceRange: number;
+  volumeRatio: number;
+  strength: number;
+  breakoutProbability: number;
+  expectedDirection: 'up' | 'down' | 'unknown';
+}
 
 interface ExplosionCountdownProps {
-  accumulation?: {
-    detected: boolean;
-    compressionLevel: number;
-    priceRange: number;
-    volumeRatio: number;
-    strength: number;
-    breakoutProbability: number;
-    expectedDirection: 'up' | 'down' | 'unknown';
-  };
+  symbol: string;
+  accumulation?: AccumulationData;
   bollingerWidth?: number;
   priceConsolidation?: boolean;
   bollingerSqueeze?: boolean;
+  realTimeMetrics?: RealTimeMetrics;
+  volumeSpike?: boolean;
 }
 
 export const ExplosionCountdown = ({ 
+  symbol,
   accumulation, 
   bollingerWidth = 2,
   priceConsolidation,
-  bollingerSqueeze
+  bollingerSqueeze,
+  realTimeMetrics,
+  volumeSpike
 }: ExplosionCountdownProps) => {
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [startTime] = useState(() => Date.now());
+  const compressionStartRef = useRef<number | null>(null);
+  const [compressionDuration, setCompressionDuration] = useState(0);
 
-  // Update elapsed time every second when compression is detected
+  // Track when compression started
   useEffect(() => {
-    if (!priceConsolidation && !bollingerSqueeze && !accumulation?.detected) {
+    const isCompressing = priceConsolidation || bollingerSqueeze || accumulation?.detected;
+    
+    if (isCompressing && compressionStartRef.current === null) {
+      // Compression just started
+      compressionStartRef.current = Date.now();
+    } else if (!isCompressing && compressionStartRef.current !== null) {
+      // Compression ended
+      compressionStartRef.current = null;
       setElapsedTime(0);
+      setCompressionDuration(0);
+    }
+  }, [priceConsolidation, bollingerSqueeze, accumulation?.detected]);
+
+  // Update elapsed time every second when compression is active
+  useEffect(() => {
+    if (compressionStartRef.current === null) {
       return;
     }
 
     const interval = setInterval(() => {
-      setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+      const elapsed = Math.floor((Date.now() - compressionStartRef.current!) / 1000);
+      setElapsedTime(elapsed);
+      setCompressionDuration(elapsed);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [priceConsolidation, bollingerSqueeze, accumulation?.detected, startTime]);
+  }, []);
 
-  // Calculate explosion countdown based on compression metrics
+  // Calculate explosion countdown based on REAL compression metrics
   const countdownData = useMemo(() => {
-    // Typical compression duration before explosion: 30-90 minutes
-    // More compression = closer to explosion
-    const baseTime = 45 * 60; // 45 minutes in seconds
+    // Base expected compression time: 20-60 minutes depending on volatility
+    // Lower volatility = longer compression = bigger explosion
+    const baseMinutes = 30;
     
-    // Factors that reduce time to explosion
+    // Calculate compression factor from real data
     let compressionFactor = 1;
     
-    if (bollingerWidth && bollingerWidth < 1) {
-      compressionFactor *= 0.5; // Very tight squeeze = explosion imminent
-    } else if (bollingerWidth && bollingerWidth < 1.5) {
-      compressionFactor *= 0.7;
-    } else if (bollingerWidth && bollingerWidth < 2) {
-      compressionFactor *= 0.85;
+    // Real Bollinger width analysis
+    if (realTimeMetrics?.bollingerWidth) {
+      const bw = realTimeMetrics.bollingerWidth;
+      if (bw < 0.5) compressionFactor *= 0.3; // Extreme squeeze - explosion very soon
+      else if (bw < 1.0) compressionFactor *= 0.5;
+      else if (bw < 1.5) compressionFactor *= 0.7;
+      else if (bw < 2.0) compressionFactor *= 0.85;
     }
 
-    if (accumulation?.compressionLevel && accumulation.compressionLevel > 0.7) {
+    // Real volatility index
+    if (realTimeMetrics?.volatilityIndex) {
+      const vi = realTimeMetrics.volatilityIndex;
+      if (vi < 30) compressionFactor *= 0.6; // Very low volatility = explosion imminent
+      else if (vi < 50) compressionFactor *= 0.8;
+    }
+
+    // Accumulation strength from real analysis
+    if (accumulation?.strength) {
+      if (accumulation.strength > 80) compressionFactor *= 0.5;
+      else if (accumulation.strength > 60) compressionFactor *= 0.7;
+    }
+
+    // Volume spike accelerates countdown
+    if (volumeSpike && realTimeMetrics?.volumeChangePercent && realTimeMetrics.volumeChangePercent > 100) {
       compressionFactor *= 0.6;
     }
 
-    if (accumulation?.strength && accumulation.strength > 60) {
-      compressionFactor *= 0.7;
-    }
-
-    const adjustedTime = baseTime * compressionFactor;
-    const remainingSeconds = Math.max(0, adjustedTime - elapsedTime);
+    const expectedDurationSeconds = baseMinutes * 60 * compressionFactor;
+    const remainingSeconds = Math.max(0, expectedDurationSeconds - elapsedTime);
     
     const minutes = Math.floor(remainingSeconds / 60);
     const seconds = Math.floor(remainingSeconds % 60);
     
-    // Calculate urgency level
-    const urgency = remainingSeconds < 300 ? 'critical' : 
-                    remainingSeconds < 600 ? 'high' : 
-                    remainingSeconds < 1200 ? 'medium' : 'low';
+    // Calculate urgency level based on real remaining time
+    const urgency = remainingSeconds < 120 ? 'critical' : 
+                    remainingSeconds < 300 ? 'high' : 
+                    remainingSeconds < 600 ? 'medium' : 'low';
 
-    // Progress percentage (how close to explosion)
-    const progress = Math.min(100, ((adjustedTime - remainingSeconds) / adjustedTime) * 100);
+    // Progress percentage based on actual elapsed time
+    const progress = expectedDurationSeconds > 0 
+      ? Math.min(100, (elapsedTime / expectedDurationSeconds) * 100)
+      : 0;
 
-    return { minutes, seconds, remainingSeconds, urgency, progress, adjustedTime };
-  }, [bollingerWidth, accumulation, elapsedTime]);
+    return { 
+      minutes, 
+      seconds, 
+      remainingSeconds, 
+      urgency, 
+      progress, 
+      expectedDurationSeconds,
+      elapsedMinutes: Math.floor(elapsedTime / 60)
+    };
+  }, [realTimeMetrics, accumulation, elapsedTime, volumeSpike]);
 
   // If no compression detected, show waiting state
   if (!priceConsolidation && !bollingerSqueeze && !accumulation?.detected) {
@@ -91,7 +146,21 @@ export const ExplosionCountdown = ({
         <CardContent className="p-4 text-center">
           <div className="flex items-center justify-center gap-2 text-slate-400">
             <Timer className="w-5 h-5" />
-            <span className="text-sm">في انتظار اكتشاف ضغط سعري...</span>
+            <span className="text-sm">في انتظار اكتشاف ضغط سعري لـ {symbol}...</span>
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2 text-[10px]">
+            <div className="bg-slate-800/50 rounded p-2">
+              <div className="text-slate-500">عرض بولينجر</div>
+              <div className="text-slate-300 font-bold">{(realTimeMetrics?.bollingerWidth || bollingerWidth).toFixed(2)}%</div>
+            </div>
+            <div className="bg-slate-800/50 rounded p-2">
+              <div className="text-slate-500">مؤشر التذبذب</div>
+              <div className="text-slate-300 font-bold">{realTimeMetrics?.volatilityIndex || 0}%</div>
+            </div>
+            <div className="bg-slate-800/50 rounded p-2">
+              <div className="text-slate-500">نطاق السعر</div>
+              <div className="text-slate-300 font-bold">{(realTimeMetrics?.priceRangePercent || 0).toFixed(2)}%</div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -103,7 +172,7 @@ export const ExplosionCountdown = ({
       bg: 'from-red-900 to-red-800',
       border: 'border-red-500',
       text: 'text-red-300',
-      glow: 'shadow-red-500/30',
+      glow: 'shadow-red-500/30 shadow-lg',
       badge: 'bg-red-500/30 text-red-200'
     },
     high: {
@@ -138,11 +207,14 @@ export const ExplosionCountdown = ({
           <div className="flex items-center gap-2">
             <Timer className={`w-4 h-4 ${countdownData.urgency === 'critical' ? 'animate-pulse text-red-400' : 'text-yellow-400'}`} />
             <span>عداد الانفجار السعري</span>
+            <Badge variant="outline" className="text-[10px] border-white/30 text-white/70">
+              {symbol}
+            </Badge>
           </div>
           <Badge className={`${colors.badge} border-0`}>
-            {countdownData.urgency === 'critical' ? 'وشيك!' : 
-             countdownData.urgency === 'high' ? 'قريب' : 
-             countdownData.urgency === 'medium' ? 'متوسط' : 'بعيد'}
+            {countdownData.urgency === 'critical' ? '🔥 وشيك!' : 
+             countdownData.urgency === 'high' ? '⚡ قريب' : 
+             countdownData.urgency === 'medium' ? '⏳ متوسط' : '🕐 بعيد'}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -153,6 +225,29 @@ export const ExplosionCountdown = ({
             {String(countdownData.minutes).padStart(2, '0')}:{String(countdownData.seconds).padStart(2, '0')}
           </div>
           <div className="text-xs text-white/60 mt-1">الوقت المتوقع للانفجار</div>
+        </div>
+
+        {/* Real-Time Metrics */}
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="bg-black/20 rounded p-2 border border-white/10">
+            <div className="text-[9px] text-white/50 flex items-center justify-center gap-1">
+              <BarChart3 className="w-3 h-3" />
+              مدة الضغط
+            </div>
+            <div className="text-sm font-bold text-white">{countdownData.elapsedMinutes}د</div>
+          </div>
+          <div className="bg-black/20 rounded p-2 border border-white/10">
+            <div className="text-[9px] text-white/50">عرض بولينجر</div>
+            <div className={`text-sm font-bold ${(realTimeMetrics?.bollingerWidth || bollingerWidth) < 1.5 ? 'text-red-400' : 'text-white'}`}>
+              {(realTimeMetrics?.bollingerWidth || bollingerWidth).toFixed(2)}%
+            </div>
+          </div>
+          <div className="bg-black/20 rounded p-2 border border-white/10">
+            <div className="text-[9px] text-white/50">قوة التجميع</div>
+            <div className={`text-sm font-bold ${(accumulation?.strength || 0) > 60 ? 'text-yellow-400' : 'text-white'}`}>
+              {accumulation?.strength || 0}%
+            </div>
+          </div>
         </div>
 
         {/* Progress Bar */}
@@ -198,7 +293,7 @@ export const ExplosionCountdown = ({
             </div>
             <div className="mt-2 flex items-center justify-between">
               <span className="text-xs text-white/70">احتمالية الانفجار</span>
-              <span className="text-sm font-bold text-yellow-300">
+              <span className={`text-sm font-bold ${accumulation.breakoutProbability >= 70 ? 'text-green-400' : 'text-yellow-300'}`}>
                 {accumulation.breakoutProbability}%
               </span>
             </div>
@@ -207,27 +302,32 @@ export const ExplosionCountdown = ({
 
         {/* Warning */}
         {countdownData.urgency === 'critical' && (
-          <div className="bg-red-500/20 rounded-lg p-2 flex items-center gap-2 border border-red-500/40">
-            <AlertTriangle className="w-4 h-4 text-red-400 animate-pulse" />
+          <div className="bg-red-500/20 rounded-lg p-2 flex items-center gap-2 border border-red-500/40 animate-pulse">
+            <AlertTriangle className="w-4 h-4 text-red-400" />
             <span className="text-xs text-red-300">⚠️ انفجار سعري وشيك - استعد للدخول!</span>
           </div>
         )}
 
-        {/* Compression Indicators */}
+        {/* Real-Time Compression Indicators */}
         <div className="flex gap-2 flex-wrap justify-center">
           {bollingerSqueeze && (
             <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/40 text-[10px]">
-              🔥 ضغط بولينجر
+              🔥 ضغط بولينجر نشط
             </Badge>
           )}
           {priceConsolidation && (
             <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/40 text-[10px]">
-              📍 تجميع سعري
+              📍 تجميع سعري فوري
             </Badge>
           )}
-          {bollingerWidth && bollingerWidth < 1.5 && (
+          {volumeSpike && (
             <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/40 text-[10px]">
-              ⚡ عرض {bollingerWidth.toFixed(2)}%
+              📊 ارتفاع حجم {realTimeMetrics?.volumeChangePercent}%+
+            </Badge>
+          )}
+          {realTimeMetrics && realTimeMetrics.bollingerWidth < 1.5 && (
+            <Badge className="bg-red-500/20 text-red-300 border-red-500/40 text-[10px]">
+              ⚡ عرض ضيق جداً
             </Badge>
           )}
         </div>
