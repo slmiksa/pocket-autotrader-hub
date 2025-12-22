@@ -667,19 +667,26 @@ const SmartRecoverySystem = () => {
         signalReasons: (analysis as any).signalReasons
       } : null} symbol={selectedSymbol} loading={analysisLoading} />
 
-        {/* Explosion Countdown Timer */}
+        {/* Explosion Countdown Timer - Real Data */}
         <ExplosionCountdown 
+          symbol={selectedSymbol}
           accumulation={(analysis as any)?.accumulation}
           bollingerWidth={(analysis as any)?.realTimeMetrics?.bollingerWidth}
           priceConsolidation={(analysis as any)?.priceConsolidation}
           bollingerSqueeze={(analysis as any)?.bollingerSqueeze}
+          realTimeMetrics={(analysis as any)?.realTimeMetrics}
+          volumeSpike={(analysis as any)?.volumeSpike}
         />
 
-        {/* Explosion History Chart */}
+        {/* Explosion History Chart - Real Data */}
         <ExplosionHistoryChart 
           symbol={selectedSymbol}
           accumulation={(analysis as any)?.accumulation}
           bollingerWidth={(analysis as any)?.realTimeMetrics?.bollingerWidth}
+          realTimeMetrics={(analysis as any)?.realTimeMetrics}
+          currentPrice={analysis?.currentPrice}
+          priceChange={(analysis as any)?.priceChange}
+          signalType={analysis?.signalType as 'BUY' | 'SELL' | 'WAIT'}
         />
 
         {/* Signals Log */}
