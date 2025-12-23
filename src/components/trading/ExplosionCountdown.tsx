@@ -46,35 +46,48 @@ export const ExplosionCountdown = ({
   const compressionStartRef = useRef<number | null>(null);
   const [compressionDuration, setCompressionDuration] = useState(0);
 
-  // Track when compression started
+  // Consider compression active either by explicit signals OR by tight real-time metrics
+  const isCompressing = useMemo(() => {
+    const bw = realTimeMetrics?.bollingerWidth ?? bollingerWidth;
+    const pr = realTimeMetrics?.priceRangePercent ?? 999;
+    return Boolean(
+      priceConsolidation ||
+        bollingerSqueeze ||
+        accumulation?.detected ||
+        (typeof bw === 'number' && bw > 0 && bw < 1.2) ||
+        (typeof pr === 'number' && pr > 0 && pr < 1.2)
+    );
+  }, [priceConsolidation, bollingerSqueeze, accumulation?.detected, realTimeMetrics?.bollingerWidth, realTimeMetrics?.priceRangePercent, bollingerWidth]);
+
+  // Track when compression started / ended
   useEffect(() => {
-    const isCompressing = priceConsolidation || bollingerSqueeze || accumulation?.detected;
-    
     if (isCompressing && compressionStartRef.current === null) {
-      // Compression just started
       compressionStartRef.current = Date.now();
-    } else if (!isCompressing && compressionStartRef.current !== null) {
-      // Compression ended
+      setElapsedTime(0);
+      setCompressionDuration(0);
+      return;
+    }
+
+    if (!isCompressing && compressionStartRef.current !== null) {
       compressionStartRef.current = null;
       setElapsedTime(0);
       setCompressionDuration(0);
     }
-  }, [priceConsolidation, bollingerSqueeze, accumulation?.detected]);
+  }, [isCompressing]);
 
   // Update elapsed time every second when compression is active
   useEffect(() => {
-    if (compressionStartRef.current === null) {
-      return;
-    }
+    if (!isCompressing || compressionStartRef.current === null) return;
 
     const interval = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - compressionStartRef.current!) / 1000);
+      if (compressionStartRef.current === null) return;
+      const elapsed = Math.floor((Date.now() - compressionStartRef.current) / 1000);
       setElapsedTime(elapsed);
       setCompressionDuration(elapsed);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isCompressing]);
 
   // Calculate explosion countdown based on REAL compression metrics
   const countdownData = useMemo(() => {

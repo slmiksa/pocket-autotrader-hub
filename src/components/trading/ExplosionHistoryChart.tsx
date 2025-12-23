@@ -51,26 +51,30 @@ export const ExplosionHistoryChart = ({
 }: ExplosionHistoryChartProps) => {
   const [priceHistory, setPriceHistory] = useState<PriceDataPoint[]>([]);
   
-  // Track real price movements over time
+  // Track real price movements over time (derive *live* movement from consecutive prices)
   useEffect(() => {
-    if (currentPrice && priceChange !== undefined) {
-      const now = new Date();
-      const timeLabel = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-      
-      setPriceHistory(prev => {
-        const newPoint: PriceDataPoint = {
-          time: timeLabel,
-          price: currentPrice,
-          volume: realTimeMetrics?.currentVolume || 0,
-          movement: priceChange
-        };
-        
-        // Keep last 20 data points for real-time tracking
-        const updated = [...prev, newPoint].slice(-20);
-        return updated;
-      });
-    }
-  }, [currentPrice, priceChange, realTimeMetrics?.currentVolume]);
+    if (!currentPrice) return;
+
+    const now = new Date();
+    const timeLabel = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    setPriceHistory((prev) => {
+      const prevPoint = prev[prev.length - 1];
+      const movement = prevPoint?.price
+        ? ((currentPrice - prevPoint.price) / prevPoint.price) * 100
+        : (priceChange ?? 0);
+
+      const newPoint: PriceDataPoint = {
+        time: timeLabel,
+        price: currentPrice,
+        volume: realTimeMetrics?.currentVolume || 0,
+        movement,
+      };
+
+      // Keep last 20 data points for real-time tracking
+      return [...prev, newPoint].slice(-20);
+    });
+  }, [currentPrice, realTimeMetrics?.currentVolume, priceChange]);
 
   // Calculate real statistics from actual data
   const stats = useMemo(() => {
