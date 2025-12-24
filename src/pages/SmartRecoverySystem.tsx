@@ -670,6 +670,7 @@ const SmartRecoverySystem = () => {
         {/* Explosion Countdown Timer - Real Data */}
         <ExplosionCountdown 
           symbol={selectedSymbol}
+          timeframe={selectedTimeframe}
           accumulation={(analysis as any)?.accumulation}
           bollingerWidth={(analysis as any)?.realTimeMetrics?.bollingerWidth}
           priceConsolidation={(analysis as any)?.priceConsolidation}
