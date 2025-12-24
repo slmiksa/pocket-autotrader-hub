@@ -25,6 +25,7 @@ interface AccumulationData {
 
 interface ExplosionCountdownProps {
   symbol: string;
+  timeframe?: string;
   accumulation?: AccumulationData;
   bollingerWidth?: number;
   priceConsolidation?: boolean;
@@ -33,152 +34,187 @@ interface ExplosionCountdownProps {
   volumeSpike?: boolean;
 }
 
-export const ExplosionCountdown = ({ 
+export const ExplosionCountdown = ({
   symbol,
-  accumulation, 
+  timeframe = '15m',
+  accumulation,
   bollingerWidth = 2,
   priceConsolidation,
   bollingerSqueeze,
   realTimeMetrics,
-  volumeSpike
+  volumeSpike,
 }: ExplosionCountdownProps) => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const compressionStartRef = useRef<number | null>(null);
-  const [compressionDuration, setCompressionDuration] = useState(0);
+  const [compressionActive, setCompressionActive] = useState(false);
 
   // Consider compression active either by explicit signals OR by tight real-time metrics
   const isCompressing = useMemo(() => {
     const bw = realTimeMetrics?.bollingerWidth ?? bollingerWidth;
     const pr = realTimeMetrics?.priceRangePercent ?? 999;
+    const acc = accumulation?.detected ?? false;
+
     return Boolean(
       priceConsolidation ||
         bollingerSqueeze ||
-        accumulation?.detected ||
+        acc ||
         (typeof bw === 'number' && bw > 0 && bw < 1.2) ||
         (typeof pr === 'number' && pr > 0 && pr < 1.2)
     );
-  }, [priceConsolidation, bollingerSqueeze, accumulation?.detected, realTimeMetrics?.bollingerWidth, realTimeMetrics?.priceRangePercent, bollingerWidth]);
+  }, [
+    priceConsolidation,
+    bollingerSqueeze,
+    accumulation?.detected,
+    realTimeMetrics?.bollingerWidth,
+    realTimeMetrics?.priceRangePercent,
+    bollingerWidth,
+  ]);
 
-  // Track when compression started / ended
+  // Start/stop compression timer (with short debounce to prevent flicker)
   useEffect(() => {
-    if (isCompressing && compressionStartRef.current === null) {
-      compressionStartRef.current = Date.now();
-      setElapsedTime(0);
-      setCompressionDuration(0);
+    const STICKY_MS = 15_000;
+
+    if (isCompressing) {
+      if (!compressionActive) {
+        compressionStartRef.current = Date.now();
+        setElapsedTime(0);
+        setCompressionActive(true);
+      }
       return;
     }
 
-    if (!isCompressing && compressionStartRef.current !== null) {
+    if (!compressionActive) return;
+
+    const timeout = setTimeout(() => {
       compressionStartRef.current = null;
       setElapsedTime(0);
-      setCompressionDuration(0);
-    }
-  }, [isCompressing]);
+      setCompressionActive(false);
+    }, STICKY_MS);
 
-  // Update elapsed time every second when compression is active
+    return () => clearTimeout(timeout);
+  }, [isCompressing, compressionActive]);
+
+  // Update elapsed time every second while compression is active
   useEffect(() => {
-    if (!isCompressing || compressionStartRef.current === null) return;
+    if (!compressionActive || compressionStartRef.current === null) return;
 
     const interval = setInterval(() => {
       if (compressionStartRef.current === null) return;
       const elapsed = Math.floor((Date.now() - compressionStartRef.current) / 1000);
       setElapsedTime(elapsed);
-      setCompressionDuration(elapsed);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isCompressing]);
+  }, [compressionActive]);
 
   // Calculate explosion countdown based on REAL compression metrics
   const countdownData = useMemo(() => {
-    // Base expected compression time: 20-60 minutes depending on volatility
-    // Lower volatility = longer compression = bigger explosion
-    const baseMinutes = 30;
-    
+    const baseMinutesByTimeframe: Record<string, number> = {
+      '15m': 60,
+      '30m': 120,
+      '1h': 240,
+    };
+
+    // Longer timeframe -> naturally longer compression cycles
+    const baseMinutes = baseMinutesByTimeframe[timeframe] ?? 60;
+
     // Calculate compression factor from real data
     let compressionFactor = 1;
-    
-    // Real Bollinger width analysis
-    if (realTimeMetrics?.bollingerWidth) {
-      const bw = realTimeMetrics.bollingerWidth;
-      if (bw < 0.5) compressionFactor *= 0.3; // Extreme squeeze - explosion very soon
+
+    // Real Bollinger width analysis (bandWidth is already in %)
+    const bw = realTimeMetrics?.bollingerWidth ?? bollingerWidth;
+    if (typeof bw === 'number' && bw > 0) {
+      if (bw < 0.5) compressionFactor *= 0.3; // extreme squeeze
       else if (bw < 1.0) compressionFactor *= 0.5;
       else if (bw < 1.5) compressionFactor *= 0.7;
       else if (bw < 2.0) compressionFactor *= 0.85;
     }
 
-    // Real volatility index
-    if (realTimeMetrics?.volatilityIndex) {
-      const vi = realTimeMetrics.volatilityIndex;
-      if (vi < 30) compressionFactor *= 0.6; // Very low volatility = explosion imminent
+    // Volatility index: lower volatility => closer to breakout
+    const vi = realTimeMetrics?.volatilityIndex;
+    if (typeof vi === 'number' && vi > 0) {
+      if (vi < 30) compressionFactor *= 0.6;
       else if (vi < 50) compressionFactor *= 0.8;
     }
 
-    // Accumulation strength from real analysis
-    if (accumulation?.strength) {
-      if (accumulation.strength > 80) compressionFactor *= 0.5;
-      else if (accumulation.strength > 60) compressionFactor *= 0.7;
+    // Accumulation strength
+    const accStrength = accumulation?.strength;
+    if (typeof accStrength === 'number' && accStrength > 0) {
+      if (accStrength > 80) compressionFactor *= 0.5;
+      else if (accStrength > 60) compressionFactor *= 0.7;
     }
 
-    // Volume spike accelerates countdown
-    if (volumeSpike && realTimeMetrics?.volumeChangePercent && realTimeMetrics.volumeChangePercent > 100) {
+    // Volume spike accelerates countdown (less relevant for forex but still works on crypto)
+    const vcp = realTimeMetrics?.volumeChangePercent;
+    if (volumeSpike && typeof vcp === 'number' && vcp > 100) {
       compressionFactor *= 0.6;
     }
 
-    const expectedDurationSeconds = baseMinutes * 60 * compressionFactor;
+    const expectedDurationSeconds = Math.max(60, baseMinutes * 60 * compressionFactor);
     const remainingSeconds = Math.max(0, expectedDurationSeconds - elapsedTime);
-    
+
     const minutes = Math.floor(remainingSeconds / 60);
     const seconds = Math.floor(remainingSeconds % 60);
-    
-    // Calculate urgency level based on real remaining time
-    const urgency = remainingSeconds < 120 ? 'critical' : 
-                    remainingSeconds < 300 ? 'high' : 
-                    remainingSeconds < 600 ? 'medium' : 'low';
 
-    // Progress percentage based on actual elapsed time
-    const progress = expectedDurationSeconds > 0 
-      ? Math.min(100, (elapsedTime / expectedDurationSeconds) * 100)
-      : 0;
+    const urgency =
+      remainingSeconds < 120
+        ? 'critical'
+        : remainingSeconds < 300
+          ? 'high'
+          : remainingSeconds < 600
+            ? 'medium'
+            : 'low';
 
-    return { 
-      minutes, 
-      seconds, 
-      remainingSeconds, 
-      urgency, 
-      progress, 
+    const progress = expectedDurationSeconds > 0 ? Math.min(100, (elapsedTime / expectedDurationSeconds) * 100) : 0;
+
+    return {
+      minutes,
+      seconds,
+      remainingSeconds,
+      urgency,
+      progress,
       expectedDurationSeconds,
-      elapsedMinutes: Math.floor(elapsedTime / 60)
+      elapsedMinutes: Math.floor(elapsedTime / 60),
     };
-  }, [realTimeMetrics, accumulation, elapsedTime, volumeSpike]);
+  }, [realTimeMetrics, accumulation, elapsedTime, volumeSpike, bollingerWidth, timeframe]);
 
   // If no compression detected, show waiting state
-  if (!priceConsolidation && !bollingerSqueeze && !accumulation?.detected) {
+  if (!compressionActive) {
+    const bw = realTimeMetrics?.bollingerWidth ?? bollingerWidth;
+    const vi = realTimeMetrics?.volatilityIndex ?? 0;
+    const pr = realTimeMetrics?.priceRangePercent ?? 0;
+    const acc = accumulation?.strength ?? 0;
+
     return (
       <Card className="bg-slate-900/80 border-slate-700">
         <CardContent className="p-4 text-center">
           <div className="flex items-center justify-center gap-2 text-slate-400">
             <Timer className="w-5 h-5" />
-            <span className="text-sm">في انتظار اكتشاف ضغط سعري لـ {symbol}...</span>
+            <span className="text-sm">لا يوجد ضغط سعري نشط لـ {symbol} حالياً</span>
           </div>
-          <div className="mt-3 grid grid-cols-3 gap-2 text-[10px]">
+          <div className="mt-3 grid grid-cols-4 gap-2 text-[10px]">
             <div className="bg-slate-800/50 rounded p-2">
               <div className="text-slate-500">عرض بولينجر</div>
-              <div className="text-slate-300 font-bold">{(realTimeMetrics?.bollingerWidth || bollingerWidth).toFixed(2)}%</div>
-            </div>
-            <div className="bg-slate-800/50 rounded p-2">
-              <div className="text-slate-500">مؤشر التذبذب</div>
-              <div className="text-slate-300 font-bold">{realTimeMetrics?.volatilityIndex || 0}%</div>
+              <div className="text-slate-300 font-bold">{Number(bw).toFixed(2)}%</div>
             </div>
             <div className="bg-slate-800/50 rounded p-2">
               <div className="text-slate-500">نطاق السعر</div>
-              <div className="text-slate-300 font-bold">{(realTimeMetrics?.priceRangePercent || 0).toFixed(2)}%</div>
+              <div className="text-slate-300 font-bold">{Number(pr).toFixed(2)}%</div>
+            </div>
+            <div className="bg-slate-800/50 rounded p-2">
+              <div className="text-slate-500">مؤشر التذبذب</div>
+              <div className="text-slate-300 font-bold">{Number(vi).toFixed(0)}%</div>
+            </div>
+            <div className="bg-slate-800/50 rounded p-2">
+              <div className="text-slate-500">مؤشر التجميع</div>
+              <div className="text-slate-300 font-bold">{Number(acc).toFixed(0)}%</div>
             </div>
           </div>
         </CardContent>
       </Card>
     );
   }
+
 
   const urgencyColors = {
     critical: {
