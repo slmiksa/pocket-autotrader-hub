@@ -51,6 +51,22 @@ interface MarketAnalysis {
     priceRangePercent: number;
     bollingerWidth: number;
   };
+  // NEW: Explosion timer derived from market history (won't reset on refresh)
+  explosionTimer: {
+    active: boolean;
+    compressionStartedAt: string | null;
+    expectedExplosionAt: string | null;
+    expectedDurationSeconds: number | null;
+    direction: 'up' | 'down' | 'unknown';
+    confidence: number; // 0-100
+    method: 'bollinger_squeeze_history' | 'none';
+    debug: {
+      thresholdBandWidth: number;
+      avgBandWidth: number;
+      currentBandWidth: number;
+      historicalSamples: number;
+    };
+  };
 }
 
 // Map our app symbols to a supported Binance symbol (or null if unsupported)
@@ -524,6 +540,188 @@ function detectBollingerSqueeze(prices: number[], period: number = 20, stdMultip
   
   return { squeeze, bandWidth };
 }
+
+function timeframeToSeconds(timeframe: string): number {
+  const map: Record<string, number> = {
+    '1m': 60,
+    '3m': 180,
+    '5m': 300,
+    '15m': 900,
+    '30m': 1800,
+    '1h': 3600,
+    '2h': 7200,
+    '4h': 14400,
+    '6h': 21600,
+    '8h': 28800,
+    '12h': 43200,
+    '1d': 86400,
+  };
+  return map[timeframe] ?? 900;
+}
+
+function median(values: number[]): number | null {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+}
+
+function calculateBandWidthSeries(
+  klines: any[],
+  period: number = 20,
+  stdMultiplier: number = 2
+): Array<{ time: number; bandWidth: number }> {
+  if (klines.length < period) return [];
+  const closes = klines.map((k) => parseFloat(k[4]));
+  const times = klines.map((k) => Number(k[0]));
+
+  const series: Array<{ time: number; bandWidth: number }> = [];
+  for (let i = period - 1; i < closes.length; i++) {
+    const window = closes.slice(i - period + 1, i + 1);
+    const sma = window.reduce((a, b) => a + b, 0) / period;
+    const variance = window.reduce((sum, p) => sum + Math.pow(p - sma, 2), 0) / period;
+    const stdDev = Math.sqrt(variance);
+    const upper = sma + stdDev * stdMultiplier;
+    const lower = sma - stdDev * stdMultiplier;
+    const bandWidth = sma > 0 ? ((upper - lower) / sma) * 100 : 0;
+    series.push({ time: times[i], bandWidth });
+  }
+  return series;
+}
+
+function computeSqueezeTimerFromHistory(opts: {
+  klines: any[];
+  timeframe: string;
+  latestBandWidth: number;
+  latestIsSqueeze: boolean;
+  accumulation: AccumulationZone;
+  volumeSpike: boolean;
+  fallbackBaseSeconds: number;
+  direction: 'up' | 'down' | 'unknown';
+}): MarketAnalysis['explosionTimer'] {
+  const { klines, timeframe, latestBandWidth, latestIsSqueeze, accumulation, volumeSpike, fallbackBaseSeconds, direction } = opts;
+
+  const series = calculateBandWidthSeries(klines, 20, 2);
+  if (series.length < 15) {
+    return {
+      active: false,
+      compressionStartedAt: null,
+      expectedExplosionAt: null,
+      expectedDurationSeconds: null,
+      direction,
+      confidence: 0,
+      method: 'none',
+      debug: {
+        thresholdBandWidth: 0,
+        avgBandWidth: 0,
+        currentBandWidth: latestBandWidth,
+        historicalSamples: series.length,
+      },
+    };
+  }
+
+  const avgBandWidth = series.reduce((s, p) => s + p.bandWidth, 0) / series.length;
+  const thresholdBandWidth = avgBandWidth * 0.6;
+  const barSeconds = timeframeToSeconds(timeframe);
+
+  // Build completed squeeze segments (bandWidth < threshold) and detect current active segment
+  const completedDurations: number[] = [];
+  let inSeg = false;
+  let segCount = 0;
+  let segStartTime = 0;
+
+  for (let i = 0; i < series.length; i++) {
+    const below = series[i].bandWidth < thresholdBandWidth;
+    if (below && !inSeg) {
+      inSeg = true;
+      segCount = 1;
+      segStartTime = series[i].time;
+    } else if (below && inSeg) {
+      segCount++;
+    } else if (!below && inSeg) {
+      // segment ends at i-1
+      if (segCount >= 3) completedDurations.push(segCount * barSeconds);
+      inSeg = false;
+      segCount = 0;
+      segStartTime = 0;
+    }
+  }
+
+  // If currently in squeeze, last points are below threshold
+  const currentlyBelow = series[series.length - 1].bandWidth < thresholdBandWidth;
+  const active = Boolean(latestIsSqueeze && currentlyBelow);
+
+  if (!active) {
+    return {
+      active: false,
+      compressionStartedAt: null,
+      expectedExplosionAt: null,
+      expectedDurationSeconds: null,
+      direction,
+      confidence: 0,
+      method: 'none',
+      debug: {
+        thresholdBandWidth,
+        avgBandWidth,
+        currentBandWidth: latestBandWidth,
+        historicalSamples: completedDurations.length,
+      },
+    };
+  }
+
+  // Determine current segment start by walking backwards while below threshold
+  let startTime = series[series.length - 1].time;
+  let barsInCurrent = 1;
+  for (let i = series.length - 2; i >= 0; i--) {
+    if (series[i].bandWidth < thresholdBandWidth) {
+      startTime = series[i].time;
+      barsInCurrent++;
+    } else {
+      break;
+    }
+  }
+
+  // Robust expected duration from historical squeezes (median) + fallback
+  const expectedFromHistory = median(completedDurations);
+  const expectedDurationSecondsRaw = expectedFromHistory ?? fallbackBaseSeconds;
+  const expectedDurationSeconds = Math.min(Math.max(expectedDurationSecondsRaw, barSeconds * 5), barSeconds * 400);
+
+  const now = Date.now();
+  const elapsedSeconds = Math.max(0, Math.floor((now - startTime) / 1000));
+  const expectedExplosionAtMs = startTime + expectedDurationSeconds * 1000;
+  const remainingSeconds = Math.max(0, Math.floor((expectedExplosionAtMs - now) / 1000));
+
+  // Confidence: tighter band width + stronger accumulation/volume = higher
+  let confidence = 40;
+  if (latestBandWidth > 0 && thresholdBandWidth > 0) {
+    const ratio = latestBandWidth / thresholdBandWidth;
+    if (ratio < 0.9) confidence += 10;
+    if (ratio < 0.75) confidence += 15;
+    if (ratio < 0.6) confidence += 15;
+  }
+  if (accumulation?.detected) confidence += 15;
+  if (typeof accumulation?.breakoutProbability === 'number') confidence += Math.min(15, Math.floor(accumulation.breakoutProbability / 10));
+  if (volumeSpike) confidence += 10;
+
+  confidence = Math.max(0, Math.min(100, Math.round(confidence)));
+
+  return {
+    active: true,
+    compressionStartedAt: new Date(startTime).toISOString(),
+    expectedExplosionAt: new Date(expectedExplosionAtMs).toISOString(),
+    expectedDurationSeconds,
+    direction,
+    confidence,
+    method: 'bollinger_squeeze_history',
+    debug: {
+      thresholdBandWidth: Math.round(thresholdBandWidth * 100) / 100,
+      avgBandWidth: Math.round(avgBandWidth * 100) / 100,
+      currentBandWidth: Math.round(latestBandWidth * 100) / 100,
+      historicalSamples: completedDurations.length,
+    },
+  };
+}
+
 
 // Detect volume spike (institutional activity) - IMPROVED with real volume analysis
 function detectVolumeSpike(klines: any[]): { spike: boolean; ratio: number; avgVolume: number; recentVolume: number } {
@@ -1007,8 +1205,35 @@ serve(async (req) => {
       volumeChangePercent: Math.round((volumeData.ratio - 1) * 100),
       volatilityIndex: Math.round(consolidationData.compressionRatio * 100),
       priceRangePercent: consolidationData.rangePercent,
-      bollingerWidth: Math.round(bollingerResult.bandWidth * 100) / 100
+      bollingerWidth: Math.round(bollingerResult.bandWidth * 100) / 100,
     };
+
+    // Direction used by the explosion timer (always try to provide one)
+    const timerDirection: 'up' | 'down' | 'unknown' =
+      accumulation.expectedDirection !== 'unknown'
+        ? accumulation.expectedDirection
+        : signalType === 'BUY'
+          ? 'up'
+          : signalType === 'SELL'
+            ? 'down'
+            : trend === 'bullish'
+              ? 'up'
+              : trend === 'bearish'
+                ? 'down'
+                : 'unknown';
+
+    // A timer computed from the market's OWN recent squeeze history.
+    // This will not reset on page refresh because it is anchored to kline timestamps.
+    const explosionTimer = computeSqueezeTimerFromHistory({
+      klines,
+      timeframe,
+      latestBandWidth: bollingerResult.bandWidth,
+      latestIsSqueeze: bollingerResult.squeeze,
+      accumulation,
+      volumeSpike: volumeData.spike,
+      fallbackBaseSeconds: (timeframe === '15m' ? 60 : timeframe === '30m' ? 120 : 240) * 60,
+      direction: timerDirection,
+    });
 
     const analysis: MarketAnalysis = {
       symbol,
@@ -1034,7 +1259,8 @@ serve(async (req) => {
       bollingerSqueeze: bollingerResult.squeeze,
       volumeSpike: volumeData.spike,
       priceConsolidation: consolidationData.consolidation,
-      realTimeMetrics
+      realTimeMetrics,
+      explosionTimer,
     };
 
     console.log('Analysis result:', analysis);

@@ -16,6 +16,46 @@ export interface MarketAnalysis {
   priceChange: number;
   timestamp: string;
   dataSource: string;
+  // Extended fields used by Smart Recovery UI (kept optional for backward compatibility)
+  confidence?: number;
+  signalReasons?: string[];
+  rsi?: number;
+  macd?: { macd: number; signal: number; histogram: number };
+  accumulation?: {
+    detected: boolean;
+    compressionLevel: number;
+    priceRange: number;
+    volumeRatio: number;
+    strength: number;
+    breakoutProbability: number;
+    expectedDirection: 'up' | 'down' | 'unknown';
+  };
+  bollingerSqueeze?: boolean;
+  volumeSpike?: boolean;
+  priceConsolidation?: boolean;
+  realTimeMetrics?: {
+    avgVolume24h: number;
+    currentVolume: number;
+    volumeChangePercent: number;
+    volatilityIndex: number;
+    priceRangePercent: number;
+    bollingerWidth: number;
+  };
+  explosionTimer?: {
+    active: boolean;
+    compressionStartedAt: string | null;
+    expectedExplosionAt: string | null;
+    expectedDurationSeconds: number | null;
+    direction: 'up' | 'down' | 'unknown';
+    confidence: number;
+    method: 'bollinger_squeeze_history' | 'none';
+    debug?: {
+      thresholdBandWidth: number;
+      avgBandWidth: number;
+      currentBandWidth: number;
+      historicalSamples: number;
+    };
+  };
 }
 
 interface UseMarketAnalysisOptions {
