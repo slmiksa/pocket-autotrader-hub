@@ -28,6 +28,14 @@ interface ExplosionTimer {
   direction: 'up' | 'down' | 'unknown';
   confidence: number;
   method: 'bollinger_squeeze_history' | 'none';
+  calibration?: {
+    dynamicThreshold: number;
+    percentileUsed: number;
+    avgBandWidth: number;
+    minBandWidth: number;
+    maxBandWidth: number;
+    samples: number;
+  };
 }
 interface ExplosionCountdownProps {
   symbol: string;
@@ -248,6 +256,32 @@ export const ExplosionCountdown = ({
             </Badge>}
           {realTimeMetrics && realTimeMetrics.bollingerWidth < 1.5 && <Badge className="bg-red-500/20 text-red-300 border-red-500/40 text-[10px]">⚡ عرض ضيق جداً</Badge>}
         </div>
+
+        {/* Calibration Info */}
+        {explosionTimer?.calibration && (
+          <div className="bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded-lg p-2 border border-indigo-500/30">
+            <div className="text-[10px] text-indigo-300/80 font-medium mb-1 flex items-center gap-1">
+              ⚙️ معايرة تلقائية لـ {symbol} ({timeframe})
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-[9px]">
+              <div className="text-center">
+                <div className="text-white/50">عتبة الضغط</div>
+                <div className="text-indigo-300 font-bold">{explosionTimer.calibration.dynamicThreshold}%</div>
+              </div>
+              <div className="text-center">
+                <div className="text-white/50">المئوي</div>
+                <div className="text-indigo-300 font-bold">P{explosionTimer.calibration.percentileUsed}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-white/50">العينات</div>
+                <div className="text-indigo-300 font-bold">{explosionTimer.calibration.samples}</div>
+              </div>
+            </div>
+            <div className="mt-1 text-[9px] text-white/40 text-center">
+              النطاق: {explosionTimer.calibration.minBandWidth}% - {explosionTimer.calibration.maxBandWidth}% | متوسط: {explosionTimer.calibration.avgBandWidth}%
+            </div>
+          </div>
+        )}
 
         {/* Debug stamp (small) */}
         <div className="text-[10px] text-white/40 text-center">
