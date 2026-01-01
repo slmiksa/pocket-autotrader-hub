@@ -589,6 +589,56 @@ function calculateBandWidthSeries(
   return series;
 }
 
+// Auto-calibration: Calculate dynamic squeeze threshold based on 30-day percentile
+// Instead of fixed 0.6, we use the 20th percentile of historical band widths
+function calculateDynamicSqueezeThreshold(bandWidths: number[]): { 
+  threshold: number; 
+  percentile: number;
+  avgBandWidth: number;
+  minBandWidth: number;
+  maxBandWidth: number;
+  calibrationSamples: number;
+} {
+  if (bandWidths.length < 30) {
+    // Fallback to 0.6 ratio if insufficient data
+    const avg = bandWidths.length > 0 
+      ? bandWidths.reduce((a, b) => a + b, 0) / bandWidths.length 
+      : 1;
+    return {
+      threshold: avg * 0.6,
+      percentile: 20,
+      avgBandWidth: avg,
+      minBandWidth: bandWidths.length > 0 ? Math.min(...bandWidths) : 0,
+      maxBandWidth: bandWidths.length > 0 ? Math.max(...bandWidths) : 0,
+      calibrationSamples: bandWidths.length,
+    };
+  }
+
+  // Sort bandWidths to calculate percentiles
+  const sorted = [...bandWidths].sort((a, b) => a - b);
+  
+  // Use 20th percentile as squeeze threshold (meaning 20% of time is in squeeze)
+  const percentileIndex = Math.floor(sorted.length * 0.20);
+  const p20 = sorted[percentileIndex];
+  
+  // Also calculate 10th percentile for extreme squeeze detection
+  const p10Index = Math.floor(sorted.length * 0.10);
+  const p10 = sorted[p10Index];
+  
+  const avgBandWidth = bandWidths.reduce((a, b) => a + b, 0) / bandWidths.length;
+  
+  // Use 20th percentile as the dynamic threshold
+  // This means squeeze is detected when bandWidth is in the lowest 20% of historical values
+  return {
+    threshold: p20,
+    percentile: 20,
+    avgBandWidth,
+    minBandWidth: sorted[0],
+    maxBandWidth: sorted[sorted.length - 1],
+    calibrationSamples: bandWidths.length,
+  };
+}
+
 function computeSqueezeTimerFromHistory(opts: {
   klines: any[];
   timeframe: string;
@@ -598,7 +648,16 @@ function computeSqueezeTimerFromHistory(opts: {
   volumeSpike: boolean;
   fallbackBaseSeconds: number;
   direction: 'up' | 'down' | 'unknown';
-}): MarketAnalysis['explosionTimer'] {
+}): MarketAnalysis['explosionTimer'] & { 
+  calibration?: { 
+    dynamicThreshold: number;
+    percentileUsed: number;
+    avgBandWidth: number;
+    minBandWidth: number;
+    maxBandWidth: number;
+    samples: number;
+  } 
+} {
   const { klines, timeframe, latestBandWidth, latestIsSqueeze, accumulation, volumeSpike, fallbackBaseSeconds, direction } = opts;
 
   const series = calculateBandWidthSeries(klines, 20, 2);
@@ -620,11 +679,14 @@ function computeSqueezeTimerFromHistory(opts: {
     };
   }
 
-  const avgBandWidth = series.reduce((s, p) => s + p.bandWidth, 0) / series.length;
-  const thresholdBandWidth = avgBandWidth * 0.6;
+  // AUTO-CALIBRATION: Calculate dynamic threshold from historical data
+  const allBandWidths = series.map(s => s.bandWidth);
+  const calibration = calculateDynamicSqueezeThreshold(allBandWidths);
+  const thresholdBandWidth = calibration.threshold;
+  
   const barSeconds = timeframeToSeconds(timeframe);
 
-  // Build completed squeeze segments (bandWidth < threshold) and detect current active segment
+  // Build completed squeeze segments using DYNAMIC threshold
   const completedDurations: number[] = [];
   let inSeg = false;
   let segCount = 0;
@@ -647,7 +709,7 @@ function computeSqueezeTimerFromHistory(opts: {
     }
   }
 
-  // If currently in squeeze, last points are below threshold
+  // Currently in squeeze check using DYNAMIC threshold
   const currentlyBelow = series[series.length - 1].bandWidth < thresholdBandWidth;
   const active = Boolean(latestIsSqueeze && currentlyBelow);
 
@@ -661,15 +723,23 @@ function computeSqueezeTimerFromHistory(opts: {
       confidence: 0,
       method: 'none',
       debug: {
-        thresholdBandWidth,
-        avgBandWidth,
-        currentBandWidth: latestBandWidth,
+        thresholdBandWidth: Math.round(thresholdBandWidth * 100) / 100,
+        avgBandWidth: Math.round(calibration.avgBandWidth * 100) / 100,
+        currentBandWidth: Math.round(latestBandWidth * 100) / 100,
         historicalSamples: completedDurations.length,
+      },
+      calibration: {
+        dynamicThreshold: Math.round(thresholdBandWidth * 100) / 100,
+        percentileUsed: calibration.percentile,
+        avgBandWidth: Math.round(calibration.avgBandWidth * 100) / 100,
+        minBandWidth: Math.round(calibration.minBandWidth * 100) / 100,
+        maxBandWidth: Math.round(calibration.maxBandWidth * 100) / 100,
+        samples: calibration.calibrationSamples,
       },
     };
   }
 
-  // Determine current segment start by walking backwards while below threshold
+  // Determine current segment start by walking backwards while below DYNAMIC threshold
   let startTime = series[series.length - 1].time;
   let barsInCurrent = 1;
   for (let i = series.length - 2; i >= 0; i--) {
@@ -715,9 +785,17 @@ function computeSqueezeTimerFromHistory(opts: {
     method: 'bollinger_squeeze_history',
     debug: {
       thresholdBandWidth: Math.round(thresholdBandWidth * 100) / 100,
-      avgBandWidth: Math.round(avgBandWidth * 100) / 100,
+      avgBandWidth: Math.round(calibration.avgBandWidth * 100) / 100,
       currentBandWidth: Math.round(latestBandWidth * 100) / 100,
       historicalSamples: completedDurations.length,
+    },
+    calibration: {
+      dynamicThreshold: Math.round(thresholdBandWidth * 100) / 100,
+      percentileUsed: calibration.percentile,
+      avgBandWidth: Math.round(calibration.avgBandWidth * 100) / 100,
+      minBandWidth: Math.round(calibration.minBandWidth * 100) / 100,
+      maxBandWidth: Math.round(calibration.maxBandWidth * 100) / 100,
+      samples: calibration.calibrationSamples,
     },
   };
 }

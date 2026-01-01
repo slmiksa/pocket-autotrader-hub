@@ -55,6 +55,14 @@ export interface MarketAnalysis {
       currentBandWidth: number;
       historicalSamples: number;
     };
+    calibration?: {
+      dynamicThreshold: number;
+      percentileUsed: number;
+      avgBandWidth: number;
+      minBandWidth: number;
+      maxBandWidth: number;
+      samples: number;
+    };
   };
 }
 
