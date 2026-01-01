@@ -672,10 +672,10 @@ const SmartRecoverySystem = () => {
           symbol={selectedSymbol}
           timeframe={selectedTimeframe}
           accumulation={(analysis as any)?.accumulation}
-          bollingerWidth={(analysis as any)?.realTimeMetrics?.bollingerWidth}
+          realTimeMetrics={(analysis as any)?.realTimeMetrics}
+          explosionTimer={(analysis as any)?.explosionTimer}
           priceConsolidation={(analysis as any)?.priceConsolidation}
           bollingerSqueeze={(analysis as any)?.bollingerSqueeze}
-          realTimeMetrics={(analysis as any)?.realTimeMetrics}
           volumeSpike={(analysis as any)?.volumeSpike}
         />
 
