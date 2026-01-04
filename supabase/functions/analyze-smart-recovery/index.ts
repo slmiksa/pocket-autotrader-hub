@@ -1306,7 +1306,7 @@ serve(async (req) => {
 
     // Calibrated squeeze threshold (last 30 days): threshold = 0.6 × average band width
     const bwSeries = calculateBandWidthSeries(klines, 20, 2);
-    const barSeconds = timeframeToSeconds(timeframe);
+    // reuse barSeconds from line 1222
     const windowBars = Math.min(bwSeries.length, Math.ceil((30 * 86400) / barSeconds));
     const calibration = calculateDynamicSqueezeThreshold(bwSeries.slice(-windowBars).map(s => s.bandWidth));
     const calibratedSqueeze = bollingerResult.bandWidth > 0 && bollingerResult.bandWidth < calibration.threshold;
