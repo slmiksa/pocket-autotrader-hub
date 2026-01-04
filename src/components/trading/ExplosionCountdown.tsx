@@ -30,19 +30,30 @@ interface ExplosionTimer {
   method: 'bollinger_squeeze_history' | 'none';
   calibration?: {
     dynamicThreshold: number;
-    percentileUsed: number;
+    ratioUsed: number;
+    windowDays: number;
     avgBandWidth: number;
     minBandWidth: number;
     maxBandWidth: number;
     samples: number;
   };
 }
+
+type RecentCandle = {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  direction: 'bull' | 'bear' | 'doji';
+};
 interface ExplosionCountdownProps {
   symbol: string;
   timeframe?: string;
   accumulation?: AccumulationData;
   realTimeMetrics?: RealTimeMetrics;
   explosionTimer?: ExplosionTimer;
+  recentCandles?: RecentCandle[];
   // Back-compat flags (still used for badges)
   priceConsolidation?: boolean;
   bollingerSqueeze?: boolean;
@@ -54,6 +65,7 @@ export const ExplosionCountdown = ({
   accumulation,
   realTimeMetrics,
   explosionTimer,
+  recentCandles,
   priceConsolidation,
   bollingerSqueeze,
   volumeSpike
@@ -269,19 +281,47 @@ export const ExplosionCountdown = ({
                 <div className="text-indigo-300 font-bold">{explosionTimer.calibration.dynamicThreshold}%</div>
               </div>
               <div className="text-center">
-                <div className="text-white/50">المئوي</div>
-                <div className="text-indigo-300 font-bold">P{explosionTimer.calibration.percentileUsed}</div>
+                <div className="text-white/50">المعامل</div>
+                <div className="text-indigo-300 font-bold">{explosionTimer.calibration.ratioUsed}×</div>
               </div>
               <div className="text-center">
-                <div className="text-white/50">العينات</div>
-                <div className="text-indigo-300 font-bold">{explosionTimer.calibration.samples}</div>
+                <div className="text-white/50">الفترة</div>
+                <div className="text-indigo-300 font-bold">{explosionTimer.calibration.windowDays}ي</div>
               </div>
             </div>
             <div className="mt-1 text-[9px] text-white/40 text-center">
-              النطاق: {explosionTimer.calibration.minBandWidth}% - {explosionTimer.calibration.maxBandWidth}% | متوسط: {explosionTimer.calibration.avgBandWidth}%
+              النطاق: {explosionTimer.calibration.minBandWidth}% - {explosionTimer.calibration.maxBandWidth}% | متوسط: {explosionTimer.calibration.avgBandWidth}% | عينات: {explosionTimer.calibration.samples}
             </div>
           </div>
         )}
+
+        {/* Candle Details (last 5) */}
+        {recentCandles?.length ? (
+          <div className="bg-black/20 rounded-lg p-2 border border-white/10">
+            <div className="text-[10px] text-white/60 mb-1">آخر 5 شمعات ({timeframe})</div>
+            <div className="space-y-1">
+              {recentCandles.slice(-5).reverse().map((c) => {
+                const t = new Date(c.time);
+                const timeLabel = Number.isFinite(t.getTime())
+                  ? t.toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' })
+                  : c.time;
+                const dirColor = c.direction === 'bull' ? 'text-green-300' : c.direction === 'bear' ? 'text-red-300' : 'text-slate-200';
+                const dirLabel = c.direction === 'bull' ? '▲' : c.direction === 'bear' ? '▼' : '•';
+                return (
+                  <div key={c.time} className="flex items-center justify-between text-[10px]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-white/50">{timeLabel}</span>
+                      <span className={dirColor}>{dirLabel}</span>
+                    </div>
+                    <div className="text-white/70 tabular-nums">
+                      O {c.open.toFixed(5)} • H {c.high.toFixed(5)} • L {c.low.toFixed(5)} • C {c.close.toFixed(5)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
 
         {/* Debug stamp (small) */}
         <div className="text-[10px] text-white/40 text-center">
