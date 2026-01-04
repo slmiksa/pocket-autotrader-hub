@@ -65,8 +65,27 @@ interface MarketAnalysis {
       avgBandWidth: number;
       currentBandWidth: number;
       historicalSamples: number;
+      barsInCurrentSqueeze?: number;
+    };
+    calibration?: {
+      dynamicThreshold: number;
+      ratioUsed: number;
+      windowDays: number;
+      avgBandWidth: number;
+      minBandWidth: number;
+      maxBandWidth: number;
+      samples: number;
     };
   };
+  // NEW: Last candles (for transparency in UI)
+  recentCandles?: Array<{
+    time: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    direction: 'bull' | 'bear' | 'doji';
+  }>;
 }
 
 // Map our app symbols to a supported Binance symbol (or null if unsupported)
@@ -166,7 +185,7 @@ async function fetchForexPrice(symbol: string): Promise<
 // Fetch Forex klines from Yahoo Finance
 async function fetchForexKlines(symbol: string, timeframe: string): Promise<any[]> {
   const ticker = getYahooForexTicker(symbol);
-  
+
   // Map timeframe to Yahoo Finance interval
   const intervalMap: Record<string, string> = {
     '1m': '1m',
@@ -174,21 +193,29 @@ async function fetchForexKlines(symbol: string, timeframe: string): Promise<any[
     '15m': '15m',
     '30m': '30m',
     '1h': '60m',
+    '2h': '60m',
     '4h': '60m', // Yahoo doesn't support 4h, use 1h
-    '1d': '1d'
+    '1d': '1d',
   };
-  
+
   const interval = intervalMap[timeframe] || '15m';
-  const range = interval === '1d' ? '1y' : interval === '60m' ? '5d' : '1d';
-  
+
+  // We need as close to 30 days as possible for auto-calibration.
+  // Note: Yahoo limits very small intervals; we still try to request a 30d window where supported.
+  const range = (() => {
+    if (interval === '1d') return '1y';
+    if (interval === '1m') return '7d';
+    return '30d';
+  })();
+
   try {
     const response = await fetch(
       `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${interval}&range=${range}`,
       {
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0'
-        }
+          'User-Agent': 'Mozilla/5.0',
+        },
       }
     );
 
@@ -199,18 +226,18 @@ async function fetchForexKlines(symbol: string, timeframe: string): Promise<any[
         const timestamps = result.timestamp || [];
         const quotes = result.indicators?.quote?.[0] || {};
         const { open, high, low, close, volume } = quotes;
-        
+
         // Convert to Binance-like kline format for compatibility
         const klines: any[] = [];
         for (let i = 0; i < timestamps.length; i++) {
-          if (open[i] && high[i] && low[i] && close[i]) {
+          if (open?.[i] != null && high?.[i] != null && low?.[i] != null && close?.[i] != null) {
             klines.push([
               timestamps[i] * 1000, // Open time
-              open[i].toString(),   // Open
-              high[i].toString(),   // High
-              low[i].toString(),    // Low
-              close[i].toString(),  // Close
-              (volume?.[i] || 1000000).toString() // Volume (use default for forex)
+              String(open[i]),
+              String(high[i]),
+              String(low[i]),
+              String(close[i]),
+              String(volume?.[i] ?? 1000000), // Volume (often missing for forex)
             ]);
           }
         }
@@ -220,7 +247,7 @@ async function fetchForexKlines(symbol: string, timeframe: string): Promise<any[
   } catch (error) {
     console.error('Yahoo Finance forex klines fetch error:', error);
   }
-  
+
   return [];
 }
 
@@ -336,6 +363,44 @@ async function fetchBinancePrice(symbol: string, retries = 3): Promise<number | 
   return null;
 }
 
+// Fetch enough klines to support "last 30 days" calibration (Binance max 1000 per request).
+async function fetchBinanceKlinesHistory(opts: {
+  symbol: string;
+  interval: string;
+  targetBars: number;
+}): Promise<any[]> {
+  const { symbol, interval } = opts;
+  const target = Math.min(5000, Math.max(250, Math.floor(opts.targetBars)));
+
+  const collected: any[] = [];
+  let endTime = Date.now();
+
+  for (let attempt = 0; attempt < 10 && collected.length < target; attempt++) {
+    const resp = await fetch(
+      `https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=1000&endTime=${endTime}`,
+      { headers: { 'Accept': 'application/json' } }
+    );
+
+    if (!resp.ok) break;
+
+    const chunk = await resp.json();
+    if (!Array.isArray(chunk) || chunk.length === 0) break;
+
+    // Prepend older chunk
+    collected.unshift(...chunk);
+
+    // Move window back
+    endTime = Number(chunk[0][0]) - 1;
+  }
+
+  // Deduplicate by open time, sort, and take the latest target bars
+  const uniq = new Map<number, any[]>();
+  for (const k of collected) {
+    uniq.set(Number(k[0]), k);
+  }
+  const sorted = [...uniq.values()].sort((a, b) => Number(a[0]) - Number(b[0]));
+  return sorted.slice(-target);
+}
 // Calculate EMA
 function calculateEMA(prices: number[], period: number): number {
   if (prices.length < period) return prices[prices.length - 1] || 0;
@@ -589,52 +654,42 @@ function calculateBandWidthSeries(
   return series;
 }
 
-// Auto-calibration: Calculate dynamic squeeze threshold based on 30-day percentile
-// Instead of fixed 0.6, we use the 20th percentile of historical band widths
-function calculateDynamicSqueezeThreshold(bandWidths: number[]): { 
-  threshold: number; 
-  percentile: number;
+// Auto-calibration: Calculate dynamic squeeze threshold based on last 30 days
+// User requirement: threshold = 0.6 * average Bollinger band width (last 30 days)
+function calculateDynamicSqueezeThreshold(bandWidths: number[]): {
+  threshold: number;
+  ratioUsed: number;
   avgBandWidth: number;
   minBandWidth: number;
   maxBandWidth: number;
   calibrationSamples: number;
 } {
-  if (bandWidths.length < 30) {
-    // Fallback to 0.6 ratio if insufficient data
-    const avg = bandWidths.length > 0 
-      ? bandWidths.reduce((a, b) => a + b, 0) / bandWidths.length 
-      : 1;
+  const ratioUsed = 0.6;
+
+  if (!bandWidths.length) {
     return {
-      threshold: avg * 0.6,
-      percentile: 20,
-      avgBandWidth: avg,
-      minBandWidth: bandWidths.length > 0 ? Math.min(...bandWidths) : 0,
-      maxBandWidth: bandWidths.length > 0 ? Math.max(...bandWidths) : 0,
-      calibrationSamples: bandWidths.length,
+      threshold: 1 * ratioUsed,
+      ratioUsed,
+      avgBandWidth: 1,
+      minBandWidth: 0,
+      maxBandWidth: 0,
+      calibrationSamples: 0,
     };
   }
 
-  // Sort bandWidths to calculate percentiles
-  const sorted = [...bandWidths].sort((a, b) => a - b);
-  
-  // Use 20th percentile as squeeze threshold (meaning 20% of time is in squeeze)
-  const percentileIndex = Math.floor(sorted.length * 0.20);
-  const p20 = sorted[percentileIndex];
-  
-  // Also calculate 10th percentile for extreme squeeze detection
-  const p10Index = Math.floor(sorted.length * 0.10);
-  const p10 = sorted[p10Index];
-  
   const avgBandWidth = bandWidths.reduce((a, b) => a + b, 0) / bandWidths.length;
-  
-  // Use 20th percentile as the dynamic threshold
-  // This means squeeze is detected when bandWidth is in the lowest 20% of historical values
+  const minBandWidth = Math.min(...bandWidths);
+  const maxBandWidth = Math.max(...bandWidths);
+
+  // Protect against pathological zero/NaN
+  const safeAvg = Number.isFinite(avgBandWidth) && avgBandWidth > 0 ? avgBandWidth : 1;
+
   return {
-    threshold: p20,
-    percentile: 20,
-    avgBandWidth,
-    minBandWidth: sorted[0],
-    maxBandWidth: sorted[sorted.length - 1],
+    threshold: safeAvg * ratioUsed,
+    ratioUsed,
+    avgBandWidth: Math.round(safeAvg * 100) / 100,
+    minBandWidth: Math.round(minBandWidth * 100) / 100,
+    maxBandWidth: Math.round(maxBandWidth * 100) / 100,
     calibrationSamples: bandWidths.length,
   };
 }
@@ -648,17 +703,18 @@ function computeSqueezeTimerFromHistory(opts: {
   volumeSpike: boolean;
   fallbackBaseSeconds: number;
   direction: 'up' | 'down' | 'unknown';
-}): MarketAnalysis['explosionTimer'] & { 
-  calibration?: { 
+}): MarketAnalysis['explosionTimer'] & {
+  calibration?: {
     dynamicThreshold: number;
-    percentileUsed: number;
+    ratioUsed: number;
+    windowDays: number;
     avgBandWidth: number;
     minBandWidth: number;
     maxBandWidth: number;
     samples: number;
-  } 
+  };
 } {
-  const { klines, timeframe, latestBandWidth, latestIsSqueeze, accumulation, volumeSpike, fallbackBaseSeconds, direction } = opts;
+  const { klines, timeframe, latestBandWidth, accumulation, volumeSpike, fallbackBaseSeconds, direction } = opts;
 
   const series = calculateBandWidthSeries(klines, 20, 2);
   if (series.length < 15) {
@@ -674,44 +730,54 @@ function computeSqueezeTimerFromHistory(opts: {
         thresholdBandWidth: 0,
         avgBandWidth: 0,
         currentBandWidth: latestBandWidth,
-        historicalSamples: series.length,
+        historicalSamples: 0,
       },
     };
   }
 
-  // AUTO-CALIBRATION: Calculate dynamic threshold from historical data
-  const allBandWidths = series.map(s => s.bandWidth);
-  const calibration = calculateDynamicSqueezeThreshold(allBandWidths);
-  const thresholdBandWidth = calibration.threshold;
-  
   const barSeconds = timeframeToSeconds(timeframe);
+  const windowDays = 30;
+  const windowBars = Math.min(series.length, Math.ceil((windowDays * 86400) / barSeconds));
+  const windowSeries = series.slice(-windowBars);
 
-  // Build completed squeeze segments using DYNAMIC threshold
+  // AUTO-CALIBRATION (30d): threshold = 0.6 * avg(bandWidth)
+  const calibrationRaw = calculateDynamicSqueezeThreshold(windowSeries.map(s => s.bandWidth));
+  const thresholdBandWidth = calibrationRaw.threshold;
+
+  // Build completed squeeze segments using threshold within the same 30d window
   const completedDurations: number[] = [];
   let inSeg = false;
   let segCount = 0;
-  let segStartTime = 0;
 
-  for (let i = 0; i < series.length; i++) {
-    const below = series[i].bandWidth < thresholdBandWidth;
+  for (let i = 0; i < windowSeries.length; i++) {
+    const below = windowSeries[i].bandWidth < thresholdBandWidth;
     if (below && !inSeg) {
       inSeg = true;
       segCount = 1;
-      segStartTime = series[i].time;
     } else if (below && inSeg) {
       segCount++;
     } else if (!below && inSeg) {
-      // segment ends at i-1
       if (segCount >= 3) completedDurations.push(segCount * barSeconds);
       inSeg = false;
       segCount = 0;
-      segStartTime = 0;
     }
   }
 
-  // Currently in squeeze check using DYNAMIC threshold
+  // Determine current segment start by walking backwards while below threshold
   const currentlyBelow = series[series.length - 1].bandWidth < thresholdBandWidth;
-  const active = Boolean(latestIsSqueeze && currentlyBelow);
+  let startTime = series[series.length - 1].time;
+  let barsInCurrent = 1;
+  for (let i = series.length - 2; i >= 0; i--) {
+    if (series[i].bandWidth < thresholdBandWidth) {
+      startTime = series[i].time;
+      barsInCurrent++;
+    } else {
+      break;
+    }
+  }
+
+  // Active squeeze requires at least 3 consecutive bars below threshold
+  const active = Boolean(currentlyBelow && barsInCurrent >= 3);
 
   if (!active) {
     return {
@@ -724,42 +790,33 @@ function computeSqueezeTimerFromHistory(opts: {
       method: 'none',
       debug: {
         thresholdBandWidth: Math.round(thresholdBandWidth * 100) / 100,
-        avgBandWidth: Math.round(calibration.avgBandWidth * 100) / 100,
+        avgBandWidth: calibrationRaw.avgBandWidth,
         currentBandWidth: Math.round(latestBandWidth * 100) / 100,
         historicalSamples: completedDurations.length,
+        barsInCurrentSqueeze: barsInCurrent,
       },
       calibration: {
         dynamicThreshold: Math.round(thresholdBandWidth * 100) / 100,
-        percentileUsed: calibration.percentile,
-        avgBandWidth: Math.round(calibration.avgBandWidth * 100) / 100,
-        minBandWidth: Math.round(calibration.minBandWidth * 100) / 100,
-        maxBandWidth: Math.round(calibration.maxBandWidth * 100) / 100,
-        samples: calibration.calibrationSamples,
+        ratioUsed: calibrationRaw.ratioUsed,
+        windowDays,
+        avgBandWidth: calibrationRaw.avgBandWidth,
+        minBandWidth: calibrationRaw.minBandWidth,
+        maxBandWidth: calibrationRaw.maxBandWidth,
+        samples: calibrationRaw.calibrationSamples,
       },
     };
-  }
-
-  // Determine current segment start by walking backwards while below DYNAMIC threshold
-  let startTime = series[series.length - 1].time;
-  let barsInCurrent = 1;
-  for (let i = series.length - 2; i >= 0; i--) {
-    if (series[i].bandWidth < thresholdBandWidth) {
-      startTime = series[i].time;
-      barsInCurrent++;
-    } else {
-      break;
-    }
   }
 
   // Robust expected duration from historical squeezes (median) + fallback
   const expectedFromHistory = median(completedDurations);
   const expectedDurationSecondsRaw = expectedFromHistory ?? fallbackBaseSeconds;
-  const expectedDurationSeconds = Math.min(Math.max(expectedDurationSecondsRaw, barSeconds * 5), barSeconds * 400);
+  const expectedDurationSeconds = Math.min(
+    Math.max(expectedDurationSecondsRaw, barSeconds * 5),
+    barSeconds * 400
+  );
 
   const now = Date.now();
-  const elapsedSeconds = Math.max(0, Math.floor((now - startTime) / 1000));
   const expectedExplosionAtMs = startTime + expectedDurationSeconds * 1000;
-  const remainingSeconds = Math.max(0, Math.floor((expectedExplosionAtMs - now) / 1000));
 
   // Confidence: tighter band width + stronger accumulation/volume = higher
   let confidence = 40;
@@ -785,17 +842,19 @@ function computeSqueezeTimerFromHistory(opts: {
     method: 'bollinger_squeeze_history',
     debug: {
       thresholdBandWidth: Math.round(thresholdBandWidth * 100) / 100,
-      avgBandWidth: Math.round(calibration.avgBandWidth * 100) / 100,
+      avgBandWidth: calibrationRaw.avgBandWidth,
       currentBandWidth: Math.round(latestBandWidth * 100) / 100,
       historicalSamples: completedDurations.length,
+      barsInCurrentSqueeze: barsInCurrent,
     },
     calibration: {
       dynamicThreshold: Math.round(thresholdBandWidth * 100) / 100,
-      percentileUsed: calibration.percentile,
-      avgBandWidth: Math.round(calibration.avgBandWidth * 100) / 100,
-      minBandWidth: Math.round(calibration.minBandWidth * 100) / 100,
-      maxBandWidth: Math.round(calibration.maxBandWidth * 100) / 100,
-      samples: calibration.calibrationSamples,
+      ratioUsed: calibrationRaw.ratioUsed,
+      windowDays,
+      avgBandWidth: calibrationRaw.avgBandWidth,
+      minBandWidth: calibrationRaw.minBandWidth,
+      maxBandWidth: calibrationRaw.maxBandWidth,
+      samples: calibrationRaw.calibrationSamples,
     },
   };
 }
@@ -1159,6 +1218,10 @@ serve(async (req) => {
     let dataSource = '';
     let klines: any[] = [];
 
+    // For accuracy, pull enough candles to calibrate on ~30 days.
+    const barSeconds = timeframeToSeconds(timeframe);
+    const targetBars = Math.min(5000, Math.max(300, Math.ceil((30 * 86400) / barSeconds) + 250));
+
     // Handle Gold (XAUUSD) separately using Yahoo Finance
     if (symbol === 'XAUUSD') {
       const goldSource: GoldPriceSource = priceSource === 'futures' ? 'futures' : 'spot';
@@ -1168,14 +1231,13 @@ serve(async (req) => {
         priceChangePercent = goldData.change;
         dataSource = goldData.sourceLabel;
       }
-      
+
       // Fetch klines from PAXG as technical indicator proxy (not for price)
-      const klinesResponse = await fetch(
-        `https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=${timeframe}&limit=250`
-      );
-      if (klinesResponse.ok) {
-        klines = await klinesResponse.json();
-      }
+      klines = await fetchBinanceKlinesHistory({
+        symbol: 'PAXGUSDT',
+        interval: timeframe,
+        targetBars,
+      });
     } else if (isForexPair(symbol)) {
       // Handle Forex pairs using Yahoo Finance
       console.log(`Fetching Forex data for ${symbol}`);
@@ -1185,8 +1247,8 @@ serve(async (req) => {
         priceChangePercent = forexData.change;
         dataSource = forexData.sourceLabel;
       }
-      
-      // Fetch klines from Yahoo Finance
+
+      // Fetch klines from Yahoo Finance (tries to use ~30d)
       klines = await fetchForexKlines(symbol, timeframe);
       console.log(`Fetched ${klines.length} klines for ${symbol}`);
     } else {
@@ -1204,16 +1266,15 @@ serve(async (req) => {
           }
         );
       }
-      
+
       currentPrice = await fetchBinancePrice(symbol);
       dataSource = binanceSymbol;
-      
-      const klinesResponse = await fetch(
-        `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${timeframe}&limit=250`
-      );
-      if (klinesResponse.ok) {
-        klines = await klinesResponse.json();
-      }
+
+      klines = await fetchBinanceKlinesHistory({
+        symbol: binanceSymbol,
+        interval: timeframe,
+        targetBars,
+      });
     }
 
     if (!currentPrice) {
@@ -1242,11 +1303,18 @@ serve(async (req) => {
     const bollingerResult = detectBollingerSqueeze(closePrices);
     const volumeData = detectVolumeSpike(klines);
     const consolidationData = detectPriceConsolidation(klines);
-    
+
+    // Calibrated squeeze threshold (last 30 days): threshold = 0.6 × average band width
+    const bwSeries = calculateBandWidthSeries(klines, 20, 2);
+    const barSeconds = timeframeToSeconds(timeframe);
+    const windowBars = Math.min(bwSeries.length, Math.ceil((30 * 86400) / barSeconds));
+    const calibration = calculateDynamicSqueezeThreshold(bwSeries.slice(-windowBars).map(s => s.bandWidth));
+    const calibratedSqueeze = bollingerResult.bandWidth > 0 && bollingerResult.bandWidth < calibration.threshold;
+
     const accumulation = detectAccumulationZone(
       klines,
       cvdStatus,
-      bollingerResult.squeeze,
+      calibratedSqueeze,
       volumeData,
       consolidationData,
       rsi,
@@ -1306,11 +1374,26 @@ serve(async (req) => {
       klines,
       timeframe,
       latestBandWidth: bollingerResult.bandWidth,
-      latestIsSqueeze: bollingerResult.squeeze,
+      latestIsSqueeze: calibratedSqueeze,
       accumulation,
       volumeSpike: volumeData.spike,
       fallbackBaseSeconds: (timeframe === '15m' ? 60 : timeframe === '30m' ? 120 : 240) * 60,
       direction: timerDirection,
+    });
+
+    const recentCandles = klines.slice(-10).map((k: any[]) => {
+      const open = parseFloat(k[1]);
+      const close = parseFloat(k[4]);
+      const direction: 'bull' | 'bear' | 'doji' =
+        close > open ? 'bull' : close < open ? 'bear' : 'doji';
+      return {
+        time: new Date(Number(k[0])).toISOString(),
+        open,
+        high: parseFloat(k[2]),
+        low: parseFloat(k[3]),
+        close,
+        direction,
+      };
     });
 
     const analysis: MarketAnalysis = {
@@ -1334,11 +1417,12 @@ serve(async (req) => {
       dataSource,
       // Accumulation zone data
       accumulation,
-      bollingerSqueeze: bollingerResult.squeeze,
+      bollingerSqueeze: calibratedSqueeze,
       volumeSpike: volumeData.spike,
       priceConsolidation: consolidationData.consolidation,
       realTimeMetrics,
       explosionTimer,
+      recentCandles,
     };
 
     console.log('Analysis result:', analysis);

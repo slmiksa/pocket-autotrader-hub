@@ -54,16 +54,26 @@ export interface MarketAnalysis {
       avgBandWidth: number;
       currentBandWidth: number;
       historicalSamples: number;
+      barsInCurrentSqueeze?: number;
     };
     calibration?: {
       dynamicThreshold: number;
-      percentileUsed: number;
+      ratioUsed: number;
+      windowDays: number;
       avgBandWidth: number;
       minBandWidth: number;
       maxBandWidth: number;
       samples: number;
     };
   };
+  recentCandles?: Array<{
+    time: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    direction: 'bull' | 'bear' | 'doji';
+  }>;
 }
 
 interface UseMarketAnalysisOptions {
