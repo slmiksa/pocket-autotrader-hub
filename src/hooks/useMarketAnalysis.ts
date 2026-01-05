@@ -1,6 +1,53 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+// Explosion phase: countdown → active → ended/new
+export type ExplosionPhase = 'countdown' | 'active' | 'ended' | 'none';
+
+export interface ExplosionEntrySignal {
+  canEnter: boolean;
+  direction: 'BUY' | 'SELL' | 'WAIT';
+  reasons: string[];
+  urgency: 'critical' | 'high' | 'medium' | 'low';
+}
+
+export interface PostExplosionStatus {
+  stillValid: boolean;
+  elapsedSinceExplosion: number; // seconds
+  priceMovedPercent: number;
+  volumeConfirmed: boolean;
+  breakoutConfirmed: boolean;
+}
+
+export interface ExplosionTimer {
+  phase: ExplosionPhase;
+  active: boolean;
+  compressionStartedAt: string | null;
+  expectedExplosionAt: string | null;
+  expectedDurationSeconds: number | null;
+  direction: 'up' | 'down' | 'unknown';
+  confidence: number;
+  method: 'bollinger_squeeze_history' | 'none';
+  entrySignal?: ExplosionEntrySignal;
+  postExplosion?: PostExplosionStatus;
+  debug?: {
+    thresholdBandWidth: number;
+    avgBandWidth: number;
+    currentBandWidth: number;
+    historicalSamples: number;
+    barsInCurrentSqueeze?: number;
+  };
+  calibration?: {
+    dynamicThreshold: number;
+    ratioUsed: number;
+    windowDays: number;
+    avgBandWidth: number;
+    minBandWidth: number;
+    maxBandWidth: number;
+    samples: number;
+  };
+}
+
 export interface MarketAnalysis {
   symbol: string;
   currentPrice: number;
@@ -16,7 +63,6 @@ export interface MarketAnalysis {
   priceChange: number;
   timestamp: string;
   dataSource: string;
-  // Extended fields used by Smart Recovery UI (kept optional for backward compatibility)
   confidence?: number;
   signalReasons?: string[];
   rsi?: number;
@@ -41,31 +87,7 @@ export interface MarketAnalysis {
     priceRangePercent: number;
     bollingerWidth: number;
   };
-  explosionTimer?: {
-    active: boolean;
-    compressionStartedAt: string | null;
-    expectedExplosionAt: string | null;
-    expectedDurationSeconds: number | null;
-    direction: 'up' | 'down' | 'unknown';
-    confidence: number;
-    method: 'bollinger_squeeze_history' | 'none';
-    debug?: {
-      thresholdBandWidth: number;
-      avgBandWidth: number;
-      currentBandWidth: number;
-      historicalSamples: number;
-      barsInCurrentSqueeze?: number;
-    };
-    calibration?: {
-      dynamicThreshold: number;
-      ratioUsed: number;
-      windowDays: number;
-      avgBandWidth: number;
-      minBandWidth: number;
-      maxBandWidth: number;
-      samples: number;
-    };
-  };
+  explosionTimer?: ExplosionTimer;
   recentCandles?: Array<{
     time: string;
     open: number;
