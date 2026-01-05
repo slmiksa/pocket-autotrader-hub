@@ -18,6 +18,51 @@ interface AccumulationZone {
   compressionLevel: number; // Volatility compression level
 }
 
+// Explosion phase: countdown → active → ended/new
+type ExplosionPhase = 'countdown' | 'active' | 'ended' | 'none';
+
+interface ExplosionState {
+  phase: ExplosionPhase;
+  active: boolean;
+  compressionStartedAt: string | null;
+  expectedExplosionAt: string | null;
+  expectedDurationSeconds: number | null;
+  direction: 'up' | 'down' | 'unknown';
+  confidence: number; // 0-100
+  method: 'bollinger_squeeze_history' | 'none';
+  // Entry signal when explosion is active
+  entrySignal?: {
+    canEnter: boolean;
+    direction: 'BUY' | 'SELL' | 'WAIT';
+    reasons: string[];
+    urgency: 'critical' | 'high' | 'medium' | 'low';
+  };
+  // Post-explosion status
+  postExplosion?: {
+    stillValid: boolean;
+    elapsedSinceExplosion: number; // seconds
+    priceMovedPercent: number;
+    volumeConfirmed: boolean;
+    breakoutConfirmed: boolean;
+  };
+  debug: {
+    thresholdBandWidth: number;
+    avgBandWidth: number;
+    currentBandWidth: number;
+    historicalSamples: number;
+    barsInCurrentSqueeze?: number;
+  };
+  calibration?: {
+    dynamicThreshold: number;
+    ratioUsed: number;
+    windowDays: number;
+    avgBandWidth: number;
+    minBandWidth: number;
+    maxBandWidth: number;
+    samples: number;
+  };
+}
+
 interface MarketAnalysis {
   symbol: string;
   currentPrice: number;
@@ -51,33 +96,9 @@ interface MarketAnalysis {
     priceRangePercent: number;
     bollingerWidth: number;
   };
-  // NEW: Explosion timer derived from market history (won't reset on refresh)
-  explosionTimer: {
-    active: boolean;
-    compressionStartedAt: string | null;
-    expectedExplosionAt: string | null;
-    expectedDurationSeconds: number | null;
-    direction: 'up' | 'down' | 'unknown';
-    confidence: number; // 0-100
-    method: 'bollinger_squeeze_history' | 'none';
-    debug: {
-      thresholdBandWidth: number;
-      avgBandWidth: number;
-      currentBandWidth: number;
-      historicalSamples: number;
-      barsInCurrentSqueeze?: number;
-    };
-    calibration?: {
-      dynamicThreshold: number;
-      ratioUsed: number;
-      windowDays: number;
-      avgBandWidth: number;
-      minBandWidth: number;
-      maxBandWidth: number;
-      samples: number;
-    };
-  };
-  // NEW: Last candles (for transparency in UI)
+  // IMPROVED: Explosion state with phases
+  explosionTimer: ExplosionState;
+  // Last candles (for transparency in UI)
   recentCandles?: Array<{
     time: string;
     open: number;
@@ -703,22 +724,17 @@ function computeSqueezeTimerFromHistory(opts: {
   volumeSpike: boolean;
   fallbackBaseSeconds: number;
   direction: 'up' | 'down' | 'unknown';
-}): MarketAnalysis['explosionTimer'] & {
-  calibration?: {
-    dynamicThreshold: number;
-    ratioUsed: number;
-    windowDays: number;
-    avgBandWidth: number;
-    minBandWidth: number;
-    maxBandWidth: number;
-    samples: number;
-  };
-} {
-  const { klines, timeframe, latestBandWidth, accumulation, volumeSpike, fallbackBaseSeconds, direction } = opts;
+  // Additional context for entry signal
+  cvdStatus: 'rising' | 'falling' | 'flat';
+  rsi: number;
+  signalType: 'BUY' | 'SELL' | 'WAIT';
+}): ExplosionState {
+  const { klines, timeframe, latestBandWidth, accumulation, volumeSpike, fallbackBaseSeconds, direction, cvdStatus, rsi, signalType } = opts;
 
   const series = calculateBandWidthSeries(klines, 20, 2);
   if (series.length < 15) {
     return {
+      phase: 'none',
       active: false,
       compressionStartedAt: null,
       expectedExplosionAt: null,
@@ -777,37 +793,9 @@ function computeSqueezeTimerFromHistory(opts: {
   }
 
   // Active squeeze requires at least 3 consecutive bars below threshold
-  const active = Boolean(currentlyBelow && barsInCurrent >= 3);
+  const squeezeActive = Boolean(currentlyBelow && barsInCurrent >= 3);
 
-  if (!active) {
-    return {
-      active: false,
-      compressionStartedAt: null,
-      expectedExplosionAt: null,
-      expectedDurationSeconds: null,
-      direction,
-      confidence: 0,
-      method: 'none',
-      debug: {
-        thresholdBandWidth: Math.round(thresholdBandWidth * 100) / 100,
-        avgBandWidth: calibrationRaw.avgBandWidth,
-        currentBandWidth: Math.round(latestBandWidth * 100) / 100,
-        historicalSamples: completedDurations.length,
-        barsInCurrentSqueeze: barsInCurrent,
-      },
-      calibration: {
-        dynamicThreshold: Math.round(thresholdBandWidth * 100) / 100,
-        ratioUsed: calibrationRaw.ratioUsed,
-        windowDays,
-        avgBandWidth: calibrationRaw.avgBandWidth,
-        minBandWidth: calibrationRaw.minBandWidth,
-        maxBandWidth: calibrationRaw.maxBandWidth,
-        samples: calibrationRaw.calibrationSamples,
-      },
-    };
-  }
-
-  // Robust expected duration from historical squeezes (median) + fallback
+  // Calculate expected duration from historical squeezes
   const expectedFromHistory = median(completedDurations);
   const expectedDurationSecondsRaw = expectedFromHistory ?? fallbackBaseSeconds;
   const expectedDurationSeconds = Math.min(
@@ -817,8 +805,26 @@ function computeSqueezeTimerFromHistory(opts: {
 
   const now = Date.now();
   const expectedExplosionAtMs = startTime + expectedDurationSeconds * 1000;
+  const remainingSeconds = Math.max(0, Math.floor((expectedExplosionAtMs - now) / 1000));
 
-  // Confidence: tighter band width + stronger accumulation/volume = higher
+  // Determine phase
+  let phase: ExplosionPhase = 'none';
+  if (squeezeActive && remainingSeconds > 0) {
+    phase = 'countdown';
+  } else if (squeezeActive && remainingSeconds <= 0) {
+    // Explosion time passed but still in squeeze - check if breakout conditions met
+    phase = 'active';
+  } else if (!squeezeActive && barsInCurrent < 3) {
+    // Just exited squeeze - check if explosion is still valid
+    const timeSinceSqueezeEnd = (now - series[series.length - 1].time) / 1000;
+    if (timeSinceSqueezeEnd < barSeconds * 5) {
+      phase = 'active'; // Still in post-explosion window
+    } else {
+      phase = 'ended';
+    }
+  }
+
+  // Confidence calculation
   let confidence = 40;
   if (latestBandWidth > 0 && thresholdBandWidth > 0) {
     const ratio = latestBandWidth / thresholdBandWidth;
@@ -829,10 +835,134 @@ function computeSqueezeTimerFromHistory(opts: {
   if (accumulation?.detected) confidence += 15;
   if (typeof accumulation?.breakoutProbability === 'number') confidence += Math.min(15, Math.floor(accumulation.breakoutProbability / 10));
   if (volumeSpike) confidence += 10;
-
   confidence = Math.max(0, Math.min(100, Math.round(confidence)));
 
+  // Entry signal generation (when phase is countdown or active)
+  let entrySignal: ExplosionState['entrySignal'] = undefined;
+  if (phase === 'countdown' || phase === 'active') {
+    const entryReasons: string[] = [];
+    let canEnter = false;
+    let entryDirection: 'BUY' | 'SELL' | 'WAIT' = 'WAIT';
+    let urgency: 'critical' | 'high' | 'medium' | 'low' = 'low';
+
+    // Check entry conditions based on additional factors
+    const volumeConfirmed = volumeSpike;
+    const cvdConfirmed = (direction === 'up' && cvdStatus === 'rising') || (direction === 'down' && cvdStatus === 'falling');
+    const rsiConfirmed = (direction === 'up' && rsi < 70) || (direction === 'down' && rsi > 30);
+    const accumulationStrong = accumulation?.strength >= 50;
+
+    if (phase === 'active') {
+      // Explosion time reached - check breakout conditions
+      if (volumeConfirmed && cvdConfirmed) {
+        canEnter = true;
+        entryDirection = direction === 'up' ? 'BUY' : direction === 'down' ? 'SELL' : signalType;
+        urgency = 'critical';
+        entryReasons.push('🔥 انفجار سعري نشط الآن!');
+        entryReasons.push('✅ تأكيد الحجم: ارتفاع قوي في الحجم');
+        entryReasons.push('✅ تأكيد التدفق: ' + (cvdStatus === 'rising' ? 'تدفق شراء' : 'تدفق بيع'));
+      } else if (volumeConfirmed || cvdConfirmed) {
+        canEnter = true;
+        entryDirection = direction === 'up' ? 'BUY' : direction === 'down' ? 'SELL' : signalType;
+        urgency = 'high';
+        entryReasons.push('⚡ انفجار سعري - تأكيد جزئي');
+        if (volumeConfirmed) entryReasons.push('✅ تأكيد الحجم');
+        if (cvdConfirmed) entryReasons.push('✅ تأكيد التدفق');
+        if (!volumeConfirmed) entryReasons.push('⚠️ انتظر تأكيد الحجم للأمان');
+      } else {
+        canEnter = false;
+        entryDirection = 'WAIT';
+        urgency = 'medium';
+        entryReasons.push('⏳ انفجار متوقع - انتظر تأكيد الحجم أو التدفق');
+      }
+    } else if (phase === 'countdown') {
+      // Still counting down
+      if (remainingSeconds < 120) {
+        urgency = 'critical';
+        entryReasons.push('🔥 انفجار وشيك خلال دقيقتين!');
+        if (accumulationStrong) {
+          canEnter = true;
+          entryDirection = direction === 'up' ? 'BUY' : direction === 'down' ? 'SELL' : 'WAIT';
+          entryReasons.push('✅ تجميع مؤسسي قوي - يمكن الدخول المبكر');
+        }
+      } else if (remainingSeconds < 300) {
+        urgency = 'high';
+        entryReasons.push('⚡ انفجار قريب - استعد للدخول');
+      } else if (remainingSeconds < 600) {
+        urgency = 'medium';
+        entryReasons.push('⏳ ضغط سعري نشط - راقب السوق');
+      } else {
+        urgency = 'low';
+        entryReasons.push('📊 تجميع سعري - انتظر اقتراب موعد الانفجار');
+      }
+
+      if (rsiConfirmed) entryReasons.push(`📈 RSI مناسب للدخول (${rsi.toFixed(0)})`);
+      if (cvdConfirmed) entryReasons.push(`💚 تدفق ${cvdStatus === 'rising' ? 'شراء' : 'بيع'} يدعم الاتجاه`);
+    }
+
+    entrySignal = {
+      canEnter,
+      direction: entryDirection,
+      reasons: entryReasons,
+      urgency,
+    };
+  }
+
+  // Post-explosion status (when phase is active or ended)
+  let postExplosion: ExplosionState['postExplosion'] = undefined;
+  if (phase === 'active' || phase === 'ended') {
+    const elapsedSinceExplosion = Math.max(0, Math.floor((now - expectedExplosionAtMs) / 1000));
+    
+    // Calculate price movement since squeeze start
+    const priceAtStart = klines.length > barsInCurrent ? parseFloat(klines[klines.length - barsInCurrent][4]) : 0;
+    const currentPrice = parseFloat(klines[klines.length - 1][4]);
+    const priceMovedPercent = priceAtStart > 0 ? ((currentPrice - priceAtStart) / priceAtStart) * 100 : 0;
+    
+    const breakoutConfirmed = Math.abs(priceMovedPercent) > 0.3; // Significant move
+    const stillValid = phase === 'active' && (volumeSpike || breakoutConfirmed);
+
+    postExplosion = {
+      stillValid,
+      elapsedSinceExplosion,
+      priceMovedPercent: Math.round(priceMovedPercent * 100) / 100,
+      volumeConfirmed: volumeSpike,
+      breakoutConfirmed,
+    };
+  }
+
+  const calibration = {
+    dynamicThreshold: Math.round(thresholdBandWidth * 100) / 100,
+    ratioUsed: calibrationRaw.ratioUsed,
+    windowDays,
+    avgBandWidth: calibrationRaw.avgBandWidth,
+    minBandWidth: calibrationRaw.minBandWidth,
+    maxBandWidth: calibrationRaw.maxBandWidth,
+    samples: calibrationRaw.calibrationSamples,
+  };
+
+  if (phase === 'none' || phase === 'ended') {
+    return {
+      phase,
+      active: false,
+      compressionStartedAt: squeezeActive ? new Date(startTime).toISOString() : null,
+      expectedExplosionAt: squeezeActive ? new Date(expectedExplosionAtMs).toISOString() : null,
+      expectedDurationSeconds: squeezeActive ? expectedDurationSeconds : null,
+      direction,
+      confidence: 0,
+      method: 'none',
+      postExplosion,
+      debug: {
+        thresholdBandWidth: Math.round(thresholdBandWidth * 100) / 100,
+        avgBandWidth: calibrationRaw.avgBandWidth,
+        currentBandWidth: Math.round(latestBandWidth * 100) / 100,
+        historicalSamples: completedDurations.length,
+        barsInCurrentSqueeze: barsInCurrent,
+      },
+      calibration,
+    };
+  }
+
   return {
+    phase,
     active: true,
     compressionStartedAt: new Date(startTime).toISOString(),
     expectedExplosionAt: new Date(expectedExplosionAtMs).toISOString(),
@@ -840,6 +970,8 @@ function computeSqueezeTimerFromHistory(opts: {
     direction,
     confidence,
     method: 'bollinger_squeeze_history',
+    entrySignal,
+    postExplosion,
     debug: {
       thresholdBandWidth: Math.round(thresholdBandWidth * 100) / 100,
       avgBandWidth: calibrationRaw.avgBandWidth,
@@ -847,15 +979,7 @@ function computeSqueezeTimerFromHistory(opts: {
       historicalSamples: completedDurations.length,
       barsInCurrentSqueeze: barsInCurrent,
     },
-    calibration: {
-      dynamicThreshold: Math.round(thresholdBandWidth * 100) / 100,
-      ratioUsed: calibrationRaw.ratioUsed,
-      windowDays,
-      avgBandWidth: calibrationRaw.avgBandWidth,
-      minBandWidth: calibrationRaw.minBandWidth,
-      maxBandWidth: calibrationRaw.maxBandWidth,
-      samples: calibrationRaw.calibrationSamples,
-    },
+    calibration,
   };
 }
 
@@ -1379,6 +1503,9 @@ serve(async (req) => {
       volumeSpike: volumeData.spike,
       fallbackBaseSeconds: (timeframe === '15m' ? 60 : timeframe === '30m' ? 120 : 240) * 60,
       direction: timerDirection,
+      cvdStatus,
+      rsi,
+      signalType,
     });
 
     const recentCandles = klines.slice(-10).map((k: any[]) => {
