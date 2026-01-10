@@ -8,17 +8,15 @@ const corsHeaders = {
 interface AccumulationZone {
   detected: boolean;
   type: 'institutional_buy' | 'institutional_sell' | 'none';
-  strength: number; // 0-100
+  strength: number;
   reasons: string[];
-  breakoutProbability: number; // 0-100
+  breakoutProbability: number;
   expectedDirection: 'up' | 'down' | 'unknown';
-  // NEW: Real-time metrics
-  volumeRatio: number; // Current volume vs average
-  priceRange: number; // Price range %
-  compressionLevel: number; // Volatility compression level
+  volumeRatio: number;
+  priceRange: number;
+  compressionLevel: number;
 }
 
-// Explosion phase: countdown → active → ended/new
 type ExplosionPhase = 'countdown' | 'active' | 'ended' | 'none';
 
 interface ExplosionState {
@@ -28,19 +26,17 @@ interface ExplosionState {
   expectedExplosionAt: string | null;
   expectedDurationSeconds: number | null;
   direction: 'up' | 'down' | 'unknown';
-  confidence: number; // 0-100
+  confidence: number;
   method: 'bollinger_squeeze_history' | 'none';
-  // Entry signal when explosion is active
   entrySignal?: {
     canEnter: boolean;
     direction: 'BUY' | 'SELL' | 'WAIT';
     reasons: string[];
     urgency: 'critical' | 'high' | 'medium' | 'low';
   };
-  // Post-explosion status
   postExplosion?: {
     stillValid: boolean;
-    elapsedSinceExplosion: number; // seconds
+    elapsedSinceExplosion: number;
     priceMovedPercent: number;
     volumeConfirmed: boolean;
     breakoutConfirmed: boolean;
@@ -77,17 +73,15 @@ interface MarketAnalysis {
   cvdStatus: 'rising' | 'falling' | 'flat';
   isValidSetup: boolean;
   signalType: 'BUY' | 'SELL' | 'WAIT';
-  confidence: number; // 0-100
+  confidence: number;
   signalReasons: string[];
   priceChange: number;
   timestamp: string;
   dataSource: string;
-  // Accumulation Zone Detection
   accumulation: AccumulationZone;
   bollingerSqueeze: boolean;
   volumeSpike: boolean;
   priceConsolidation: boolean;
-  // NEW: Real data metrics for display
   realTimeMetrics: {
     avgVolume24h: number;
     currentVolume: number;
@@ -96,9 +90,7 @@ interface MarketAnalysis {
     priceRangePercent: number;
     bollingerWidth: number;
   };
-  // IMPROVED: Explosion state with phases
   explosionTimer: ExplosionState;
-  // Last candles (for transparency in UI)
   recentCandles?: Array<{
     time: string;
     open: number;
@@ -109,45 +101,85 @@ interface MarketAnalysis {
   }>;
 }
 
-// Map our app symbols to a supported Binance symbol (or null if unsupported)
-function getBinanceSymbol(symbol: string): string | null {
-  // Gold, commodities, and Forex should use different API
-  if (symbol === 'XAUUSD' || symbol === 'XAGUSD') return null;
-  // Forex pairs use Yahoo Finance
-  if (isForexPair(symbol)) return null;
-  if (symbol.endsWith('USDT')) return symbol;
+// ============= LIVE MARKET DATA APIs =============
+
+// Fetch real-time gold price from multiple sources
+async function fetchGoldPriceLive(): Promise<{ price: number; change: number; source: string } | null> {
+  const sources = [
+    { name: 'Yahoo Finance', fetch: fetchYahooGold },
+    { name: 'Metals.live', fetch: fetchMetalsLive },
+  ];
+
+  for (const source of sources) {
+    try {
+      const result = await source.fetch();
+      if (result) {
+        console.log(`Gold price from ${source.name}: $${result.price}`);
+        return { ...result, source: source.name };
+      }
+    } catch (e) {
+      console.error(`${source.name} failed:`, e);
+    }
+  }
   return null;
 }
 
-// Check if symbol is a Forex pair
-function isForexPair(symbol: string): boolean {
-  const forexPairs = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'EURGBP', 'EURJPY', 'GBPJPY'];
-  return forexPairs.includes(symbol);
-}
+async function fetchYahooGold(): Promise<{ price: number; change: number } | null> {
+  const tickers = ['GC=F', 'XAUUSD=X'];
+  
+  for (const ticker of tickers) {
+    try {
+      const response = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1m&range=1d`,
+        { headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' } }
+      );
 
-// Map Forex symbol to Yahoo Finance ticker
-function getYahooForexTicker(symbol: string): string {
-  // Yahoo Finance uses format like EURUSD=X
-  return `${symbol}=X`;
-}
-
-// Fetch Forex price from Yahoo Finance
-async function fetchForexPrice(symbol: string): Promise<
-  { price: number; change: number; sourceLabel: string } | null
-> {
-  const ticker = getYahooForexTicker(symbol);
-  const sourceLabel = `Yahoo Finance (${symbol})`;
-
-  // Primary: chart endpoint
-  try {
-    const response = await fetch(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1m&range=1d`,
-      {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0'
+      if (response.ok) {
+        const data = await response.json();
+        const meta = data.chart?.result?.[0]?.meta;
+        if (meta?.regularMarketPrice) {
+          const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
+          return {
+            price: meta.regularMarketPrice,
+            change: prevClose ? ((meta.regularMarketPrice - prevClose) / prevClose) * 100 : 0,
+          };
         }
       }
+    } catch (e) {
+      console.error(`Yahoo ${ticker} error:`, e);
+    }
+  }
+  return null;
+}
+
+async function fetchMetalsLive(): Promise<{ price: number; change: number } | null> {
+  try {
+    const response = await fetch('https://api.metals.live/v1/spot/gold', {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return { price: data[0].price, change: 0 };
+      }
+    }
+  } catch (e) {
+    console.error('Metals.live error:', e);
+  }
+  return null;
+}
+
+// Fetch real-time forex prices
+async function fetchForexPriceLive(symbol: string): Promise<{ price: number; change: number; source: string } | null> {
+  const base = symbol.slice(0, 3);
+  const quote = symbol.slice(3, 6);
+
+  // Try Yahoo Finance first
+  try {
+    const ticker = `${symbol}=X`;
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1m&range=1d`,
+      { headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' } }
     );
 
     if (response.ok) {
@@ -155,89 +187,80 @@ async function fetchForexPrice(symbol: string): Promise<
       const meta = data.chart?.result?.[0]?.meta;
       if (meta?.regularMarketPrice) {
         const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
-        const change = prevClose
-          ? ((meta.regularMarketPrice - prevClose) / prevClose) * 100
-          : 0;
-
+        console.log(`Forex ${symbol} from Yahoo: ${meta.regularMarketPrice}`);
         return {
           price: meta.regularMarketPrice,
-          change,
-          sourceLabel,
+          change: prevClose ? ((meta.regularMarketPrice - prevClose) / prevClose) * 100 : 0,
+          source: `Yahoo Finance (${symbol})`,
         };
       }
     }
-  } catch (error) {
-    console.error('Yahoo Finance forex chart fetch error:', error);
+  } catch (e) {
+    console.error('Yahoo Forex error:', e);
   }
 
-  // Fallback: quoteSummary endpoint
+  // Fallback to Frankfurter
   try {
-    const response = await fetch(
-      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=price`,
-      {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0'
-        }
-      }
-    );
-
+    const response = await fetch(`https://api.frankfurter.app/latest?from=${base}&to=${quote}`);
     if (response.ok) {
       const data = await response.json();
-      const price = data.quoteSummary?.result?.[0]?.price;
-      const rawPrice = price?.regularMarketPrice?.raw;
-      const rawChangePct = price?.regularMarketChangePercent?.raw;
-
-      if (typeof rawPrice === 'number') {
-        let change = 0;
-        if (typeof rawChangePct === 'number') {
-          change = Math.abs(rawChangePct) <= 1 ? rawChangePct * 100 : rawChangePct;
-        }
-        return { price: rawPrice, change, sourceLabel };
+      if (data.rates?.[quote]) {
+        return { price: data.rates[quote], change: 0, source: 'Frankfurter API' };
       }
     }
-  } catch (error) {
-    console.error('Yahoo Finance forex quoteSummary fetch error:', error);
+  } catch (e) {
+    console.error('Frankfurter error:', e);
   }
 
   return null;
 }
 
-// Fetch Forex klines from Yahoo Finance
-async function fetchForexKlines(symbol: string, timeframe: string): Promise<any[]> {
-  const ticker = getYahooForexTicker(symbol);
+// Fetch real-time crypto prices from Binance
+async function fetchCryptoPriceLive(symbol: string): Promise<{ price: number; change: number; source: string } | null> {
+  const binanceSymbol = symbol.endsWith('USDT') ? symbol : `${symbol.replace('USD', '')}USDT`;
+  
+  try {
+    const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${binanceSymbol}`);
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        price: parseFloat(data.lastPrice),
+        change: parseFloat(data.priceChangePercent),
+        source: `Binance (${binanceSymbol})`,
+      };
+    }
+  } catch (e) {
+    console.error('Binance error:', e);
+  }
+  return null;
+}
 
-  // Map timeframe to Yahoo Finance interval
+// Fetch klines with pagination for historical data
+async function fetchKlinesLive(symbol: string, timeframe: string, targetBars: number): Promise<any[]> {
+  const isGold = symbol === 'XAUUSD';
+  const isForex = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'EURGBP', 'EURJPY', 'GBPJPY'].includes(symbol);
+  
+  if (isGold) {
+    return await fetchYahooKlines('GC=F', timeframe, targetBars);
+  } else if (isForex) {
+    return await fetchYahooKlines(`${symbol}=X`, timeframe, targetBars);
+  } else {
+    return await fetchBinanceKlines(symbol.endsWith('USDT') ? symbol : `${symbol.replace('USD', '')}USDT`, timeframe, targetBars);
+  }
+}
+
+async function fetchYahooKlines(ticker: string, timeframe: string, targetBars: number): Promise<any[]> {
   const intervalMap: Record<string, string> = {
-    '1m': '1m',
-    '5m': '5m',
-    '15m': '15m',
-    '30m': '30m',
-    '1h': '60m',
-    '2h': '60m',
-    '4h': '60m', // Yahoo doesn't support 4h, use 1h
-    '1d': '1d',
+    '1m': '1m', '5m': '5m', '15m': '15m', '30m': '30m',
+    '1h': '60m', '2h': '60m', '4h': '60m', '1d': '1d',
   };
-
   const interval = intervalMap[timeframe] || '15m';
-
-  // We need as close to 30 days as possible for auto-calibration.
-  // Note: Yahoo limits very small intervals; we still try to request a 30d window where supported.
-  const range = (() => {
-    if (interval === '1d') return '1y';
-    if (interval === '1m') return '7d';
-    return '30d';
-  })();
+  const range = interval === '1d' ? '1y' : interval === '1m' ? '7d' : '60d';
 
   try {
     const response = await fetch(
       `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${interval}&range=${range}`,
-      {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0',
-        },
-      }
+      { headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' } }
     );
 
     if (response.ok) {
@@ -248,212 +271,81 @@ async function fetchForexKlines(symbol: string, timeframe: string): Promise<any[
         const quotes = result.indicators?.quote?.[0] || {};
         const { open, high, low, close, volume } = quotes;
 
-        // Convert to Binance-like kline format for compatibility
         const klines: any[] = [];
         for (let i = 0; i < timestamps.length; i++) {
           if (open?.[i] != null && high?.[i] != null && low?.[i] != null && close?.[i] != null) {
             klines.push([
-              timestamps[i] * 1000, // Open time
+              timestamps[i] * 1000,
               String(open[i]),
               String(high[i]),
               String(low[i]),
               String(close[i]),
-              String(volume?.[i] ?? 1000000), // Volume (often missing for forex)
+              String(volume?.[i] ?? 1000000),
             ]);
           }
         }
-        return klines;
+        console.log(`Yahoo klines for ${ticker}: ${klines.length} bars`);
+        return klines.slice(-targetBars);
       }
     }
-  } catch (error) {
-    console.error('Yahoo Finance forex klines fetch error:', error);
+  } catch (e) {
+    console.error('Yahoo klines error:', e);
   }
-
   return [];
 }
 
-// Fetch gold price from Yahoo Finance (spot or futures)
-type GoldPriceSource = 'spot' | 'futures';
-
-async function fetchGoldPrice(source: GoldPriceSource = 'spot'): Promise<
-  { price: number; change: number; sourceLabel: string } | null
-> {
-  const ticker = source === 'spot' ? 'XAUUSD=X' : 'GC=F';
-  const sourceLabel = source === 'spot'
-    ? 'Yahoo Finance (Gold Spot XAUUSD=X)'
-    : 'Yahoo Finance (Gold Futures GC=F)';
-
-  // Primary: chart endpoint (lets us compute % change reliably)
-  try {
-    const response = await fetch(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1m&range=1d`,
-      {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0'
-        }
-      }
-    );
-
-    if (response.ok) {
-      const data = await response.json();
-      const meta = data.chart?.result?.[0]?.meta;
-      if (meta?.regularMarketPrice) {
-        const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
-        const change = prevClose
-          ? ((meta.regularMarketPrice - prevClose) / prevClose) * 100
-          : 0;
-
-        return {
-          price: meta.regularMarketPrice,
-          change,
-          sourceLabel,
-        };
-      }
-    }
-  } catch (error) {
-    console.error('Yahoo Finance gold chart fetch error:', error);
-  }
-
-  // Fallback: quoteSummary endpoint
-  try {
-    const response = await fetch(
-      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=price`,
-      {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0'
-        }
-      }
-    );
-
-    if (response.ok) {
-      const data = await response.json();
-      const price = data.quoteSummary?.result?.[0]?.price;
-      const rawPrice = price?.regularMarketPrice?.raw;
-      const rawChangePct = price?.regularMarketChangePercent?.raw;
-
-      if (typeof rawPrice === 'number') {
-        let change = 0;
-        if (typeof rawChangePct === 'number') {
-          // Yahoo can return either 0.23 (percent) or 0.0023 (fraction). Normalize.
-          change = Math.abs(rawChangePct) <= 1 ? rawChangePct * 100 : rawChangePct;
-        }
-        return { price: rawPrice, change, sourceLabel };
-      }
-    }
-  } catch (error) {
-    console.error('Yahoo Finance gold quoteSummary fetch error:', error);
-  }
-
-  // Last resort: try futures if spot failed (or vice versa)
-  if (source === 'spot') return await fetchGoldPrice('futures');
-
-  return null;
-}
-
-// Fetch price from Binance API with retry
-async function fetchBinancePrice(symbol: string, retries = 3): Promise<number | null> {
-  const binanceSymbol = getBinanceSymbol(symbol);
-  if (!binanceSymbol) return null;
-
-  for (let attempt = 0; attempt < retries; attempt++) {
-    try {
-      if (attempt > 0) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-      }
-
-      const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`, {
-        headers: { 'Accept': 'application/json' }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return parseFloat(data.price);
-      }
-
-      if (response.status === 429) {
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        continue;
-      }
-    } catch (error) {
-      console.error(`Binance fetch error (attempt ${attempt + 1}):`, error);
-    }
-  }
-
-  return null;
-}
-
-// Fetch enough klines to support "last 30 days" calibration (Binance max 1000 per request).
-async function fetchBinanceKlinesHistory(opts: {
-  symbol: string;
-  interval: string;
-  targetBars: number;
-}): Promise<any[]> {
-  const { symbol, interval } = opts;
-  const target = Math.min(5000, Math.max(250, Math.floor(opts.targetBars)));
-
+async function fetchBinanceKlines(symbol: string, timeframe: string, targetBars: number): Promise<any[]> {
   const collected: any[] = [];
   let endTime = Date.now();
+  const limit = Math.min(1000, targetBars);
 
-  for (let attempt = 0; attempt < 10 && collected.length < target; attempt++) {
-    const resp = await fetch(
-      `https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(symbol)}&interval=${encodeURIComponent(interval)}&limit=1000&endTime=${endTime}`,
-      { headers: { 'Accept': 'application/json' } }
-    );
+  for (let attempt = 0; attempt < 10 && collected.length < targetBars; attempt++) {
+    try {
+      const response = await fetch(
+        `https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(symbol)}&interval=${timeframe}&limit=${limit}&endTime=${endTime}`
+      );
 
-    if (!resp.ok) break;
+      if (!response.ok) break;
+      const chunk = await response.json();
+      if (!Array.isArray(chunk) || chunk.length === 0) break;
 
-    const chunk = await resp.json();
-    if (!Array.isArray(chunk) || chunk.length === 0) break;
-
-    // Prepend older chunk
-    collected.unshift(...chunk);
-
-    // Move window back
-    endTime = Number(chunk[0][0]) - 1;
+      collected.unshift(...chunk);
+      endTime = Number(chunk[0][0]) - 1;
+    } catch (e) {
+      console.error('Binance klines error:', e);
+      break;
+    }
   }
 
-  // Deduplicate by open time, sort, and take the latest target bars
   const uniq = new Map<number, any[]>();
-  for (const k of collected) {
-    uniq.set(Number(k[0]), k);
-  }
+  for (const k of collected) uniq.set(Number(k[0]), k);
   const sorted = [...uniq.values()].sort((a, b) => Number(a[0]) - Number(b[0]));
-  return sorted.slice(-target);
+  console.log(`Binance klines for ${symbol}: ${sorted.length} bars`);
+  return sorted.slice(-targetBars);
 }
-// Calculate EMA
+
+// ============= TECHNICAL INDICATORS =============
+
 function calculateEMA(prices: number[], period: number): number {
   if (prices.length < period) return prices[prices.length - 1] || 0;
-  
   const multiplier = 2 / (period + 1);
   let ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-  
   for (let i = period; i < prices.length; i++) {
     ema = (prices[i] - ema) * multiplier + ema;
   }
-  
   return ema;
 }
 
-// Calculate RSI
 function calculateRSI(prices: number[], period: number = 14): number {
   if (prices.length < period + 1) return 50;
-  
-  let gains = 0;
-  let losses = 0;
-  
-  // Calculate initial average gain/loss
+  let gains = 0, losses = 0;
   for (let i = 1; i <= period; i++) {
     const change = prices[i] - prices[i - 1];
     if (change > 0) gains += change;
     else losses += Math.abs(change);
   }
-  
   let avgGain = gains / period;
   let avgLoss = losses / period;
-  
-  // Calculate smoothed RSI
   for (let i = period + 1; i < prices.length; i++) {
     const change = prices[i] - prices[i - 1];
     if (change > 0) {
@@ -464,101 +356,78 @@ function calculateRSI(prices: number[], period: number = 14): number {
       avgLoss = (avgLoss * (period - 1) + Math.abs(change)) / period;
     }
   }
-  
   if (avgLoss === 0) return 100;
-  const rs = avgGain / avgLoss;
-  return 100 - (100 / (1 + rs));
+  return 100 - (100 / (1 + avgGain / avgLoss));
 }
 
-// Calculate MACD
 function calculateMACD(prices: number[]): { macd: number; signal: number; histogram: number } {
   const ema12 = calculateEMA(prices, 12);
   const ema26 = calculateEMA(prices, 26);
   const macdLine = ema12 - ema26;
-  
-  // Calculate signal line (9-period EMA of MACD)
   const macdValues: number[] = [];
   for (let i = 26; i < prices.length; i++) {
     const ema12_i = calculateEMA(prices.slice(0, i + 1), 12);
     const ema26_i = calculateEMA(prices.slice(0, i + 1), 26);
     macdValues.push(ema12_i - ema26_i);
   }
-  
   const signalLine = macdValues.length >= 9 ? calculateEMA(macdValues, 9) : macdLine;
-  const histogram = macdLine - signalLine;
-  
-  return { macd: macdLine, signal: signalLine, histogram };
+  return { macd: macdLine, signal: signalLine, histogram: macdLine - signalLine };
 }
 
-// Calculate VWAP
 function calculateVWAP(klines: any[]): number {
   if (klines.length === 0) return 0;
-  
-  let cumulativeTPV = 0;
-  let cumulativeVolume = 0;
-  
+  let cumulativeTPV = 0, cumulativeVolume = 0;
   for (const k of klines) {
     const high = parseFloat(k[2]);
     const low = parseFloat(k[3]);
     const close = parseFloat(k[4]);
     const volume = parseFloat(k[5]);
-    
     const typicalPrice = (high + low + close) / 3;
     cumulativeTPV += typicalPrice * volume;
     cumulativeVolume += volume;
   }
-  
   return cumulativeVolume > 0 ? cumulativeTPV / cumulativeVolume : 0;
 }
 
-// Analyze short-term trend
 function analyzeShortTermTrend(klines: any[]): { trend: 'bullish' | 'bearish' | 'neutral'; priceChange: number } {
   if (klines.length < 10) return { trend: 'neutral', priceChange: 0 };
-  
   const recentKlines = klines.slice(-10);
   const firstClose = parseFloat(recentKlines[0][4]);
   const lastClose = parseFloat(recentKlines[recentKlines.length - 1][4]);
   const priceChange = ((lastClose - firstClose) / firstClose) * 100;
-  
-  let bullishCandles = 0;
-  let bearishCandles = 0;
-  
+
+  let bullishCandles = 0, bearishCandles = 0;
   for (const k of recentKlines) {
     const open = parseFloat(k[1]);
     const close = parseFloat(k[4]);
     if (close > open) bullishCandles++;
     else if (close < open) bearishCandles++;
   }
-  
+
   const highs = recentKlines.map(k => parseFloat(k[2]));
   const lows = recentKlines.map(k => parseFloat(k[3]));
-  
-  let higherHighs = 0;
-  let lowerLows = 0;
-  
+  let higherHighs = 0, lowerLows = 0;
   for (let i = 1; i < highs.length; i++) {
     if (highs[i] > highs[i - 1]) higherHighs++;
     if (lows[i] < lows[i - 1]) lowerLows++;
   }
-  
+
   const bullishScore = bullishCandles + higherHighs + (priceChange > 0.1 ? 2 : 0);
   const bearishScore = bearishCandles + lowerLows + (priceChange < -0.1 ? 2 : 0);
-  
+
   if (bullishScore > bearishScore + 3) return { trend: 'bullish', priceChange };
   if (bearishScore > bullishScore + 3) return { trend: 'bearish', priceChange };
   return { trend: 'neutral', priceChange };
 }
 
-// Analyze CVD
 function analyzeCVD(klines: any[]): 'rising' | 'falling' | 'flat' {
   if (klines.length < 20) return 'flat';
-  
   const recentKlines = klines.slice(-20);
   const recent10 = recentKlines.slice(-10);
   const older10 = recentKlines.slice(0, 10);
-  
+
   let recentBuy = 0, recentSell = 0, olderBuy = 0, olderSell = 0;
-  
+
   for (const k of recent10) {
     const high = parseFloat(k[2]);
     const low = parseFloat(k[3]);
@@ -570,7 +439,7 @@ function analyzeCVD(klines: any[]): 'rising' | 'falling' | 'flat' {
       recentSell += ((high - close) / range) * volume;
     }
   }
-  
+
   for (const k of older10) {
     const high = parseFloat(k[2]);
     const low = parseFloat(k[3]);
@@ -582,65 +451,95 @@ function analyzeCVD(klines: any[]): 'rising' | 'falling' | 'flat' {
       olderSell += ((high - close) / range) * volume;
     }
   }
-  
+
   const recentDelta = recentBuy - recentSell;
   const olderDelta = olderBuy - olderSell;
-  
+
   if (recentDelta > olderDelta * 1.15) return 'rising';
   if (recentDelta < olderDelta * 0.85) return 'falling';
   return 'flat';
 }
 
-// Calculate Bollinger Bands and detect squeeze
-function detectBollingerSqueeze(prices: number[], period: number = 20, stdMultiplier: number = 2): { squeeze: boolean; bandWidth: number } {
+function detectBollingerSqueeze(prices: number[], period: number = 20): { squeeze: boolean; bandWidth: number } {
   if (prices.length < period) return { squeeze: false, bandWidth: 0 };
-  
+
   const recentPrices = prices.slice(-period);
   const sma = recentPrices.reduce((a, b) => a + b, 0) / period;
-  const squaredDiffs = recentPrices.map(p => Math.pow(p - sma, 2));
-  const variance = squaredDiffs.reduce((a, b) => a + b, 0) / period;
+  const variance = recentPrices.reduce((sum, p) => sum + Math.pow(p - sma, 2), 0) / period;
   const stdDev = Math.sqrt(variance);
-  
-  const upperBand = sma + (stdDev * stdMultiplier);
-  const lowerBand = sma - (stdDev * stdMultiplier);
+
+  const upperBand = sma + stdDev * 2;
+  const lowerBand = sma - stdDev * 2;
   const bandWidth = ((upperBand - lowerBand) / sma) * 100;
-  
-  // Calculate historical band width to compare
+
   const historicalBandWidths: number[] = [];
   for (let i = period; i < prices.length; i++) {
     const histPrices = prices.slice(i - period, i);
     const histSma = histPrices.reduce((a, b) => a + b, 0) / period;
-    const histSquaredDiffs = histPrices.map(p => Math.pow(p - histSma, 2));
-    const histVariance = histSquaredDiffs.reduce((a, b) => a + b, 0) / period;
+    const histVariance = histPrices.reduce((sum, p) => sum + Math.pow(p - histSma, 2), 0) / period;
     const histStdDev = Math.sqrt(histVariance);
-    const histUpper = histSma + (histStdDev * stdMultiplier);
-    const histLower = histSma - (histStdDev * stdMultiplier);
-    historicalBandWidths.push(((histUpper - histLower) / histSma) * 100);
+    const histBandWidth = ((histSma + histStdDev * 2 - (histSma - histStdDev * 2)) / histSma) * 100;
+    historicalBandWidths.push(histBandWidth);
   }
-  
+
   if (historicalBandWidths.length < 10) return { squeeze: false, bandWidth };
-  
+
   const avgBandWidth = historicalBandWidths.reduce((a, b) => a + b, 0) / historicalBandWidths.length;
-  // Squeeze detected when current band width is significantly lower than average
   const squeeze = bandWidth < avgBandWidth * 0.6;
-  
+
   return { squeeze, bandWidth };
+}
+
+function detectVolumeSpike(klines: any[]): { spike: boolean; ratio: number; avgVolume: number; recentVolume: number } {
+  if (klines.length < 30) return { spike: false, ratio: 1, avgVolume: 0, recentVolume: 0 };
+
+  const recent5 = klines.slice(-5);
+  const older20 = klines.slice(-25, -5);
+
+  const recentAvgVolume = recent5.reduce((sum, k) => sum + parseFloat(k[5]), 0) / 5;
+  const olderAvgVolume = older20.reduce((sum, k) => sum + parseFloat(k[5]), 0) / 20;
+
+  const ratio = olderAvgVolume > 0 ? recentAvgVolume / olderAvgVolume : 1;
+  const spike = ratio > 2.0;
+
+  return { spike, ratio: Math.round(ratio * 100) / 100, avgVolume: Math.round(olderAvgVolume), recentVolume: Math.round(recentAvgVolume) };
+}
+
+function detectPriceConsolidation(klines: any[]): { consolidation: boolean; rangePercent: number; compressionRatio: number } {
+  if (klines.length < 30) return { consolidation: false, rangePercent: 0, compressionRatio: 1 };
+
+  const recent20 = klines.slice(-20);
+  const older20 = klines.slice(-40, -20);
+  const highs = recent20.map(k => parseFloat(k[2]));
+  const lows = recent20.map(k => parseFloat(k[3]));
+
+  const highestHigh = Math.max(...highs);
+  const lowestLow = Math.min(...lows);
+  const midPrice = (highestHigh + lowestLow) / 2;
+  const rangePercent = ((highestHigh - lowestLow) / midPrice) * 100;
+
+  let recentATR = 0;
+  for (const k of recent20) {
+    recentATR += parseFloat(k[2]) - parseFloat(k[3]);
+  }
+  recentATR /= recent20.length;
+
+  let olderATR = 0;
+  for (const k of older20) {
+    olderATR += parseFloat(k[2]) - parseFloat(k[3]);
+  }
+  olderATR /= older20.length;
+
+  const compressionRatio = olderATR > 0 ? recentATR / olderATR : 1;
+  const consolidation = rangePercent < 1.2 && compressionRatio < 0.6;
+
+  return { consolidation, rangePercent: Math.round(rangePercent * 100) / 100, compressionRatio: Math.round(compressionRatio * 100) / 100 };
 }
 
 function timeframeToSeconds(timeframe: string): number {
   const map: Record<string, number> = {
-    '1m': 60,
-    '3m': 180,
-    '5m': 300,
-    '15m': 900,
-    '30m': 1800,
-    '1h': 3600,
-    '2h': 7200,
-    '4h': 14400,
-    '6h': 21600,
-    '8h': 28800,
-    '12h': 43200,
-    '1d': 86400,
+    '1m': 60, '3m': 180, '5m': 300, '15m': 900, '30m': 1800,
+    '1h': 3600, '2h': 7200, '4h': 14400, '6h': 21600, '8h': 28800, '12h': 43200, '1d': 86400,
   };
   return map[timeframe] ?? 900;
 }
@@ -652,14 +551,10 @@ function median(values: number[]): number | null {
   return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
 }
 
-function calculateBandWidthSeries(
-  klines: any[],
-  period: number = 20,
-  stdMultiplier: number = 2
-): Array<{ time: number; bandWidth: number }> {
+function calculateBandWidthSeries(klines: any[], period: number = 20): Array<{ time: number; bandWidth: number }> {
   if (klines.length < period) return [];
-  const closes = klines.map((k) => parseFloat(k[4]));
-  const times = klines.map((k) => Number(k[0]));
+  const closes = klines.map(k => parseFloat(k[4]));
+  const times = klines.map(k => Number(k[0]));
 
   const series: Array<{ time: number; bandWidth: number }> = [];
   for (let i = period - 1; i < closes.length; i++) {
@@ -667,42 +562,23 @@ function calculateBandWidthSeries(
     const sma = window.reduce((a, b) => a + b, 0) / period;
     const variance = window.reduce((sum, p) => sum + Math.pow(p - sma, 2), 0) / period;
     const stdDev = Math.sqrt(variance);
-    const upper = sma + stdDev * stdMultiplier;
-    const lower = sma - stdDev * stdMultiplier;
+    const upper = sma + stdDev * 2;
+    const lower = sma - stdDev * 2;
     const bandWidth = sma > 0 ? ((upper - lower) / sma) * 100 : 0;
     series.push({ time: times[i], bandWidth });
   }
   return series;
 }
 
-// Auto-calibration: Calculate dynamic squeeze threshold based on last 30 days
-// User requirement: threshold = 0.6 * average Bollinger band width (last 30 days)
-function calculateDynamicSqueezeThreshold(bandWidths: number[]): {
-  threshold: number;
-  ratioUsed: number;
-  avgBandWidth: number;
-  minBandWidth: number;
-  maxBandWidth: number;
-  calibrationSamples: number;
-} {
+function calculateDynamicSqueezeThreshold(bandWidths: number[]) {
   const ratioUsed = 0.6;
-
   if (!bandWidths.length) {
-    return {
-      threshold: 1 * ratioUsed,
-      ratioUsed,
-      avgBandWidth: 1,
-      minBandWidth: 0,
-      maxBandWidth: 0,
-      calibrationSamples: 0,
-    };
+    return { threshold: ratioUsed, ratioUsed, avgBandWidth: 1, minBandWidth: 0, maxBandWidth: 0, calibrationSamples: 0 };
   }
 
   const avgBandWidth = bandWidths.reduce((a, b) => a + b, 0) / bandWidths.length;
   const minBandWidth = Math.min(...bandWidths);
   const maxBandWidth = Math.max(...bandWidths);
-
-  // Protect against pathological zero/NaN
   const safeAvg = Number.isFinite(avgBandWidth) && avgBandWidth > 0 ? avgBandWidth : 1;
 
   return {
@@ -715,23 +591,20 @@ function calculateDynamicSqueezeThreshold(bandWidths: number[]): {
   };
 }
 
-function computeSqueezeTimerFromHistory(opts: {
+function computeExplosionTimer(opts: {
   klines: any[];
   timeframe: string;
   latestBandWidth: number;
-  latestIsSqueeze: boolean;
   accumulation: AccumulationZone;
   volumeSpike: boolean;
-  fallbackBaseSeconds: number;
   direction: 'up' | 'down' | 'unknown';
-  // Additional context for entry signal
   cvdStatus: 'rising' | 'falling' | 'flat';
   rsi: number;
   signalType: 'BUY' | 'SELL' | 'WAIT';
 }): ExplosionState {
-  const { klines, timeframe, latestBandWidth, accumulation, volumeSpike, fallbackBaseSeconds, direction, cvdStatus, rsi, signalType } = opts;
+  const { klines, timeframe, latestBandWidth, accumulation, volumeSpike, direction, cvdStatus, rsi, signalType } = opts;
 
-  const series = calculateBandWidthSeries(klines, 20, 2);
+  const series = calculateBandWidthSeries(klines, 20);
   if (series.length < 15) {
     return {
       phase: 'none',
@@ -742,28 +615,19 @@ function computeSqueezeTimerFromHistory(opts: {
       direction,
       confidence: 0,
       method: 'none',
-      debug: {
-        thresholdBandWidth: 0,
-        avgBandWidth: 0,
-        currentBandWidth: latestBandWidth,
-        historicalSamples: 0,
-      },
+      debug: { thresholdBandWidth: 0, avgBandWidth: 0, currentBandWidth: latestBandWidth, historicalSamples: 0 },
     };
   }
 
   const barSeconds = timeframeToSeconds(timeframe);
-  const windowDays = 30;
-  const windowBars = Math.min(series.length, Math.ceil((windowDays * 86400) / barSeconds));
+  const windowBars = Math.min(series.length, Math.ceil((30 * 86400) / barSeconds));
   const windowSeries = series.slice(-windowBars);
 
-  // AUTO-CALIBRATION (30d): threshold = 0.6 * avg(bandWidth)
   const calibrationRaw = calculateDynamicSqueezeThreshold(windowSeries.map(s => s.bandWidth));
   const thresholdBandWidth = calibrationRaw.threshold;
 
-  // Build completed squeeze segments using threshold within the same 30d window
   const completedDurations: number[] = [];
-  let inSeg = false;
-  let segCount = 0;
+  let inSeg = false, segCount = 0;
 
   for (let i = 0; i < windowSeries.length; i++) {
     const below = windowSeries[i].bandWidth < thresholdBandWidth;
@@ -779,7 +643,6 @@ function computeSqueezeTimerFromHistory(opts: {
     }
   }
 
-  // Determine current segment start by walking backwards while below threshold
   const currentlyBelow = series[series.length - 1].bandWidth < thresholdBandWidth;
   let startTime = series[series.length - 1].time;
   let barsInCurrent = 1;
@@ -792,39 +655,26 @@ function computeSqueezeTimerFromHistory(opts: {
     }
   }
 
-  // Active squeeze requires at least 3 consecutive bars below threshold
   const squeezeActive = Boolean(currentlyBelow && barsInCurrent >= 3);
 
-  // Calculate expected duration from historical squeezes
   const expectedFromHistory = median(completedDurations);
-  const expectedDurationSecondsRaw = expectedFromHistory ?? fallbackBaseSeconds;
-  const expectedDurationSeconds = Math.min(
-    Math.max(expectedDurationSecondsRaw, barSeconds * 5),
-    barSeconds * 400
-  );
+  const fallbackSeconds = barSeconds * 15;
+  const expectedDurationSeconds = Math.min(Math.max(expectedFromHistory ?? fallbackSeconds, barSeconds * 5), barSeconds * 400);
 
   const now = Date.now();
   const expectedExplosionAtMs = startTime + expectedDurationSeconds * 1000;
   const remainingSeconds = Math.max(0, Math.floor((expectedExplosionAtMs - now) / 1000));
 
-  // Determine phase
   let phase: ExplosionPhase = 'none';
   if (squeezeActive && remainingSeconds > 0) {
     phase = 'countdown';
   } else if (squeezeActive && remainingSeconds <= 0) {
-    // Explosion time passed but still in squeeze - check if breakout conditions met
     phase = 'active';
   } else if (!squeezeActive && barsInCurrent < 3) {
-    // Just exited squeeze - check if explosion is still valid
     const timeSinceSqueezeEnd = (now - series[series.length - 1].time) / 1000;
-    if (timeSinceSqueezeEnd < barSeconds * 5) {
-      phase = 'active'; // Still in post-explosion window
-    } else {
-      phase = 'ended';
-    }
+    phase = timeSinceSqueezeEnd < barSeconds * 5 ? 'active' : 'ended';
   }
 
-  // Confidence calculation
   let confidence = 40;
   if (latestBandWidth > 0 && thresholdBandWidth > 0) {
     const ratio = latestBandWidth / thresholdBandWidth;
@@ -833,11 +683,10 @@ function computeSqueezeTimerFromHistory(opts: {
     if (ratio < 0.6) confidence += 15;
   }
   if (accumulation?.detected) confidence += 15;
-  if (typeof accumulation?.breakoutProbability === 'number') confidence += Math.min(15, Math.floor(accumulation.breakoutProbability / 10));
+  if (accumulation?.breakoutProbability) confidence += Math.min(15, Math.floor(accumulation.breakoutProbability / 10));
   if (volumeSpike) confidence += 10;
   confidence = Math.max(0, Math.min(100, Math.round(confidence)));
 
-  // Entry signal generation (when phase is countdown or active)
   let entrySignal: ExplosionState['entrySignal'] = undefined;
   if (phase === 'countdown' || phase === 'active') {
     const entryReasons: string[] = [];
@@ -845,21 +694,19 @@ function computeSqueezeTimerFromHistory(opts: {
     let entryDirection: 'BUY' | 'SELL' | 'WAIT' = 'WAIT';
     let urgency: 'critical' | 'high' | 'medium' | 'low' = 'low';
 
-    // Check entry conditions based on additional factors
     const volumeConfirmed = volumeSpike;
     const cvdConfirmed = (direction === 'up' && cvdStatus === 'rising') || (direction === 'down' && cvdStatus === 'falling');
     const rsiConfirmed = (direction === 'up' && rsi < 70) || (direction === 'down' && rsi > 30);
     const accumulationStrong = accumulation?.strength >= 50;
 
     if (phase === 'active') {
-      // Explosion time reached - check breakout conditions
       if (volumeConfirmed && cvdConfirmed) {
         canEnter = true;
         entryDirection = direction === 'up' ? 'BUY' : direction === 'down' ? 'SELL' : signalType;
         urgency = 'critical';
         entryReasons.push('🔥 انفجار سعري نشط الآن!');
-        entryReasons.push('✅ تأكيد الحجم: ارتفاع قوي في الحجم');
-        entryReasons.push('✅ تأكيد التدفق: ' + (cvdStatus === 'rising' ? 'تدفق شراء' : 'تدفق بيع'));
+        entryReasons.push('✅ تأكيد الحجم: ارتفاع قوي');
+        entryReasons.push('✅ تأكيد التدفق: ' + (cvdStatus === 'rising' ? 'شراء' : 'بيع'));
       } else if (volumeConfirmed || cvdConfirmed) {
         canEnter = true;
         entryDirection = direction === 'up' ? 'BUY' : direction === 'down' ? 'SELL' : signalType;
@@ -867,57 +714,46 @@ function computeSqueezeTimerFromHistory(opts: {
         entryReasons.push('⚡ انفجار سعري - تأكيد جزئي');
         if (volumeConfirmed) entryReasons.push('✅ تأكيد الحجم');
         if (cvdConfirmed) entryReasons.push('✅ تأكيد التدفق');
-        if (!volumeConfirmed) entryReasons.push('⚠️ انتظر تأكيد الحجم للأمان');
       } else {
         canEnter = false;
         entryDirection = 'WAIT';
         urgency = 'medium';
-        entryReasons.push('⏳ انفجار متوقع - انتظر تأكيد الحجم أو التدفق');
+        entryReasons.push('⏳ انفجار متوقع - انتظر تأكيد');
       }
     } else if (phase === 'countdown') {
-      // Still counting down
       if (remainingSeconds < 120) {
         urgency = 'critical';
         entryReasons.push('🔥 انفجار وشيك خلال دقيقتين!');
         if (accumulationStrong) {
           canEnter = true;
           entryDirection = direction === 'up' ? 'BUY' : direction === 'down' ? 'SELL' : 'WAIT';
-          entryReasons.push('✅ تجميع مؤسسي قوي - يمكن الدخول المبكر');
+          entryReasons.push('✅ تجميع مؤسسي قوي');
         }
       } else if (remainingSeconds < 300) {
         urgency = 'high';
-        entryReasons.push('⚡ انفجار قريب - استعد للدخول');
+        entryReasons.push('⚡ انفجار قريب - استعد');
       } else if (remainingSeconds < 600) {
         urgency = 'medium';
-        entryReasons.push('⏳ ضغط سعري نشط - راقب السوق');
+        entryReasons.push('⏳ ضغط سعري نشط');
       } else {
         urgency = 'low';
-        entryReasons.push('📊 تجميع سعري - انتظر اقتراب موعد الانفجار');
+        entryReasons.push('📊 تجميع سعري - انتظر');
       }
 
-      if (rsiConfirmed) entryReasons.push(`📈 RSI مناسب للدخول (${rsi.toFixed(0)})`);
-      if (cvdConfirmed) entryReasons.push(`💚 تدفق ${cvdStatus === 'rising' ? 'شراء' : 'بيع'} يدعم الاتجاه`);
+      if (rsiConfirmed) entryReasons.push(`📈 RSI مناسب (${rsi.toFixed(0)})`);
+      if (cvdConfirmed) entryReasons.push(`💚 تدفق ${cvdStatus === 'rising' ? 'شراء' : 'بيع'}`);
     }
 
-    entrySignal = {
-      canEnter,
-      direction: entryDirection,
-      reasons: entryReasons,
-      urgency,
-    };
+    entrySignal = { canEnter, direction: entryDirection, reasons: entryReasons, urgency };
   }
 
-  // Post-explosion status (when phase is active or ended)
   let postExplosion: ExplosionState['postExplosion'] = undefined;
   if (phase === 'active' || phase === 'ended') {
     const elapsedSinceExplosion = Math.max(0, Math.floor((now - expectedExplosionAtMs) / 1000));
-    
-    // Calculate price movement since squeeze start
     const priceAtStart = klines.length > barsInCurrent ? parseFloat(klines[klines.length - barsInCurrent][4]) : 0;
     const currentPrice = parseFloat(klines[klines.length - 1][4]);
     const priceMovedPercent = priceAtStart > 0 ? ((currentPrice - priceAtStart) / priceAtStart) * 100 : 0;
-    
-    const breakoutConfirmed = Math.abs(priceMovedPercent) > 0.3; // Significant move
+    const breakoutConfirmed = Math.abs(priceMovedPercent) > 0.3;
     const stillValid = phase === 'active' && (volumeSpike || breakoutConfirmed);
 
     postExplosion = {
@@ -932,7 +768,7 @@ function computeSqueezeTimerFromHistory(opts: {
   const calibration = {
     dynamicThreshold: Math.round(thresholdBandWidth * 100) / 100,
     ratioUsed: calibrationRaw.ratioUsed,
-    windowDays,
+    windowDays: 30,
     avgBandWidth: calibrationRaw.avgBandWidth,
     minBandWidth: calibrationRaw.minBandWidth,
     maxBandWidth: calibrationRaw.maxBandWidth,
@@ -983,74 +819,6 @@ function computeSqueezeTimerFromHistory(opts: {
   };
 }
 
-
-// Detect volume spike (institutional activity) - IMPROVED with real volume analysis
-function detectVolumeSpike(klines: any[]): { spike: boolean; ratio: number; avgVolume: number; recentVolume: number } {
-  if (klines.length < 30) return { spike: false, ratio: 1, avgVolume: 0, recentVolume: 0 };
-  
-  const volumes = klines.map(k => parseFloat(k[5]));
-  const recent5Volumes = volumes.slice(-5);
-  const older25Volumes = volumes.slice(-30, -5);
-  
-  const recentAvgVolume = recent5Volumes.reduce((a, b) => a + b, 0) / 5;
-  const olderAvgVolume = older25Volumes.reduce((a, b) => a + b, 0) / 25;
-  
-  const ratio = olderAvgVolume > 0 ? recentAvgVolume / olderAvgVolume : 1;
-  // Volume spike detected when recent volume is significantly higher (2x or more)
-  const spike = ratio > 2.0;
-  
-  return { spike, ratio: Math.round(ratio * 100) / 100, avgVolume: Math.round(olderAvgVolume), recentVolume: Math.round(recentAvgVolume) };
-}
-
-// Detect price consolidation (tight range) - IMPROVED with ATR comparison
-function detectPriceConsolidation(klines: any[]): { consolidation: boolean; rangePercent: number; atrPercent: number; compressionRatio: number } {
-  if (klines.length < 30) return { consolidation: false, rangePercent: 0, atrPercent: 0, compressionRatio: 1 };
-  
-  const recent20 = klines.slice(-20);
-  const older20 = klines.slice(-40, -20);
-  const highs = recent20.map(k => parseFloat(k[2]));
-  const lows = recent20.map(k => parseFloat(k[3]));
-  
-  const highestHigh = Math.max(...highs);
-  const lowestLow = Math.min(...lows);
-  const midPrice = (highestHigh + lowestLow) / 2;
-  const rangePercent = ((highestHigh - lowestLow) / midPrice) * 100;
-  
-  // Calculate ATR for recent 20 candles
-  let atrSum = 0;
-  for (const k of recent20) {
-    const high = parseFloat(k[2]);
-    const low = parseFloat(k[3]);
-    atrSum += high - low;
-  }
-  const recentATR = atrSum / recent20.length;
-  
-  // Calculate ATR for older 20 candles
-  let olderAtrSum = 0;
-  for (const k of older20) {
-    const high = parseFloat(k[2]);
-    const low = parseFloat(k[3]);
-    olderAtrSum += high - low;
-  }
-  const olderATR = olderAtrSum / older20.length;
-  
-  const atrPercent = (recentATR / midPrice) * 100;
-  const compressionRatio = olderATR > 0 ? recentATR / olderATR : 1;
-  
-  // Consolidation detected when:
-  // 1. Price range is tight (< 1.2%)
-  // 2. AND ATR compression (current ATR < 60% of historical ATR)
-  const consolidation = rangePercent < 1.2 && compressionRatio < 0.6;
-  
-  return { 
-    consolidation, 
-    rangePercent: Math.round(rangePercent * 100) / 100, 
-    atrPercent: Math.round(atrPercent * 100) / 100,
-    compressionRatio: Math.round(compressionRatio * 100) / 100
-  };
-}
-
-// IMPROVED: Detect institutional accumulation/distribution with real metrics
 function detectAccumulationZone(
   klines: any[],
   cvdStatus: string,
@@ -1062,75 +830,56 @@ function detectAccumulationZone(
   bandWidth: number
 ): AccumulationZone {
   const reasons: string[] = [];
-  let buySignals = 0;
-  let sellSignals = 0;
-  let strength = 0;
+  let buySignals = 0, sellSignals = 0, strength = 0;
 
-  const { spike: volumeSpike, ratio: volumeRatio, avgVolume, recentVolume } = volumeData;
-  const { consolidation: priceConsolidation, rangePercent, compressionRatio } = consolidationData;
-
-  // 1. Bollinger Squeeze - STRICT: real squeeze detection
   if (bollingerSqueeze && bandWidth < 2.0) {
     strength += 35;
-    reasons.push(`🔥 ضغط بولينجر شديد (${bandWidth.toFixed(1)}%) - انفجار وشيك`);
+    reasons.push(`🔥 ضغط بولينجر شديد (${bandWidth.toFixed(1)}%)`);
   } else if (bollingerSqueeze) {
     strength += 20;
     reasons.push(`📊 ضغط بولينجر (${bandWidth.toFixed(1)}%)`);
   }
 
-  // 2. Volume Analysis - REAL DATA
-  if (volumeSpike && priceConsolidation) {
+  if (volumeData.spike && consolidationData.consolidation) {
     strength += 40;
-    reasons.push(`📊 تجميع مؤسسي قوي (حجم ${volumeRatio}x مع سعر ثابت)`);
-  } else if (volumeSpike && volumeRatio > 2.5) {
+    reasons.push(`📊 تجميع مؤسسي قوي (حجم ${volumeData.ratio}x)`);
+  } else if (volumeData.spike && volumeData.ratio > 2.5) {
     strength += 25;
-    reasons.push(`📈 حجم استثنائي (${volumeRatio}x المتوسط)`);
-  } else if (volumeSpike) {
+    reasons.push(`📈 حجم استثنائي (${volumeData.ratio}x)`);
+  } else if (volumeData.spike) {
     strength += 15;
-    reasons.push(`📈 ارتفاع الحجم (${volumeRatio}x)`);
+    reasons.push(`📈 ارتفاع الحجم (${volumeData.ratio}x)`);
   }
 
-  // 3. Price Consolidation - ATR based
-  if (priceConsolidation && compressionRatio < 0.5) {
+  if (consolidationData.consolidation && consolidationData.compressionRatio < 0.5) {
     strength += 20;
-    reasons.push(`📍 ضغط سعري شديد (${rangePercent.toFixed(2)}%)`);
-  } else if (priceConsolidation) {
+    reasons.push(`📍 ضغط سعري شديد (${consolidationData.rangePercent.toFixed(2)}%)`);
+  } else if (consolidationData.consolidation) {
     strength += 10;
-    reasons.push(`📍 نطاق سعري ضيق (${rangePercent.toFixed(2)}%)`);
+    reasons.push(`📍 نطاق سعري ضيق`);
   }
 
-  // 4. CVD analysis for direction - IMPORTANT
   if (cvdStatus === 'rising') {
     buySignals += 3;
-    reasons.push('💚 تدفق شراء مؤسسي نشط');
+    reasons.push('💚 تدفق شراء مؤسسي');
   } else if (cvdStatus === 'falling') {
     sellSignals += 3;
-    reasons.push('🔴 تدفق بيع مؤسسي نشط');
+    reasons.push('🔴 تدفق بيع مؤسسي');
   }
 
-  // 5. RSI divergence with CVD confirmation
   if (rsi < 30 && cvdStatus === 'rising') {
     buySignals += 3;
     strength += 20;
-    reasons.push('⚡ تباعد إيجابي: RSI منخفض + شراء مؤسسي');
+    reasons.push('⚡ تباعد إيجابي');
   } else if (rsi > 70 && cvdStatus === 'falling') {
     sellSignals += 3;
     strength += 20;
-    reasons.push('⚡ تباعد سلبي: RSI مرتفع + بيع مؤسسي');
-  } else if (rsi < 35) {
-    reasons.push(`📉 RSI منخفض (${rsi.toFixed(0)})`);
-  } else if (rsi > 65) {
-    reasons.push(`📈 RSI مرتفع (${rsi.toFixed(0)})`);
+    reasons.push('⚡ تباعد سلبي');
   }
 
-  // 6. MACD momentum confirmation
-  if (macd.histogram > 0 && macd.macd > macd.signal) {
-    buySignals += 1;
-  } else if (macd.histogram < 0 && macd.macd < macd.signal) {
-    sellSignals += 1;
-  }
+  if (macd.histogram > 0 && macd.macd > macd.signal) buySignals += 1;
+  else if (macd.histogram < 0 && macd.macd < macd.signal) sellSignals += 1;
 
-  // Determine accumulation type - STRICT
   const detected = strength >= 45;
   let type: 'institutional_buy' | 'institutional_sell' | 'none' = 'none';
   let expectedDirection: 'up' | 'down' | 'unknown' = 'unknown';
@@ -1145,14 +894,11 @@ function detectAccumulationZone(
     }
   }
 
-  // Calculate breakout probability - MORE ACCURATE
   let breakoutProbability = 0;
   if (bollingerSqueeze && bandWidth < 2.0) breakoutProbability += 45;
   else if (bollingerSqueeze) breakoutProbability += 30;
-  
-  if (volumeSpike && priceConsolidation) breakoutProbability += 35;
-  else if (volumeSpike && volumeRatio > 2.5) breakoutProbability += 25;
-  
+  if (volumeData.spike && consolidationData.consolidation) breakoutProbability += 35;
+  else if (volumeData.spike && volumeData.ratio > 2.5) breakoutProbability += 25;
   if (cvdStatus !== 'flat') breakoutProbability += 10;
   if (Math.abs(buySignals - sellSignals) >= 3) breakoutProbability += 10;
 
@@ -1163,13 +909,12 @@ function detectAccumulationZone(
     reasons,
     breakoutProbability: Math.min(100, breakoutProbability),
     expectedDirection,
-    volumeRatio,
-    priceRange: rangePercent,
-    compressionLevel: compressionRatio
+    volumeRatio: volumeData.ratio,
+    priceRange: consolidationData.rangePercent,
+    compressionLevel: consolidationData.compressionRatio,
   };
 }
 
-// IMPROVED: Calculate signal confidence with stricter multi-confirmation logic
 function calculateSignalConfidence(
   trend: string,
   rsi: number,
@@ -1178,31 +923,22 @@ function calculateSignalConfidence(
   nearVWAP: boolean,
   priceAboveEMA: boolean,
   ema50?: number,
-  ema200?: number,
-  currentPrice?: number,
-  prevHistogram?: number
+  ema200?: number
 ): { confidence: number; signalType: 'BUY' | 'SELL' | 'WAIT'; reasons: string[] } {
   const reasons: string[] = [];
+  let buyConfirmations = 0, sellConfirmations = 0, conflictPenalty = 0;
 
-  // ========== MULTI-CONFIRMATION SYSTEM ==========
-  // Each confirmation adds to the signal. We require at least 3 aligned confirmations.
-  let buyConfirmations = 0;
-  let sellConfirmations = 0;
-  let conflictPenalty = 0;
-
-  // ----- 1. Higher Timeframe Trend Filter (EMA50 vs EMA200) -----
   const htfBullish = ema50 && ema200 && ema50 > ema200;
   const htfBearish = ema50 && ema200 && ema50 < ema200;
 
   if (htfBullish) {
     buyConfirmations += 1;
-    reasons.push('✅ الاتجاه العام صاعد (EMA50 > EMA200)');
+    reasons.push('✅ الاتجاه العام صاعد');
   } else if (htfBearish) {
     sellConfirmations += 1;
-    reasons.push('✅ الاتجاه العام هابط (EMA50 < EMA200)');
+    reasons.push('✅ الاتجاه العام هابط');
   }
 
-  // ----- 2. Short-Term Trend -----
   if (trend === 'bullish') {
     buyConfirmations += 1;
     reasons.push('✅ الاتجاه القصير صاعد');
@@ -1211,111 +947,68 @@ function calculateSignalConfidence(
     reasons.push('✅ الاتجاه القصير هابط');
   }
 
-  // ----- 3. RSI Confirmation (strict zones) -----
-  // BUY: RSI recovering from oversold (<35) but not extreme (<20 = wait for bounce)
-  // SELL: RSI dropping from overbought (>65) but not extreme (>80 = wait for pullback)
   if (rsi >= 20 && rsi < 35) {
     buyConfirmations += 1;
-    reasons.push('✅ RSI في منطقة ذروة البيع مع احتمال ارتداد');
+    reasons.push('✅ RSI ذروة بيع');
   } else if (rsi > 65 && rsi <= 80) {
     sellConfirmations += 1;
-    reasons.push('✅ RSI في منطقة ذروة الشراء مع احتمال تراجع');
-  } else if (rsi < 20) {
-    reasons.push('⚠️ RSI متطرف (ذروة بيع شديدة) - انتظر ارتداد');
+    reasons.push('✅ RSI ذروة شراء');
+  } else if (rsi < 20 || rsi > 80) {
     conflictPenalty += 1;
-  } else if (rsi > 80) {
-    reasons.push('⚠️ RSI متطرف (ذروة شراء شديدة) - انتظر تصحيح');
-    conflictPenalty += 1;
+    reasons.push('⚠️ RSI متطرف');
   }
 
-  // ----- 4. MACD Confirmation (crossover + momentum) -----
-  const macdBullishCross = macd.macd > macd.signal && macd.histogram > 0;
-  const macdBearishCross = macd.macd < macd.signal && macd.histogram < 0;
-  const histogramGrowing = prevHistogram !== undefined && Math.abs(macd.histogram) > Math.abs(prevHistogram);
-
-  if (macdBullishCross) {
+  if (macd.macd > macd.signal && macd.histogram > 0) {
     buyConfirmations += 1;
-    if (histogramGrowing && macd.histogram > 0) {
-      buyConfirmations += 0.5; // Extra weight for growing momentum
-      reasons.push('✅ MACD صاعد مع زخم متزايد');
-    } else {
-      reasons.push('✅ MACD متقاطع للأعلى');
-    }
-  } else if (macdBearishCross) {
+    reasons.push('✅ MACD صاعد');
+  } else if (macd.macd < macd.signal && macd.histogram < 0) {
     sellConfirmations += 1;
-    if (histogramGrowing && macd.histogram < 0) {
-      sellConfirmations += 0.5;
-      reasons.push('✅ MACD هابط مع زخم متزايد');
-    } else {
-      reasons.push('✅ MACD متقاطع للأسفل');
-    }
+    reasons.push('✅ MACD هابط');
   }
 
-  // ----- 5. CVD (Volume Delta) Confirmation -----
   if (cvdStatus === 'rising') {
     buyConfirmations += 1;
-    reasons.push('✅ ضغط شراء صافي متزايد');
+    reasons.push('✅ ضغط شراء');
   } else if (cvdStatus === 'falling') {
     sellConfirmations += 1;
-    reasons.push('✅ ضغط بيع صافي متزايد');
+    reasons.push('✅ ضغط بيع');
   }
 
-  // ----- 6. Price Position vs EMA200 -----
   if (priceAboveEMA) {
     buyConfirmations += 0.5;
-    reasons.push('📍 السعر فوق EMA200');
+    reasons.push('📍 فوق EMA200');
   } else {
     sellConfirmations += 0.5;
-    reasons.push('📍 السعر تحت EMA200');
+    reasons.push('📍 تحت EMA200');
   }
 
-  // ----- 7. VWAP Entry Quality -----
-  if (nearVWAP) {
-    reasons.push('📍 السعر قريب من VWAP (نقطة دخول جيدة)');
-    // Good entry zone, slight bonus
-    buyConfirmations += 0.25;
-    sellConfirmations += 0.25;
-  }
+  if (nearVWAP) reasons.push('📍 قريب من VWAP');
 
-  // ========== CONFLICT DETECTION ==========
-  // Penalize when signals are mixed (e.g., bullish trend but RSI overbought)
   if (buyConfirmations > 0 && sellConfirmations > 0) {
     const mixRatio = Math.min(buyConfirmations, sellConfirmations) / Math.max(buyConfirmations, sellConfirmations);
     if (mixRatio > 0.5) {
       conflictPenalty += 1;
-      reasons.push('⚠️ إشارات متضاربة - توخّ الحذر');
+      reasons.push('⚠️ إشارات متضاربة');
     }
   }
 
-  // ========== FINAL DECISION ==========
-  const netBuy = buyConfirmations - (sellConfirmations * 0.3) - conflictPenalty;
-  const netSell = sellConfirmations - (buyConfirmations * 0.3) - conflictPenalty;
+  const netBuy = buyConfirmations - sellConfirmations * 0.3 - conflictPenalty;
+  const netSell = sellConfirmations - buyConfirmations * 0.3 - conflictPenalty;
 
-  // Calculate confidence (0-100)
-  const maxConfirmations = 5.25; // theoretical max
-  const rawConfidence = (Math.max(netBuy, netSell) / maxConfirmations) * 100;
+  const rawConfidence = (Math.max(netBuy, netSell) / 5.25) * 100;
   const confidence = Math.min(100, Math.max(0, Math.round(rawConfidence)));
 
-  // STRICT ENTRY RULES:
-  // - Need at least 3 aligned confirmations
-  // - Net score must be >= 2.5 (clear direction)
-  // - No high conflict penalty
-  const minConfirmationsRequired = 3;
-  const minNetScore = 2.5;
-
-  if (netBuy >= minNetScore && buyConfirmations >= minConfirmationsRequired && conflictPenalty < 2) {
+  if (netBuy >= 2.5 && buyConfirmations >= 3 && conflictPenalty < 2) {
     reasons.unshift('🟢 إشارة شراء مؤكدة');
     return { confidence: Math.max(60, confidence), signalType: 'BUY', reasons };
   }
 
-  if (netSell >= minNetScore && sellConfirmations >= minConfirmationsRequired && conflictPenalty < 2) {
+  if (netSell >= 2.5 && sellConfirmations >= 3 && conflictPenalty < 2) {
     reasons.unshift('🔴 إشارة بيع مؤكدة');
     return { confidence: Math.max(60, confidence), signalType: 'SELL', reasons };
   }
 
-  // Not enough confirmations or conflicting signals
-  reasons.unshift('⏳ انتظر تأكيد أوضح');
-  reasons.push(`تأكيدات الشراء: ${buyConfirmations.toFixed(1)} | البيع: ${sellConfirmations.toFixed(1)}`);
+  reasons.unshift('⏳ انتظر تأكيد');
   return { confidence: Math.min(50, confidence), signalType: 'WAIT', reasons };
 }
 
@@ -1325,7 +1018,7 @@ serve(async (req) => {
   }
 
   try {
-    const { symbol = 'XAUUSD', timeframe = '15m', priceSource } = await req.json();
+    const { symbol = 'XAUUSD', timeframe = '15m' } = await req.json();
 
     const allowedIntervals = new Set(['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '8h', '12h', '1d']);
     if (!allowedIntervals.has(timeframe)) {
@@ -1335,79 +1028,57 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Analyzing ${symbol} on ${timeframe} timeframe`);
+    console.log(`🔴 LIVE Analysis: ${symbol} on ${timeframe}`);
 
     let currentPrice: number | null = null;
     let priceChangePercent = 0;
     let dataSource = '';
-    let klines: any[] = [];
 
-    // For accuracy, pull enough candles to calibrate on ~30 days.
-    const barSeconds = timeframeToSeconds(timeframe);
-    const targetBars = Math.min(5000, Math.max(300, Math.ceil((30 * 86400) / barSeconds) + 250));
+    const isGold = symbol === 'XAUUSD';
+    const isForex = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'EURGBP', 'EURJPY', 'GBPJPY'].includes(symbol);
 
-    // Handle Gold (XAUUSD) separately using Yahoo Finance
-    if (symbol === 'XAUUSD') {
-      const goldSource: GoldPriceSource = priceSource === 'futures' ? 'futures' : 'spot';
-      const goldData = await fetchGoldPrice(goldSource);
+    // Fetch LIVE price
+    if (isGold) {
+      const goldData = await fetchGoldPriceLive();
       if (goldData) {
         currentPrice = goldData.price;
         priceChangePercent = goldData.change;
-        dataSource = goldData.sourceLabel;
+        dataSource = goldData.source;
       }
-
-      // Fetch klines from PAXG as technical indicator proxy (not for price)
-      klines = await fetchBinanceKlinesHistory({
-        symbol: 'PAXGUSDT',
-        interval: timeframe,
-        targetBars,
-      });
-    } else if (isForexPair(symbol)) {
-      // Handle Forex pairs using Yahoo Finance
-      console.log(`Fetching Forex data for ${symbol}`);
-      const forexData = await fetchForexPrice(symbol);
+    } else if (isForex) {
+      const forexData = await fetchForexPriceLive(symbol);
       if (forexData) {
         currentPrice = forexData.price;
         priceChangePercent = forexData.change;
-        dataSource = forexData.sourceLabel;
+        dataSource = forexData.source;
       }
-
-      // Fetch klines from Yahoo Finance (tries to use ~30d)
-      klines = await fetchForexKlines(symbol, timeframe);
-      console.log(`Fetched ${klines.length} klines for ${symbol}`);
     } else {
-      // For crypto, use Binance
-      const binanceSymbol = getBinanceSymbol(symbol);
-      if (!binanceSymbol) {
-        return new Response(
-          JSON.stringify({
-            error: 'هذا الرمز غير مدعوم حالياً في Smart Recovery',
-            supported: ['XAUUSD', 'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD', 'EURGBP', 'EURJPY', 'GBPJPY', '*USDT'],
-          }),
-          {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
+      const cryptoData = await fetchCryptoPriceLive(symbol);
+      if (cryptoData) {
+        currentPrice = cryptoData.price;
+        priceChangePercent = cryptoData.change;
+        dataSource = cryptoData.source;
       }
-
-      currentPrice = await fetchBinancePrice(symbol);
-      dataSource = binanceSymbol;
-
-      klines = await fetchBinanceKlinesHistory({
-        symbol: binanceSymbol,
-        interval: timeframe,
-        targetBars,
-      });
     }
 
     if (!currentPrice) {
-      throw new Error('Could not fetch current price');
+      throw new Error('فشل في جلب السعر الحالي');
     }
 
-    const closePrices = klines.map((k: any[]) => parseFloat(k[4]));
+    // Fetch LIVE klines
+    const barSeconds = timeframeToSeconds(timeframe);
+    const targetBars = Math.min(5000, Math.max(300, Math.ceil((30 * 86400) / barSeconds) + 250));
+    const klines = await fetchKlinesLive(symbol, timeframe, targetBars);
 
-    // Calculate all indicators
+    if (klines.length < 50) {
+      throw new Error('بيانات غير كافية للتحليل');
+    }
+
+    console.log(`📊 Fetched ${klines.length} live bars for ${symbol}`);
+
+    const closePrices = klines.map(k => parseFloat(k[4]));
+
+    // Calculate indicators
     const ema50 = calculateEMA(closePrices, 50);
     const ema200 = calculateEMA(closePrices, 200);
     const vwap = calculateVWAP(klines.slice(-50));
@@ -1416,111 +1087,51 @@ serve(async (req) => {
     const cvdStatus = analyzeCVD(klines);
     const shortTermAnalysis = analyzeShortTermTrend(klines);
 
-    // Calculate previous MACD histogram for momentum detection
-    let prevHistogram: number | undefined;
-    if (closePrices.length > 10) {
-      const prevMacd = calculateMACD(closePrices.slice(0, -5));
-      prevHistogram = prevMacd.histogram;
-    }
-
-    // Accumulation detection - with REAL DATA
     const bollingerResult = detectBollingerSqueeze(closePrices);
     const volumeData = detectVolumeSpike(klines);
     const consolidationData = detectPriceConsolidation(klines);
 
-    // Calibrated squeeze threshold (last 30 days): threshold = 0.6 × average band width
-    const bwSeries = calculateBandWidthSeries(klines, 20, 2);
-    // reuse barSeconds from line 1222
+    const bwSeries = calculateBandWidthSeries(klines, 20);
     const windowBars = Math.min(bwSeries.length, Math.ceil((30 * 86400) / barSeconds));
     const calibration = calculateDynamicSqueezeThreshold(bwSeries.slice(-windowBars).map(s => s.bandWidth));
     const calibratedSqueeze = bollingerResult.bandWidth > 0 && bollingerResult.bandWidth < calibration.threshold;
 
-    const accumulation = detectAccumulationZone(
-      klines,
-      cvdStatus,
-      calibratedSqueeze,
-      volumeData,
-      consolidationData,
-      rsi,
-      macd,
-      bollingerResult.bandWidth
-    );
+    const accumulation = detectAccumulationZone(klines, cvdStatus, calibratedSqueeze, volumeData, consolidationData, rsi, macd, bollingerResult.bandWidth);
 
     const priceAboveEMA = currentPrice > ema200;
-    const trend = shortTermAnalysis.trend;
-    
     const vwapDistance = Math.abs((currentPrice - vwap) / vwap) * 100;
     const nearVWAP = vwapDistance <= 0.8;
 
-    // Calculate confidence-based signal with improved multi-confirmation
     const { confidence, signalType, reasons } = calculateSignalConfidence(
-      trend,
-      rsi,
-      macd,
-      cvdStatus,
-      nearVWAP,
-      priceAboveEMA,
-      ema50,
-      ema200,
-      currentPrice,
-      prevHistogram
+      shortTermAnalysis.trend, rsi, macd, cvdStatus, nearVWAP, priceAboveEMA, ema50, ema200
     );
 
-    const isValidSetup = signalType !== 'WAIT' && confidence >= 60;
-
-    // Calculate real-time metrics for display
-    const realTimeMetrics = {
-      avgVolume24h: volumeData.avgVolume,
-      currentVolume: volumeData.recentVolume,
-      volumeChangePercent: Math.round((volumeData.ratio - 1) * 100),
-      volatilityIndex: Math.round(consolidationData.compressionRatio * 100),
-      priceRangePercent: consolidationData.rangePercent,
-      bollingerWidth: Math.round(bollingerResult.bandWidth * 100) / 100,
-    };
-
-    // Direction used by the explosion timer (always try to provide one)
-    const timerDirection: 'up' | 'down' | 'unknown' =
-      accumulation.expectedDirection !== 'unknown'
-        ? accumulation.expectedDirection
-        : signalType === 'BUY'
-          ? 'up'
-          : signalType === 'SELL'
-            ? 'down'
-            : trend === 'bullish'
-              ? 'up'
-              : trend === 'bearish'
-                ? 'down'
-                : 'unknown';
-
-    // A timer computed from the market's OWN recent squeeze history.
-    // This will not reset on page refresh because it is anchored to kline timestamps.
-    const explosionTimer = computeSqueezeTimerFromHistory({
+    const explosionTimer = computeExplosionTimer({
       klines,
       timeframe,
       latestBandWidth: bollingerResult.bandWidth,
-      latestIsSqueeze: calibratedSqueeze,
       accumulation,
       volumeSpike: volumeData.spike,
-      fallbackBaseSeconds: (timeframe === '15m' ? 60 : timeframe === '30m' ? 120 : 240) * 60,
-      direction: timerDirection,
+      direction: accumulation.expectedDirection,
       cvdStatus,
       rsi,
       signalType,
     });
 
-    const recentCandles = klines.slice(-10).map((k: any[]) => {
+    // Recent candles
+    const recentKlines = klines.slice(-5);
+    const recentCandles = recentKlines.map(k => {
       const open = parseFloat(k[1]);
+      const high = parseFloat(k[2]);
+      const low = parseFloat(k[3]);
       const close = parseFloat(k[4]);
-      const direction: 'bull' | 'bear' | 'doji' =
-        close > open ? 'bull' : close < open ? 'bear' : 'doji';
-      return {
-        time: new Date(Number(k[0])).toISOString(),
-        open,
-        high: parseFloat(k[2]),
-        low: parseFloat(k[3]),
-        close,
-        direction,
-      };
+      let direction: 'bull' | 'bear' | 'doji' = 'doji';
+      const body = Math.abs(close - open);
+      const range = high - low;
+      if (range > 0 && body / range < 0.1) direction = 'doji';
+      else if (close > open) direction = 'bull';
+      else if (close < open) direction = 'bear';
+      return { time: new Date(Number(k[0])).toISOString(), open, high, low, close, direction };
     });
 
     const analysis: MarketAnalysis = {
@@ -1530,38 +1141,43 @@ serve(async (req) => {
       vwap,
       rsi,
       macd,
-      trend,
+      trend: shortTermAnalysis.trend,
       shortTermTrend: shortTermAnalysis.trend,
       priceAboveEMA,
       nearVWAP,
       cvdStatus,
-      isValidSetup,
+      isValidSetup: signalType !== 'WAIT',
       signalType,
       confidence,
       signalReasons: reasons,
-      priceChange: symbol === 'XAUUSD' ? priceChangePercent : shortTermAnalysis.priceChange,
+      priceChange: priceChangePercent,
       timestamp: new Date().toISOString(),
-      dataSource,
-      // Accumulation zone data
+      dataSource: `🔴 LIVE: ${dataSource}`,
       accumulation,
       bollingerSqueeze: calibratedSqueeze,
       volumeSpike: volumeData.spike,
       priceConsolidation: consolidationData.consolidation,
-      realTimeMetrics,
+      realTimeMetrics: {
+        avgVolume24h: volumeData.avgVolume,
+        currentVolume: volumeData.recentVolume,
+        volumeChangePercent: (volumeData.ratio - 1) * 100,
+        volatilityIndex: Math.round(bollingerResult.bandWidth * 10) / 10,
+        priceRangePercent: consolidationData.rangePercent,
+        bollingerWidth: Math.round(bollingerResult.bandWidth * 100) / 100,
+      },
       explosionTimer,
       recentCandles,
     };
 
-    console.log('Analysis result:', analysis);
+    console.log(`✅ Analysis complete: ${signalType} (${confidence}%)`);
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Analysis error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    console.error('❌ Error:', error);
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'حدث خطأ' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
