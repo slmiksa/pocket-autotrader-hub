@@ -5,6 +5,17 @@ import ReactMarkdown from 'react-markdown';
 interface AnalysisResultProps {
   analysis: string | any;
 }
+// Helper function to extract JSON from markdown code blocks
+const extractJsonFromMarkdown = (text: string): string => {
+  // Match ```json ... ``` or ``` ... ```
+  const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)```/;
+  const match = text.match(codeBlockRegex);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  return text;
+};
+
 export const AnalysisResult = ({
   analysis
 }: AnalysisResultProps) => {
@@ -15,56 +26,63 @@ export const AnalysisResult = ({
     data = analysis;
   } else {
     try {
+      // First try direct parse
       data = JSON.parse(analysis);
     } catch {
-      // If not JSON, display as formatted markdown text
-      return <Card className="bg-card border-border">
-        <CardContent className="p-6">
-          <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{
-            fontSize: '15px',
-            lineHeight: '1.8',
-            textAlign: 'right'
-          }}>
-            <ReactMarkdown components={{
-              h1: ({
-                children
-              }) => <h1 className="text-2xl font-bold mt-6 mb-4 text-foreground">{children}</h1>,
-              h2: ({
-                children
-              }) => <h2 className="text-xl font-bold mt-6 mb-3 text-foreground">{children}</h2>,
-              h3: ({
-                children
-              }) => <h3 className="text-lg font-semibold mt-4 mb-2 text-foreground">{children}</h3>,
-              p: ({
-                children
-              }) => <p className="mb-3 text-foreground">{children}</p>,
-              ul: ({
-                children
-              }) => <ul className="list-disc pr-6 mb-4 space-y-2">{children}</ul>,
-              ol: ({
-                children
-              }) => <ol className="list-decimal pr-6 mb-4 space-y-2">{children}</ol>,
-              li: ({
-                children
-              }) => <li className="text-foreground">{children}</li>,
-              strong: ({
-                children
-              }) => <strong className="font-bold text-primary">{children}</strong>,
-              em: ({
-                children
-              }) => <em className="italic text-foreground">{children}</em>,
-              blockquote: ({
-                children
-              }) => <blockquote className="border-r-4 border-primary pr-4 py-2 my-4 bg-muted/50 rounded">{children}</blockquote>,
-              code: ({
-                children
-              }) => <code className="bg-muted px-2 py-1 rounded text-sm">{children}</code>
+      try {
+        // Try extracting JSON from markdown code blocks
+        const extractedJson = extractJsonFromMarkdown(analysis);
+        data = JSON.parse(extractedJson);
+      } catch {
+        // If still not JSON, display as formatted markdown text
+        return <Card className="bg-card border-border">
+          <CardContent className="p-6">
+            <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{
+              fontSize: '15px',
+              lineHeight: '1.8',
+              textAlign: 'right'
             }}>
-              {analysis}
-            </ReactMarkdown>
-          </div>
-        </CardContent>
-      </Card>;
+              <ReactMarkdown components={{
+                h1: ({
+                  children
+                }) => <h1 className="text-2xl font-bold mt-6 mb-4 text-foreground">{children}</h1>,
+                h2: ({
+                  children
+                }) => <h2 className="text-xl font-bold mt-6 mb-3 text-foreground">{children}</h2>,
+                h3: ({
+                  children
+                }) => <h3 className="text-lg font-semibold mt-4 mb-2 text-foreground">{children}</h3>,
+                p: ({
+                  children
+                }) => <p className="mb-3 text-foreground">{children}</p>,
+                ul: ({
+                  children
+                }) => <ul className="list-disc pr-6 mb-4 space-y-2">{children}</ul>,
+                ol: ({
+                  children
+                }) => <ol className="list-decimal pr-6 mb-4 space-y-2">{children}</ol>,
+                li: ({
+                  children
+                }) => <li className="text-foreground">{children}</li>,
+                strong: ({
+                  children
+                }) => <strong className="font-bold text-primary">{children}</strong>,
+                em: ({
+                  children
+                }) => <em className="italic text-foreground">{children}</em>,
+                blockquote: ({
+                  children
+                }) => <blockquote className="border-r-4 border-primary pr-4 py-2 my-4 bg-muted/50 rounded">{children}</blockquote>,
+                code: ({
+                  children
+                }) => <code className="bg-muted px-2 py-1 rounded text-sm">{children}</code>
+              }}>
+                {analysis}
+              </ReactMarkdown>
+            </div>
+          </CardContent>
+        </Card>;
+      }
     }
   }
   const isUpDirection = data.direction?.includes('شراء') || data.direction?.includes('CALL') || data.direction?.toUpperCase().includes('BUY');
