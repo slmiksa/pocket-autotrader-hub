@@ -16,6 +16,11 @@ interface Zone {
   lower_price: number;
   strength_score: number;
   candle_index: number;
+  distance_percent?: number;
+  grade?: string;
+  touches?: number;
+  freshness?: string;
+  volume_confirmation?: boolean;
 }
 interface TradeSetup {
   type: "BUY" | "SELL";
@@ -24,6 +29,20 @@ interface TradeSetup {
   takeProfit1: number;
   takeProfit2: number;
   reason: string;
+  grade?: string;
+  confidence?: string;
+  riskReward?: string;
+  volumeConfirmed?: boolean;
+  touches?: number;
+  priceActionConfirmation?: boolean;
+}
+interface AnalysisStats {
+  totalCandles: number;
+  atr: string;
+  avgVolume: number;
+  aPlusSupplyZones: number;
+  aPlusDemandZones: number;
+  lastUpdated: string;
 }
 const SupplyDemandAnalyzer = () => {
   const navigate = useNavigate();
@@ -47,6 +66,10 @@ const SupplyDemandAnalyzer = () => {
   const [imageAnalysis, setImageAnalysis] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+  const [trendStrength, setTrendStrength] = useState<number>(0);
+  const [trendDescription, setTrendDescription] = useState<string>("");
+  const [dataSource, setDataSource] = useState<string>("");
+  const [stats, setStats] = useState<AnalysisStats | null>(null);
   
   const marketOptions = [{
     value: "forex",
@@ -523,13 +546,17 @@ const SupplyDemandAnalyzer = () => {
         setSupplyZones(data.supplyZones || []);
         setDemandZones(data.demandZones || []);
         setTrend(data.trend || "");
+        setTrendStrength(data.trendStrength || 0);
+        setTrendDescription(data.trendDescription || "");
         setTradeSetup(data.tradeSetup || null);
         setSignalStatus(data.signalStatus || "WAITING");
         setCurrentPrice(data.currentPrice || 0);
+        setDataSource(data.dataSource || "");
+        setStats(data.stats || null);
         setAnalysisComplete(true);
         toast({
           title: "✅ تم التحليل بنجاح",
-          description: `تم تحليل ${symbol} على إطار ${timeframe}`
+          description: `🔴 بيانات حية - ${symbol} على إطار ${timeframe}`
         });
       } else {
         throw new Error(data.message || "فشل التحليل");
@@ -883,13 +910,25 @@ const SupplyDemandAnalyzer = () => {
               </Card>
             )}
 
+            {/* Live Data Badge */}
+            {dataSource && (
+              <div className="flex items-center justify-center gap-2 p-2 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <span className="animate-pulse w-2 h-2 bg-red-500 rounded-full"></span>
+                <span className="text-red-400 font-semibold">{dataSource} بيانات لحظية من السوق</span>
+                {stats?.lastUpdated && (
+                  <span className="text-white/40 text-sm">| آخر تحديث: {new Date(stats.lastUpdated).toLocaleTimeString('ar-SA')}</span>
+                )}
+              </div>
+            )}
+
             {/* Overview Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <Card className="p-4 bg-[#111827] border border-white/10 rounded-xl">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white/50">الاتجاه</p>
                     <p className="text-lg font-bold text-white">{trend || "غير محدد"}</p>
+                    {trendStrength > 0 && <p className="text-xs text-white/40">قوة: {trendStrength}%</p>}
                   </div>
                   {getTrendIcon()}
                 </div>
@@ -899,19 +938,27 @@ const SupplyDemandAnalyzer = () => {
                 <div>
                   <p className="text-sm text-white/50">السعر الحالي</p>
                   <p className="text-lg font-bold text-cyan-400">{currentPrice > 0 ? currentPrice.toFixed(5) : "---"}</p>
+                  {stats?.atr && <p className="text-xs text-white/40">ATR: {stats.atr}</p>}
                 </div>
               </Card>
 
               <Card className="p-4 bg-[#111827] border border-white/10 rounded-xl">
-                <div className="flex justify-between">
-                  <div>
-                    <p className="text-sm text-white/50">مناطق العرض</p>
-                    <p className="text-lg font-bold text-red-400">{supplyZones.length}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-white/50">مناطق الطلب</p>
-                    <p className="text-lg font-bold text-green-400">{demandZones.length}</p>
-                  </div>
+                <div>
+                  <p className="text-sm text-white/50">مناطق العرض</p>
+                  <p className="text-lg font-bold text-red-400">{supplyZones.length}</p>
+                  {stats?.aPlusSupplyZones !== undefined && stats.aPlusSupplyZones > 0 && (
+                    <p className="text-xs text-yellow-400">⭐ {stats.aPlusSupplyZones} A+</p>
+                  )}
+                </div>
+              </Card>
+
+              <Card className="p-4 bg-[#111827] border border-white/10 rounded-xl">
+                <div>
+                  <p className="text-sm text-white/50">مناطق الطلب</p>
+                  <p className="text-lg font-bold text-green-400">{demandZones.length}</p>
+                  {stats?.aPlusDemandZones !== undefined && stats.aPlusDemandZones > 0 && (
+                    <p className="text-xs text-yellow-400">⭐ {stats.aPlusDemandZones} A+</p>
+                  )}
                 </div>
               </Card>
 
@@ -938,9 +985,12 @@ const SupplyDemandAnalyzer = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center p-3 bg-[#0f172a] rounded-lg">
                       <span className="text-white/60">نوع الصفقة</span>
-                      <Badge className={tradeSetup.type === "BUY" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>
-                        {tradeSetup.type === "BUY" ? "شراء" : "بيع"}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {tradeSetup.grade && <Badge className="bg-yellow-500/20 text-yellow-400">{tradeSetup.grade}</Badge>}
+                        <Badge className={tradeSetup.type === "BUY" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}>
+                          {tradeSetup.type === "BUY" ? "شراء" : "بيع"}
+                        </Badge>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-[#0f172a] rounded-lg">
                       <span className="text-white/60">نقطة الدخول</span>
@@ -950,6 +1000,12 @@ const SupplyDemandAnalyzer = () => {
                       <span className="text-white/60">وقف الخسارة</span>
                       <span className="font-bold text-red-400">{tradeSetup.stopLoss.toFixed(5)}</span>
                     </div>
+                    {tradeSetup.confidence && (
+                      <div className="flex justify-between items-center p-3 bg-[#0f172a] rounded-lg">
+                        <span className="text-white/60">مستوى الثقة</span>
+                        <span className="font-bold text-cyan-400">{tradeSetup.confidence}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center p-3 bg-[#0f172a] rounded-lg">
@@ -960,9 +1016,19 @@ const SupplyDemandAnalyzer = () => {
                       <span className="text-white/60">الهدف الثاني</span>
                       <span className="font-bold text-green-400">{tradeSetup.takeProfit2.toFixed(5)}</span>
                     </div>
+                    {tradeSetup.riskReward && (
+                      <div className="flex justify-between items-center p-3 bg-[#0f172a] rounded-lg">
+                        <span className="text-white/60">نسبة المخاطرة/العائد</span>
+                        <span className="font-bold text-purple-400">1:{tradeSetup.riskReward}</span>
+                      </div>
+                    )}
                     <div className="p-3 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
                       <p className="text-sm text-white/50 mb-1">السبب</p>
                       <p className="text-sm text-white/80">{tradeSetup.reason}</p>
+                      <div className="flex gap-2 mt-2 flex-wrap">
+                        {tradeSetup.volumeConfirmed && <Badge className="bg-blue-500/20 text-blue-400 text-xs">✓ حجم مؤكد</Badge>}
+                        {tradeSetup.priceActionConfirmation && <Badge className="bg-green-500/20 text-green-400 text-xs">✓ Price Action</Badge>}
+                      </div>
                     </div>
                   </div>
                 </div>
