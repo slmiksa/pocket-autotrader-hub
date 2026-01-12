@@ -1038,51 +1038,209 @@ const SupplyDemandAnalyzer = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Supply Zones */}
               <Card className="p-6 bg-[#111827] border border-red-500/20 rounded-xl">
-                <h3 className="text-xl font-bold mb-4 text-red-400">مناطق العرض (البيع)</h3>
-                <div className="space-y-3">
-                  {supplyZones.length === 0 ? <p className="text-white/50 text-center py-4">لم يتم العثور على مناطق عرض</p> : supplyZones.map((zone, idx) => <div key={idx} className="p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-white/60">منطقة {idx + 1}</span>
+                <h3 className="text-xl font-bold mb-4 text-red-400 flex items-center gap-2">
+                  <TrendingDown className="w-5 h-5" />
+                  مناطق العرض (البيع)
+                  {stats?.aPlusSupplyZones !== undefined && stats.aPlusSupplyZones > 0 && (
+                    <Badge className="bg-yellow-500/30 text-yellow-400 mr-2">⭐ {stats.aPlusSupplyZones} A+</Badge>
+                  )}
+                </h3>
+                <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                  {supplyZones.length === 0 ? (
+                    <p className="text-white/50 text-center py-4">لم يتم العثور على مناطق عرض</p>
+                  ) : (
+                    supplyZones.map((zone, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`p-4 rounded-lg border transition-all ${
+                          zone.grade === 'A+' 
+                            ? 'bg-gradient-to-r from-yellow-500/20 to-red-500/20 border-yellow-500/50 shadow-lg shadow-yellow-500/10' 
+                            : zone.grade === 'A'
+                            ? 'bg-gradient-to-r from-orange-500/15 to-red-500/15 border-orange-500/30'
+                            : 'bg-red-500/10 border-red-500/20'
+                        }`}
+                      >
+                        {/* Header Row */}
+                        <div className="flex justify-between items-center mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-white/60">منطقة {idx + 1}</span>
+                            {zone.grade && (
+                              <Badge className={`${
+                                zone.grade === 'A+' 
+                                  ? 'bg-yellow-500/30 text-yellow-300 animate-pulse' 
+                                  : zone.grade === 'A'
+                                  ? 'bg-orange-500/30 text-orange-300'
+                                  : zone.grade === 'B'
+                                  ? 'bg-blue-500/30 text-blue-300'
+                                  : 'bg-gray-500/30 text-gray-300'
+                              }`}>
+                                {zone.grade === 'A+' && '⭐ '}{zone.grade}
+                              </Badge>
+                            )}
+                          </div>
                           <Badge className="bg-red-500/20 text-red-400">
                             قوة: {zone.strength_score.toFixed(1)}
                           </Badge>
                         </div>
-                        <div className="mt-2 space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-white/50">الحد العلوي</span>
-                            <span className="font-mono text-white">{zone.upper_price.toFixed(5)}</span>
+                        
+                        {/* Price Range */}
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                          <div className="bg-black/20 rounded p-2">
+                            <span className="text-xs text-white/50 block">الحد العلوي</span>
+                            <span className="font-mono text-white text-sm">{zone.upper_price.toFixed(5)}</span>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-white/50">الحد السفلي</span>
-                            <span className="font-mono text-white">{zone.lower_price.toFixed(5)}</span>
+                          <div className="bg-black/20 rounded p-2">
+                            <span className="text-xs text-white/50 block">الحد السفلي</span>
+                            <span className="font-mono text-white text-sm">{zone.lower_price.toFixed(5)}</span>
                           </div>
                         </div>
-                      </div>)}
+                        
+                        {/* Zone Details */}
+                        <div className="flex flex-wrap gap-2">
+                          {zone.touches !== undefined && (
+                            <div className="flex items-center gap-1 bg-white/5 rounded-full px-2 py-1">
+                              <span className="text-xs text-white/50">اللمسات:</span>
+                              <span className={`text-xs font-bold ${
+                                zone.touches === 0 ? 'text-green-400' : 
+                                zone.touches === 1 ? 'text-yellow-400' : 'text-red-400'
+                              }`}>
+                                {zone.touches === 0 ? 'طازجة ✨' : zone.touches}
+                              </span>
+                            </div>
+                          )}
+                          {zone.freshness && (
+                            <div className="flex items-center gap-1 bg-white/5 rounded-full px-2 py-1">
+                              <span className="text-xs text-white/50">الحداثة:</span>
+                              <span className={`text-xs font-bold ${
+                                zone.freshness === 'fresh' ? 'text-green-400' : 
+                                zone.freshness === 'tested' ? 'text-yellow-400' : 'text-red-400'
+                              }`}>
+                                {zone.freshness === 'fresh' ? 'جديدة 🆕' : 
+                                 zone.freshness === 'tested' ? 'مختبرة 🔄' : 'قديمة ⏳'}
+                              </span>
+                            </div>
+                          )}
+                          {zone.volume_confirmation && (
+                            <div className="flex items-center gap-1 bg-blue-500/20 rounded-full px-2 py-1">
+                              <span className="text-xs text-blue-400">📊 حجم مؤكد</span>
+                            </div>
+                          )}
+                          {zone.distance_percent !== undefined && (
+                            <div className="flex items-center gap-1 bg-white/5 rounded-full px-2 py-1">
+                              <span className="text-xs text-white/50">المسافة:</span>
+                              <span className="text-xs font-bold text-cyan-400">
+                                {zone.distance_percent.toFixed(2)}%
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </Card>
 
               {/* Demand Zones */}
               <Card className="p-6 bg-[#111827] border border-green-500/20 rounded-xl">
-                <h3 className="text-xl font-bold mb-4 text-green-400">مناطق الطلب (الشراء)</h3>
-                <div className="space-y-3">
-                  {demandZones.length === 0 ? <p className="text-white/50 text-center py-4">لم يتم العثور على مناطق طلب</p> : demandZones.map((zone, idx) => <div key={idx} className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-white/60">منطقة {idx + 1}</span>
+                <h3 className="text-xl font-bold mb-4 text-green-400 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  مناطق الطلب (الشراء)
+                  {stats?.aPlusDemandZones !== undefined && stats.aPlusDemandZones > 0 && (
+                    <Badge className="bg-yellow-500/30 text-yellow-400 mr-2">⭐ {stats.aPlusDemandZones} A+</Badge>
+                  )}
+                </h3>
+                <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                  {demandZones.length === 0 ? (
+                    <p className="text-white/50 text-center py-4">لم يتم العثور على مناطق طلب</p>
+                  ) : (
+                    demandZones.map((zone, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`p-4 rounded-lg border transition-all ${
+                          zone.grade === 'A+' 
+                            ? 'bg-gradient-to-r from-yellow-500/20 to-green-500/20 border-yellow-500/50 shadow-lg shadow-yellow-500/10' 
+                            : zone.grade === 'A'
+                            ? 'bg-gradient-to-r from-emerald-500/15 to-green-500/15 border-emerald-500/30'
+                            : 'bg-green-500/10 border-green-500/20'
+                        }`}
+                      >
+                        {/* Header Row */}
+                        <div className="flex justify-between items-center mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-white/60">منطقة {idx + 1}</span>
+                            {zone.grade && (
+                              <Badge className={`${
+                                zone.grade === 'A+' 
+                                  ? 'bg-yellow-500/30 text-yellow-300 animate-pulse' 
+                                  : zone.grade === 'A'
+                                  ? 'bg-emerald-500/30 text-emerald-300'
+                                  : zone.grade === 'B'
+                                  ? 'bg-blue-500/30 text-blue-300'
+                                  : 'bg-gray-500/30 text-gray-300'
+                              }`}>
+                                {zone.grade === 'A+' && '⭐ '}{zone.grade}
+                              </Badge>
+                            )}
+                          </div>
                           <Badge className="bg-green-500/20 text-green-400">
                             قوة: {zone.strength_score.toFixed(1)}
                           </Badge>
                         </div>
-                        <div className="mt-2 space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-white/50">الحد العلوي</span>
-                            <span className="font-mono text-white">{zone.upper_price.toFixed(5)}</span>
+                        
+                        {/* Price Range */}
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                          <div className="bg-black/20 rounded p-2">
+                            <span className="text-xs text-white/50 block">الحد العلوي</span>
+                            <span className="font-mono text-white text-sm">{zone.upper_price.toFixed(5)}</span>
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-white/50">الحد السفلي</span>
-                            <span className="font-mono text-white">{zone.lower_price.toFixed(5)}</span>
+                          <div className="bg-black/20 rounded p-2">
+                            <span className="text-xs text-white/50 block">الحد السفلي</span>
+                            <span className="font-mono text-white text-sm">{zone.lower_price.toFixed(5)}</span>
                           </div>
                         </div>
-                      </div>)}
+                        
+                        {/* Zone Details */}
+                        <div className="flex flex-wrap gap-2">
+                          {zone.touches !== undefined && (
+                            <div className="flex items-center gap-1 bg-white/5 rounded-full px-2 py-1">
+                              <span className="text-xs text-white/50">اللمسات:</span>
+                              <span className={`text-xs font-bold ${
+                                zone.touches === 0 ? 'text-green-400' : 
+                                zone.touches === 1 ? 'text-yellow-400' : 'text-red-400'
+                              }`}>
+                                {zone.touches === 0 ? 'طازجة ✨' : zone.touches}
+                              </span>
+                            </div>
+                          )}
+                          {zone.freshness && (
+                            <div className="flex items-center gap-1 bg-white/5 rounded-full px-2 py-1">
+                              <span className="text-xs text-white/50">الحداثة:</span>
+                              <span className={`text-xs font-bold ${
+                                zone.freshness === 'fresh' ? 'text-green-400' : 
+                                zone.freshness === 'tested' ? 'text-yellow-400' : 'text-red-400'
+                              }`}>
+                                {zone.freshness === 'fresh' ? 'جديدة 🆕' : 
+                                 zone.freshness === 'tested' ? 'مختبرة 🔄' : 'قديمة ⏳'}
+                              </span>
+                            </div>
+                          )}
+                          {zone.volume_confirmation && (
+                            <div className="flex items-center gap-1 bg-blue-500/20 rounded-full px-2 py-1">
+                              <span className="text-xs text-blue-400">📊 حجم مؤكد</span>
+                            </div>
+                          )}
+                          {zone.distance_percent !== undefined && (
+                            <div className="flex items-center gap-1 bg-white/5 rounded-full px-2 py-1">
+                              <span className="text-xs text-white/50">المسافة:</span>
+                              <span className="text-xs font-bold text-cyan-400">
+                                {zone.distance_percent.toFixed(2)}%
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </Card>
             </div>
