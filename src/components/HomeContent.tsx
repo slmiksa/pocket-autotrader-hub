@@ -137,48 +137,69 @@ export const HomeContent = () => {
         loop: true,
         direction: "rtl"
       }}>
-            <CarouselContent>
+            <CarouselContent className="-ml-0">
               {heroSlides.map((slide, index) => {
             const SlideIcon = iconMap[slide.button_link] || Sparkles;
             const bgImage = slide.image_url || defaultImages[index % defaultImages.length];
             const gradient = gradientMap[slide.gradient_color] || gradientMap.primary;
-            return <CarouselItem key={slide.id}>
-                  <Card className="relative overflow-hidden border-0 min-h-[300px] md:min-h-[350px]">
-                    {/* Background Image */}
-                    <div className="absolute inset-0 bg-cover bg-center" style={{
+            return <CarouselItem key={slide.id} className="pl-0">
+                  <Card className="relative overflow-hidden border-0 rounded-2xl min-h-[280px] sm:min-h-[320px] md:min-h-[380px] shadow-2xl shadow-black/20">
+                    {/* Background Image with better scaling */}
+                    <div className="absolute inset-0 bg-cover bg-center scale-105 transition-transform duration-700 group-hover:scale-110" style={{
                   backgroundImage: `url(${bgImage})`
                 }} />
                     
-                    {/* Gradient Overlay */}
+                    {/* Multiple Gradient Overlays for depth */}
                     <div className={`absolute inset-0 bg-gradient-to-l ${gradient}`} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/70 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
                     
-                    <CardContent className="relative z-10 p-8 md:p-12 h-full flex items-center">
+                    {/* Animated particles effect */}
+                    <div className="absolute inset-0 overflow-hidden">
+                      <div className="absolute top-10 right-10 w-32 h-32 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+                      <div className="absolute bottom-10 left-10 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl animate-pulse delay-300" />
+                    </div>
+                    
+                    <CardContent className="relative z-10 p-6 sm:p-8 md:p-12 h-full flex items-center">
                       <div className="flex flex-col md:flex-row items-center justify-between gap-6 w-full">
                         <div className="text-center md:text-right space-y-4 flex-1">
-                          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-background/30 border border-white/20 backdrop-blur-sm">
-                            <SlideIcon className="h-5 w-5 text-primary" />
-                            <span className="text-sm font-medium text-foreground">منصة احترافية</span>
+                          {/* Badge with glow */}
+                          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 border border-primary/30 backdrop-blur-md shadow-lg shadow-primary/10">
+                            <SlideIcon className="h-5 w-5 text-primary animate-pulse" />
+                            <span className="text-sm font-semibold text-primary">منصة احترافية</span>
                           </div>
-                          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground drop-shadow-lg">
+                          
+                          {/* Title with text shadow */}
+                          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
                             {slide.title}
                           </h1>
-                          <p className="text-lg text-foreground/90 max-w-xl drop-shadow">
+                          
+                          {/* Subtitle */}
+                          <p className="text-base sm:text-lg text-foreground/90 max-w-xl leading-relaxed" style={{ textShadow: '0 1px 10px rgba(0,0,0,0.3)' }}>
                             {slide.subtitle}
                           </p>
-                          <Button size="lg" className="mt-4 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25" onClick={() => navigate(slide.button_link)}>
+                          
+                          {/* CTA Button with enhanced styling */}
+                          <Button size="lg" className="mt-4 gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-xl shadow-primary/30 transition-all duration-300 hover:scale-105 hover:shadow-primary/40" onClick={() => navigate(slide.button_link)}>
                             {slide.button_text}
-                            <ArrowUpRight className="h-4 w-4" />
+                            <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
                           </Button>
                         </div>
                         
-                        {/* Decorative Icon */}
+                        {/* Enhanced Decorative Icon */}
                         <div className="hidden md:flex items-center justify-center">
-                          <div className="relative">
-                            <div className="absolute inset-0 bg-primary/30 rounded-full blur-2xl animate-pulse" />
-                            <div className="relative w-28 h-28 rounded-full bg-background/30 border border-white/20 flex items-center justify-center backdrop-blur-sm">
-                              <SlideIcon className="h-14 w-14 text-primary" />
+                          <div className="relative group">
+                            {/* Multiple glow layers */}
+                            <div className="absolute inset-0 bg-primary/40 rounded-full blur-3xl animate-pulse scale-150" />
+                            <div className="absolute inset-0 bg-blue-500/30 rounded-full blur-2xl animate-pulse delay-150 scale-125" />
+                            
+                            {/* Main icon container */}
+                            <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-background/50 to-background/20 border-2 border-primary/40 flex items-center justify-center backdrop-blur-md shadow-2xl shadow-primary/20 transition-transform duration-500 hover:scale-110 hover:rotate-6">
+                              <SlideIcon className="h-16 w-16 text-primary drop-shadow-lg" />
                             </div>
+                            
+                            {/* Rotating ring */}
+                            <div className="absolute inset-[-8px] border-2 border-dashed border-primary/30 rounded-full animate-spin" style={{ animationDuration: '20s' }} />
                           </div>
                         </div>
                       </div>
@@ -188,10 +209,18 @@ export const HomeContent = () => {
           })}
           </CarouselContent>
           
-          {/* Custom Navigation */}
-          <div className="flex items-center justify-center gap-2 mt-4">
-            <CarouselPrevious className="relative inset-auto translate-y-0 bg-card/50 border-border/50 hover:bg-card backdrop-blur-sm" />
-            <CarouselNext className="relative inset-auto translate-y-0 bg-card/50 border-border/50 hover:bg-card backdrop-blur-sm" />
+          {/* Enhanced Navigation with dots */}
+          <div className="flex items-center justify-center gap-4 mt-6">
+            <CarouselPrevious className="relative inset-auto translate-y-0 bg-card/80 border-primary/30 hover:bg-primary/20 hover:border-primary/50 backdrop-blur-md transition-all duration-300 hover:scale-110" />
+            
+            {/* Slide indicators */}
+            <div className="flex gap-2">
+              {heroSlides.map((_, index) => (
+                <div key={index} className="w-2 h-2 rounded-full bg-primary/30 transition-all duration-300" />
+              ))}
+            </div>
+            
+            <CarouselNext className="relative inset-auto translate-y-0 bg-card/80 border-primary/30 hover:bg-primary/20 hover:border-primary/50 backdrop-blur-md transition-all duration-300 hover:scale-110" />
           </div>
         </Carousel>
         </div>}

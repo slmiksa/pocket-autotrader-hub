@@ -88,6 +88,10 @@ const headerNavItems = [{
   icon: Image,
   path: "/image-analysis"
 }, {
+  label: "محلل العرض والطلب",
+  icon: TrendingUp,
+  path: "/supply-demand"
+}, {
   label: "توصيات المحترفين",
   icon: Target,
   path: "/professional-signals"
