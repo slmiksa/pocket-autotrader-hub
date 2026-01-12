@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Activity, AlertTriangle, ArrowRight, BarChart3, CheckCircle2, Clock, Timer, TrendingDown, TrendingUp, XCircle, Zap, Flame, Target, Shield, Volume2 } from 'lucide-react';
-import { ExplosionPhase, ExplosionTimer, PostExplosionStatus, ExplosionEntrySignal } from '@/hooks/useMarketAnalysis';
+import { Activity, AlertTriangle, ArrowRight, BarChart3, CheckCircle2, Clock, Timer, TrendingDown, TrendingUp, XCircle, Zap, Flame, Target, Shield, Volume2, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ExplosionPhase, ExplosionTimer, PostExplosionStatus, ExplosionEntrySignal, ExplosionDetails } from '@/hooks/useMarketAnalysis';
 
 interface RealTimeMetrics {
   avgVolume24h: number;
@@ -280,14 +280,150 @@ export const ExplosionCountdown = ({
       </CardHeader>
 
       <CardContent className="pt-5 space-y-5">
+        {/* Explosion Details Card - NEW */}
+        {explosionTimer?.explosionDetails && (phase === 'active' || phase === 'countdown') && (
+          <div className={`rounded-xl p-4 border-2 ${
+            explosionTimer.explosionDetails.entryWindow === 'optimal' 
+              ? 'bg-gradient-to-br from-green-900/70 to-emerald-800/70 border-green-400/70 shadow-[0_0_20px_rgba(34,197,94,0.3)]'
+              : explosionTimer.explosionDetails.entryWindow === 'good'
+              ? 'bg-gradient-to-br from-blue-900/70 to-cyan-800/70 border-blue-400/70'
+              : explosionTimer.explosionDetails.entryWindow === 'late'
+              ? 'bg-gradient-to-br from-orange-900/70 to-amber-800/70 border-orange-400/70'
+              : 'bg-gradient-to-br from-red-900/70 to-rose-800/70 border-red-400/70'
+          }`}>
+            {/* Entry Window Status */}
+            <div className="text-center mb-4">
+              <div className={`text-2xl font-black mb-2 ${
+                explosionTimer.explosionDetails.entryWindow === 'optimal' ? 'text-green-300' :
+                explosionTimer.explosionDetails.entryWindow === 'good' ? 'text-blue-300' :
+                explosionTimer.explosionDetails.entryWindow === 'late' ? 'text-orange-300' :
+                'text-red-300'
+              }`}>
+                {explosionTimer.explosionDetails.entryWindowMessage}
+              </div>
+              <div className={`text-lg font-bold ${
+                explosionTimer.explosionDetails.entryWindow === 'optimal' ? 'text-green-200' :
+                explosionTimer.explosionDetails.entryWindow === 'good' ? 'text-blue-200' :
+                explosionTimer.explosionDetails.entryWindow === 'late' ? 'text-orange-200' :
+                'text-red-200'
+              }`}>
+                {explosionTimer.explosionDetails.recommendedAction}
+              </div>
+            </div>
+            
+            {/* Price Details Grid */}
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              {/* سعر الانفجار */}
+              <div className="bg-black/40 rounded-xl p-3 border border-white/10">
+                <div className="text-[10px] text-white/60 mb-1 flex items-center gap-1">
+                  <Zap className="w-3 h-3" />
+                  سعر الانفجار
+                </div>
+                <div className="text-xl font-black text-yellow-400">
+                  {explosionTimer.explosionDetails.explosionPrice.toLocaleString()}
+                </div>
+              </div>
+              
+              {/* السعر الحالي */}
+              <div className="bg-black/40 rounded-xl p-3 border border-white/10">
+                <div className="text-[10px] text-white/60 mb-1 flex items-center gap-1">
+                  <DollarSign className="w-3 h-3" />
+                  السعر الحالي
+                </div>
+                <div className="text-xl font-black text-white">
+                  {explosionTimer.explosionDetails.currentPrice.toLocaleString()}
+                </div>
+              </div>
+              
+              {/* حركة السعر منذ الانفجار */}
+              <div className={`bg-black/40 rounded-xl p-3 border ${
+                explosionTimer.explosionDetails.priceMoveSinceExplosionPercent > 0 
+                  ? 'border-green-500/30' 
+                  : explosionTimer.explosionDetails.priceMoveSinceExplosionPercent < 0 
+                  ? 'border-red-500/30' 
+                  : 'border-white/10'
+              }`}>
+                <div className="text-[10px] text-white/60 mb-1">حركة السعر منذ الانفجار</div>
+                <div className={`text-lg font-bold flex items-center gap-1 ${
+                  explosionTimer.explosionDetails.priceMoveSinceExplosionPercent > 0 
+                    ? 'text-green-400' 
+                    : explosionTimer.explosionDetails.priceMoveSinceExplosionPercent < 0 
+                    ? 'text-red-400' 
+                    : 'text-gray-400'
+                }`}>
+                  {explosionTimer.explosionDetails.priceMoveSinceExplosionPercent > 0 ? (
+                    <ArrowUpRight className="w-4 h-4" />
+                  ) : explosionTimer.explosionDetails.priceMoveSinceExplosionPercent < 0 ? (
+                    <ArrowDownRight className="w-4 h-4" />
+                  ) : null}
+                  {explosionTimer.explosionDetails.priceMoveSinceExplosionPercent > 0 ? '+' : ''}
+                  {explosionTimer.explosionDetails.priceMoveSinceExplosionPercent.toFixed(2)}%
+                </div>
+              </div>
+              
+              {/* اتجاه الانفجار الفعلي */}
+              <div className={`bg-black/40 rounded-xl p-3 border ${
+                explosionTimer.explosionDetails.explosionDirection === 'up' 
+                  ? 'border-green-500/30' 
+                  : explosionTimer.explosionDetails.explosionDirection === 'down' 
+                  ? 'border-red-500/30' 
+                  : 'border-white/10'
+              }`}>
+                <div className="text-[10px] text-white/60 mb-1">اتجاه الانفجار الفعلي</div>
+                <div className={`text-lg font-bold flex items-center gap-1 ${
+                  explosionTimer.explosionDetails.explosionDirection === 'up' 
+                    ? 'text-green-400' 
+                    : explosionTimer.explosionDetails.explosionDirection === 'down' 
+                    ? 'text-red-400' 
+                    : 'text-gray-400'
+                }`}>
+                  {explosionTimer.explosionDetails.explosionDirection === 'up' ? (
+                    <>
+                      <TrendingUp className="w-5 h-5" />
+                      صعود 📈
+                    </>
+                  ) : explosionTimer.explosionDetails.explosionDirection === 'down' ? (
+                    <>
+                      <TrendingDown className="w-5 h-5" />
+                      هبوط 📉
+                    </>
+                  ) : (
+                    <>
+                      <Activity className="w-5 h-5" />
+                      مستقر
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Direction Accuracy */}
+            {phase === 'active' && (
+              <div className={`mt-3 p-2 rounded-lg text-center ${
+                explosionTimer.explosionDetails.isDirectionCorrect 
+                  ? 'bg-green-500/20 border border-green-500/30' 
+                  : 'bg-red-500/20 border border-red-500/30'
+              }`}>
+                <span className={`text-sm font-medium ${
+                  explosionTimer.explosionDetails.isDirectionCorrect ? 'text-green-300' : 'text-red-300'
+                }`}>
+                  {explosionTimer.explosionDetails.isDirectionCorrect 
+                    ? '✅ التوقع كان صحيحاً!' 
+                    : '❌ الاتجاه مختلف عن المتوقع - كن حذراً'}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+        
         {/* Main Timer Display */}
         <div className="text-center">
           {isActive ? (
             <div className="space-y-3">
-              <div className="text-4xl font-black text-green-300 animate-pulse flex items-center justify-center gap-3">
-                <Flame className="w-10 h-10" />
+              <div className="text-3xl font-black text-green-300 animate-pulse flex items-center justify-center gap-3">
+                <Flame className="w-8 h-8" />
                 <span>الانفجار نشط الآن!</span>
-                <Flame className="w-10 h-10" />
+                <Flame className="w-8 h-8" />
               </div>
               
               {/* Elapsed time since explosion - BIG DIGITAL DISPLAY */}
@@ -297,20 +433,6 @@ export const ExplosionCountdown = ({
                   {String(countdownData.elapsedExplosionMinutes).padStart(2, '0')}:{String(countdownData.elapsedExplosionSeconds).padStart(2, '0')}
                 </div>
               </div>
-              
-              {/* Entry Status Card */}
-              {entryStatus && (
-                <div className={`rounded-xl p-4 border-2 ${entryStatus.bgColor} transition-all duration-300`}>
-                  <div className={`text-xl font-bold ${entryStatus.color}`}>
-                    {entryStatus.message}
-                  </div>
-                  {entryStatus.status === 'valid' && (
-                    <div className="mt-2 text-sm text-green-300/80">
-                      الشروط متوفرة - ادخل {direction === 'up' ? 'شراء 📈' : direction === 'down' ? 'بيع 📉' : ''} الآن!
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           ) : countdownData.isPastExplosion ? (
             <div className="space-y-2">

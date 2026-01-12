@@ -24,10 +24,24 @@ interface ExplosionState {
   active: boolean;
   compressionStartedAt: string | null;
   expectedExplosionAt: string | null;
+  actualExplosionAt: string | null; // وقت حدوث الانفجار الفعلي
   expectedDurationSeconds: number | null;
   direction: 'up' | 'down' | 'unknown';
   confidence: number;
   method: 'bollinger_squeeze_history' | 'none';
+  // معلومات الانفجار التفصيلية
+  explosionDetails?: {
+    explosionPrice: number; // سعر لحظة الانفجار
+    currentPrice: number; // السعر الحالي
+    priceAtCompression: number; // سعر بداية الضغط
+    priceMoveSinceExplosion: number; // حركة السعر منذ الانفجار بالنقاط
+    priceMoveSinceExplosionPercent: number; // حركة السعر بالنسبة المئوية
+    explosionDirection: 'up' | 'down' | 'flat'; // اتجاه الانفجار الفعلي
+    isDirectionCorrect: boolean; // هل الاتجاه المتوقع كان صحيحاً
+    entryWindow: 'optimal' | 'good' | 'late' | 'missed'; // نافذة الدخول
+    entryWindowMessage: string; // رسالة توضيحية
+    recommendedAction: string; // التوصية
+  };
   entrySignal?: {
     canEnter: boolean;
     direction: 'BUY' | 'SELL' | 'WAIT';
@@ -611,6 +625,7 @@ function computeExplosionTimer(opts: {
       active: false,
       compressionStartedAt: null,
       expectedExplosionAt: null,
+      actualExplosionAt: null,
       expectedDurationSeconds: null,
       direction,
       confidence: 0,
@@ -781,6 +796,7 @@ function computeExplosionTimer(opts: {
       active: false,
       compressionStartedAt: squeezeActive ? new Date(startTime).toISOString() : null,
       expectedExplosionAt: squeezeActive ? new Date(expectedExplosionAtMs).toISOString() : null,
+      actualExplosionAt: phase === 'ended' ? new Date(expectedExplosionAtMs).toISOString() : null,
       expectedDurationSeconds: squeezeActive ? expectedDurationSeconds : null,
       direction,
       confidence: 0,
@@ -797,15 +813,90 @@ function computeExplosionTimer(opts: {
     };
   }
 
+  // حساب تفاصيل الانفجار
+  const currentPrice = parseFloat(klines[klines.length - 1][4]);
+  const priceAtCompression = klines.length > barsInCurrent ? parseFloat(klines[klines.length - barsInCurrent][4]) : currentPrice;
+  
+  // سعر الانفجار (السعر عند لحظة الانفجار المتوقعة)
+  const explosionBarIndex = klines.length - Math.max(1, Math.floor((now - expectedExplosionAtMs) / (barSeconds * 1000)));
+  const explosionPrice = explosionBarIndex >= 0 && explosionBarIndex < klines.length 
+    ? parseFloat(klines[explosionBarIndex][4]) 
+    : priceAtCompression;
+  
+  const priceMoveSinceExplosion = currentPrice - explosionPrice;
+  const priceMoveSinceExplosionPercent = explosionPrice > 0 ? (priceMoveSinceExplosion / explosionPrice) * 100 : 0;
+  
+  // تحديد اتجاه الانفجار الفعلي
+  const explosionDirection: 'up' | 'down' | 'flat' = 
+    priceMoveSinceExplosionPercent > 0.1 ? 'up' : 
+    priceMoveSinceExplosionPercent < -0.1 ? 'down' : 'flat';
+  
+  const isDirectionCorrect = direction === explosionDirection || explosionDirection === 'flat';
+  
+  // تحديد نافذة الدخول
+  const elapsedSinceExplosion = phase === 'active' ? Math.max(0, Math.floor((now - expectedExplosionAtMs) / 1000)) : 0;
+  let entryWindow: 'optimal' | 'good' | 'late' | 'missed' = 'missed';
+  let entryWindowMessage = '';
+  let recommendedAction = '';
+  
+  if (phase === 'countdown') {
+    if (remainingSeconds < 60) {
+      entryWindow = 'optimal';
+      entryWindowMessage = '🎯 أفضل وقت للدخول - قبل الانفجار مباشرة';
+      recommendedAction = `ادخل الآن ${direction === 'up' ? 'شراء 📈' : direction === 'down' ? 'بيع 📉' : 'بحذر'}`;
+    } else if (remainingSeconds < 180) {
+      entryWindow = 'good';
+      entryWindowMessage = '✅ وقت جيد للتحضير - راقب السعر';
+      recommendedAction = 'استعد للدخول خلال دقائق';
+    } else {
+      entryWindow = 'late';
+      entryWindowMessage = '⏳ انتظر اقتراب وقت الانفجار';
+      recommendedAction = 'راقب واستعد';
+    }
+  } else if (phase === 'active') {
+    if (elapsedSinceExplosion < 60 && volumeSpike) {
+      entryWindow = 'optimal';
+      entryWindowMessage = '🔥 دخول مثالي - الانفجار حصل الآن!';
+      recommendedAction = `ادخل فوراً ${explosionDirection === 'up' ? 'شراء 📈' : explosionDirection === 'down' ? 'بيع 📉' : ''}`;
+    } else if (elapsedSinceExplosion < 180) {
+      entryWindow = 'good';
+      entryWindowMessage = `⚡ لا يزال الوقت مناسباً (مضى ${Math.floor(elapsedSinceExplosion / 60)} دقيقة)`;
+      recommendedAction = `يمكنك الدخول ${explosionDirection === 'up' ? 'شراء' : explosionDirection === 'down' ? 'بيع' : ''}`;
+    } else if (elapsedSinceExplosion < 600) {
+      entryWindow = 'late';
+      entryWindowMessage = `⚠️ متأخر قليلاً (مضى ${Math.floor(elapsedSinceExplosion / 60)} دقيقة)`;
+      recommendedAction = 'دخول بحذر أو انتظر فرصة جديدة';
+    } else {
+      entryWindow = 'missed';
+      entryWindowMessage = `❌ فات الأوان (مضى ${Math.floor(elapsedSinceExplosion / 60)} دقيقة)`;
+      recommendedAction = 'انتظر الفرصة القادمة';
+    }
+  }
+  
+  const explosionDetails: ExplosionState['explosionDetails'] = {
+    explosionPrice: Math.round(explosionPrice * 100000) / 100000,
+    currentPrice: Math.round(currentPrice * 100000) / 100000,
+    priceAtCompression: Math.round(priceAtCompression * 100000) / 100000,
+    priceMoveSinceExplosion: Math.round(priceMoveSinceExplosion * 100000) / 100000,
+    priceMoveSinceExplosionPercent: Math.round(priceMoveSinceExplosionPercent * 100) / 100,
+    explosionDirection,
+    isDirectionCorrect,
+    entryWindow,
+    entryWindowMessage,
+    recommendedAction,
+  };
+  
   return {
     phase,
     active: true,
     compressionStartedAt: new Date(startTime).toISOString(),
     expectedExplosionAt: new Date(expectedExplosionAtMs).toISOString(),
+    actualExplosionAt: phase === 'active' ? new Date(expectedExplosionAtMs).toISOString() : null,
     expectedDurationSeconds,
     direction,
     confidence,
     method: 'bollinger_squeeze_history',
+    explosionDetails,
     entrySignal,
     postExplosion,
     debug: {
