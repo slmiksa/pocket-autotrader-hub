@@ -19,15 +19,30 @@ export interface PostExplosionStatus {
   breakoutConfirmed: boolean;
 }
 
+export interface ExplosionDetails {
+  explosionPrice: number;
+  currentPrice: number;
+  priceAtCompression: number;
+  priceMoveSinceExplosion: number;
+  priceMoveSinceExplosionPercent: number;
+  explosionDirection: 'up' | 'down' | 'flat';
+  isDirectionCorrect: boolean;
+  entryWindow: 'optimal' | 'good' | 'late' | 'missed';
+  entryWindowMessage: string;
+  recommendedAction: string;
+}
+
 export interface ExplosionTimer {
   phase: ExplosionPhase;
   active: boolean;
   compressionStartedAt: string | null;
   expectedExplosionAt: string | null;
+  actualExplosionAt: string | null;
   expectedDurationSeconds: number | null;
   direction: 'up' | 'down' | 'unknown';
   confidence: number;
   method: 'bollinger_squeeze_history' | 'none';
+  explosionDetails?: ExplosionDetails;
   entrySignal?: ExplosionEntrySignal;
   postExplosion?: PostExplosionStatus;
   debug?: {
