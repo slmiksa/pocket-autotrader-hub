@@ -35,6 +35,11 @@ type RecentCandle = {
 interface ExplosionCountdownProps {
   symbol: string;
   timeframe?: string;
+  /**
+   * Server-side timestamp (ISO string) for aligning countdown with backend time.
+   * This prevents wrong timers if the device clock is incorrect.
+   */
+  serverTimestamp?: string;
   accumulation?: AccumulationData;
   realTimeMetrics?: RealTimeMetrics;
   explosionTimer?: ExplosionTimer;
@@ -44,9 +49,43 @@ interface ExplosionCountdownProps {
   volumeSpike?: boolean;
 }
 
+const formatMMSS = (totalSeconds: number) => {
+  const mins = Math.floor(Math.max(0, totalSeconds) / 60);
+  const secs = Math.floor(Math.max(0, totalSeconds) % 60);
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+};
+
+const formatPriceForSymbol = (symbol: string, price: number) => {
+  const isCrypto = symbol.endsWith('USDT');
+  const isGold = symbol === 'XAUUSD';
+  const isJpyPair = symbol.endsWith('JPY');
+
+  const digits = isGold ? 2 : isCrypto ? 2 : isJpyPair ? 3 : 5;
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(price);
+};
+
+const formatDateTime = (iso?: string | null) => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  // Show local time clearly
+  return d.toLocaleString('ar-SA', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+};
+
 export const ExplosionCountdown = ({
   symbol,
   timeframe = '15m',
+  serverTimestamp,
   accumulation,
   realTimeMetrics,
   explosionTimer,
@@ -56,7 +95,17 @@ export const ExplosionCountdown = ({
   volumeSpike
 }: ExplosionCountdownProps) => {
   const [nowTick, setNowTick] = useState(() => Date.now());
-  
+
+  // Align the timer with backend time to avoid issues with incorrect device clocks.
+  const serverOffsetMs = useMemo(() => {
+    if (!serverTimestamp) return 0;
+    const serverMs = new Date(serverTimestamp).getTime();
+    if (Number.isNaN(serverMs)) return 0;
+    return serverMs - Date.now();
+  }, [serverTimestamp]);
+
+  const effectiveNowMs = nowTick + serverOffsetMs;
+
   // Update every second for accurate countdown
   useEffect(() => {
     const id = setInterval(() => setNowTick(Date.now()), 1000);
@@ -65,24 +114,43 @@ export const ExplosionCountdown = ({
 
   const countdownData = useMemo(() => {
     const startedAt = explosionTimer?.compressionStartedAt ? new Date(explosionTimer.compressionStartedAt).getTime() : null;
-    const explodeAt = explosionTimer?.expectedExplosionAt ? new Date(explosionTimer.expectedExplosionAt).getTime() : null;
+
+    // Prefer actualExplosionAt when available.
+    const explodeAt = (explosionTimer?.actualExplosionAt || explosionTimer?.expectedExplosionAt)
+      ? new Date(explosionTimer.actualExplosionAt || explosionTimer.expectedExplosionAt!).getTime()
+      : null;
+
     const expectedDurationSeconds = explosionTimer?.expectedDurationSeconds ?? null;
-    const elapsedSeconds = startedAt ? Math.max(0, Math.floor((nowTick - startedAt) / 1000)) : 0;
-    const remainingSeconds = explodeAt ? Math.floor((explodeAt - nowTick) / 1000) : 0;
+
+    const elapsedSeconds = startedAt ? Math.max(0, Math.floor((effectiveNowMs - startedAt) / 1000)) : 0;
+    const remainingSeconds = explodeAt ? Math.floor((explodeAt - effectiveNowMs) / 1000) : 0;
+
     const minutes = Math.floor(Math.abs(remainingSeconds) / 60);
     const seconds = Math.floor(Math.abs(remainingSeconds) % 60);
+
     const isPastExplosion = remainingSeconds < 0;
-    const urgency = !isPastExplosion && remainingSeconds < 120 ? 'critical' 
-      : !isPastExplosion && remainingSeconds < 300 ? 'high' 
-      : !isPastExplosion && remainingSeconds < 600 ? 'medium' 
+    const urgency = !isPastExplosion && remainingSeconds < 120 ? 'critical'
+      : !isPastExplosion && remainingSeconds < 300 ? 'high'
+      : !isPastExplosion && remainingSeconds < 600 ? 'medium'
       : 'low';
-    const progress = expectedDurationSeconds && expectedDurationSeconds > 0 ? Math.min(100, elapsedSeconds / expectedDurationSeconds * 100) : 0;
-    
-    // Calculate elapsed time since explosion for active phase
-    const elapsedSinceExplosion = isPastExplosion ? Math.abs(remainingSeconds) : 0;
+
+    const progress = expectedDurationSeconds && expectedDurationSeconds > 0
+      ? Math.min(100, (elapsedSeconds / expectedDurationSeconds) * 100)
+      : 0;
+
+    // If backend provided elapsedSinceExplosion, keep it running client-side as well.
+    let elapsedSinceExplosion = isPastExplosion ? Math.abs(remainingSeconds) : 0;
+    if (serverTimestamp && explosionTimer?.postExplosion?.elapsedSinceExplosion != null) {
+      const serverMs = new Date(serverTimestamp).getTime();
+      if (!Number.isNaN(serverMs)) {
+        const driftSeconds = Math.max(0, Math.floor((effectiveNowMs - serverMs) / 1000));
+        elapsedSinceExplosion = Math.max(0, explosionTimer.postExplosion.elapsedSinceExplosion + driftSeconds);
+      }
+    }
+
     const elapsedExplosionMinutes = Math.floor(elapsedSinceExplosion / 60);
     const elapsedExplosionSeconds = elapsedSinceExplosion % 60;
-    
+
     return {
       minutes,
       seconds,
@@ -99,7 +167,15 @@ export const ExplosionCountdown = ({
       elapsedExplosionMinutes,
       elapsedExplosionSeconds,
     };
-  }, [explosionTimer?.compressionStartedAt, explosionTimer?.expectedExplosionAt, explosionTimer?.expectedDurationSeconds, nowTick]);
+  }, [
+    explosionTimer?.compressionStartedAt,
+    explosionTimer?.expectedExplosionAt,
+    explosionTimer?.actualExplosionAt,
+    explosionTimer?.expectedDurationSeconds,
+    explosionTimer?.postExplosion?.elapsedSinceExplosion,
+    serverTimestamp,
+    effectiveNowMs,
+  ]);
 
   const phase = explosionTimer?.phase || 'none';
   const entrySignal = explosionTimer?.entrySignal;
@@ -310,7 +386,30 @@ export const ExplosionCountdown = ({
                 {explosionTimer.explosionDetails.recommendedAction}
               </div>
             </div>
-            
+            {/* Time & Level (Clear for the user) */}
+            <div className="bg-black/30 rounded-xl p-3 border border-white/10">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-right">
+                  <div className="text-[10px] text-white/60 mb-1">🕒 وقت بداية الضغط</div>
+                  <div className="text-sm font-bold text-white/90 tabular-nums">
+                    {formatDateTime(explosionTimer.compressionStartedAt)}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] text-white/60 mb-1">💥 وقت الانفجار</div>
+                  <div className="text-sm font-bold text-white/90 tabular-nums">
+                    {formatDateTime(explosionTimer.actualExplosionAt || explosionTimer.expectedExplosionAt)}
+                  </div>
+                </div>
+                <div className="text-right col-span-2">
+                  <div className="text-[10px] text-white/60 mb-1">📍 سعر بداية منطقة الضغط</div>
+                  <div className="text-sm font-black text-white tabular-nums">
+                    {formatPriceForSymbol(symbol, explosionTimer.explosionDetails.priceAtCompression)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Price Details Grid */}
             <div className="grid grid-cols-2 gap-3 mt-4">
               {/* سعر الانفجار */}
@@ -319,8 +418,8 @@ export const ExplosionCountdown = ({
                   <Zap className="w-3 h-3" />
                   سعر الانفجار
                 </div>
-                <div className="text-xl font-black text-yellow-400">
-                  {explosionTimer.explosionDetails.explosionPrice.toLocaleString()}
+                <div className="text-xl font-black text-yellow-400 tabular-nums">
+                  {formatPriceForSymbol(symbol, explosionTimer.explosionDetails.explosionPrice)}
                 </div>
               </div>
               
@@ -330,8 +429,8 @@ export const ExplosionCountdown = ({
                   <DollarSign className="w-3 h-3" />
                   السعر الحالي
                 </div>
-                <div className="text-xl font-black text-white">
-                  {explosionTimer.explosionDetails.currentPrice.toLocaleString()}
+                <div className="text-xl font-black text-white tabular-nums">
+                  {formatPriceForSymbol(symbol, explosionTimer.explosionDetails.currentPrice)}
                 </div>
               </div>
               

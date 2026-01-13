@@ -671,6 +671,7 @@ const SmartRecoverySystem = () => {
         <ExplosionCountdown 
           symbol={selectedSymbol}
           timeframe={selectedTimeframe}
+          serverTimestamp={analysis?.timestamp}
           accumulation={(analysis as any)?.accumulation}
           realTimeMetrics={(analysis as any)?.realTimeMetrics}
           explosionTimer={(analysis as any)?.explosionTimer}
