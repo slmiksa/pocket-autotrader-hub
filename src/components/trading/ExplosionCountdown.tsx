@@ -457,12 +457,12 @@ export const ExplosionCountdown = ({
           )}
         </div>
 
-        {/* Entry Signal Card - Enhanced Design */}
+        {/* Entry Signal Card - Only show when canEnter is true, otherwise show waiting state */}
         {entrySignal && (
           <div className={`rounded-xl p-4 border-2 transition-all duration-300 ${
             entrySignal.canEnter 
               ? 'bg-gradient-to-r from-green-900/60 to-emerald-900/60 border-green-500/70 shadow-[0_0_15px_rgba(34,197,94,0.2)]' 
-              : 'bg-gradient-to-r from-slate-800/60 to-slate-700/60 border-slate-600/70'
+              : 'bg-gradient-to-r from-yellow-900/40 to-amber-900/40 border-yellow-500/50'
           }`}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
@@ -474,7 +474,9 @@ export const ExplosionCountdown = ({
                   )}
                 </div>
                 <span className={`font-bold text-lg ${entrySignal.canEnter ? 'text-green-300' : 'text-yellow-300'}`}>
-                  {entrySignal.canEnter ? '🎯 يمكن الدخول الآن!' : '⏳ انتظر التأكيد'}
+                  {entrySignal.canEnter 
+                    ? `🎯 ادخل الآن ${entrySignal.direction === 'BUY' ? 'شراء' : entrySignal.direction === 'SELL' ? 'بيع' : ''}!` 
+                    : '⏳ لا تدخل - انتظر التأكيد'}
                 </span>
               </div>
               {entrySignal.canEnter && (
@@ -488,21 +490,26 @@ export const ExplosionCountdown = ({
               )}
             </div>
             
-            {/* Entry Reasons - Enhanced Pills */}
+            {/* Entry Reasons - Show all confirmations status */}
             <div className="flex flex-wrap gap-2">
-              {entrySignal.reasons.map((reason, idx) => (
-                <div 
-                  key={idx} 
-                  className={`text-xs px-3 py-1.5 rounded-full font-medium flex items-center gap-1.5 ${
-                    entrySignal.canEnter 
-                      ? 'bg-green-500/20 text-green-200 border border-green-500/30' 
-                      : 'bg-slate-600/40 text-slate-300 border border-slate-500/30'
-                  }`}
-                >
-                  <CheckCircle2 className="w-3 h-3" />
-                  <span>{reason}</span>
-                </div>
-              ))}
+              {entrySignal.reasons.map((reason, idx) => {
+                const isPositive = reason.includes('✅') || reason.includes('🔥') || reason.includes('🎯');
+                const isNegative = reason.includes('❌');
+                return (
+                  <div 
+                    key={idx} 
+                    className={`text-xs px-3 py-1.5 rounded-full font-medium flex items-center gap-1.5 ${
+                      isPositive 
+                        ? 'bg-green-500/20 text-green-200 border border-green-500/30' 
+                        : isNegative
+                        ? 'bg-red-500/20 text-red-200 border border-red-500/30'
+                        : 'bg-yellow-500/20 text-yellow-200 border border-yellow-500/30'
+                    }`}
+                  >
+                    <span>{reason}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
