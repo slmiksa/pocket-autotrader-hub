@@ -702,6 +702,20 @@ function computeExplosionTimer(opts: {
   if (volumeSpike) confidence += 10;
   confidence = Math.max(0, Math.min(100, Math.round(confidence)));
 
+  // حساب التأكيدات المطلوبة
+  const volumeConfirmed = volumeSpike;
+  const cvdConfirmed = (direction === 'up' && cvdStatus === 'rising') || (direction === 'down' && cvdStatus === 'falling');
+  const rsiConfirmed = (direction === 'up' && rsi < 70) || (direction === 'down' && rsi > 30);
+  const accumulationStrong = accumulation?.strength >= 50;
+  
+  // حساب نسبة حركة السعر لتحديد الاختراق
+  const priceAtStart = klines.length > barsInCurrent ? parseFloat(klines[klines.length - barsInCurrent][4]) : 0;
+  const latestPrice = parseFloat(klines[klines.length - 1][4]);
+  const priceMovePercent = priceAtStart > 0 ? ((latestPrice - priceAtStart) / priceAtStart) * 100 : 0;
+  const breakoutConfirmed = Math.abs(priceMovePercent) > 0.2;
+  
+  const confirmationCount = [volumeConfirmed, cvdConfirmed, breakoutConfirmed].filter(Boolean).length;
+
   let entrySignal: ExplosionState['entrySignal'] = undefined;
   if (phase === 'countdown' || phase === 'active') {
     const entryReasons: string[] = [];
@@ -709,54 +723,62 @@ function computeExplosionTimer(opts: {
     let entryDirection: 'BUY' | 'SELL' | 'WAIT' = 'WAIT';
     let urgency: 'critical' | 'high' | 'medium' | 'low' = 'low';
 
-    const volumeConfirmed = volumeSpike;
-    const cvdConfirmed = (direction === 'up' && cvdStatus === 'rising') || (direction === 'down' && cvdStatus === 'falling');
-    const rsiConfirmed = (direction === 'up' && rsi < 70) || (direction === 'down' && rsi > 30);
-    const accumulationStrong = accumulation?.strength >= 50;
-
     if (phase === 'active') {
-      if (volumeConfirmed && cvdConfirmed) {
+      // الانفجار نشط - يجب أن يكون لدينا تأكيدين على الأقل للدخول
+      if (confirmationCount >= 2) {
         canEnter = true;
         entryDirection = direction === 'up' ? 'BUY' : direction === 'down' ? 'SELL' : signalType;
         urgency = 'critical';
-        entryReasons.push('🔥 انفجار سعري نشط الآن!');
-        entryReasons.push('✅ تأكيد الحجم: ارتفاع قوي');
-        entryReasons.push('✅ تأكيد التدفق: ' + (cvdStatus === 'rising' ? 'شراء' : 'بيع'));
-      } else if (volumeConfirmed || cvdConfirmed) {
-        canEnter = true;
-        entryDirection = direction === 'up' ? 'BUY' : direction === 'down' ? 'SELL' : signalType;
+        entryReasons.push('🔥 انفجار مؤكد!');
+        if (volumeConfirmed) entryReasons.push('✅ حجم قوي');
+        if (cvdConfirmed) entryReasons.push('✅ تدفق ' + (cvdStatus === 'rising' ? 'شراء' : 'بيع'));
+        if (breakoutConfirmed) entryReasons.push(`✅ اختراق ${priceMovePercent > 0 ? '+' : ''}${priceMovePercent.toFixed(2)}%`);
+      } else if (confirmationCount === 1) {
+        canEnter = false;
+        entryDirection = 'WAIT';
         urgency = 'high';
-        entryReasons.push('⚡ انفجار سعري - تأكيد جزئي');
-        if (volumeConfirmed) entryReasons.push('✅ تأكيد الحجم');
-        if (cvdConfirmed) entryReasons.push('✅ تأكيد التدفق');
+        entryReasons.push('⏳ انتظر تأكيد إضافي');
+        if (volumeConfirmed) entryReasons.push('✅ حجم قوي');
+        else entryReasons.push('❌ الحجم ضعيف');
+        if (cvdConfirmed) entryReasons.push('✅ تدفق ' + (cvdStatus === 'rising' ? 'شراء' : 'بيع'));
+        if (breakoutConfirmed) entryReasons.push(`✅ اختراق ${priceMovePercent > 0 ? '+' : ''}${priceMovePercent.toFixed(2)}%`);
+        else entryReasons.push('❌ لا اختراق واضح');
       } else {
         canEnter = false;
         entryDirection = 'WAIT';
         urgency = 'medium';
-        entryReasons.push('⏳ انفجار متوقع - انتظر تأكيد');
+        entryReasons.push('⚠️ لا توجد تأكيدات كافية');
+        entryReasons.push('❌ الحجم ضعيف');
+        entryReasons.push('❌ لا اختراق واضح');
       }
     } else if (phase === 'countdown') {
-      if (remainingSeconds < 120) {
+      // العد التنازلي - لا ندخل إلا في حالات خاصة
+      if (remainingSeconds < 60 && accumulationStrong && cvdConfirmed) {
+        canEnter = true;
+        entryDirection = direction === 'up' ? 'BUY' : direction === 'down' ? 'SELL' : 'WAIT';
         urgency = 'critical';
-        entryReasons.push('🔥 انفجار وشيك خلال دقيقتين!');
-        if (accumulationStrong) {
-          canEnter = true;
-          entryDirection = direction === 'up' ? 'BUY' : direction === 'down' ? 'SELL' : 'WAIT';
-          entryReasons.push('✅ تجميع مؤسسي قوي');
-        }
+        entryReasons.push('🎯 دخول استباقي!');
+        entryReasons.push('✅ تجميع مؤسسي قوي');
+        entryReasons.push(`✅ تدفق ${cvdStatus === 'rising' ? 'شراء' : 'بيع'}`);
+      } else if (remainingSeconds < 120) {
+        canEnter = false;
+        entryDirection = 'WAIT';
+        urgency = 'critical';
+        entryReasons.push('🔥 انفجار وشيك!');
+        entryReasons.push('⏳ انتظر الاختراق للدخول');
       } else if (remainingSeconds < 300) {
+        canEnter = false;
+        entryDirection = 'WAIT';
         urgency = 'high';
-        entryReasons.push('⚡ انفجار قريب - استعد');
-      } else if (remainingSeconds < 600) {
-        urgency = 'medium';
-        entryReasons.push('⏳ ضغط سعري نشط');
+        entryReasons.push('⚡ استعد للانفجار');
       } else {
-        urgency = 'low';
-        entryReasons.push('📊 تجميع سعري - انتظر');
+        canEnter = false;
+        entryDirection = 'WAIT';
+        urgency = remainingSeconds < 600 ? 'medium' : 'low';
+        entryReasons.push('📊 ضغط نشط - راقب');
       }
 
       if (rsiConfirmed) entryReasons.push(`📈 RSI مناسب (${rsi.toFixed(0)})`);
-      if (cvdConfirmed) entryReasons.push(`💚 تدفق ${cvdStatus === 'rising' ? 'شراء' : 'بيع'}`);
     }
 
     entrySignal = { canEnter, direction: entryDirection, reasons: entryReasons, urgency };
@@ -817,24 +839,36 @@ function computeExplosionTimer(opts: {
   const currentPrice = parseFloat(klines[klines.length - 1][4]);
   const priceAtCompression = klines.length > barsInCurrent ? parseFloat(klines[klines.length - barsInCurrent][4]) : currentPrice;
   
-  // سعر الانفجار (السعر عند لحظة الانفجار المتوقعة)
-  const explosionBarIndex = klines.length - Math.max(1, Math.floor((now - expectedExplosionAtMs) / (barSeconds * 1000)));
-  const explosionPrice = explosionBarIndex >= 0 && explosionBarIndex < klines.length 
-    ? parseFloat(klines[explosionBarIndex][4]) 
+  // سعر الانفجار: السعر في آخر شمعة قبل وقت الانفجار المتوقع
+  // إذا كان الانفجار نشط، نحسب كم شمعة مرت منذ الانفجار
+  const barsElapsedSinceExplosion = Math.max(0, Math.floor((now - expectedExplosionAtMs) / (barSeconds * 1000)));
+  const explosionBarIndex = Math.max(0, klines.length - 1 - barsElapsedSinceExplosion);
+  
+  // سعر لحظة الانفجار الفعلية (الشمعة التي حدث فيها الانفجار)
+  const explosionPrice = phase === 'active' && barsElapsedSinceExplosion > 0
+    ? parseFloat(klines[explosionBarIndex][4])
     : priceAtCompression;
   
+  // حركة السعر منذ الانفجار
   const priceMoveSinceExplosion = currentPrice - explosionPrice;
   const priceMoveSinceExplosionPercent = explosionPrice > 0 ? (priceMoveSinceExplosion / explosionPrice) * 100 : 0;
   
-  // تحديد اتجاه الانفجار الفعلي
+  // تحديد اتجاه الانفجار الفعلي بناءً على حركة السعر من بداية الضغط
+  const priceChangeSinceCompression = currentPrice - priceAtCompression;
+  const priceChangeSinceCompressionPercent = priceAtCompression > 0 ? (priceChangeSinceCompression / priceAtCompression) * 100 : 0;
+  
   const explosionDirection: 'up' | 'down' | 'flat' = 
-    priceMoveSinceExplosionPercent > 0.1 ? 'up' : 
-    priceMoveSinceExplosionPercent < -0.1 ? 'down' : 'flat';
+    priceChangeSinceCompressionPercent > 0.05 ? 'up' : 
+    priceChangeSinceCompressionPercent < -0.05 ? 'down' : 'flat';
   
   const isDirectionCorrect = direction === explosionDirection || explosionDirection === 'flat';
   
-  // تحديد نافذة الدخول
+  // تحديد نافذة الدخول والتأكيدات
   const elapsedSinceExplosion = phase === 'active' ? Math.max(0, Math.floor((now - expectedExplosionAtMs) / 1000)) : 0;
+  const hasVolumeConfirmation = volumeSpike;
+  const hasCVDConfirmation = (direction === 'up' && cvdStatus === 'rising') || (direction === 'down' && cvdStatus === 'falling');
+  const hasBreakoutConfirmation = Math.abs(priceChangeSinceCompressionPercent) > 0.2;
+  
   let entryWindow: 'optimal' | 'good' | 'late' | 'missed' = 'missed';
   let entryWindowMessage = '';
   let recommendedAction = '';
@@ -842,43 +876,56 @@ function computeExplosionTimer(opts: {
   if (phase === 'countdown') {
     if (remainingSeconds < 60) {
       entryWindow = 'optimal';
-      entryWindowMessage = '🎯 أفضل وقت للدخول - قبل الانفجار مباشرة';
-      recommendedAction = `ادخل الآن ${direction === 'up' ? 'شراء 📈' : direction === 'down' ? 'بيع 📉' : 'بحذر'}`;
+      entryWindowMessage = `🎯 الانفجار خلال ${remainingSeconds} ثانية!`;
+      recommendedAction = accumulation?.strength >= 50 
+        ? `استعد للدخول ${direction === 'up' ? 'شراء 📈' : direction === 'down' ? 'بيع 📉' : ''}`
+        : 'انتظر تأكيد الاختراق';
     } else if (remainingSeconds < 180) {
       entryWindow = 'good';
-      entryWindowMessage = '✅ وقت جيد للتحضير - راقب السعر';
-      recommendedAction = 'استعد للدخول خلال دقائق';
+      entryWindowMessage = `⏳ متبقي ${Math.ceil(remainingSeconds / 60)} دقيقة للانفجار`;
+      recommendedAction = 'استعد وراقب الحجم';
     } else {
       entryWindow = 'late';
-      entryWindowMessage = '⏳ انتظر اقتراب وقت الانفجار';
+      entryWindowMessage = `📊 ضغط نشط - انتظر ${Math.ceil(remainingSeconds / 60)} دقيقة`;
       recommendedAction = 'راقب واستعد';
     }
   } else if (phase === 'active') {
-    if (elapsedSinceExplosion < 60 && volumeSpike) {
+    // الانفجار نشط - تحديد حالة الدخول بناءً على التأكيدات
+    const confirmationCount = [hasVolumeConfirmation, hasCVDConfirmation, hasBreakoutConfirmation].filter(Boolean).length;
+    
+    if (elapsedSinceExplosion < 60 && confirmationCount >= 2) {
       entryWindow = 'optimal';
-      entryWindowMessage = '🔥 دخول مثالي - الانفجار حصل الآن!';
-      recommendedAction = `ادخل فوراً ${explosionDirection === 'up' ? 'شراء 📈' : explosionDirection === 'down' ? 'بيع 📉' : ''}`;
-    } else if (elapsedSinceExplosion < 180) {
+      entryWindowMessage = '🔥 فرصة مثالية - تأكيدات قوية!';
+      recommendedAction = `ادخل ${explosionDirection === 'up' ? 'شراء 📈' : explosionDirection === 'down' ? 'بيع 📉' : 'بحذر'}`;
+    } else if (elapsedSinceExplosion < 180 && confirmationCount >= 1) {
       entryWindow = 'good';
-      entryWindowMessage = `⚡ لا يزال الوقت مناسباً (مضى ${Math.floor(elapsedSinceExplosion / 60)} دقيقة)`;
+      entryWindowMessage = `✅ فرصة جيدة (مضى ${Math.floor(elapsedSinceExplosion / 60)}:${String(elapsedSinceExplosion % 60).padStart(2, '0')})`;
       recommendedAction = `يمكنك الدخول ${explosionDirection === 'up' ? 'شراء' : explosionDirection === 'down' ? 'بيع' : ''}`;
-    } else if (elapsedSinceExplosion < 600) {
+    } else if (elapsedSinceExplosion < 180 && confirmationCount === 0) {
+      entryWindow = 'good';
+      entryWindowMessage = `⏳ انتظر التأكيد (مضى ${Math.floor(elapsedSinceExplosion / 60)}:${String(elapsedSinceExplosion % 60).padStart(2, '0')})`;
+      recommendedAction = 'انتظر تأكيد الحجم أو الاختراق';
+    } else if (elapsedSinceExplosion < 600 && hasBreakoutConfirmation) {
       entryWindow = 'late';
-      entryWindowMessage = `⚠️ متأخر قليلاً (مضى ${Math.floor(elapsedSinceExplosion / 60)} دقيقة)`;
-      recommendedAction = 'دخول بحذر أو انتظر فرصة جديدة';
-    } else {
+      entryWindowMessage = `⚠️ متأخر لكن الاختراق مؤكد (${Math.floor(elapsedSinceExplosion / 60)} دقيقة)`;
+      recommendedAction = 'دخول بحذر مع وقف خسارة قريب';
+    } else if (elapsedSinceExplosion >= 600) {
       entryWindow = 'missed';
-      entryWindowMessage = `❌ فات الأوان (مضى ${Math.floor(elapsedSinceExplosion / 60)} دقيقة)`;
+      entryWindowMessage = `❌ فات الأوان (${Math.floor(elapsedSinceExplosion / 60)} دقيقة)`;
       recommendedAction = 'انتظر الفرصة القادمة';
+    } else {
+      entryWindow = 'late';
+      entryWindowMessage = `⏳ انتظر التأكيد (${Math.floor(elapsedSinceExplosion / 60)}:${String(elapsedSinceExplosion % 60).padStart(2, '0')})`;
+      recommendedAction = 'لا تدخل بدون تأكيد الحجم';
     }
   }
   
   const explosionDetails: ExplosionState['explosionDetails'] = {
-    explosionPrice: Math.round(explosionPrice * 100000) / 100000,
-    currentPrice: Math.round(currentPrice * 100000) / 100000,
-    priceAtCompression: Math.round(priceAtCompression * 100000) / 100000,
-    priceMoveSinceExplosion: Math.round(priceMoveSinceExplosion * 100000) / 100000,
-    priceMoveSinceExplosionPercent: Math.round(priceMoveSinceExplosionPercent * 100) / 100,
+    explosionPrice: Math.round(explosionPrice * 100) / 100, // تقريب للأسعار المقروءة
+    currentPrice: Math.round(currentPrice * 100) / 100,
+    priceAtCompression: Math.round(priceAtCompression * 100) / 100,
+    priceMoveSinceExplosion: Math.round(priceMoveSinceExplosion * 100) / 100,
+    priceMoveSinceExplosionPercent: Math.round(priceMoveSinceExplosionPercent * 1000) / 1000,
     explosionDirection,
     isDirectionCorrect,
     entryWindow,
