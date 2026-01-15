@@ -138,14 +138,14 @@ export const ExplosionCountdown = ({
       ? Math.min(100, (elapsedSeconds / expectedDurationSeconds) * 100)
       : 0;
 
-    // If backend provided elapsedSinceExplosion, keep it running client-side as well.
-    let elapsedSinceExplosion = isPastExplosion ? Math.abs(remainingSeconds) : 0;
-    if (serverTimestamp && explosionTimer?.postExplosion?.elapsedSinceExplosion != null) {
-      const serverMs = new Date(serverTimestamp).getTime();
-      if (!Number.isNaN(serverMs)) {
-        const driftSeconds = Math.max(0, Math.floor((effectiveNowMs - serverMs) / 1000));
-        elapsedSinceExplosion = Math.max(0, explosionTimer.postExplosion.elapsedSinceExplosion + driftSeconds);
-      }
+    // Elapsed since explosion should be anchored to the (server-determined) explosion timestamp,
+    // not to the last fetch timestamp; otherwise it will reset on refresh.
+    let elapsedSinceExplosion = 0;
+    if (explodeAt != null) {
+      elapsedSinceExplosion = Math.max(0, Math.floor((effectiveNowMs - explodeAt) / 1000));
+    } else if (isPastExplosion) {
+      // Fallback (should be rare): if we only know we're past the expected moment
+      elapsedSinceExplosion = Math.abs(remainingSeconds);
     }
 
     const elapsedExplosionMinutes = Math.floor(elapsedSinceExplosion / 60);
