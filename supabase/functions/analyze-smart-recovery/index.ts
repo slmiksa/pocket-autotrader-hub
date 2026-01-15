@@ -677,17 +677,40 @@ function computeExplosionTimer(opts: {
   const expectedDurationSeconds = Math.min(Math.max(expectedFromHistory ?? fallbackSeconds, barSeconds * 5), barSeconds * 400);
 
   const now = Date.now();
-  const expectedExplosionAtMs = startTime + expectedDurationSeconds * 1000;
-  const remainingSeconds = Math.max(0, Math.floor((expectedExplosionAtMs - now) / 1000));
+
+  // Determine the squeeze start + (optional) real explosion time.
+  // IMPORTANT: We only mark phase = 'active' when the squeeze actually ends (real breakout),
+  // not just when a predicted countdown reaches zero.
+  let squeezeStartMs: number | null = null;
+  let barsInSqueeze = 0;
+  let actualExplosionAtMs: number | null = null;
+
+  if (squeezeActive) {
+    squeezeStartMs = startTime;
+    barsInSqueeze = barsInCurrent;
+  } else if (!currentlyBelow) {
+    // Find the most recent squeeze segment that ended immediately before the latest bar.
+    // Last bar is above threshold (breakout candle). We look back from the previous bar.
+    let i = series.length - 2;
+    while (i >= 0 && series[i].bandWidth < thresholdBandWidth) i--;
+    const segBars = (series.length - 2) - i;
+
+    if (segBars >= 3) {
+      squeezeStartMs = series[i + 1].time;
+      barsInSqueeze = segBars;
+      actualExplosionAtMs = series[series.length - 1].time;
+    }
+  }
+
+  const expectedExplosionAtMs = squeezeStartMs ? squeezeStartMs + expectedDurationSeconds * 1000 : null;
+  const remainingSeconds = expectedExplosionAtMs ? Math.max(0, Math.floor((expectedExplosionAtMs - now) / 1000)) : 0;
 
   let phase: ExplosionPhase = 'none';
-  if (squeezeActive && remainingSeconds > 0) {
+  if (squeezeActive && squeezeStartMs) {
     phase = 'countdown';
-  } else if (squeezeActive && remainingSeconds <= 0) {
-    phase = 'active';
-  } else if (!squeezeActive && barsInCurrent < 3) {
-    const timeSinceSqueezeEnd = (now - series[series.length - 1].time) / 1000;
-    phase = timeSinceSqueezeEnd < barSeconds * 5 ? 'active' : 'ended';
+  } else if (actualExplosionAtMs) {
+    const timeSinceExplosion = (now - actualExplosionAtMs) / 1000;
+    phase = timeSinceExplosion < barSeconds * 5 ? 'active' : 'ended';
   }
 
   let confidence = 40;
@@ -785,9 +808,13 @@ function computeExplosionTimer(opts: {
   }
 
   let postExplosion: ExplosionState['postExplosion'] = undefined;
-  if (phase === 'active' || phase === 'ended') {
-    const elapsedSinceExplosion = Math.max(0, Math.floor((now - expectedExplosionAtMs) / 1000));
-    const priceAtStart = klines.length > barsInCurrent ? parseFloat(klines[klines.length - barsInCurrent][4]) : 0;
+  if (actualExplosionAtMs && (phase === 'active' || phase === 'ended')) {
+    const elapsedSinceExplosion = Math.max(0, Math.floor((now - actualExplosionAtMs) / 1000));
+
+    // Start-of-squeeze price (for "moved since explosion" context)
+    const startIndex = Math.max(0, klines.length - (barsInSqueeze + 1));
+    const priceAtStart = klines.length ? parseFloat(klines[startIndex][4]) : 0;
+
     const currentPrice = parseFloat(klines[klines.length - 1][4]);
     const priceMovedPercent = priceAtStart > 0 ? ((currentPrice - priceAtStart) / priceAtStart) * 100 : 0;
     const breakoutConfirmed = Math.abs(priceMovedPercent) > 0.3;
@@ -813,23 +840,27 @@ function computeExplosionTimer(opts: {
   };
 
   if (phase === 'none' || phase === 'ended') {
+    const startIso = squeezeStartMs ? new Date(squeezeStartMs).toISOString() : null;
+    const expectedIso = expectedExplosionAtMs ? new Date(expectedExplosionAtMs).toISOString() : null;
+    const actualIso = actualExplosionAtMs ? new Date(actualExplosionAtMs).toISOString() : null;
+
     return {
       phase,
       active: false,
-      compressionStartedAt: squeezeActive ? new Date(startTime).toISOString() : null,
-      expectedExplosionAt: squeezeActive ? new Date(expectedExplosionAtMs).toISOString() : null,
-      actualExplosionAt: phase === 'ended' ? new Date(expectedExplosionAtMs).toISOString() : null,
-      expectedDurationSeconds: squeezeActive ? expectedDurationSeconds : null,
+      compressionStartedAt: startIso,
+      expectedExplosionAt: expectedIso,
+      actualExplosionAt: actualIso,
+      expectedDurationSeconds: squeezeStartMs ? expectedDurationSeconds : null,
       direction,
       confidence: 0,
-      method: 'none',
+      method: 'bollinger_squeeze_history',
       postExplosion,
       debug: {
         thresholdBandWidth: Math.round(thresholdBandWidth * 100) / 100,
         avgBandWidth: calibrationRaw.avgBandWidth,
         currentBandWidth: Math.round(latestBandWidth * 100) / 100,
         historicalSamples: completedDurations.length,
-        barsInCurrentSqueeze: barsInCurrent,
+        barsInCurrentSqueeze: barsInSqueeze || undefined,
       },
       calibration,
     };
@@ -864,7 +895,9 @@ function computeExplosionTimer(opts: {
   const isDirectionCorrect = direction === explosionDirection || explosionDirection === 'flat';
   
   // تحديد نافذة الدخول والتأكيدات
-  const elapsedSinceExplosion = phase === 'active' ? Math.max(0, Math.floor((now - expectedExplosionAtMs) / 1000)) : 0;
+  const elapsedSinceExplosion = (phase === 'active' && actualExplosionAtMs != null)
+    ? Math.max(0, Math.floor((now - actualExplosionAtMs) / 1000))
+    : 0;
   const hasVolumeConfirmation = volumeSpike;
   const hasCVDConfirmation = (direction === 'up' && cvdStatus === 'rising') || (direction === 'down' && cvdStatus === 'falling');
   const hasBreakoutConfirmation = Math.abs(priceChangeSinceCompressionPercent) > 0.2;
@@ -935,11 +968,11 @@ function computeExplosionTimer(opts: {
   
   return {
     phase,
-    active: true,
-    compressionStartedAt: new Date(startTime).toISOString(),
-    expectedExplosionAt: new Date(expectedExplosionAtMs).toISOString(),
-    actualExplosionAt: phase === 'active' ? new Date(expectedExplosionAtMs).toISOString() : null,
-    expectedDurationSeconds,
+    active: phase === 'countdown' || phase === 'active',
+    compressionStartedAt: squeezeStartMs ? new Date(squeezeStartMs).toISOString() : null,
+    expectedExplosionAt: expectedExplosionAtMs ? new Date(expectedExplosionAtMs).toISOString() : null,
+    actualExplosionAt: actualExplosionAtMs ? new Date(actualExplosionAtMs).toISOString() : null,
+    expectedDurationSeconds: squeezeStartMs ? expectedDurationSeconds : null,
     direction,
     confidence,
     method: 'bollinger_squeeze_history',
@@ -1298,9 +1331,9 @@ serve(async (req) => {
       realTimeMetrics: {
         avgVolume24h: volumeData.avgVolume,
         currentVolume: volumeData.recentVolume,
-        volumeChangePercent: (volumeData.ratio - 1) * 100,
+        volumeChangePercent: Math.round(((volumeData.ratio - 1) * 100) * 10) / 10,
         volatilityIndex: Math.round(bollingerResult.bandWidth * 10) / 10,
-        priceRangePercent: consolidationData.rangePercent,
+        priceRangePercent: Math.round(consolidationData.rangePercent * 100) / 100,
         bollingerWidth: Math.round(bollingerResult.bandWidth * 100) / 100,
       },
       explosionTimer,

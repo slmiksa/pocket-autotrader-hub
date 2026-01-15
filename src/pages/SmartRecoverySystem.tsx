@@ -481,13 +481,13 @@ const SmartRecoverySystem = () => {
                                   {((analysis as any).realTimeMetrics.currentVolume / 1000).toFixed(1)}K
                                 </div>
                                 <div className={`text-[9px] font-medium ${(analysis as any).realTimeMetrics.volumeChangePercent > 50 ? 'text-green-400' : 'text-purple-300'}`}>
-                                  {(analysis as any).realTimeMetrics.volumeChangePercent > 0 ? '+' : ''}{(analysis as any).realTimeMetrics.volumeChangePercent}% من المتوسط
+                                  {(analysis as any).realTimeMetrics.volumeChangePercent > 0 ? '+' : ''}{Number((analysis as any).realTimeMetrics.volumeChangePercent).toFixed(1)}% من المتوسط
                                 </div>
                               </div>
                               <div className="bg-purple-900/50 rounded-lg p-2 text-center">
                                 <div className="text-[9px] text-purple-300 font-medium">عرض بولينجر</div>
                                 <div className="text-sm font-bold text-purple-100">
-                                  {(analysis as any).realTimeMetrics.bollingerWidth}%
+                                  {Number((analysis as any).realTimeMetrics.bollingerWidth).toFixed(2)}%
                                 </div>
                                 <div className={`text-[9px] font-medium ${(analysis as any).realTimeMetrics.bollingerWidth < 2 ? 'text-orange-400' : 'text-purple-300'}`}>
                                   {(analysis as any).realTimeMetrics.bollingerWidth < 2 ? 'ضغط شديد!' : 'طبيعي'}
@@ -546,7 +546,7 @@ const SmartRecoverySystem = () => {
                               🔥 ضغط بولينجر
                             </Badge>}
                           {(analysis as any).volumeSpike && <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/40">
-                              📊 ارتفاع الحجم {(analysis as any).realTimeMetrics?.volumeChangePercent > 0 ? `+${(analysis as any).realTimeMetrics.volumeChangePercent}%` : ''}
+                              📊 ارتفاع الحجم {(analysis as any).realTimeMetrics?.volumeChangePercent > 0 ? `+${Number((analysis as any).realTimeMetrics.volumeChangePercent).toFixed(1)}%` : ''}
                             </Badge>}
                           {(analysis as any).priceConsolidation && <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/40">
                               📍 تجميع سعري

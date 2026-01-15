@@ -164,7 +164,7 @@ export const ExplosionHistoryChart = ({
           <div className="bg-slate-800/80 rounded-lg p-2 text-center border border-slate-600">
             <div className="text-[9px] text-slate-400">تغير الحجم</div>
             <div className={`text-sm font-bold ${(realTimeMetrics?.volumeChangePercent || 0) > 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {(realTimeMetrics?.volumeChangePercent || 0) > 0 ? '+' : ''}{realTimeMetrics?.volumeChangePercent || 0}%
+              {(realTimeMetrics?.volumeChangePercent || 0) > 0 ? '+' : ''}{Number(realTimeMetrics?.volumeChangePercent || 0).toFixed(1)}%
             </div>
           </div>
           <div className="bg-slate-800/80 rounded-lg p-2 text-center border border-slate-600">
@@ -216,7 +216,7 @@ export const ExplosionHistoryChart = ({
                   borderRadius: '8px',
                   fontSize: '11px'
                 }}
-                formatter={(value: number) => [`${value.toFixed(3)}%`, 'الحركة']}
+                formatter={(value: number) => [`${Number(value).toFixed(2)}%`, 'الحركة']}
                 labelFormatter={(label) => `الوقت: ${label}`}
               />
               <ReferenceLine y={0} stroke="#475569" strokeDasharray="3 3" />
