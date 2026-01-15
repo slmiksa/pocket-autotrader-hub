@@ -872,7 +872,8 @@ function computeExplosionTimer(opts: {
   
   // سعر الانفجار: السعر في آخر شمعة قبل وقت الانفجار المتوقع
   // إذا كان الانفجار نشط، نحسب كم شمعة مرت منذ الانفجار
-  const barsElapsedSinceExplosion = Math.max(0, Math.floor((now - expectedExplosionAtMs) / (barSeconds * 1000)));
+  const explosionTimeMs = actualExplosionAtMs ?? expectedExplosionAtMs ?? now;
+  const barsElapsedSinceExplosion = Math.max(0, Math.floor((now - explosionTimeMs) / (barSeconds * 1000)));
   const explosionBarIndex = Math.max(0, klines.length - 1 - barsElapsedSinceExplosion);
   
   // سعر لحظة الانفجار الفعلية (الشمعة التي حدث فيها الانفجار)
