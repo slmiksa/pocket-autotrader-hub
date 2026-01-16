@@ -66,14 +66,31 @@ serve(async (req) => {
       
       const coinId = coinGeckoMap[symbol] || symbol.toLowerCase().replace('usd', '');
       try {
-        const response = await fetch(
-          `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`
-        );
-        const data = await response.json();
-        if (data[coinId]) {
-          currentPrice = `$${data[coinId].usd}`;
-          const change24h = data[coinId].usd_24h_change?.toFixed(2) || 'N/A';
-          priceData = `العملة: ${symbol}\nالسعر الحالي: ${currentPrice}\nالتغير في 24 ساعة: ${change24h}%`;
+        // First try Binance for most accurate real-time price
+        const binanceSymbol = symbol.replace('USD', 'USDT');
+        const binanceRes = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${binanceSymbol}`);
+        if (binanceRes.ok) {
+          const binanceData = await binanceRes.json();
+          if (binanceData.lastPrice) {
+            currentPrice = `$${parseFloat(binanceData.lastPrice).toFixed(2)}`;
+            const change24h = parseFloat(binanceData.priceChangePercent).toFixed(2);
+            priceData = `العملة: ${symbol}\nالسعر الحالي: ${currentPrice} (Binance LIVE)\nالتغير في 24 ساعة: ${change24h}%\nأعلى سعر 24س: $${parseFloat(binanceData.highPrice).toFixed(2)}\nأقل سعر 24س: $${parseFloat(binanceData.lowPrice).toFixed(2)}`;
+            console.log(`✅ Crypto ${symbol} LIVE from Binance: ${currentPrice}`);
+          }
+        }
+        
+        // Fallback to CoinGecko if Binance failed
+        if (!currentPrice) {
+          const response = await fetch(
+            `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`
+          );
+          const data = await response.json();
+          if (data[coinId]) {
+            currentPrice = `$${data[coinId].usd}`;
+            const change24h = data[coinId].usd_24h_change?.toFixed(2) || 'N/A';
+            priceData = `العملة: ${symbol}\nالسعر الحالي: ${currentPrice} (CoinGecko LIVE)\nالتغير في 24 ساعة: ${change24h}%`;
+            console.log(`✅ Crypto ${symbol} LIVE from CoinGecko: ${currentPrice}`);
+          }
         }
       } catch (error) {
         console.error('Error fetching crypto data:', error);
@@ -84,40 +101,61 @@ serve(async (req) => {
       if (symbol === 'XAUUSD' || symbol === 'XAGUSD') {
         try {
           const metalName = symbol === 'XAUUSD' ? 'الذهب (Gold)' : 'الفضة (Silver)';
-          console.log(`Analyzing precious metal: ${metalName}`);
+          console.log(`🔴 Fetching LIVE metal price: ${metalName}`);
           
-          // Use CoinGecko API to get real gold/silver prices
-          // PAX Gold (PAXG) represents physical gold (1 PAXG = 1 troy ounce of gold)
-          const coinId = symbol === 'XAUUSD' ? 'pax-gold' : 'silver'; // Note: silver may not be available
-          
-          const response = await fetch(
-            `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true`
+          // Try Yahoo Finance first for accurate gold futures price
+          const yahooSymbol = symbol === 'XAUUSD' ? 'GC=F' : 'SI=F';
+          const yahooRes = await fetch(
+            `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?interval=1m&range=1d`,
+            { headers: { 'User-Agent': 'Mozilla/5.0' } }
           );
           
-          if (!response.ok) {
-            throw new Error('CoinGecko API failed');
-          }
-          
-          const data = await response.json();
-          console.log('Metal price data received:', data);
-          
-          if (data[coinId]) {
-            currentPrice = data[coinId].usd.toFixed(2);
-            const change24h = data[coinId].usd_24h_change?.toFixed(2) || 'N/A';
-            
-            priceData = `المعدن: ${metalName}
+          if (yahooRes.ok) {
+            const yahooData = await yahooRes.json();
+            const meta = yahooData.chart?.result?.[0]?.meta;
+            if (meta?.regularMarketPrice) {
+              currentPrice = meta.regularMarketPrice.toFixed(2);
+              const prevClose = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPrice;
+              const change24h = prevClose ? (((meta.regularMarketPrice - prevClose) / prevClose) * 100).toFixed(2) : 'N/A';
+              
+              priceData = `المعدن: ${metalName}
 الرمز: ${symbol}
-السعر الحالي: $${currentPrice}
+السعر الحالي: $${currentPrice} (Yahoo Finance LIVE)
 التغير في 24 ساعة: ${change24h}%
 الإطار الزمني: ${timeframe}`;
+              
+              console.log(`✅ Metal ${symbol} LIVE from Yahoo: $${currentPrice}`);
+            }
+          }
+          
+          // Fallback to CoinGecko PAXG for gold
+          if (!currentPrice && symbol === 'XAUUSD') {
+            const response = await fetch(
+              'https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd&include_24hr_change=true'
+            );
             
-            console.log('Metal price data prepared:', priceData);
-          } else {
-            throw new Error('No price data in response');
+            if (response.ok) {
+              const data = await response.json();
+              if (data['pax-gold']) {
+                currentPrice = data['pax-gold'].usd.toFixed(2);
+                const change24h = data['pax-gold'].usd_24h_change?.toFixed(2) || 'N/A';
+                
+                priceData = `المعدن: ${metalName}
+الرمز: ${symbol}
+السعر الحالي: $${currentPrice} (CoinGecko PAXG LIVE)
+التغير في 24 ساعة: ${change24h}%
+الإطار الزمني: ${timeframe}`;
+                
+                console.log(`✅ Metal ${symbol} LIVE from CoinGecko PAXG: $${currentPrice}`);
+              }
+            }
+          }
+          
+          if (!currentPrice) {
+            throw new Error('No price data available');
           }
         } catch (error) {
           console.error('Error fetching metal data:', error);
-          // Fallback to providing context without live price
           const metalName = symbol === 'XAUUSD' ? 'الذهب (Gold)' : 'الفضة (Silver)';
           priceData = `المعدن: ${metalName}
 الرمز: ${symbol}
