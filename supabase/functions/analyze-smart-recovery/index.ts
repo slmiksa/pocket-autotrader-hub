@@ -174,12 +174,30 @@ async function fetchMetalsLive(): Promise<{ price: number; change: number } | nu
     if (response.ok) {
       const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
+        console.log(`✅ Gold LIVE from Metals.live: $${data[0].price}`);
         return { price: data[0].price, change: 0 };
       }
     }
   } catch (e) {
     console.error('Metals.live error:', e);
   }
+  
+  // Fallback to GoldAPI via CoinGecko (PAX Gold as proxy)
+  try {
+    const response = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd&include_24hr_change=true'
+    );
+    if (response.ok) {
+      const data = await response.json();
+      if (data['pax-gold']?.usd) {
+        console.log(`✅ Gold LIVE from CoinGecko (PAXG): $${data['pax-gold'].usd}`);
+        return { price: data['pax-gold'].usd, change: data['pax-gold'].usd_24h_change || 0 };
+      }
+    }
+  } catch (e) {
+    console.error('CoinGecko PAXG error:', e);
+  }
+  
   return null;
 }
 
@@ -229,23 +247,57 @@ async function fetchForexPriceLive(symbol: string): Promise<{ price: number; cha
   return null;
 }
 
-// Fetch real-time crypto prices from Binance
+// Fetch real-time crypto prices from Binance with fallback to CoinGecko
 async function fetchCryptoPriceLive(symbol: string): Promise<{ price: number; change: number; source: string } | null> {
   const binanceSymbol = symbol.endsWith('USDT') ? symbol : `${symbol.replace('USD', '')}USDT`;
   
+  // Try Binance first (most accurate for crypto)
   try {
-    const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${binanceSymbol}`);
+    const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${binanceSymbol}`, {
+      headers: { 'Accept': 'application/json' }
+    });
     if (response.ok) {
       const data = await response.json();
-      return {
-        price: parseFloat(data.lastPrice),
-        change: parseFloat(data.priceChangePercent),
-        source: `Binance (${binanceSymbol})`,
-      };
+      if (data.lastPrice) {
+        console.log(`✅ Crypto ${binanceSymbol} LIVE from Binance: ${data.lastPrice}`);
+        return {
+          price: parseFloat(data.lastPrice),
+          change: parseFloat(data.priceChangePercent),
+          source: `Binance LIVE (${binanceSymbol})`,
+        };
+      }
     }
   } catch (e) {
     console.error('Binance error:', e);
   }
+  
+  // Fallback to CoinGecko
+  try {
+    const coinId = symbol.replace('USDT', '').replace('USD', '').toLowerCase();
+    const coinGeckoMap: Record<string, string> = {
+      'btc': 'bitcoin', 'eth': 'ethereum', 'bnb': 'binancecoin',
+      'xrp': 'ripple', 'ada': 'cardano', 'sol': 'solana',
+      'doge': 'dogecoin', 'dot': 'polkadot', 'ltc': 'litecoin',
+    };
+    const cgId = coinGeckoMap[coinId] || coinId;
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${cgId}&vs_currencies=usd&include_24hr_change=true`
+    );
+    if (response.ok) {
+      const data = await response.json();
+      if (data[cgId]?.usd) {
+        console.log(`✅ Crypto ${symbol} LIVE from CoinGecko: ${data[cgId].usd}`);
+        return {
+          price: data[cgId].usd,
+          change: data[cgId].usd_24h_change || 0,
+          source: `CoinGecko LIVE (${cgId})`,
+        };
+      }
+    }
+  } catch (e) {
+    console.error('CoinGecko error:', e);
+  }
+  
   return null;
 }
 
@@ -352,16 +404,25 @@ function calculateEMA(prices: number[], period: number): number {
 
 function calculateRSI(prices: number[], period: number = 14): number {
   if (prices.length < period + 1) return 50;
-  let gains = 0, losses = 0;
-  for (let i = 1; i <= period; i++) {
-    const change = prices[i] - prices[i - 1];
-    if (change > 0) gains += change;
-    else losses += Math.abs(change);
+  
+  // Use Wilder's smoothing method for accurate RSI
+  const changes: number[] = [];
+  for (let i = 1; i < prices.length; i++) {
+    changes.push(prices[i] - prices[i - 1]);
   }
-  let avgGain = gains / period;
-  let avgLoss = losses / period;
-  for (let i = period + 1; i < prices.length; i++) {
-    const change = prices[i] - prices[i - 1];
+  
+  // Initial averages using SMA for first period
+  let avgGain = 0, avgLoss = 0;
+  for (let i = 0; i < period; i++) {
+    if (changes[i] > 0) avgGain += changes[i];
+    else avgLoss += Math.abs(changes[i]);
+  }
+  avgGain /= period;
+  avgLoss /= period;
+  
+  // Apply Wilder's smoothing for remaining data
+  for (let i = period; i < changes.length; i++) {
+    const change = changes[i];
     if (change > 0) {
       avgGain = (avgGain * (period - 1) + change) / period;
       avgLoss = (avgLoss * (period - 1)) / period;
@@ -370,8 +431,14 @@ function calculateRSI(prices: number[], period: number = 14): number {
       avgLoss = (avgLoss * (period - 1) + Math.abs(change)) / period;
     }
   }
+  
   if (avgLoss === 0) return 100;
-  return 100 - (100 / (1 + avgGain / avgLoss));
+  if (avgGain === 0) return 0;
+  
+  const rs = avgGain / avgLoss;
+  const rsi = 100 - (100 / (1 + rs));
+  
+  return Math.round(rsi * 100) / 100;
 }
 
 function calculateMACD(prices: number[]): { macd: number; signal: number; histogram: number } {
