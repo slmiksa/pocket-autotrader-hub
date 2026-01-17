@@ -36,14 +36,21 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const recipients = Array.isArray(to) ? to : [to];
-    console.log(`Sending email to ${recipients.length} recipient(s)`);
+    const senderEmail = from || "TIFUE SA <onboarding@resend.dev>";
+    
+    console.log(`=== EMAIL SEND REQUEST ===`);
+    console.log(`From: ${senderEmail}`);
+    console.log(`Recipients: ${recipients.length}`);
     console.log(`Subject: ${subject}`);
+    console.log(`Recipients list: ${recipients.join(', ')}`);
 
     // Send each email individually to prevent exposing recipient list
-    const results: { email: string; success: boolean; error?: string }[] = [];
+    const results: { email: string; success: boolean; error?: string; resendId?: string }[] = [];
     
     for (const recipient of recipients) {
       try {
+        console.log(`Sending to: ${recipient}...`);
+        
         const response = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -51,7 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: from || "TIFUE SA <noreply@tifue.com>",
+            from: senderEmail,
             to: [recipient],
             subject: subject,
             html: html,
@@ -59,15 +66,17 @@ const handler = async (req: Request): Promise<Response> => {
         });
 
         const data = await response.json();
+        console.log(`Response for ${recipient}:`, JSON.stringify(data));
 
         if (!response.ok) {
-          console.error(`Failed to send to ${recipient}:`, data);
-          results.push({ email: recipient, success: false, error: data.message });
+          console.error(`❌ Failed to send to ${recipient}:`, data);
+          results.push({ email: recipient, success: false, error: data.message || data.error });
         } else {
-          results.push({ email: recipient, success: true });
+          console.log(`✅ Sent to ${recipient}, ID: ${data.id}`);
+          results.push({ email: recipient, success: true, resendId: data.id });
         }
       } catch (err: any) {
-        console.error(`Error sending to ${recipient}:`, err);
+        console.error(`❌ Exception sending to ${recipient}:`, err);
         results.push({ email: recipient, success: false, error: err.message });
       }
     }
