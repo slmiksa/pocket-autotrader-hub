@@ -36,7 +36,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const recipients = Array.isArray(to) ? to : [to];
-    const senderEmail = from || "TIFUE SA <onboarding@resend.dev>";
+    const senderEmail = from || "TIFUE SA <noreply@tifue.com>";
     
     console.log(`=== EMAIL SEND REQUEST ===`);
     console.log(`From: ${senderEmail}`);
