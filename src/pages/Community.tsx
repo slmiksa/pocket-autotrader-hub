@@ -223,6 +223,15 @@ export default function Community() {
       toast.error('يرجى إدخال العنوان والمحتوى');
       return;
     }
+    // Input length validation to prevent DoS/storage abuse
+    if (title.trim().length > 200) {
+      toast.error('العنوان طويل جداً (الحد الأقصى 200 حرف)');
+      return;
+    }
+    if (content.trim().length > 5000) {
+      toast.error('المحتوى طويل جداً (الحد الأقصى 5000 حرف)');
+      return;
+    }
     setCreating(true);
     try {
       let imageUrl: string | null = null;
