@@ -45,9 +45,9 @@ const MARKET_SYMBOLS = {
 };
 
 const CATEGORY_INFO = {
-  forex: { label: 'فوركس', icon: DollarSign, color: 'text-blue-400' },
-  crypto: { label: 'عملات رقمية', icon: Coins, color: 'text-amber-400' },
-  commodities: { label: 'معادن', icon: Gem, color: 'text-yellow-400' }
+  forex: { label: 'فوركس', icon: DollarSign, color: 'text-primary' },
+  crypto: { label: 'عملات رقمية', icon: Coins, color: 'text-warning' },
+  commodities: { label: 'معادن', icon: Gem, color: 'text-warning' }
 };
 
 const SmartRecoverySystem = () => {
@@ -324,36 +324,36 @@ const SmartRecoverySystem = () => {
               <>
                 {/* Accumulation Alert - Prominent Display */}
                 {(analysis as any)?.accumulation?.detected && (
-                  <Card className="bg-gradient-to-br from-orange-900/30 via-orange-800/20 to-amber-900/30 border-2 border-orange-500/50 shadow-xl shadow-orange-500/20">
+                  <Card className="bg-gradient-to-br from-warning/20 via-warning/10 to-warning/5 border-2 border-warning/50 shadow-xl shadow-warning/20">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="p-3 bg-orange-500/20 rounded-xl border border-orange-400/30">
-                          <AlertTriangle className="w-7 h-7 text-orange-400" />
+                        <div className="p-3 bg-warning/20 rounded-xl border border-warning/30">
+                          <AlertTriangle className="w-7 h-7 text-warning" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-xl font-bold text-orange-300 mb-1">
+                          <h3 className="text-xl font-bold text-warning mb-1">
                             🔥 تجمع سعري مؤسسي مكتشف!
                           </h3>
-                          <p className="text-orange-200/80 text-sm">
+                          <p className="text-warning/80 text-sm">
                             السوق في منطقة تجميع - توقع حركة قوية قريباً
                           </p>
                         </div>
-                        <Badge className="bg-orange-500 text-white font-bold text-lg px-4 py-2 border-none">
+                        <Badge className="bg-warning text-warning-foreground font-bold text-lg px-4 py-2 border-none">
                           {(analysis as any).accumulation.strength}%
                         </Badge>
                       </div>
                       
                       {/* Accumulation Details */}
                       <div className="grid grid-cols-2 gap-3 mb-4">
-                        <div className="bg-black/30 rounded-lg p-3 border border-orange-500/20">
-                          <div className="text-orange-300/70 text-xs mb-1">احتمال الاختراق</div>
-                          <div className="text-2xl font-bold text-orange-300">
+                        <div className="bg-background/30 rounded-lg p-3 border border-warning/20">
+                          <div className="text-warning/70 text-xs mb-1">احتمال الاختراق</div>
+                          <div className="text-2xl font-bold text-warning">
                             {(analysis as any).accumulation.breakoutProbability}%
                           </div>
                         </div>
-                        <div className="bg-black/30 rounded-lg p-3 border border-orange-500/20">
-                          <div className="text-orange-300/70 text-xs mb-1">الاتجاه المتوقع</div>
-                          <div className="text-lg font-bold text-orange-300 flex items-center gap-2">
+                        <div className="bg-background/30 rounded-lg p-3 border border-warning/20">
+                          <div className="text-warning/70 text-xs mb-1">الاتجاه المتوقع</div>
+                          <div className="text-lg font-bold text-warning flex items-center gap-2">
                             {(analysis as any).accumulation.expectedDirection === 'up' ? (
                               <>
                                 <TrendingUp className="w-5 h-5" />
@@ -374,11 +374,11 @@ const SmartRecoverySystem = () => {
                       {/* Reasons */}
                       {(analysis as any).accumulation.reasons && (analysis as any).accumulation.reasons.length > 0 && (
                         <div className="space-y-2">
-                          <div className="text-orange-300/90 text-sm font-semibold mb-2">دلائل التجمع:</div>
+                          <div className="text-warning/90 text-sm font-semibold mb-2">دلائل التجمع:</div>
                           <div className="grid gap-2">
                             {(analysis as any).accumulation.reasons.map((reason: string, idx: number) => (
-                              <div key={idx} className="flex items-center gap-2 text-orange-200/90 text-sm bg-black/20 rounded-lg px-3 py-2 border border-orange-500/10">
-                                <span className="text-orange-400">•</span>
+                              <div key={idx} className="flex items-center gap-2 text-warning/90 text-sm bg-background/20 rounded-lg px-3 py-2 border border-warning/10">
+                                <span className="text-warning">•</span>
                                 <span>{reason}</span>
                               </div>
                             ))}
@@ -394,7 +394,7 @@ const SmartRecoverySystem = () => {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted-foreground font-medium">مستوى الثقة</span>
                     <span className={`text-lg font-bold ${
-                      confidence >= 60 ? 'text-green-500' : confidence >= 40 ? 'text-yellow-500' : 'text-red-500'
+                      confidence >= 60 ? 'text-success' : confidence >= 40 ? 'text-warning' : 'text-danger'
                     }`}>
                       {confidence}%
                     </span>
@@ -402,7 +402,7 @@ const SmartRecoverySystem = () => {
                   <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
                     <div 
                       className={`h-full transition-all duration-500 ${
-                        confidence >= 60 ? 'bg-green-500' : confidence >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                        confidence >= 60 ? 'bg-success' : confidence >= 40 ? 'bg-warning' : 'bg-danger'
                       }`} 
                       style={{ width: `${confidence}%` }} 
                     />
@@ -413,34 +413,34 @@ const SmartRecoverySystem = () => {
                 <div 
                   className={`rounded-2xl p-6 text-center cursor-pointer transition-all active:scale-98 shadow-lg ${
                     isWait 
-                      ? 'bg-gradient-to-br from-amber-600/80 to-amber-700/80 border-2 border-amber-400/60' 
+                      ? 'bg-gradient-to-br from-warning/80 to-warning/60 border-2 border-warning/60' 
                       : isBuy 
-                      ? 'bg-gradient-to-br from-green-600 to-green-700 border-2 border-green-400' 
-                      : 'bg-gradient-to-br from-red-600 to-red-700 border-2 border-red-400'
+                      ? 'bg-gradient-to-br from-success to-success/80 border-2 border-success' 
+                      : 'bg-gradient-to-br from-danger to-danger/80 border-2 border-danger'
                   }`} 
                   onClick={isWait ? undefined : triggerManualAlert}
                 >
                   <div className="flex items-center justify-center gap-3 mb-4">
-                    {isWait ? <AlertTriangle className="w-12 h-12 text-white" /> : isBuy ? <TrendingUp className="w-12 h-12 text-white" /> : <TrendingDown className="w-12 h-12 text-white" />}
-                    <span className="text-4xl font-black text-white">
+                    {isWait ? <AlertTriangle className="w-12 h-12 text-warning-foreground" /> : isBuy ? <TrendingUp className="w-12 h-12 text-success-foreground" /> : <TrendingDown className="w-12 h-12 text-danger-foreground" />}
+                    <span className={`text-4xl font-black ${isWait ? 'text-warning-foreground' : isBuy ? 'text-success-foreground' : 'text-danger-foreground'}`}>
                       {isWait ? 'انتظار' : isBuy ? 'شراء' : 'بيع'}
                     </span>
                   </div>
-                  <div className="text-4xl font-bold text-white mb-2">
+                  <div className={`text-4xl font-bold mb-2 ${isWait ? 'text-warning-foreground' : isBuy ? 'text-success-foreground' : 'text-danger-foreground'}`}>
                     {analysis.currentPrice.toFixed(analysis.currentPrice > 100 ? 2 : 5)}
                   </div>
                   {analysis.priceChange !== undefined && (
                     <div className={`inline-flex items-center gap-1 text-lg font-bold px-4 py-1.5 rounded-full ${
-                      analysis.priceChange >= 0 ? 'bg-green-400/30 text-green-100' : 'bg-red-400/30 text-red-100'
+                      analysis.priceChange >= 0 ? 'bg-success/30 text-success-foreground' : 'bg-danger/30 text-danger-foreground'
                     }`}>
                       {analysis.priceChange >= 0 ? '▲' : '▼'} {Math.abs(analysis.priceChange).toFixed(2)}%
                     </div>
                   )}
-                  <div className="mt-4 text-xs text-white/70">
+                  <div className={`mt-4 text-xs ${isWait ? 'text-warning-foreground/70' : isBuy ? 'text-success-foreground/70' : 'text-danger-foreground/70'}`}>
                     آخر تحديث: {new Date(analysis.timestamp).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                   {!isWait && (
-                    <div className="text-xs text-white/60 mt-2">🔔 اضغط للتنبيه الصوتي</div>
+                    <div className={`text-xs mt-2 ${isBuy ? 'text-success-foreground/60' : 'text-danger-foreground/60'}`}>🔔 اضغط للتنبيه الصوتي</div>
                   )}
                 </div>
 
@@ -457,9 +457,9 @@ const SmartRecoverySystem = () => {
                             key={idx} 
                             className={`text-xs px-3 py-1.5 rounded-full ${
                               isPositive 
-                                ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                                ? 'bg-success/20 text-success border border-success/30' 
                                 : isNegative 
-                                ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                                ? 'bg-danger/20 text-danger border border-danger/30' 
                                 : 'bg-muted text-muted-foreground border border-border/30'
                             }`}
                           >
@@ -474,29 +474,29 @@ const SmartRecoverySystem = () => {
                 {/* Entry, Target, Stop Loss */}
                 {!isWait && (
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-blue-500/10 rounded-xl p-4 text-center border border-blue-500/30">
-                      <div className="text-xs text-blue-400 font-bold mb-1">🎯 الدخول</div>
-                      <div className="font-black text-lg text-blue-300">
+                    <div className="bg-primary/10 rounded-xl p-4 text-center border border-primary/30">
+                      <div className="text-xs text-primary font-bold mb-1">🎯 الدخول</div>
+                      <div className="font-black text-lg text-primary">
                         {analysis.currentPrice.toFixed(analysis.currentPrice > 100 ? 2 : 5)}
                       </div>
                     </div>
-                    <div className="bg-green-500/10 rounded-xl p-4 text-center border border-green-500/30">
-                      <div className="text-xs text-green-400 font-bold mb-1">🏆 الهدف</div>
-                      <div className="font-black text-lg text-green-300">
+                    <div className="bg-success/10 rounded-xl p-4 text-center border border-success/30">
+                      <div className="text-xs text-success font-bold mb-1">🏆 الهدف</div>
+                      <div className="font-black text-lg text-success">
                         {isBuy 
                           ? (analysis.currentPrice * 1.015).toFixed(analysis.currentPrice > 100 ? 2 : 5) 
                           : (analysis.currentPrice * 0.985).toFixed(analysis.currentPrice > 100 ? 2 : 5)}
                       </div>
-                      <div className="text-[10px] text-green-400/70 mt-0.5">+1.5%</div>
+                      <div className="text-[10px] text-success/70 mt-0.5">+1.5%</div>
                     </div>
-                    <div className="bg-red-500/10 rounded-xl p-4 text-center border border-red-500/30">
-                      <div className="text-xs text-red-400 font-bold mb-1">🛑 الوقف</div>
-                      <div className="font-black text-lg text-red-300">
+                    <div className="bg-danger/10 rounded-xl p-4 text-center border border-danger/30">
+                      <div className="text-xs text-danger font-bold mb-1">🛑 الوقف</div>
+                      <div className="font-black text-lg text-danger">
                         {isBuy 
                           ? (analysis.currentPrice * 0.99).toFixed(analysis.currentPrice > 100 ? 2 : 5) 
                           : (analysis.currentPrice * 1.01).toFixed(analysis.currentPrice > 100 ? 2 : 5)}
                       </div>
-                      <div className="text-[10px] text-red-400/70 mt-0.5">-1%</div>
+                      <div className="text-[10px] text-danger/70 mt-0.5">-1%</div>
                     </div>
                   </div>
                 )}
@@ -506,7 +506,7 @@ const SmartRecoverySystem = () => {
                   <div className="bg-muted/50 rounded-lg p-3 text-center border border-border/30">
                     <div className="text-[10px] text-muted-foreground mb-1">الاتجاه</div>
                     <div className={`text-lg font-bold ${
-                      analysis.trend === 'bullish' ? 'text-green-500' : analysis.trend === 'bearish' ? 'text-red-500' : 'text-yellow-500'
+                      analysis.trend === 'bullish' ? 'text-success' : analysis.trend === 'bearish' ? 'text-danger' : 'text-warning'
                     }`}>
                       {analysis.trend === 'bullish' ? '↑' : analysis.trend === 'bearish' ? '↓' : '→'}
                     </div>
@@ -514,7 +514,7 @@ const SmartRecoverySystem = () => {
                   <div className="bg-muted/50 rounded-lg p-3 text-center border border-border/30">
                     <div className="text-[10px] text-muted-foreground mb-1">RSI</div>
                     <div className={`text-lg font-bold ${
-                      ((analysis as any).rsi || 50) > 70 ? 'text-red-500' : ((analysis as any).rsi || 50) < 30 ? 'text-green-500' : 'text-yellow-500'
+                      ((analysis as any).rsi || 50) > 70 ? 'text-danger' : ((analysis as any).rsi || 50) < 30 ? 'text-success' : 'text-warning'
                     }`}>
                       {((analysis as any).rsi || 50).toFixed(0)}
                     </div>
@@ -522,14 +522,14 @@ const SmartRecoverySystem = () => {
                   <div className="bg-muted/50 rounded-lg p-3 text-center border border-border/30">
                     <div className="text-[10px] text-muted-foreground mb-1">MACD</div>
                     <div className={`text-lg font-bold ${
-                      ((analysis as any).macd?.histogram || 0) > 0 ? 'text-green-500' : 'text-red-500'
+                      ((analysis as any).macd?.histogram || 0) > 0 ? 'text-success' : 'text-danger'
                     }`}>
                       {((analysis as any).macd?.histogram || 0) > 0 ? '↑' : '↓'}
                     </div>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-3 text-center border border-border/30">
                     <div className="text-[10px] text-muted-foreground mb-1">EMA200</div>
-                    <div className={`text-lg font-bold ${analysis.priceAboveEMA ? 'text-green-500' : 'text-red-500'}`}>
+                    <div className={`text-lg font-bold ${analysis.priceAboveEMA ? 'text-success' : 'text-danger'}`}>
                       {analysis.priceAboveEMA ? '✓' : '✗'}
                     </div>
                   </div>
@@ -575,13 +575,13 @@ const SmartRecoverySystem = () => {
         />
 
         {/* Disclaimer */}
-        <Card className="bg-amber-500/5 border-amber-500/30">
+        <Card className="bg-warning/5 border-warning/30">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <Clock className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <Clock className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm text-amber-200/80 font-medium">تنبيه مهم</p>
-                <p className="text-xs text-amber-300/60 mt-1">
+                <p className="text-sm text-warning/80 font-medium">تنبيه مهم</p>
+                <p className="text-xs text-warning/60 mt-1">
                   هذا النظام للمساعدة فقط وليس نصيحة مالية. تداول بمسؤولية.
                 </p>
               </div>
