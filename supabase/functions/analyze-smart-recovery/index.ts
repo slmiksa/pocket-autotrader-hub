@@ -906,6 +906,38 @@ function computeExplosionTimer(opts: {
     samples: calibrationRaw.calibrationSamples,
   };
 
+  // حساب الثقة حتى عند عدم وجود انفجار نشط
+  if (phase === 'none' && !squeezeActive) {
+    // نحسب الثقة بناءً على المؤشرات الموجودة
+    let baseConfidence = 30; // ثقة أساسية
+    
+    // تقييم قوة التجمع السعري
+    if (accumulation?.detected) {
+      baseConfidence += 25;
+      if (accumulation.strength >= 70) baseConfidence += 15;
+      else if (accumulation.strength >= 50) baseConfidence += 10;
+    }
+    
+    // تقييم اقتراب البولينجر من الضغط
+    if (latestBandWidth > 0 && thresholdBandWidth > 0) {
+      const ratio = latestBandWidth / thresholdBandWidth;
+      if (ratio < 1.2) baseConfidence += 15;
+      if (ratio < 1.0) baseConfidence += 10;
+    }
+    
+    // تقييم المؤشرات الفنية
+    if (volumeSpike) baseConfidence += 10;
+    if (cvdStatus !== 'flat') baseConfidence += 5;
+    if ((direction === 'up' && rsi < 50) || (direction === 'down' && rsi > 50)) baseConfidence += 5;
+    
+    confidence = Math.max(0, Math.min(85, Math.round(baseConfidence)));
+  }
+  
+  if (phase === 'ended') {
+    // في حالة انتهاء الانفجار، نقلل الثقة تدريجياً
+    confidence = Math.max(0, Math.round(confidence * 0.3));
+  }
+  
   if (phase === 'none' || phase === 'ended') {
     const startIso = squeezeStartMs ? new Date(squeezeStartMs).toISOString() : null;
     const expectedIso = expectedExplosionAtMs ? new Date(expectedExplosionAtMs).toISOString() : null;
@@ -919,7 +951,7 @@ function computeExplosionTimer(opts: {
       actualExplosionAt: actualIso,
       expectedDurationSeconds: squeezeStartMs ? expectedDurationSeconds : null,
       direction,
-      confidence: 0,
+      confidence, // استخدام الثقة المحسوبة بدلاً من 0
       method: 'bollinger_squeeze_history',
       postExplosion,
       debug: {
