@@ -215,13 +215,24 @@ const SmartRecoverySystem = () => {
               </Select>
 
               {selectedSymbol === 'XAUUSD' && (
-                <Select value={xauPriceSource} onValueChange={v => setXauPriceSource(v as 'spot' | 'futures')}>
-                  <SelectTrigger className="w-28 bg-muted/50 border-border">
-                    <SelectValue />
+                <Select 
+                  value={xauPriceSource} 
+                  onValueChange={(value: string) => {
+                    if (value === 'spot' || value === 'futures') {
+                      setXauPriceSource(value);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-28 bg-card border-border text-foreground">
+                    <SelectValue placeholder="اختر المصدر" />
                   </SelectTrigger>
-                  <SelectContent className="dark bg-popover border-border">
-                    <SelectItem value="spot">Spot</SelectItem>
-                    <SelectItem value="futures">Futures</SelectItem>
+                  <SelectContent 
+                    className="dark bg-card border-border z-[100]" 
+                    position="popper"
+                    sideOffset={4}
+                  >
+                    <SelectItem value="spot" className="cursor-pointer">Spot</SelectItem>
+                    <SelectItem value="futures" className="cursor-pointer">Futures</SelectItem>
                   </SelectContent>
                 </Select>
               )}
