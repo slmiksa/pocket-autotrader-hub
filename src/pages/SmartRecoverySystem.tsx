@@ -132,7 +132,7 @@ const SmartRecoverySystem = () => {
   const signalType = analysis?.signalType as 'BUY' | 'SELL' | 'WAIT' | 'NONE';
   const isWait = signalType === 'WAIT' || signalType === 'NONE';
   const isBuy = signalType === 'BUY';
-  const confidence = (analysis as any)?.confidence || 0;
+  const confidence = (analysis as any)?.explosionTimer?.confidence || (analysis as any)?.confidence || 0;
   const signalReasons = (analysis as any)?.signalReasons || [];
 
   return (
@@ -311,6 +311,73 @@ const SmartRecoverySystem = () => {
           <CardContent className="p-4 space-y-5">
             {analysis ? (
               <>
+                {/* Accumulation Alert - Prominent Display */}
+                {(analysis as any)?.accumulation?.detected && (
+                  <Card className="bg-gradient-to-br from-orange-900/30 via-orange-800/20 to-amber-900/30 border-2 border-orange-500/50 shadow-xl shadow-orange-500/20">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-3 bg-orange-500/20 rounded-xl border border-orange-400/30">
+                          <AlertTriangle className="w-7 h-7 text-orange-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-orange-300 mb-1">
+                            🔥 تجمع سعري مؤسسي مكتشف!
+                          </h3>
+                          <p className="text-orange-200/80 text-sm">
+                            السوق في منطقة تجميع - توقع حركة قوية قريباً
+                          </p>
+                        </div>
+                        <Badge className="bg-orange-500 text-white font-bold text-lg px-4 py-2 border-none">
+                          {(analysis as any).accumulation.strength}%
+                        </Badge>
+                      </div>
+                      
+                      {/* Accumulation Details */}
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div className="bg-black/30 rounded-lg p-3 border border-orange-500/20">
+                          <div className="text-orange-300/70 text-xs mb-1">احتمال الاختراق</div>
+                          <div className="text-2xl font-bold text-orange-300">
+                            {(analysis as any).accumulation.breakoutProbability}%
+                          </div>
+                        </div>
+                        <div className="bg-black/30 rounded-lg p-3 border border-orange-500/20">
+                          <div className="text-orange-300/70 text-xs mb-1">الاتجاه المتوقع</div>
+                          <div className="text-lg font-bold text-orange-300 flex items-center gap-2">
+                            {(analysis as any).accumulation.expectedDirection === 'up' ? (
+                              <>
+                                <TrendingUp className="w-5 h-5" />
+                                <span>صعود</span>
+                              </>
+                            ) : (analysis as any).accumulation.expectedDirection === 'down' ? (
+                              <>
+                                <TrendingDown className="w-5 h-5" />
+                                <span>هبوط</span>
+                              </>
+                            ) : (
+                              <span className="text-sm">غير محدد</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Reasons */}
+                      {(analysis as any).accumulation.reasons && (analysis as any).accumulation.reasons.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-orange-300/90 text-sm font-semibold mb-2">دلائل التجمع:</div>
+                          <div className="grid gap-2">
+                            {(analysis as any).accumulation.reasons.map((reason: string, idx: number) => (
+                              <div key={idx} className="flex items-center gap-2 text-orange-200/90 text-sm bg-black/20 rounded-lg px-3 py-2 border border-orange-500/10">
+                                <span className="text-orange-400">•</span>
+                                <span>{reason}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Confidence Bar */}
                 <div className="bg-muted/50 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
