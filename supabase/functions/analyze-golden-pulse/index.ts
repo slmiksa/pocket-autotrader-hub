@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface GoldenPulseAnalysis {
@@ -127,65 +127,108 @@ function calculateVWAP(candles: any[]): number {
 
 async function fetchGoldData(): Promise<any> {
   const errors: string[] = [];
-  
-  // Try multiple sources for reliability
-  
-  // Source 1: Metals.live API (free, no auth required)
+
+  // NOTE: Golden Pulse requires a real-market feed. We prioritize Finnhub (API key already configured).
+  const FINNHUB_API_KEY = Deno.env.get('FINNHUB_API_KEY');
+  const isPlausibleGoldPrice = (p: unknown) => typeof p === 'number' && isFinite(p) && p > 1000 && p < 5000;
+
+  // Source 1: Finnhub (candles + quote)
+  if (FINNHUB_API_KEY) {
+    try {
+      console.log('Trying Finnhub forex candles...');
+      const now = Math.floor(Date.now() / 1000);
+      const from = now - 4 * 60 * 60; // 4h for enough data (EMA50 needs >= 50 candles)
+
+      // Common symbols: OANDA:XAU_USD or FX_IDC:XAUUSD (availability depends on plan)
+      const symbolsToTry = ['OANDA:XAU_USD', 'FX_IDC:XAUUSD'];
+
+      for (const symbol of symbolsToTry) {
+        const candlesUrl = `https://finnhub.io/api/v1/forex/candle?symbol=${encodeURIComponent(symbol)}&resolution=1&from=${from}&to=${now}&token=${encodeURIComponent(FINNHUB_API_KEY)}`;
+        const candlesRes = await fetch(candlesUrl, { headers: { 'Accept': 'application/json' } });
+        const candlesJson = await candlesRes.json().catch(() => null);
+
+        if (candlesRes.ok && candlesJson?.s === 'ok' && Array.isArray(candlesJson?.c) && candlesJson.c.length >= 60) {
+          const candles = candlesJson.t.map((ts: number, i: number) => ({
+            time: new Date(ts * 1000).toISOString(),
+            open: candlesJson.o[i],
+            high: candlesJson.h[i],
+            low: candlesJson.l[i],
+            close: candlesJson.c[i],
+            volume: candlesJson.v?.[i] ?? 0,
+          })).filter((c: any) => isPlausibleGoldPrice(c.close));
+
+          if (candles.length >= 60) {
+            // Quote for current price + prev close
+            let currentPrice = candles[candles.length - 1].close;
+            let previousClose = candles[0].open;
+            try {
+              const quoteUrl = `https://finnhub.io/api/v1/forex/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(FINNHUB_API_KEY)}`;
+              const quoteRes = await fetch(quoteUrl, { headers: { 'Accept': 'application/json' } });
+              const quoteJson = await quoteRes.json().catch(() => null);
+              if (quoteRes.ok && quoteJson) {
+                if (isPlausibleGoldPrice(quoteJson.c)) currentPrice = quoteJson.c;
+                if (isPlausibleGoldPrice(quoteJson.pc)) previousClose = quoteJson.pc;
+              }
+            } catch (e) {
+              errors.push(`Finnhub quote (${symbol}): ${String(e)}`);
+            }
+
+            // Ensure last candle contains currentPrice for coherent candle calculations
+            const last = candles[candles.length - 1];
+            const adjustedLast = {
+              ...last,
+              close: currentPrice,
+              high: Math.max(last.high, currentPrice, last.open),
+              low: Math.min(last.low, currentPrice, last.open),
+            };
+            candles[candles.length - 1] = adjustedLast;
+
+            console.log(`Finnhub success (${symbol})`);
+            return {
+              currentPrice,
+              previousClose,
+              candles,
+              timestamp: new Date().toISOString(),
+              dataSource: `finnhub:${symbol}`,
+            };
+          }
+        }
+
+        errors.push(`Finnhub candles (${symbol}): ${candlesJson?.s ?? candlesRes.status}`);
+      }
+    } catch (e) {
+      errors.push(`Finnhub: ${String(e)}`);
+    }
+  } else {
+    errors.push('Finnhub: missing FINNHUB_API_KEY');
+  }
+
+  // Source 2: Metals.live (spot-only; we synthesize candles from spot price)
   try {
     console.log('Trying Metals.live API...');
     const response = await fetch('https://api.metals.live/v1/spot/gold', {
       headers: { 'Accept': 'application/json' }
     });
-    
+
     if (response.ok) {
       const data = await response.json();
-      if (data && data.length > 0) {
-        const goldPrice = data[0]?.price || data[0];
-        console.log('Metals.live success:', goldPrice);
-        return generateCandleData(goldPrice);
+      const candidate = data?.[0]?.price ?? data?.[0] ?? null;
+      const price = typeof candidate === 'number' ? candidate : Number(candidate);
+      if (isPlausibleGoldPrice(price)) {
+        console.log('Metals.live success:', price);
+        return { ...generateCandleData(price), dataSource: 'metals.live' };
       }
+      errors.push(`Metals.live: implausible price ${String(candidate)}`);
+    } else {
+      errors.push(`Metals.live: HTTP ${response.status}`);
     }
   } catch (e) {
-    errors.push(`Metals.live: ${e}`);
+    errors.push(`Metals.live: ${String(e)}`);
   }
-  
-  // Source 2: Gold API (alternative endpoint)
-  try {
-    console.log('Trying Gold API alternative...');
-    const response = await fetch('https://api.gold-api.com/price/XAU', {
-      headers: { 'Accept': 'application/json' }
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data.price) {
-        console.log('Gold API success:', data.price);
-        return generateCandleData(data.price);
-      }
-    }
-  } catch (e) {
-    errors.push(`Gold API: ${e}`);
-  }
-  
-  // Source 3: FastForex free endpoint
-  try {
-    console.log('Trying FastForex...');
-    const response = await fetch('https://www.fastforex.io/api/fetch-one?from=XAU&to=USD&api_key=demo');
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data?.result?.USD) {
-        console.log('FastForex success:', data.result.USD);
-        return generateCandleData(data.result.USD);
-      }
-    }
-  } catch (e) {
-    errors.push(`FastForex: ${e}`);
-  }
-  
-  // Source 4: Generate realistic simulation with market-like behavior
-  console.log('Using simulated real-time data with market behavior...');
-  return generateSimulatedGoldData();
+
+  // Last resort: simulation (never 500; keeps UI alive). Marked as simulated for transparency.
+  console.log('All live sources failed; using simulated data. Errors:', errors);
+  return { ...generateSimulatedGoldData(), dataSource: 'simulated', errors };
 }
 
 function generateCandleData(currentPrice: number): any {
@@ -197,9 +240,16 @@ function generateCandleData(currentPrice: number): any {
     const change = (Math.random() - 0.48) * currentPrice * volatility * 2;
     const open = price;
     price += change;
-    const high = Math.max(open, price) + Math.random() * currentPrice * volatility * 0.5;
-    const low = Math.min(open, price) - Math.random() * currentPrice * volatility * 0.5;
-    const close = i === 59 ? currentPrice : price;
+    let close = price;
+    let high = Math.max(open, price) + Math.random() * currentPrice * volatility * 0.5;
+    let low = Math.min(open, price) - Math.random() * currentPrice * volatility * 0.5;
+
+    // Force the last candle to include the provided currentPrice coherently
+    if (i === 59) {
+      close = currentPrice;
+      high = Math.max(high, close, open);
+      low = Math.min(low, close, open);
+    }
     
     candles.push({
       time: new Date(Date.now() - (59 - i) * 60000).toISOString(),
@@ -224,7 +274,6 @@ function generateSimulatedGoldData(): any {
   const basePrice = 2650; // Approximate current gold price
   const hourOfDay = new Date().getHours();
   const minuteOfHour = new Date().getMinutes();
-  const secondOfMinute = new Date().getSeconds();
   
   // Add time-based micro-movements to simulate real market
   const timeVariation = Math.sin(Date.now() / 10000) * 15 + 
@@ -250,13 +299,21 @@ function generateSimulatedGoldData(): any {
     const range = Math.abs(change) + Math.random() * 2;
     const high = Math.max(open, price) + range * 0.3;
     const low = Math.min(open, price) - range * 0.3;
-    const close = i === 59 ? currentPrice : price;
+    let close = price;
+    let adjHigh = high;
+    let adjLow = low;
+
+    if (i === 59) {
+      close = currentPrice;
+      adjHigh = Math.max(high, close, open);
+      adjLow = Math.min(low, close, open);
+    }
     
     candles.push({
       time: new Date(Date.now() - (59 - i) * 60000).toISOString(),
       open,
-      high,
-      low,
+      high: adjHigh,
+      low: adjLow,
       close,
       volume: Math.floor(2000 + Math.random() * 8000 * sessionMultiplier)
     });
