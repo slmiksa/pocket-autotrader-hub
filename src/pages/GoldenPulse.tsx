@@ -36,14 +36,78 @@ const GoldenPulse = () => {
     tradeSession,
     cooldown,
     refetch,
+    lastSignal,
     enterTrade,
     exitTrade,
   } = useGoldenPulse({
     autoRefresh: true,
-    refreshInterval: 1000,
+    refreshInterval: 3000, // تحديث كل 3 ثوان لاستقرار أكبر
     maxTradeDuration: 90,
     cooldownPeriod: 120,
   });
+
+  // حالة ثابتة للإشارة (لا تتغير إلا عند تأكيد قوي)
+  const [stableSignal, setStableSignal] = useState<{
+    action: 'BUY' | 'SELL' | 'HOLD' | 'EXIT';
+    confidence: number;
+    reasons: string[];
+    entryZone: string | null;
+    lockedAt: Date | null;
+  }>({
+    action: 'HOLD',
+    confidence: 0,
+    reasons: [],
+    entryZone: null,
+    lockedAt: null
+  });
+
+  // تثبيت الإشارة - لا تتغير إلا بثقة عالية ومنطقة ارتداد
+  useEffect(() => {
+    if (!analysis) return;
+    
+    const { signal, reactionZones } = analysis;
+    
+    // إذا كنا في صفقة، نبحث عن إشارة خروج فقط
+    if (tradeSession.isActive) {
+      if (analysis.exitConditions.shouldExit || signal.action === 'EXIT') {
+        setStableSignal({
+          action: 'EXIT',
+          confidence: 90,
+          reasons: analysis.exitConditions.reason ? [analysis.exitConditions.reason] : ['حان وقت الخروج'],
+          entryZone: null,
+          lockedAt: new Date()
+        });
+      }
+      return;
+    }
+    
+    // للدخول: نحتاج ثقة >= 75 ومنطقة ارتداد واضحة
+    const hasReactionZone = reactionZones.nearZone && 
+      (reactionZones.zoneType === 'support' || reactionZones.zoneType === 'resistance');
+    
+    if (signal.confidence >= 75 && hasReactionZone) {
+      // تأكد أن الإشارة مختلفة عن الحالية
+      if (signal.action !== stableSignal.action || 
+          (Date.now() - (stableSignal.lockedAt?.getTime() || 0)) > 30000) {
+        setStableSignal({
+          action: signal.action,
+          confidence: signal.confidence,
+          reasons: signal.reasons,
+          entryZone: reactionZones.zoneType === 'support' ? 'دعم' : 'مقاومة',
+          lockedAt: new Date()
+        });
+      }
+    } else if (stableSignal.action !== 'HOLD' && !stableSignal.lockedAt) {
+      // إعادة للانتظار إذا لم تكن هناك إشارة قوية
+      setStableSignal({
+        action: 'HOLD',
+        confidence: 0,
+        reasons: ['انتظار منطقة ارتداد واضحة'],
+        entryZone: null,
+        lockedAt: null
+      });
+    }
+  }, [analysis, tradeSession.isActive, stableSignal.action, stableSignal.lockedAt]);
 
   // Play alert sound
   const playSound = useCallback((type: 'buy' | 'sell' | 'exit') => {
@@ -169,7 +233,7 @@ const GoldenPulse = () => {
     : '';
 
   return (
-    <div className={cn("min-h-screen bg-background pt-16 pb-8 transition-colors duration-300", flashClass)}>
+    <div className={cn("min-h-screen bg-[#0a0a0f] pt-16 pb-8 transition-colors duration-300", flashClass)}>
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header */}
         <div className="text-center mb-6">
@@ -236,49 +300,69 @@ const GoldenPulse = () => {
           </CardContent>
         </Card>
 
-        {/* Signal Status */}
+        {/* Signal Status - استخدام الإشارة الثابتة */}
         <Card className={cn(
-          "mb-4 transition-all duration-300",
-          analysis?.signal.action === 'BUY' && "border-success/50 bg-success/10",
-          analysis?.signal.action === 'SELL' && "border-destructive/50 bg-destructive/10",
-          analysis?.signal.action === 'EXIT' && "border-warning/50 bg-warning/10",
+          "mb-4 transition-all duration-500 border-2",
+          stableSignal.action === 'BUY' && "border-success bg-success/15",
+          stableSignal.action === 'SELL' && "border-destructive bg-destructive/15",
+          stableSignal.action === 'EXIT' && "border-warning bg-warning/15",
+          stableSignal.action === 'HOLD' && "border-muted-foreground/30 bg-muted/10",
           tradeSession.isActive && "ring-2 ring-primary"
         )}>
           <CardContent className="py-6">
             <div className="text-center">
+              {/* منطقة الارتداد */}
+              {stableSignal.entryZone && (
+                <div className="mb-3">
+                  <Badge variant="outline" className="text-sm border-primary text-primary">
+                    <Target className="h-3 w-3 ml-1" />
+                    منطقة {stableSignal.entryZone}
+                  </Badge>
+                </div>
+              )}
+              
               <Badge 
                 className={cn(
-                  "text-lg px-6 py-2 mb-3",
-                  analysis?.signal.action === 'BUY' && "bg-success text-success-foreground",
-                  analysis?.signal.action === 'SELL' && "bg-destructive text-destructive-foreground",
-                  analysis?.signal.action === 'EXIT' && "bg-warning text-warning-foreground",
-                  analysis?.signal.action === 'HOLD' && "bg-muted text-muted-foreground"
+                  "text-xl px-8 py-3 mb-3 font-bold",
+                  stableSignal.action === 'BUY' && "bg-success text-success-foreground",
+                  stableSignal.action === 'SELL' && "bg-destructive text-destructive-foreground",
+                  stableSignal.action === 'EXIT' && "bg-warning text-warning-foreground animate-pulse",
+                  stableSignal.action === 'HOLD' && "bg-muted text-muted-foreground"
                 )}
               >
-                {getStatusText()}
+                {stableSignal.action === 'BUY' ? '🟢 ادخل شراء' :
+                 stableSignal.action === 'SELL' ? '🔴 ادخل بيع' :
+                 stableSignal.action === 'EXIT' ? '⚠️ أغلق الآن' : '⏳ انتظر'}
               </Badge>
               
               {/* Confidence Bar */}
               <div className="mt-4 mb-3">
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-muted-foreground">مستوى الثقة</span>
-                  <span className="font-bold">{analysis?.signal.confidence || 0}%</span>
+                  <span className="font-bold text-foreground">{stableSignal.confidence}%</span>
                 </div>
                 <Progress 
-                  value={analysis?.signal.confidence || 0} 
+                  value={stableSignal.confidence} 
                   className="h-3"
                 />
               </div>
 
               {/* Signal Reasons */}
-              {analysis?.signal.reasons && analysis.signal.reasons.length > 0 && (
+              {stableSignal.reasons.length > 0 && (
                 <div className="flex flex-wrap justify-center gap-2 mt-3">
-                  {analysis.signal.reasons.map((reason, idx) => (
-                    <Badge key={idx} variant="outline" className="text-xs">
+                  {stableSignal.reasons.map((reason, idx) => (
+                    <Badge key={idx} variant="outline" className="text-xs bg-background/50">
                       {reason}
                     </Badge>
                   ))}
                 </div>
+              )}
+              
+              {/* وقت تثبيت الإشارة */}
+              {stableSignal.lockedAt && stableSignal.action !== 'HOLD' && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  تم تثبيت الإشارة: {stableSignal.lockedAt.toLocaleTimeString('ar-SA')}
+                </p>
               )}
             </div>
           </CardContent>
@@ -496,8 +580,8 @@ const GoldenPulse = () => {
 
         {/* System Info Footer */}
         <div className="text-center text-xs text-muted-foreground mt-6">
-          <p>Golden Pulse v1.0 – Private Scalping System</p>
-          <p>تحديث كل ثانية • بدون SL/TP • للاستخدام الخاص فقط</p>
+          <p>Golden Pulse v1.0</p>
+          <p>تحديث كل 3 ثوان • بدون SL/TP</p>
         </div>
       </div>
     </div>
