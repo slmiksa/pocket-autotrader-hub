@@ -270,35 +270,35 @@ function generateCandleData(currentPrice: number): any {
 }
 
 function generateSimulatedGoldData(): any {
-  // Use realistic gold price range with time-based variation
-  const basePrice = 2650; // Approximate current gold price
-  const hourOfDay = new Date().getHours();
+  // Use realistic gold price range - current market ~2750-2800 USD
+  const basePrice = 2765;
+  const hourOfDay = new Date().getUTCHours();
   const minuteOfHour = new Date().getMinutes();
   
-  // Add time-based micro-movements to simulate real market
-  const timeVariation = Math.sin(Date.now() / 10000) * 15 + 
-                        Math.sin(Date.now() / 3000) * 5 +
-                        Math.sin(Date.now() / 1000) * 2;
+  // More stable time variation (slower changes)
+  const timeVariation = Math.sin(Date.now() / 60000) * 8 + 
+                        Math.sin(Date.now() / 30000) * 4;
   
-  // Session-based volatility (higher during London/NY overlap)
-  const sessionMultiplier = (hourOfDay >= 13 && hourOfDay <= 17) ? 1.5 : 1;
+  // Session-based volatility
+  const sessionMultiplier = (hourOfDay >= 13 && hourOfDay <= 17) ? 1.3 : 1;
   
   const currentPrice = basePrice + timeVariation * sessionMultiplier;
   
   const candles = [];
-  let price = currentPrice - (Math.random() * 20 - 10);
+  let price = currentPrice - (Math.random() * 10 - 5);
   
   for (let i = 0; i < 60; i++) {
-    const momentum = Math.sin((i + minuteOfHour) / 10) * 0.3;
-    const noise = (Math.random() - 0.5) * 1.5;
+    const momentum = Math.sin((i + minuteOfHour) / 15) * 0.2;
+    const noise = (Math.random() - 0.5) * 0.8;
     const change = (momentum + noise) * sessionMultiplier;
     
     const open = price;
     price += change;
     
-    const range = Math.abs(change) + Math.random() * 2;
-    const high = Math.max(open, price) + range * 0.3;
-    const low = Math.min(open, price) - range * 0.3;
+    const range = Math.abs(change) + Math.random() * 1.5;
+    const high = Math.max(open, price) + range * 0.2;
+    const low = Math.min(open, price) - range * 0.2;
+    
     let close = price;
     let adjHigh = high;
     let adjLow = low;
@@ -308,14 +308,14 @@ function generateSimulatedGoldData(): any {
       adjHigh = Math.max(high, close, open);
       adjLow = Math.min(low, close, open);
     }
-    
+
     candles.push({
       time: new Date(Date.now() - (59 - i) * 60000).toISOString(),
       open,
       high: adjHigh,
       low: adjLow,
       close,
-      volume: Math.floor(2000 + Math.random() * 8000 * sessionMultiplier)
+      volume: Math.floor(3000 + Math.random() * 6000 * sessionMultiplier)
     });
   }
   
