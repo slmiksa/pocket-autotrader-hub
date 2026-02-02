@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.analyze-smart-recovery]
 verify_jwt = false
+
+[functions.analyze-golden-pulse]
+verify_jwt = false
