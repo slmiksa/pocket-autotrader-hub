@@ -1,587 +1,432 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { 
   TrendingUp, 
   TrendingDown, 
-  Activity, 
-  Zap, 
-  Clock, 
-  AlertTriangle,
-  Volume2,
-  VolumeX,
-  ArrowUp,
-  ArrowDown,
-  Minus,
-  Target,
-  Shield,
-  Timer,
+  Activity,
+  Clock,
+  Wifi,
+  WifiOff,
   RefreshCw
 } from "lucide-react";
-import { useGoldenPulse } from "@/hooks/useGoldenPulse";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { createChart, CandlestickSeries, IChartApi, ISeriesApi, CandlestickData, Time } from "lightweight-charts";
+
+interface SupportResistanceZone {
+  price: number;
+  type: 'support' | 'resistance';
+  strength: number;
+  touches: number;
+  signal: 'CALL' | 'PUT' | 'NEUTRAL';
+  label: string;
+}
+
+interface ChartAnalysis {
+  currentPrice: number;
+  previousClose: number;
+  priceChange: number;
+  priceChangePercent: number;
+  timestamp: string;
+  timeframe: string;
+  candles: {
+    time: number;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume?: number;
+  }[];
+  zones: SupportResistanceZone[];
+  dataSource: string;
+  isLive: boolean;
+}
+
+const TIMEFRAMES = [
+  { value: '1', label: '1m', labelAr: '1 دقيقة' },
+  { value: '5', label: '5m', labelAr: '5 دقائق' },
+  { value: '15', label: '15m', labelAr: '15 دقيقة' },
+  { value: '30', label: '30m', labelAr: '30 دقيقة' },
+  { value: '60', label: '1H', labelAr: 'ساعة' },
+  { value: '240', label: '4H', labelAr: '4 ساعات' },
+  { value: 'D', label: '1D', labelAr: 'يوم' },
+];
 
 const GoldenPulse = () => {
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [screenFlash, setScreenFlash] = useState<'green' | 'red' | null>(null);
-  const lastAlertRef = useRef<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const priceLineRefs = useRef<any[]>([]);
+  
+  const [selectedTimeframe, setSelectedTimeframe] = useState('1');
+  const [analysis, setAnalysis] = useState<ChartAnalysis | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  
+  const isFetchingRef = useRef(false);
 
-  const {
-    analysis,
-    loading,
-    error,
-    tradeSession,
-    cooldown,
-    refetch,
-    lastSignal,
-    enterTrade,
-    exitTrade,
-  } = useGoldenPulse({
-    autoRefresh: true,
-    refreshInterval: 3000, // تحديث كل 3 ثوان لاستقرار أكبر
-    maxTradeDuration: 90,
-    cooldownPeriod: 120,
-  });
+  const fetchAnalysis = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+    
+    if (!analysis) setLoading(true);
+    setError(null);
 
-  // حالة ثابتة للإشارة (لا تتغير إلا عند تأكيد قوي)
-  const [stableSignal, setStableSignal] = useState<{
-    action: 'BUY' | 'SELL' | 'HOLD' | 'EXIT';
-    confidence: number;
-    reasons: string[];
-    entryZone: string | null;
-    lockedAt: Date | null;
-  }>({
-    action: 'HOLD',
-    confidence: 0,
-    reasons: [],
-    entryZone: null,
-    lockedAt: null
-  });
-
-  // تثبيت الإشارة - لا تتغير إلا بثقة عالية ومنطقة ارتداد
-  useEffect(() => {
-    if (!analysis) return;
-    
-    const { signal, reactionZones } = analysis;
-    
-    // إذا كنا في صفقة، نبحث عن إشارة خروج فقط
-    if (tradeSession.isActive) {
-      if (analysis.exitConditions.shouldExit || signal.action === 'EXIT') {
-        setStableSignal({
-          action: 'EXIT',
-          confidence: 90,
-          reasons: analysis.exitConditions.reason ? [analysis.exitConditions.reason] : ['حان وقت الخروج'],
-          entryZone: null,
-          lockedAt: new Date()
-        });
-      }
-      return;
-    }
-    
-    // للدخول: نحتاج ثقة >= 75 ومنطقة ارتداد واضحة
-    const hasReactionZone = reactionZones.nearZone && 
-      (reactionZones.zoneType === 'support' || reactionZones.zoneType === 'resistance');
-    
-    if (signal.confidence >= 75 && hasReactionZone) {
-      // تأكد أن الإشارة مختلفة عن الحالية
-      if (signal.action !== stableSignal.action || 
-          (Date.now() - (stableSignal.lockedAt?.getTime() || 0)) > 30000) {
-        setStableSignal({
-          action: signal.action,
-          confidence: signal.confidence,
-          reasons: signal.reasons,
-          entryZone: reactionZones.zoneType === 'support' ? 'دعم' : 'مقاومة',
-          lockedAt: new Date()
-        });
-      }
-    } else if (stableSignal.action !== 'HOLD' && !stableSignal.lockedAt) {
-      // إعادة للانتظار إذا لم تكن هناك إشارة قوية
-      setStableSignal({
-        action: 'HOLD',
-        confidence: 0,
-        reasons: ['انتظار منطقة ارتداد واضحة'],
-        entryZone: null,
-        lockedAt: null
-      });
-    }
-  }, [analysis, tradeSession.isActive, stableSignal.action, stableSignal.lockedAt]);
-
-  // Play alert sound
-  const playSound = useCallback((type: 'buy' | 'sell' | 'exit') => {
-    if (!soundEnabled) return;
-    
     try {
-      const frequencies = {
-        buy: [523.25, 659.25, 783.99], // C5, E5, G5 (major chord)
-        sell: [493.88, 587.33, 698.46], // B4, D5, F5
-        exit: [440, 349.23, 293.66], // A4, F4, D4 (descending)
-      };
-      
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const freqs = frequencies[type];
-      
-      freqs.forEach((freq, i) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = freq;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + i * 0.1);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.1 + 0.3);
-        
-        oscillator.start(audioContext.currentTime + i * 0.1);
-        oscillator.stop(audioContext.currentTime + i * 0.1 + 0.3);
-      });
-    } catch (e) {
-      console.log('Audio not available');
-    }
-  }, [soundEnabled]);
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-golden-pulse?timeframe=${selectedTimeframe}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-  // Flash screen effect
-  const flashScreen = useCallback((color: 'green' | 'red') => {
-    setScreenFlash(color);
-    setTimeout(() => setScreenFlash(null), 500);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      setAnalysis(result);
+      setLastUpdate(new Date());
+      updateChart(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'خطأ في تحميل البيانات';
+      setError(message);
+      console.error('Golden Pulse fetch error:', err);
+    } finally {
+      isFetchingRef.current = false;
+      setLoading(false);
+    }
+  }, [selectedTimeframe, analysis]);
+
+  // Initialize chart
+  useEffect(() => {
+    if (!chartContainerRef.current) return;
+
+    const chart = createChart(chartContainerRef.current, {
+      layout: {
+        background: { color: '#0a0a0f' },
+        textColor: '#9ca3af',
+      },
+      grid: {
+        vertLines: { color: '#1f2937' },
+        horzLines: { color: '#1f2937' },
+      },
+      crosshair: {
+        mode: 1,
+        vertLine: {
+          color: '#f59e0b',
+          width: 1,
+          style: 2,
+        },
+        horzLine: {
+          color: '#f59e0b',
+          width: 1,
+          style: 2,
+        },
+      },
+      rightPriceScale: {
+        borderColor: '#374151',
+        scaleMargins: {
+          top: 0.1,
+          bottom: 0.1,
+        },
+      },
+      timeScale: {
+        borderColor: '#374151',
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      width: chartContainerRef.current.clientWidth,
+      height: 400,
+    });
+
+    // v5 API: use addSeries with CandlestickSeries
+    const candleSeries = chart.addSeries(CandlestickSeries, {
+      upColor: '#22c55e',
+      downColor: '#ef4444',
+      borderUpColor: '#22c55e',
+      borderDownColor: '#ef4444',
+      wickUpColor: '#22c55e',
+      wickDownColor: '#ef4444',
+    });
+
+    chartRef.current = chart;
+    candleSeriesRef.current = candleSeries;
+
+    // Handle resize
+    const handleResize = () => {
+      if (chartContainerRef.current && chartRef.current) {
+        chartRef.current.applyOptions({
+          width: chartContainerRef.current.clientWidth,
+        });
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      chart.remove();
+    };
   }, []);
 
-  // Handle signal alerts
-  useEffect(() => {
-    if (!analysis) return;
-    
-    const { action, confidence } = analysis.signal;
-    const alertKey = `${action}-${confidence}`;
-    
-    if (alertKey !== lastAlertRef.current && confidence >= 70) {
-      lastAlertRef.current = alertKey;
+  // Update chart with new data
+  const updateChart = useCallback((data: ChartAnalysis) => {
+    if (!candleSeriesRef.current || !chartRef.current) return;
+
+    // Convert candles to lightweight-charts format
+    const chartData: CandlestickData<Time>[] = data.candles.map(candle => ({
+      time: candle.time as Time,
+      open: candle.open,
+      high: candle.high,
+      low: candle.low,
+      close: candle.close,
+    }));
+
+    candleSeriesRef.current.setData(chartData);
+
+    // Remove old price lines
+    priceLineRefs.current.forEach(line => {
+      try {
+        candleSeriesRef.current?.removePriceLine(line);
+      } catch (e) {}
+    });
+    priceLineRefs.current = [];
+
+    // Add support/resistance zones as price lines
+    data.zones.forEach(zone => {
+      const isSupport = zone.type === 'support';
+      const color = isSupport ? '#22c55e' : '#ef4444';
       
-      if (action === 'BUY') {
-        playSound('buy');
-        flashScreen('green');
-      } else if (action === 'SELL') {
-        playSound('sell');
-        flashScreen('red');
-      } else if (action === 'EXIT' || analysis.exitConditions.shouldExit) {
-        playSound('exit');
+      const priceLine = candleSeriesRef.current?.createPriceLine({
+        price: zone.price,
+        color: color,
+        lineWidth: 2,
+        lineStyle: 0,
+        axisLabelVisible: true,
+        title: zone.signal !== 'NEUTRAL' ? (zone.signal === 'CALL' ? '📈 CALL' : '📉 PUT') : '',
+      });
+
+      if (priceLine) {
+        priceLineRefs.current.push(priceLine);
       }
-    }
-  }, [analysis, playSound, flashScreen]);
+    });
 
-  // Handle trade actions
-  const handleEnterTrade = (direction: 'BUY' | 'SELL') => {
-    if (analysis && cooldown === 0 && !tradeSession.isActive) {
-      enterTrade(direction, analysis.currentPrice);
-      playSound(direction.toLowerCase() as 'buy' | 'sell');
-      flashScreen(direction === 'BUY' ? 'green' : 'red');
-    }
-  };
+    // Fit content
+    chartRef.current.timeScale().fitContent();
+  }, []);
 
-  const handleExitTrade = () => {
-    exitTrade();
-    playSound('exit');
-  };
-
-  // Format time
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Get trend icon
-  const getTrendIcon = () => {
-    if (!analysis) return <Minus className="h-8 w-8" />;
+  // Fetch data on mount and interval
+  useEffect(() => {
+    fetchAnalysis();
     
-    switch (analysis.trend.direction) {
-      case 'bullish':
-        return <ArrowUp className="h-8 w-8 text-success" />;
-      case 'bearish':
-        return <ArrowDown className="h-8 w-8 text-destructive" />;
-      default:
-        return <Minus className="h-8 w-8 text-muted-foreground" />;
-    }
-  };
-
-  // Get status text
-  const getStatusText = () => {
-    if (tradeSession.isActive) return 'IN TRADE';
-    if (cooldown > 0) return 'COOLDOWN';
-    if (!analysis) return 'LOADING...';
+    const interval = setInterval(fetchAnalysis, 1000);
     
-    switch (analysis.signal.action) {
-      case 'BUY':
-        return 'ENTER BUY';
-      case 'SELL':
-        return 'ENTER SELL';
-      case 'EXIT':
-        return 'EXIT NOW';
-      default:
-        return 'HOLD';
-    }
-  };
+    return () => clearInterval(interval);
+  }, [fetchAnalysis]);
 
-  // Background flash class
-  const flashClass = screenFlash === 'green' 
-    ? 'animate-pulse bg-success/20' 
-    : screenFlash === 'red' 
-    ? 'animate-pulse bg-destructive/20' 
-    : '';
+  // Refetch when timeframe changes
+  useEffect(() => {
+    setAnalysis(null);
+    fetchAnalysis();
+  }, [selectedTimeframe]);
 
   return (
-    <div className={cn("min-h-screen bg-[#0a0a0f] pt-16 pb-8 transition-colors duration-300", flashClass)}>
-      <div className="container mx-auto px-4 max-w-4xl">
+    <div className="min-h-screen bg-background pt-16 pb-8">
+      <div className="container mx-auto px-4 max-w-6xl">
         {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-warning to-primary bg-clip-text text-transparent mb-2">
+        <div className="text-center mb-4">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-warning to-primary bg-clip-text text-transparent mb-1">
             Golden Pulse
           </h1>
-          <p className="text-muted-foreground text-lg">نبض الذهب الخاطف</p>
-          <Badge variant="outline" className="mt-2 border-warning/50 text-warning">
-            XAUUSD Scalping System
-          </Badge>
+          <p className="text-muted-foreground text-sm">نبض الذهب الخاطف - XAUUSD</p>
         </div>
 
-        {/* Error State */}
+        {/* Price Header */}
+        <Card className="mb-4 border-primary/30 bg-gradient-to-r from-card to-card/80">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">GOLD / USD</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl md:text-3xl font-bold font-mono text-foreground">
+                      {analysis?.currentPrice.toFixed(2) || '----.--'}
+                    </span>
+                    {analysis && (
+                      <Badge className={cn(
+                        "text-xs",
+                        analysis.priceChange >= 0 ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
+                      )}>
+                        {analysis.priceChange >= 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                        {analysis.priceChange >= 0 ? '+' : ''}{analysis.priceChange.toFixed(2)} ({analysis.priceChangePercent.toFixed(3)}%)
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                {/* Live Status */}
+                <Badge variant="outline" className={cn(
+                  "text-xs",
+                  analysis?.isLive ? "border-success/50 text-success" : "border-warning/50 text-warning"
+                )}>
+                  {analysis?.isLive ? <Wifi className="h-3 w-3 mr-1" /> : <WifiOff className="h-3 w-3 mr-1" />}
+                  {analysis?.isLive ? 'LIVE' : 'SIMULATED'}
+                </Badge>
+                
+                {/* Data Source */}
+                <Badge variant="outline" className="text-xs border-muted text-muted-foreground">
+                  {analysis?.dataSource || '---'}
+                </Badge>
+                
+                {/* Last Update */}
+                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {lastUpdate?.toLocaleTimeString('ar-SA') || '--:--:--'}
+                </div>
+                
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => fetchAnalysis()}
+                  disabled={loading}
+                  className="h-8 w-8"
+                >
+                  <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Timeframe Selector */}
+        <div className="flex flex-wrap justify-center gap-2 mb-4">
+          {TIMEFRAMES.map(tf => (
+            <Button
+              key={tf.value}
+              variant={selectedTimeframe === tf.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedTimeframe(tf.value)}
+              className={cn(
+                "min-w-[50px] text-sm",
+                selectedTimeframe === tf.value 
+                  ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
+                  : "border-muted text-muted-foreground hover:text-foreground hover:border-primary/50"
+              )}
+            >
+              {tf.label}
+            </Button>
+          ))}
+        </div>
+
+        {/* Error Display */}
         {error && (
           <Card className="mb-4 border-destructive/50 bg-destructive/10">
-            <CardContent className="py-4 flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              <span className="text-destructive">{error}</span>
-              <Button variant="outline" size="sm" onClick={refetch} className="mr-auto">
-                <RefreshCw className="h-4 w-4 ml-2" />
-                إعادة المحاولة
-              </Button>
+            <CardContent className="py-3 flex items-center gap-2 text-destructive text-sm">
+              <Activity className="h-4 w-4" />
+              {error}
             </CardContent>
           </Card>
         )}
 
-        {/* Main Price Display */}
-        <Card className="mb-4 border-primary/30 bg-gradient-to-br from-background to-primary/5">
-          <CardContent className="py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">GOLD / USD</p>
-                <div className="flex items-center gap-3">
-                  <span className="text-4xl md:text-5xl font-bold font-mono">
-                    {analysis?.currentPrice.toFixed(2) || '----.--'}
-                  </span>
-                  {getTrendIcon()}
-                </div>
-                {analysis && (
-                  <div className={cn(
-                    "text-sm mt-1 font-medium",
-                    analysis.priceChange >= 0 ? "text-success" : "text-destructive"
-                  )}>
-                    {analysis.priceChange >= 0 ? '+' : ''}{analysis.priceChange.toFixed(2)} 
-                    ({analysis.priceChangePercent >= 0 ? '+' : ''}{analysis.priceChangePercent.toFixed(3)}%)
-                  </div>
-                )}
-              </div>
-              
-              <div className="text-left">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSoundEnabled(!soundEnabled)}
-                  className="mb-2"
-                >
-                  {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-                </Button>
-                <div className="text-xs text-muted-foreground">
-                  {analysis?.timestamp ? new Date(analysis.timestamp).toLocaleTimeString('ar-SA') : '--:--:--'}
-                </div>
-              </div>
-            </div>
+        {/* Chart Container */}
+        <Card className="mb-4 border-border bg-card overflow-hidden">
+          <CardContent className="p-0">
+            <div 
+              ref={chartContainerRef} 
+              className="w-full" 
+              style={{ height: '400px' }}
+            />
           </CardContent>
         </Card>
 
-        {/* Signal Status - استخدام الإشارة الثابتة */}
-        <Card className={cn(
-          "mb-4 transition-all duration-500 border-2",
-          stableSignal.action === 'BUY' && "border-success bg-success/15",
-          stableSignal.action === 'SELL' && "border-destructive bg-destructive/15",
-          stableSignal.action === 'EXIT' && "border-warning bg-warning/15",
-          stableSignal.action === 'HOLD' && "border-muted-foreground/30 bg-muted/10",
-          tradeSession.isActive && "ring-2 ring-primary"
-        )}>
-          <CardContent className="py-6">
-            <div className="text-center">
-              {/* منطقة الارتداد */}
-              {stableSignal.entryZone && (
-                <div className="mb-3">
-                  <Badge variant="outline" className="text-sm border-primary text-primary">
-                    <Target className="h-3 w-3 ml-1" />
-                    منطقة {stableSignal.entryZone}
-                  </Badge>
-                </div>
-              )}
-              
-              <Badge 
-                className={cn(
-                  "text-xl px-8 py-3 mb-3 font-bold",
-                  stableSignal.action === 'BUY' && "bg-success text-success-foreground",
-                  stableSignal.action === 'SELL' && "bg-destructive text-destructive-foreground",
-                  stableSignal.action === 'EXIT' && "bg-warning text-warning-foreground animate-pulse",
-                  stableSignal.action === 'HOLD' && "bg-muted text-muted-foreground"
-                )}
-              >
-                {stableSignal.action === 'BUY' ? '🟢 ادخل شراء' :
-                 stableSignal.action === 'SELL' ? '🔴 ادخل بيع' :
-                 stableSignal.action === 'EXIT' ? '⚠️ أغلق الآن' : '⏳ انتظر'}
-              </Badge>
-              
-              {/* Confidence Bar */}
-              <div className="mt-4 mb-3">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">مستوى الثقة</span>
-                  <span className="font-bold text-foreground">{stableSignal.confidence}%</span>
-                </div>
-                <Progress 
-                  value={stableSignal.confidence} 
-                  className="h-3"
-                />
-              </div>
-
-              {/* Signal Reasons */}
-              {stableSignal.reasons.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2 mt-3">
-                  {stableSignal.reasons.map((reason, idx) => (
-                    <Badge key={idx} variant="outline" className="text-xs bg-background/50">
-                      {reason}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              
-              {/* وقت تثبيت الإشارة */}
-              {stableSignal.lockedAt && stableSignal.action !== 'HOLD' && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  تم تثبيت الإشارة: {stableSignal.lockedAt.toLocaleTimeString('ar-SA')}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <Button
-            size="lg"
-            className="h-20 text-xl font-bold bg-success hover:bg-success/90 text-success-foreground"
-            disabled={cooldown > 0 || tradeSession.isActive || analysis?.signal.action === 'SELL'}
-            onClick={() => handleEnterTrade('BUY')}
-          >
-            <TrendingUp className="h-8 w-8 ml-3" />
-            BUY
-          </Button>
-          
-          <Button
-            size="lg"
-            className="h-20 text-xl font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-            disabled={cooldown > 0 || tradeSession.isActive || analysis?.signal.action === 'BUY'}
-            onClick={() => handleEnterTrade('SELL')}
-          >
-            <TrendingDown className="h-8 w-8 ml-3" />
-            SELL
-          </Button>
-        </div>
-
-        {/* Exit Button (shown when in trade) */}
-        {tradeSession.isActive && (
-          <Button
-            size="lg"
-            variant="outline"
-            className="w-full h-16 text-xl font-bold border-warning text-warning hover:bg-warning/10 mb-4"
-            onClick={handleExitTrade}
-          >
-            <AlertTriangle className="h-6 w-6 ml-3" />
-            EXIT NOW - أغلق الصفقة
-          </Button>
-        )}
-
-        {/* Trade Session Info */}
-        {tradeSession.isActive && (
-          <Card className="mb-4 border-primary/50 bg-primary/5">
+        {/* Support/Resistance Zones Legend */}
+        {analysis && analysis.zones.length > 0 && (
+          <Card className="mb-4 border-border bg-card">
             <CardContent className="py-4">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-xs text-muted-foreground">الاتجاه</p>
-                  <Badge className={tradeSession.direction === 'BUY' ? 'bg-success' : 'bg-destructive'}>
-                    {tradeSession.direction}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">سعر الدخول</p>
-                  <p className="font-bold">{tradeSession.entryPrice?.toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">المدة</p>
-                  <p className="font-mono font-bold text-lg">{formatTime(tradeSession.duration)}</p>
-                </div>
-              </div>
-              
-              {/* Duration Progress */}
-              <div className="mt-3">
-                <Progress 
-                  value={(tradeSession.duration / 90) * 100} 
-                  className="h-2"
-                />
-                <p className="text-xs text-muted-foreground text-center mt-1">
-                  الحد الأقصى: 90 ثانية
-                </p>
+              <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" />
+                مناطق الدعم والمقاومة
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {analysis.zones.map((zone, idx) => (
+                  <div 
+                    key={idx}
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg border",
+                      zone.type === 'support' 
+                        ? "border-success/30 bg-success/5" 
+                        : "border-destructive/30 bg-destructive/5"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-3 h-3 rounded-full",
+                        zone.type === 'support' ? "bg-success" : "bg-destructive"
+                      )} />
+                      <div>
+                        <p className="text-sm font-mono font-medium text-foreground">
+                          {zone.price.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {zone.type === 'support' ? 'دعم' : 'مقاومة'} • {zone.touches} لمسة
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {zone.signal !== 'NEUTRAL' && (
+                      <Badge className={cn(
+                        "text-sm font-bold",
+                        zone.signal === 'CALL' 
+                          ? "bg-success text-success-foreground" 
+                          : "bg-destructive text-destructive-foreground"
+                      )}>
+                        {zone.signal === 'CALL' ? (
+                          <>
+                            <TrendingUp className="h-3 w-3 mr-1" />
+                            CALL
+                          </>
+                        ) : (
+                          <>
+                            <TrendingDown className="h-3 w-3 mr-1" />
+                            PUT
+                          </>
+                        )}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Cooldown Display */}
-        {cooldown > 0 && (
-          <Card className="mb-4 border-muted bg-muted/20">
-            <CardContent className="py-4 text-center">
-              <Timer className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-muted-foreground">فترة الانتظار</p>
-              <p className="text-3xl font-mono font-bold">{formatTime(cooldown)}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Technical Indicators Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          {/* Trend */}
-          <Card className="border-muted">
-            <CardContent className="py-3 text-center">
-              <Activity className="h-5 w-5 mx-auto mb-1 text-primary" />
-              <p className="text-xs text-muted-foreground">الاتجاه</p>
-              <Badge variant="outline" className={cn(
-                analysis?.trend.direction === 'bullish' && "border-success text-success",
-                analysis?.trend.direction === 'bearish' && "border-destructive text-destructive"
-              )}>
-                {analysis?.trend.direction === 'bullish' ? 'صاعد' : 
-                 analysis?.trend.direction === 'bearish' ? 'هابط' : 'محايد'}
-              </Badge>
-            </CardContent>
-          </Card>
-
-          {/* RSI */}
-          <Card className="border-muted">
-            <CardContent className="py-3 text-center">
-              <Zap className="h-5 w-5 mx-auto mb-1 text-warning" />
-              <p className="text-xs text-muted-foreground">RSI (7)</p>
-              <p className="font-bold">{analysis?.momentum.rsi7.toFixed(1) || '--'}</p>
-            </CardContent>
-          </Card>
-
-          {/* Volume */}
-          <Card className="border-muted">
-            <CardContent className="py-3 text-center">
-              <Activity className="h-5 w-5 mx-auto mb-1 text-info" />
-              <p className="text-xs text-muted-foreground">الحجم</p>
-              <Badge variant={analysis?.momentum.volumeSpike ? "default" : "secondary"}>
-                {analysis?.momentum.volumeRatio.toFixed(1) || '--'}x
-              </Badge>
-            </CardContent>
-          </Card>
-
-          {/* Zone */}
-          <Card className="border-muted">
-            <CardContent className="py-3 text-center">
-              <Target className="h-5 w-5 mx-auto mb-1 text-accent" />
-              <p className="text-xs text-muted-foreground">المنطقة</p>
-              <Badge variant="outline">
-                {analysis?.reactionZones.zoneType === 'support' ? 'دعم' :
-                 analysis?.reactionZones.zoneType === 'resistance' ? 'مقاومة' :
-                 analysis?.reactionZones.zoneType === 'vwap' ? 'VWAP' : 'لا يوجد'}
-              </Badge>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* EMA Values */}
-        <Card className="mb-4">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              المتوسطات المتحركة (EMA)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="py-3">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-xs text-muted-foreground">EMA 9</p>
-                <p className="font-mono font-bold text-success">
-                  {analysis?.trend.ema9.toFixed(2) || '----'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">EMA 21</p>
-                <p className="font-mono font-bold text-warning">
-                  {analysis?.trend.ema21.toFixed(2) || '----'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">EMA 50</p>
-                <p className="font-mono font-bold text-destructive">
-                  {analysis?.trend.ema50.toFixed(2) || '----'}
-                </p>
-              </div>
+        {/* Loading Overlay */}
+        {loading && !analysis && (
+          <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
+            <div className="bg-card p-6 rounded-xl flex flex-col items-center gap-4 border border-border">
+              <RefreshCw className="h-8 w-8 text-primary animate-spin" />
+              <p className="text-foreground">جاري تحميل بيانات الذهب...</p>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Exit Conditions Alert */}
-        {analysis?.exitConditions.shouldExit && tradeSession.isActive && (
-          <Card className="mb-4 border-warning bg-warning/10 animate-pulse">
-            <CardContent className="py-4 flex items-center gap-3">
-              <AlertTriangle className="h-6 w-6 text-warning" />
-              <div>
-                <p className="font-bold text-warning">⚠️ إشارة خروج!</p>
-                <p className="text-sm text-muted-foreground">{analysis.exitConditions.reason}</p>
-              </div>
-            </CardContent>
-          </Card>
+          </div>
         )}
 
-        {/* Key Levels */}
-        <Card className="mb-4">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              المستويات الرئيسية
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="py-3">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-xs text-muted-foreground">المقاومة</p>
-                <p className="font-mono font-bold text-destructive">
-                  {analysis?.reactionZones.previousHigh.toFixed(2) || '----'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">VWAP</p>
-                <p className="font-mono font-bold text-primary">
-                  {analysis?.reactionZones.vwap.toFixed(2) || '----'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">الدعم</p>
-                <p className="font-mono font-bold text-success">
-                  {analysis?.reactionZones.previousLow.toFixed(2) || '----'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* System Info Footer */}
-        <div className="text-center text-xs text-muted-foreground mt-6">
-          <p>Golden Pulse v1.0</p>
-          <p>تحديث كل 3 ثوان • بدون SL/TP</p>
+        {/* Footer */}
+        <div className="text-center text-xs text-muted-foreground mt-4">
+          <p>Golden Pulse v2.0 • تحديث كل ثانية</p>
         </div>
       </div>
     </div>
