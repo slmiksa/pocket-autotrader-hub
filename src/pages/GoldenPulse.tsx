@@ -7,7 +7,8 @@ import {
   TrendingDown, 
   Activity,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,9 +27,8 @@ const GoldenPulse = () => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState('1');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [chartKey, setChartKey] = useState(0);
 
-  // Load TradingView widget
+  // Load TradingView widget with Support/Resistance indicators
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
@@ -42,6 +42,7 @@ const GoldenPulse = () => {
 
     const tfConfig = TIMEFRAMES.find(t => t.value === selectedTimeframe);
 
+    // Widget configuration with S/R indicators
     script.innerHTML = JSON.stringify({
       "autosize": true,
       "symbol": "OANDA:XAUUSD",
@@ -51,20 +52,25 @@ const GoldenPulse = () => {
       "style": "1",
       "locale": "ar_AE",
       "backgroundColor": "rgba(10, 10, 15, 1)",
-      "gridColor": "rgba(31, 41, 55, 0.5)",
+      "gridColor": "rgba(31, 41, 55, 0.3)",
       "withdateranges": true,
       "hide_side_toolbar": false,
       "allow_symbol_change": false,
+      "save_image": true,
       "details": true,
       "hotlist": false,
       "calendar": false,
       "studies": [
-        "STD;Pivot%1Points%1Standard",
-        "STD;Support%1and%1Resistance"
+        // Pivot Points - الأفضل للدعم والمقاومة
+        "STD;Pivot%Points%High%Low",
+        // Donchian Channels - لتحديد القمم والقيعان
+        "STD;Donchian%Channels",
+        // VWAP - مستوى سعر مهم
+        "STD;VWAP"
       ],
       "show_popup_button": true,
-      "popup_width": "1000",
-      "popup_height": "650",
+      "popup_width": "1200",
+      "popup_height": "700",
       "support_host": "https://www.tradingview.com"
     });
 
@@ -87,7 +93,7 @@ const GoldenPulse = () => {
         chartContainerRef.current.innerHTML = '';
       }
     };
-  }, [selectedTimeframe, chartKey]);
+  }, [selectedTimeframe]);
 
   // Toggle fullscreen
   const toggleFullscreen = () => {
@@ -96,12 +102,12 @@ const GoldenPulse = () => {
 
   return (
     <div className={cn(
-      "min-h-screen bg-[#0a0a0f] pt-16 pb-8",
-      isFullscreen && "fixed inset-0 z-50 pt-0"
+      "min-h-screen bg-background pt-16 pb-8",
+      isFullscreen && "fixed inset-0 z-50 pt-0 bg-background"
     )}>
       <div className={cn(
         "container mx-auto px-4",
-        isFullscreen ? "max-w-full h-full flex flex-col" : "max-w-7xl"
+        isFullscreen ? "max-w-full h-full flex flex-col p-0" : "max-w-7xl"
       )}>
         {/* Header */}
         {!isFullscreen && (
@@ -109,14 +115,14 @@ const GoldenPulse = () => {
             <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent mb-1">
               Golden Pulse
             </h1>
-            <p className="text-gray-400 text-sm">نبض الذهب الخاطف - XAUUSD - شارت TradingView الحي</p>
+            <p className="text-muted-foreground text-sm">نبض الذهب الخاطف - XAUUSD - شارت TradingView الحي مع مناطق الدعم والمقاومة</p>
           </div>
         )}
 
         {/* Controls Bar */}
         <Card className={cn(
-          "mb-3 border-amber-500/30 bg-[#0f0f15]",
-          isFullscreen && "rounded-none mb-0"
+          "mb-3 border-amber-500/30 bg-card",
+          isFullscreen && "rounded-none mb-0 border-x-0 border-t-0"
         )}>
           <CardContent className="py-3">
             <div className="flex items-center justify-between flex-wrap gap-3">
@@ -132,7 +138,7 @@ const GoldenPulse = () => {
                       "min-w-[45px] text-xs font-medium",
                       selectedTimeframe === tf.value 
                         ? "bg-amber-500 hover:bg-amber-600 text-black" 
-                        : "border-gray-700 text-gray-400 hover:text-white hover:border-amber-500/50 bg-transparent"
+                        : "border-border text-muted-foreground hover:text-foreground hover:border-amber-500/50 bg-transparent"
                     )}
                   >
                     {tf.label}
@@ -142,7 +148,7 @@ const GoldenPulse = () => {
 
               <div className="flex items-center gap-2">
                 {/* Live Badge */}
-                <Badge className="bg-green-500/20 text-green-400 border-green-500/50 text-xs">
+                <Badge className="bg-green-500/20 text-green-400 border border-green-500/50 text-xs">
                   <span className="w-2 h-2 bg-green-500 rounded-full mr-1.5 animate-pulse" />
                   LIVE
                 </Badge>
@@ -152,7 +158,7 @@ const GoldenPulse = () => {
                   variant="outline"
                   size="sm"
                   onClick={toggleFullscreen}
-                  className="border-gray-700 text-gray-400 hover:text-white hover:border-amber-500/50 bg-transparent"
+                  className="border-border text-muted-foreground hover:text-foreground hover:border-amber-500/50 bg-transparent"
                 >
                   {isFullscreen ? (
                     <Minimize2 className="h-4 w-4" />
@@ -167,8 +173,8 @@ const GoldenPulse = () => {
 
         {/* TradingView Chart Container */}
         <Card className={cn(
-          "border-gray-800 bg-[#0a0a0f] overflow-hidden",
-          isFullscreen ? "flex-1 rounded-none" : "mb-4"
+          "border-border bg-card overflow-hidden",
+          isFullscreen ? "flex-1 rounded-none border-0" : "mb-4"
         )}>
           <CardContent className="p-0 h-full">
             <div 
@@ -179,65 +185,145 @@ const GoldenPulse = () => {
           </CardContent>
         </Card>
 
-        {/* Info Cards */}
+        {/* Trading Guide Cards */}
         {!isFullscreen && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-            {/* Support Zones */}
-            <Card className="border-green-500/30 bg-gradient-to-br from-green-500/10 to-green-500/5">
+          <>
+            {/* Indicator Legend */}
+            <Card className="mb-4 border-border bg-card">
               <CardContent className="py-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                  <h3 className="text-sm font-semibold text-white">مناطق الدعم - CALL</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Target className="h-4 w-4 text-amber-500" />
+                  دليل المؤشرات على الشارت
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-start gap-3 p-3 rounded-lg border border-green-500/30 bg-green-500/5">
+                    <div className="w-4 h-1 bg-green-500 mt-2 rounded" />
+                    <div>
+                      <p className="text-sm font-medium text-green-400">خطوط الدعم (Support)</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        الخط السفلي من Donchian • عند الارتداد منه = CALL
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg border border-red-500/30 bg-red-500/5">
+                    <div className="w-4 h-1 bg-red-500 mt-2 rounded" />
+                    <div>
+                      <p className="text-sm font-medium text-red-400">خطوط المقاومة (Resistance)</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        الخط العلوي من Donchian • عند الارتداد منه = PUT
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 rounded-lg border border-purple-500/30 bg-purple-500/5">
+                    <div className="w-4 h-1 bg-purple-500 mt-2 rounded" />
+                    <div>
+                      <p className="text-sm font-medium text-purple-400">VWAP (متوسط السعر)</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        خط التوازن • الارتداد منه إشارة قوية
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-400">
-                  عند وصول السعر لمنطقة الدعم (الخط الأخضر) وظهور شمعة انعكاسية = فرصة CALL
-                </p>
-                <Badge className="mt-2 bg-green-500 text-black font-bold">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  BUY / CALL
-                </Badge>
               </CardContent>
             </Card>
 
-            {/* Resistance Zones */}
-            <Card className="border-red-500/30 bg-gradient-to-br from-red-500/10 to-red-500/5">
-              <CardContent className="py-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingDown className="h-5 w-5 text-red-500" />
-                  <h3 className="text-sm font-semibold text-white">مناطق المقاومة - PUT</h3>
-                </div>
-                <p className="text-xs text-gray-400">
-                  عند وصول السعر لمنطقة المقاومة (الخط الأحمر) وظهور شمعة انعكاسية = فرصة PUT
-                </p>
-                <Badge className="mt-2 bg-red-500 text-white font-bold">
-                  <TrendingDown className="h-3 w-3 mr-1" />
-                  SELL / PUT
-                </Badge>
-              </CardContent>
-            </Card>
+            {/* Trading Signals Guide */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              {/* CALL Signal */}
+              <Card className="border-green-500/40 bg-gradient-to-br from-green-500/10 to-green-500/5">
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-6 w-6 text-green-500" />
+                      <h3 className="text-lg font-bold text-green-400">إشارة CALL (شراء)</h3>
+                    </div>
+                    <Badge className="bg-green-500 text-black font-bold text-sm px-3">
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                      BUY
+                    </Badge>
+                  </div>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full" />
+                      السعر يلامس الخط السفلي (دعم)
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full" />
+                      ظهور شمعة انعكاسية صاعدة
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full" />
+                      السعر أعلى من VWAP = تأكيد إضافي
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* PUT Signal */}
+              <Card className="border-red-500/40 bg-gradient-to-br from-red-500/10 to-red-500/5">
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <TrendingDown className="h-6 w-6 text-red-500" />
+                      <h3 className="text-lg font-bold text-red-400">إشارة PUT (بيع)</h3>
+                    </div>
+                    <Badge className="bg-red-500 text-white font-bold text-sm px-3">
+                      <TrendingDown className="h-4 w-4 mr-1" />
+                      SELL
+                    </Badge>
+                  </div>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-red-500 rounded-full" />
+                      السعر يلامس الخط العلوي (مقاومة)
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-red-500 rounded-full" />
+                      ظهور شمعة انعكاسية هابطة
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-red-500 rounded-full" />
+                      السعر أسفل من VWAP = تأكيد إضافي
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Instructions */}
-            <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-500/5">
+            <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-500/5 mb-4">
               <CardContent className="py-4">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-3">
                   <Activity className="h-5 w-5 text-amber-500" />
-                  <h3 className="text-sm font-semibold text-white">طريقة الاستخدام</h3>
+                  <h3 className="text-sm font-semibold text-foreground">خطوات التداول</h3>
                 </div>
-                <ul className="text-xs text-gray-400 space-y-1">
-                  <li>• راقب مناطق Pivot Points على الشارت</li>
-                  <li>• انتظر وصول السعر للمنطقة</li>
-                  <li>• تأكد من ظهور شمعة انعكاسية</li>
-                  <li>• ادخل الصفقة بعد الإغلاق</li>
-                </ul>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div className="text-center p-3 rounded-lg bg-background/50">
+                    <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center mx-auto mb-2 text-sm font-bold">1</div>
+                    <p className="text-xs text-muted-foreground">راقب وصول السعر للخط العلوي أو السفلي</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-background/50">
+                    <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center mx-auto mb-2 text-sm font-bold">2</div>
+                    <p className="text-xs text-muted-foreground">انتظر ظهور شمعة انعكاسية واضحة</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-background/50">
+                    <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center mx-auto mb-2 text-sm font-bold">3</div>
+                    <p className="text-xs text-muted-foreground">تحقق من موقع السعر نسبة لـ VWAP</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-background/50">
+                    <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center mx-auto mb-2 text-sm font-bold">4</div>
+                    <p className="text-xs text-muted-foreground">ادخل الصفقة بعد إغلاق الشمعة</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          </div>
+          </>
         )}
 
         {/* Footer */}
         {!isFullscreen && (
-          <div className="text-center text-xs text-gray-500 mt-4">
-            <p>Golden Pulse v3.0 • شارت TradingView الحي • تحديث فوري</p>
+          <div className="text-center text-xs text-muted-foreground mt-4">
+            <p>Golden Pulse v3.0 • شارت TradingView الحي • Pivot Points + Donchian Channels + VWAP</p>
           </div>
         )}
       </div>
