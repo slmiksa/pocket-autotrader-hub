@@ -42,7 +42,7 @@ const GoldenPulse = () => {
 
     const tfConfig = TIMEFRAMES.find(t => t.value === selectedTimeframe);
 
-    // Widget configuration with S/R indicators
+    // Widget configuration with clear Pivot Points S/R
     script.innerHTML = JSON.stringify({
       "autosize": true,
       "symbol": "OANDA:XAUUSD",
@@ -61,12 +61,8 @@ const GoldenPulse = () => {
       "hotlist": false,
       "calendar": false,
       "studies": [
-        // Pivot Points - الأفضل للدعم والمقاومة
-        "STD;Pivot%Points%High%Low",
-        // Donchian Channels - لتحديد القمم والقيعان
-        "STD;Donchian%Channels",
-        // VWAP - مستوى سعر مهم
-        "STD;VWAP"
+        // Pivot Points Standard - خطوط S1,S2,S3 و R1,R2,R3 واضحة
+        "PivotPointsStandard@tv-basicstudies"
       ],
       "show_popup_button": true,
       "popup_width": "1200",
@@ -193,35 +189,35 @@ const GoldenPulse = () => {
               <CardContent className="py-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                   <Target className="h-4 w-4 text-amber-500" />
-                  دليل المؤشرات على الشارت
+                  خطوط Pivot Points على الشارت
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-start gap-3 p-3 rounded-lg border border-green-500/30 bg-green-500/5">
-                    <div className="w-4 h-1 bg-green-500 mt-2 rounded" />
-                    <div>
-                      <p className="text-sm font-medium text-green-400">خطوط الدعم (Support)</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        الخط السفلي من Donchian • عند الارتداد منه = CALL
-                      </p>
-                    </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {/* Pivot Point */}
+                  <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 text-center">
+                    <div className="w-full h-1 bg-amber-500 rounded mb-2" />
+                    <p className="text-sm font-bold text-amber-400">P (Pivot)</p>
+                    <p className="text-xs text-muted-foreground">نقطة المحور</p>
                   </div>
-                  <div className="flex items-start gap-3 p-3 rounded-lg border border-red-500/30 bg-red-500/5">
-                    <div className="w-4 h-1 bg-red-500 mt-2 rounded" />
-                    <div>
-                      <p className="text-sm font-medium text-red-400">خطوط المقاومة (Resistance)</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        الخط العلوي من Donchian • عند الارتداد منه = PUT
-                      </p>
-                    </div>
+                  
+                  {/* Support Levels */}
+                  <div className="p-3 rounded-lg border border-green-500/30 bg-green-500/5 text-center">
+                    <div className="w-full h-1 bg-green-500 rounded mb-2" />
+                    <p className="text-sm font-bold text-green-400">S1, S2, S3</p>
+                    <p className="text-xs text-muted-foreground">مستويات الدعم</p>
                   </div>
-                  <div className="flex items-start gap-3 p-3 rounded-lg border border-purple-500/30 bg-purple-500/5">
-                    <div className="w-4 h-1 bg-purple-500 mt-2 rounded" />
-                    <div>
-                      <p className="text-sm font-medium text-purple-400">VWAP (متوسط السعر)</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        خط التوازن • الارتداد منه إشارة قوية
-                      </p>
-                    </div>
+                  
+                  {/* Resistance Levels */}
+                  <div className="p-3 rounded-lg border border-red-500/30 bg-red-500/5 text-center">
+                    <div className="w-full h-1 bg-red-500 rounded mb-2" />
+                    <p className="text-sm font-bold text-red-400">R1, R2, R3</p>
+                    <p className="text-xs text-muted-foreground">مستويات المقاومة</p>
+                  </div>
+                  
+                  {/* How to use */}
+                  <div className="p-3 rounded-lg border border-blue-500/30 bg-blue-500/5 text-center">
+                    <div className="w-full h-1 bg-blue-500 rounded mb-2" />
+                    <p className="text-sm font-bold text-blue-400">الاستخدام</p>
+                    <p className="text-xs text-muted-foreground">ارتداد من S = CALL</p>
                   </div>
                 </div>
               </CardContent>
