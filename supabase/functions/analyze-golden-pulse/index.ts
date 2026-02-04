@@ -5,15 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-interface SupportResistanceZone {
-  price: number;
-  type: 'support' | 'resistance';
-  strength: number; // 0-100
-  touches: number;
-  signal: 'CALL' | 'PUT' | 'NEUTRAL';
-  label: string;
-}
-
 interface CandleData {
   time: number;
   open: number;
@@ -21,6 +12,15 @@ interface CandleData {
   low: number;
   close: number;
   volume?: number;
+}
+
+interface TradingLevel {
+  price: number;
+  type: 'resistance' | 'support' | 'call_entry' | 'put_entry' | 'target_up' | 'target_down';
+  label: string;
+  labelAr: string;
+  color: string;
+  strength: number;
 }
 
 interface ChartAnalysis {
@@ -31,24 +31,23 @@ interface ChartAnalysis {
   timestamp: string;
   timeframe: string;
   candles: CandleData[];
-  zones: SupportResistanceZone[];
+  levels: TradingLevel[];
   dataSource: string;
   isLive: boolean;
 }
 
-// Timeframe to resolution mapping for Finnhub
-const timeframeMap: Record<string, { resolution: string; periodMinutes: number }> = {
-  '1': { resolution: '1', periodMinutes: 60 * 4 },      // 4 hours of 1m data
-  '5': { resolution: '5', periodMinutes: 60 * 12 },     // 12 hours of 5m data
-  '15': { resolution: '15', periodMinutes: 60 * 24 },   // 24 hours of 15m data
-  '30': { resolution: '30', periodMinutes: 60 * 48 },   // 48 hours of 30m data
-  '60': { resolution: '60', periodMinutes: 60 * 72 },   // 72 hours of 1h data
-  '240': { resolution: '240', periodMinutes: 60 * 168 }, // 1 week of 4h data
-  'D': { resolution: 'D', periodMinutes: 60 * 24 * 90 }, // 90 days of daily data
+// Timeframe configuration
+const timeframeMap: Record<string, { resolution: string; periodMinutes: number; lookback: number }> = {
+  '1': { resolution: '1', periodMinutes: 60 * 4, lookback: 20 },
+  '5': { resolution: '5', periodMinutes: 60 * 12, lookback: 30 },
+  '15': { resolution: '15', periodMinutes: 60 * 24, lookback: 40 },
+  '30': { resolution: '30', periodMinutes: 60 * 48, lookback: 50 },
+  '60': { resolution: '60', periodMinutes: 60 * 72, lookback: 60 },
+  '240': { resolution: '240', periodMinutes: 60 * 168, lookback: 50 },
+  'D': { resolution: 'D', periodMinutes: 60 * 24 * 90, lookback: 30 },
 };
 
 async function fetchGoldCandles(timeframe: string): Promise<{ candles: CandleData[]; currentPrice: number; previousClose: number; dataSource: string; isLive: boolean }> {
-  const errors: string[] = [];
   const FINNHUB_API_KEY = Deno.env.get('FINNHUB_API_KEY');
   const isPlausibleGoldPrice = (p: unknown) => typeof p === 'number' && isFinite(p) && p > 1000 && p < 5000;
   
@@ -59,7 +58,6 @@ async function fetchGoldCandles(timeframe: string): Promise<{ candles: CandleDat
   // Source 1: Finnhub
   if (FINNHUB_API_KEY) {
     try {
-      console.log(`Fetching Finnhub candles for timeframe ${timeframe}...`);
       const symbolsToTry = ['OANDA:XAU_USD', 'FX_IDC:XAUUSD'];
 
       for (const symbol of symbolsToTry) {
@@ -91,7 +89,7 @@ async function fetchGoldCandles(timeframe: string): Promise<{ candles: CandleDat
                 if (isPlausibleGoldPrice(quoteJson.pc)) previousClose = quoteJson.pc;
               }
             } catch (e) {
-              errors.push(`Quote error: ${String(e)}`);
+              console.log('Quote error:', e);
             }
 
             // Update last candle with current price
@@ -103,7 +101,6 @@ async function fetchGoldCandles(timeframe: string): Promise<{ candles: CandleDat
               low: Math.min(last.low, currentPrice),
             };
 
-            console.log(`Finnhub success: ${candles.length} candles`);
             return {
               candles,
               currentPrice,
@@ -113,16 +110,14 @@ async function fetchGoldCandles(timeframe: string): Promise<{ candles: CandleDat
             };
           }
         }
-        errors.push(`Finnhub (${symbol}): ${candlesJson?.s ?? candlesRes.status}`);
       }
     } catch (e) {
-      errors.push(`Finnhub: ${String(e)}`);
+      console.log('Finnhub error:', e);
     }
   }
 
-  // Source 2: Metals.live (spot only, synthesize candles)
+  // Source 2: Metals.live
   try {
-    console.log('Trying Metals.live...');
     const response = await fetch('https://api.metals.live/v1/spot/gold', {
       headers: { 'Accept': 'application/json' }
     });
@@ -133,7 +128,6 @@ async function fetchGoldCandles(timeframe: string): Promise<{ candles: CandleDat
       const price = typeof candidate === 'number' ? candidate : Number(candidate);
       
       if (isPlausibleGoldPrice(price)) {
-        console.log('Metals.live success:', price);
         const candles = generateCandlesFromPrice(price, timeframe);
         return {
           candles,
@@ -145,11 +139,10 @@ async function fetchGoldCandles(timeframe: string): Promise<{ candles: CandleDat
       }
     }
   } catch (e) {
-    errors.push(`Metals.live: ${String(e)}`);
+    console.log('Metals.live error:', e);
   }
 
-  // Fallback: Simulated data
-  console.log('Using simulated data. Errors:', errors);
+  // Fallback: Simulated
   const simData = generateSimulatedCandles(timeframe);
   return {
     ...simData,
@@ -172,21 +165,19 @@ function generateCandlesFromPrice(currentPrice: number, timeframe: string): Cand
     price += change;
     
     const range = Math.abs(change) + Math.random() * currentPrice * volatility * 0.5;
-    let high = Math.max(open, price) + range * 0.3;
-    let low = Math.min(open, price) - range * 0.3;
+    const high = Math.max(open, price) + range * 0.3;
+    const low = Math.min(open, price) - range * 0.3;
     let close = price;
 
     if (i === candleCount - 1) {
       close = currentPrice;
-      high = Math.max(high, close);
-      low = Math.min(low, close);
     }
 
     candles.push({
       time: Math.floor((Date.now() - (candleCount - 1 - i) * tfMinutes * 60000) / 1000),
       open,
-      high,
-      low,
+      high: Math.max(high, close),
+      low: Math.min(low, close),
       close,
       volume: Math.floor(1000 + Math.random() * 5000),
     });
@@ -209,96 +200,167 @@ function generateSimulatedCandles(timeframe: string): { candles: CandleData[]; c
   };
 }
 
-function detectSupportResistanceZones(candles: CandleData[], currentPrice: number): SupportResistanceZone[] {
-  const zones: SupportResistanceZone[] = [];
-  const pricePoints: { price: number; type: 'high' | 'low'; index: number }[] = [];
+function calculatePivotPoints(candles: CandleData[]): { pivot: number; r1: number; r2: number; r3: number; s1: number; s2: number; s3: number } {
+  // Use previous period's high, low, close
+  const lookbackCandles = candles.slice(-20, -1);
+  const highs = lookbackCandles.map(c => c.high);
+  const lows = lookbackCandles.map(c => c.low);
   
-  // Find swing highs and lows
-  for (let i = 2; i < candles.length - 2; i++) {
-    const prev2 = candles[i - 2];
-    const prev1 = candles[i - 1];
+  const high = Math.max(...highs);
+  const low = Math.min(...lows);
+  const close = candles[candles.length - 2]?.close || candles[candles.length - 1].close;
+  
+  const pivot = (high + low + close) / 3;
+  const range = high - low;
+  
+  return {
+    pivot,
+    r1: 2 * pivot - low,
+    r2: pivot + range,
+    r3: high + 2 * (pivot - low),
+    s1: 2 * pivot - high,
+    s2: pivot - range,
+    s3: low - 2 * (high - pivot),
+  };
+}
+
+function detectSwingLevels(candles: CandleData[]): { highs: number[]; lows: number[] } {
+  const highs: number[] = [];
+  const lows: number[] = [];
+  
+  for (let i = 3; i < candles.length - 3; i++) {
     const curr = candles[i];
-    const next1 = candles[i + 1];
-    const next2 = candles[i + 2];
+    const neighbors = [
+      candles[i - 3], candles[i - 2], candles[i - 1],
+      candles[i + 1], candles[i + 2], candles[i + 3]
+    ];
     
     // Swing High
-    if (curr.high > prev1.high && curr.high > prev2.high && 
-        curr.high > next1.high && curr.high > next2.high) {
-      pricePoints.push({ price: curr.high, type: 'high', index: i });
+    if (neighbors.every(n => curr.high >= n.high)) {
+      highs.push(curr.high);
     }
     
     // Swing Low
-    if (curr.low < prev1.low && curr.low < prev2.low && 
-        curr.low < next1.low && curr.low < next2.low) {
-      pricePoints.push({ price: curr.low, type: 'low', index: i });
+    if (neighbors.every(n => curr.low <= n.low)) {
+      lows.push(curr.low);
     }
   }
   
-  // Cluster nearby points into zones
-  const tolerance = currentPrice * 0.001; // 0.1% tolerance
-  const clustered: { price: number; type: 'support' | 'resistance'; touches: number }[] = [];
+  return { highs, lows };
+}
+
+function calculateTradingLevels(candles: CandleData[], currentPrice: number): TradingLevel[] {
+  const levels: TradingLevel[] = [];
+  const pivots = calculatePivotPoints(candles);
+  const swings = detectSwingLevels(candles);
   
-  for (const point of pricePoints) {
-    let merged = false;
-    for (const cluster of clustered) {
-      if (Math.abs(cluster.price - point.price) < tolerance) {
-        cluster.price = (cluster.price + point.price) / 2;
-        cluster.touches++;
-        merged = true;
-        break;
-      }
-    }
-    if (!merged) {
-      clustered.push({
-        price: point.price,
-        type: point.type === 'high' ? 'resistance' : 'support',
-        touches: 1,
-      });
-    }
-  }
+  // Calculate ATR for target distances
+  const atr = candles.slice(-14).reduce((sum, c, i, arr) => {
+    if (i === 0) return sum;
+    const prev = arr[i - 1];
+    const tr = Math.max(c.high - c.low, Math.abs(c.high - prev.close), Math.abs(c.low - prev.close));
+    return sum + tr;
+  }, 0) / 13;
   
-  // Add significant zones (at least 2 touches)
-  const allPrices = candles.flatMap(c => [c.high, c.low]);
-  const priceRange = Math.max(...allPrices) - Math.min(...allPrices);
+  // Find nearest resistance (above current price)
+  const resistanceCandidates = [
+    ...swings.highs.filter(h => h > currentPrice),
+    pivots.r1, pivots.r2, pivots.r3
+  ].filter(r => r > currentPrice).sort((a, b) => a - b);
   
-  for (const cluster of clustered) {
-    if (cluster.touches >= 1) {
-      const distanceFromPrice = Math.abs(currentPrice - cluster.price);
-      const strength = Math.min(100, 50 + cluster.touches * 15);
-      
-      // Determine signal based on position relative to current price
-      let signal: 'CALL' | 'PUT' | 'NEUTRAL' = 'NEUTRAL';
-      const nearZone = distanceFromPrice < priceRange * 0.03; // Within 3% of range
-      
-      if (nearZone) {
-        if (cluster.type === 'support' && currentPrice > cluster.price) {
-          signal = 'CALL'; // Price bouncing off support
-        } else if (cluster.type === 'resistance' && currentPrice < cluster.price) {
-          signal = 'PUT'; // Price hitting resistance
-        }
-      }
-      
-      // Generate label like in the reference image
-      const labelPrefix = cluster.type === 'resistance' ? 'R' : 'S';
-      const touchLabel = `[${cluster.touches}${cluster.touches > 1 ? '0' : ''}]`;
-      const percentLabel = `B:${Math.floor(Math.random() * 40 + 40)}%`;
-      
-      zones.push({
-        price: cluster.price,
-        type: cluster.type,
-        strength,
-        touches: cluster.touches,
-        signal,
-        label: `${labelPrefix}: ${cluster.touches} ${touchLabel} ${percentLabel}`,
-      });
-    }
-  }
+  // Find nearest support (below current price)  
+  const supportCandidates = [
+    ...swings.lows.filter(l => l < currentPrice),
+    pivots.s1, pivots.s2, pivots.s3
+  ].filter(s => s < currentPrice).sort((a, b) => b - a);
   
-  // Sort by distance from current price
-  zones.sort((a, b) => Math.abs(currentPrice - a.price) - Math.abs(currentPrice - b.price));
+  const nearestResistance = resistanceCandidates[0] || currentPrice + atr * 1.5;
+  const nearestSupport = supportCandidates[0] || currentPrice - atr * 1.5;
   
-  // Return top zones (limit to prevent clutter)
-  return zones.slice(0, 8);
+  // Entry levels (slightly inside S/R)
+  const callEntryPrice = nearestSupport + atr * 0.3;
+  const putEntryPrice = nearestResistance - atr * 0.3;
+  
+  // 1. Resistance Level (المقاومة) - Yellow
+  levels.push({
+    price: nearestResistance,
+    type: 'resistance',
+    label: `Resistance: ${nearestResistance.toFixed(2)}`,
+    labelAr: `المقاومة: ${nearestResistance.toFixed(2)}`,
+    color: '#FFEB3B',
+    strength: 85,
+  });
+  
+  // 2. Support Level (الدعم) - Yellow
+  levels.push({
+    price: nearestSupport,
+    type: 'support',
+    label: `Support: ${nearestSupport.toFixed(2)}`,
+    labelAr: `الدعم: ${nearestSupport.toFixed(2)}`,
+    color: '#FFEB3B',
+    strength: 85,
+  });
+  
+  // 3. Call Entry (دخول كول) - Green
+  levels.push({
+    price: callEntryPrice,
+    type: 'call_entry',
+    label: `CALL Entry: ${callEntryPrice.toFixed(2)}`,
+    labelAr: `دخول كول: ${callEntryPrice.toFixed(2)}`,
+    color: '#4CAF50',
+    strength: 90,
+  });
+  
+  // 4. Put Entry (دخول بوت) - Red/Orange
+  levels.push({
+    price: putEntryPrice,
+    type: 'put_entry',
+    label: `PUT Entry: ${putEntryPrice.toFixed(2)}`,
+    labelAr: `دخول بوت: ${putEntryPrice.toFixed(2)}`,
+    color: '#FF5722',
+    strength: 90,
+  });
+  
+  // 5. Targets UP (أهداف صعود) - Green
+  const targetsUp = [
+    nearestResistance + atr * 0.8,
+    nearestResistance + atr * 1.5,
+    nearestResistance + atr * 2.5,
+  ];
+  
+  targetsUp.forEach((target, i) => {
+    levels.push({
+      price: target,
+      type: 'target_up',
+      label: `Target ${i + 1}: ${target.toFixed(2)}`,
+      labelAr: `هدف ${i + 1}: ${target.toFixed(2)}`,
+      color: '#4CAF50',
+      strength: 70 - i * 10,
+    });
+  });
+  
+  // 6. Targets DOWN (أهداف هبوط) - Red/Orange
+  const targetsDown = [
+    nearestSupport - atr * 0.8,
+    nearestSupport - atr * 1.5,
+    nearestSupport - atr * 2.5,
+  ];
+  
+  targetsDown.forEach((target, i) => {
+    levels.push({
+      price: target,
+      type: 'target_down',
+      label: `Target ${i + 1}: ${target.toFixed(2)}`,
+      labelAr: `هدف ${i + 1}: ${target.toFixed(2)}`,
+      color: '#FF5722',
+      strength: 70 - i * 10,
+    });
+  });
+  
+  // Sort by price descending
+  levels.sort((a, b) => b.price - a.price);
+  
+  return levels;
 }
 
 serve(async (req) => {
@@ -310,12 +372,12 @@ serve(async (req) => {
     const url = new URL(req.url);
     const timeframe = url.searchParams.get('timeframe') || '1';
     
-    console.log(`Golden Pulse analysis request - Timeframe: ${timeframe}`);
+    console.log(`Golden Pulse analysis - Timeframe: ${timeframe}`);
     
     const { candles, currentPrice, previousClose, dataSource, isLive } = await fetchGoldCandles(timeframe);
     
-    // Detect support/resistance zones
-    const zones = detectSupportResistanceZones(candles, currentPrice);
+    // Calculate trading levels
+    const levels = calculateTradingLevels(candles, currentPrice);
     
     const priceChange = currentPrice - previousClose;
     const priceChangePercent = (priceChange / previousClose) * 100;
@@ -328,12 +390,12 @@ serve(async (req) => {
       timestamp: new Date().toISOString(),
       timeframe,
       candles,
-      zones,
+      levels,
       dataSource,
       isLive,
     };
     
-    console.log(`Analysis complete: ${candles.length} candles, ${zones.length} zones, source: ${dataSource}`);
+    console.log(`Analysis complete: ${candles.length} candles, ${levels.length} levels, source: ${dataSource}`);
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
