@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 interface TradingLevel {
   price: number;
-  type: 'resistance' | 'support' | 'call_entry' | 'put_entry' | 'target_up' | 'target_down';
+   type: 'resistance' | 'support' | 'call_entry' | 'put_entry' | 'target_up' | 'target_down' | 'pivot';
   label: string;
   labelAr: string;
   color: string;
@@ -46,13 +46,17 @@ const LevelsPanel = ({ levels, currentPrice }: LevelsPanelProps) => {
         return 'هدف صعود';
       case 'target_down':
         return 'هدف هبوط';
+       case 'pivot':
+         return 'المحور';
+       default:
+         return '';
     }
   };
 
   const sortedLevels = [...levels].sort((a, b) => b.price - a.price);
 
   const entriesAndSR = sortedLevels.filter(l => 
-    ['call_entry', 'put_entry', 'resistance', 'support'].includes(l.type)
+     ['call_entry', 'put_entry', 'resistance', 'support', 'pivot'].includes(l.type)
   );
   
   const targetsUp = sortedLevels.filter(l => l.type === 'target_up');
@@ -80,7 +84,8 @@ const LevelsPanel = ({ levels, currentPrice }: LevelsPanelProps) => {
                   level.type === 'call_entry' && "bg-green-500/10 border-green-500/30",
                   level.type === 'put_entry' && "bg-red-500/10 border-red-500/30",
                   level.type === 'resistance' && "bg-yellow-500/10 border-yellow-500/30",
-                  level.type === 'support' && "bg-yellow-500/10 border-yellow-500/30"
+                   level.type === 'support' && "bg-yellow-500/10 border-yellow-500/30",
+                   level.type === 'pivot' && "bg-purple-500/10 border-purple-500/30"
                 )}
               >
                 <div className="flex items-center gap-2">

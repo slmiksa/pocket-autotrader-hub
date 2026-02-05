@@ -2,14 +2,14 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { createChart, IChartApi, ISeriesApi, CandlestickData, Time, CandlestickSeries } from 'lightweight-charts';
 import { cn } from '@/lib/utils';
 
-interface TradingLevel {
-  price: number;
-  type: 'resistance' | 'support' | 'call_entry' | 'put_entry' | 'target_up' | 'target_down';
-  label: string;
-  labelAr: string;
-  color: string;
-  strength: number;
-}
+ interface TradingLevel {
+   price: number;
+   type: 'resistance' | 'support' | 'call_entry' | 'put_entry' | 'target_up' | 'target_down' | 'pivot';
+   label: string;
+   labelAr: string;
+   color: string;
+   strength: number;
+ }
 
 interface CandleData {
   time: number;
