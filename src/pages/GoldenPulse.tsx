@@ -7,7 +7,8 @@ import {
   Minimize2,
   RefreshCw,
   Wifi,
-  WifiOff
+   WifiOff,
+   AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import GoldenPulseChart from "@/components/golden-pulse/GoldenPulseChart";
@@ -30,7 +31,7 @@ const GoldenPulse = () => {
 
   const { data, loading, error, refetch } = useGoldenPulseData({
     timeframe: selectedTimeframe,
-    refreshInterval: 3000,
+     refreshInterval: 30000, // Refresh every 30 seconds for stable data
   });
 
   const toggleFullscreen = () => {
@@ -165,8 +166,18 @@ const GoldenPulse = () => {
           )}>
             <CardContent className="p-0 h-full">
               {error ? (
-                <div className="flex items-center justify-center h-[550px] text-red-400">
-                  <p>{error}</p>
+                 <div className="flex flex-col items-center justify-center h-[550px] text-center px-4">
+                   <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
+                   <p className="text-red-400 text-lg mb-2">خطأ في جلب البيانات</p>
+                   <p className="text-muted-foreground text-sm mb-4">{error}</p>
+                   <Button
+                     variant="outline"
+                     onClick={refetch}
+                     className="border-amber-500/50 text-amber-400 hover:bg-amber-500/20"
+                   >
+                     <RefreshCw className="h-4 w-4 mr-2" />
+                     إعادة المحاولة
+                   </Button>
                 </div>
               ) : loading && !data ? (
                 <div className="flex items-center justify-center h-[550px]">
