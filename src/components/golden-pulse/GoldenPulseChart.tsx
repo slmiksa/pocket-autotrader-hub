@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
  interface TradingLevel {
    price: number;
-   type: 'resistance' | 'support' | 'call_entry' | 'put_entry' | 'target_up' | 'target_down' | 'pivot';
+   type: 'resistance' | 'support' | 'call_entry' | 'put_entry' | 'target_up' | 'target_down' | 'pivot' | 'swing_high' | 'swing_low' | 'stop_loss';
    label: string;
    labelAr: string;
    color: string;
@@ -135,36 +135,45 @@ const GoldenPulseChart = ({ candles, levels, currentPrice, isFullscreen }: Golde
       const y = coordinate;
       if (y < 0 || y > rect.height) return;
 
+      // Determine line style based on level type
+      const isEntry = level.type === 'call_entry' || level.type === 'put_entry';
+      const isTarget = level.type === 'target_up' || level.type === 'target_down';
+      const isStopLoss = level.type === 'stop_loss';
+      const isSwing = level.type === 'swing_high' || level.type === 'swing_low';
+      
+      const lineHeight = isEntry ? '3px' : isStopLoss ? '3px' : '2px';
+
       // Create level line
       const line = document.createElement('div');
       line.className = 'absolute left-0 pointer-events-none';
       line.style.top = `${y}px`;
-      line.style.height = '2px';
-      line.style.right = '140px';
+      line.style.height = lineHeight;
+      line.style.right = '150px';
       line.style.backgroundColor = level.color;
-      line.style.opacity = '0.9';
+      line.style.opacity = isEntry || isStopLoss ? '1' : '0.8';
       
-      // Add dashed style for targets
-      if (level.type === 'target_up' || level.type === 'target_down') {
+      // Add dashed style for targets and swing points
+      if (isTarget || isSwing) {
         line.style.background = `repeating-linear-gradient(to right, ${level.color}, ${level.color} 8px, transparent 8px, transparent 16px)`;
       }
 
       container.appendChild(line);
 
-      // Create label box
+      // Create label box with improved styling
       const labelBox = document.createElement('div');
       labelBox.className = 'absolute px-2 py-1 text-xs font-bold rounded shadow-lg pointer-events-none whitespace-nowrap';
       labelBox.style.top = `${y}px`;
       labelBox.style.right = '4px';
       labelBox.style.backgroundColor = level.color;
-      labelBox.style.color = level.color === '#FFEB3B' ? '#000' : '#fff';
+      labelBox.style.color = ['#FBBF24', '#34D399', '#4ADE80'].includes(level.color) ? '#000' : '#fff';
       labelBox.style.transform = 'translateY(-50%)';
-      labelBox.style.zIndex = '10';
-      labelBox.style.minWidth = '130px';
+      labelBox.style.zIndex = isEntry ? '20' : isStopLoss ? '18' : '10';
+      labelBox.style.minWidth = isEntry ? '140px' : '120px';
       labelBox.style.textAlign = 'center';
-      labelBox.style.fontSize = '11px';
+      labelBox.style.fontSize = isEntry ? '12px' : '11px';
       labelBox.style.fontWeight = '700';
-      labelBox.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
+      labelBox.style.boxShadow = isEntry ? '0 3px 12px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.4)';
+      labelBox.style.border = isEntry ? '2px solid rgba(255,255,255,0.3)' : 'none';
       labelBox.textContent = level.labelAr;
 
       container.appendChild(labelBox);

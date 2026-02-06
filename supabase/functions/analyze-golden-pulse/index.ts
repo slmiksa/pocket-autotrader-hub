@@ -14,14 +14,14 @@
    volume?: number;
  }
  
- interface TradingLevel {
-   price: number;
-   type: 'resistance' | 'support' | 'call_entry' | 'put_entry' | 'target_up' | 'target_down' | 'pivot';
-   label: string;
-   labelAr: string;
-   color: string;
-   strength: number;
- }
+interface TradingLevel {
+  price: number;
+  type: 'resistance' | 'support' | 'call_entry' | 'put_entry' | 'target_up' | 'target_down' | 'pivot' | 'swing_high' | 'swing_low' | 'stop_loss';
+  label: string;
+  labelAr: string;
+  color: string;
+  strength: number;
+}
  
  interface ChartAnalysis {
    currentPrice: number;
@@ -240,168 +240,232 @@
    };
  }
  
- // Calculate trading levels from REAL data - STABLE, not changing every second
- function calculateTradingLevels(
-   candles: CandleData[], 
-   currentPrice: number,
-   dailyHigh: number,
-   dailyLow: number
- ): TradingLevel[] {
-   const levels: TradingLevel[] = [];
-   
-   // Get previous day's close for pivot calculation
-   const previousClose = candles.length > 1 ? candles[candles.length - 2].close : currentPrice;
-   
-   // Calculate Standard Pivot Points from daily data
-   const pivots = calculateDailyPivots(dailyHigh, dailyLow, previousClose);
-   
-   // Calculate ATR for entry offset
-   const atr = candles.slice(-14).reduce((sum, c, i, arr) => {
-     if (i === 0) return sum;
-     const prev = arr[i - 1];
-     const tr = Math.max(c.high - c.low, Math.abs(c.high - prev.close), Math.abs(c.low - prev.close));
-     return sum + tr;
-   }, 0) / 13;
-   
-   // R3 - Resistance 3
-   levels.push({
-     price: pivots.r3,
-     type: 'resistance',
-     label: `R3: ${pivots.r3.toFixed(2)}`,
-     labelAr: `مقاومة 3: ${pivots.r3.toFixed(2)}`,
-     color: '#EF4444',
-     strength: 95,
-   });
-   
-   // R2 - Resistance 2
-   levels.push({
-     price: pivots.r2,
-     type: 'resistance',
-     label: `R2: ${pivots.r2.toFixed(2)}`,
-     labelAr: `مقاومة 2: ${pivots.r2.toFixed(2)}`,
-     color: '#F97316',
-     strength: 90,
-   });
-   
-   // PUT Entry - slightly below R1
-   const putEntry = pivots.r1 - atr * 0.2;
-   levels.push({
-     price: putEntry,
-     type: 'put_entry',
-     label: `PUT Entry: ${putEntry.toFixed(2)}`,
-     labelAr: `دخول PUT: ${putEntry.toFixed(2)}`,
-     color: '#DC2626',
-     strength: 92,
-   });
-   
-   // R1 - Resistance 1
-   levels.push({
-     price: pivots.r1,
-     type: 'resistance',
-     label: `R1: ${pivots.r1.toFixed(2)}`,
-     labelAr: `مقاومة 1: ${pivots.r1.toFixed(2)}`,
-     color: '#FBBF24',
-     strength: 85,
-   });
-   
-   // Pivot Point
-   levels.push({
-     price: pivots.pivot,
-     type: 'pivot',
-     label: `Pivot: ${pivots.pivot.toFixed(2)}`,
-     labelAr: `المحور: ${pivots.pivot.toFixed(2)}`,
-     color: '#A855F7',
-     strength: 80,
-   });
-   
-   // S1 - Support 1
-   levels.push({
-     price: pivots.s1,
-     type: 'support',
-     label: `S1: ${pivots.s1.toFixed(2)}`,
-     labelAr: `دعم 1: ${pivots.s1.toFixed(2)}`,
-     color: '#22C55E',
-     strength: 85,
-   });
-   
-   // CALL Entry - slightly above S1
-   const callEntry = pivots.s1 + atr * 0.2;
-   levels.push({
-     price: callEntry,
-     type: 'call_entry',
-     label: `CALL Entry: ${callEntry.toFixed(2)}`,
-     labelAr: `دخول CALL: ${callEntry.toFixed(2)}`,
-     color: '#16A34A',
-     strength: 92,
-   });
-   
-   // S2 - Support 2
-   levels.push({
-     price: pivots.s2,
-     type: 'support',
-     label: `S2: ${pivots.s2.toFixed(2)}`,
-     labelAr: `دعم 2: ${pivots.s2.toFixed(2)}`,
-     color: '#10B981',
-     strength: 90,
-   });
-   
-   // S3 - Support 3
-   levels.push({
-     price: pivots.s3,
-     type: 'support',
-     label: `S3: ${pivots.s3.toFixed(2)}`,
-     labelAr: `دعم 3: ${pivots.s3.toFixed(2)}`,
-     color: '#059669',
-     strength: 95,
-   });
-   
-   // Target levels
-   const targetUp1 = pivots.r1 + atr * 0.5;
-   const targetUp2 = pivots.r2 + atr * 0.5;
-   const targetDown1 = pivots.s1 - atr * 0.5;
-   const targetDown2 = pivots.s2 - atr * 0.5;
-   
-   levels.push({
-     price: targetUp1,
-     type: 'target_up',
-     label: `Target 1↑: ${targetUp1.toFixed(2)}`,
-     labelAr: `هدف 1↑: ${targetUp1.toFixed(2)}`,
-     color: '#22C55E',
-     strength: 70,
-   });
-   
-   levels.push({
-     price: targetUp2,
-     type: 'target_up',
-     label: `Target 2↑: ${targetUp2.toFixed(2)}`,
-     labelAr: `هدف 2↑: ${targetUp2.toFixed(2)}`,
-     color: '#22C55E',
-     strength: 65,
-   });
-   
-   levels.push({
-     price: targetDown1,
-     type: 'target_down',
-     label: `Target 1↓: ${targetDown1.toFixed(2)}`,
-     labelAr: `هدف 1↓: ${targetDown1.toFixed(2)}`,
-     color: '#EF4444',
-     strength: 70,
-   });
-   
-   levels.push({
-     price: targetDown2,
-     type: 'target_down',
-     label: `Target 2↓: ${targetDown2.toFixed(2)}`,
-     labelAr: `هدف 2↓: ${targetDown2.toFixed(2)}`,
-     color: '#EF4444',
-     strength: 65,
-   });
-   
-   // Sort by price descending
-   levels.sort((a, b) => b.price - a.price);
-   
-   return levels;
- }
+// Detect Swing Highs and Lows from candle data
+function detectSwingPoints(candles: CandleData[], lookback: number = 5): { swingHighs: number[]; swingLows: number[] } {
+  const swingHighs: number[] = [];
+  const swingLows: number[] = [];
+  
+  for (let i = lookback; i < candles.length - lookback; i++) {
+    const current = candles[i];
+    let isSwingHigh = true;
+    let isSwingLow = true;
+    
+    for (let j = i - lookback; j <= i + lookback; j++) {
+      if (j === i) continue;
+      if (candles[j].high >= current.high) isSwingHigh = false;
+      if (candles[j].low <= current.low) isSwingLow = false;
+    }
+    
+    if (isSwingHigh) swingHighs.push(current.high);
+    if (isSwingLow) swingLows.push(current.low);
+  }
+  
+  return { swingHighs, swingLows };
+}
+
+// Calculate trading levels from REAL data - STABLE, not changing every second
+function calculateTradingLevels(
+  candles: CandleData[], 
+  currentPrice: number,
+  dailyHigh: number,
+  dailyLow: number
+): TradingLevel[] {
+  const levels: TradingLevel[] = [];
+  
+  // Get previous day's close for pivot calculation
+  const previousClose = candles.length > 1 ? candles[candles.length - 2].close : currentPrice;
+  
+  // Calculate Standard Pivot Points from daily data
+  const pivots = calculateDailyPivots(dailyHigh, dailyLow, previousClose);
+  
+  // Calculate ATR for entry offset and stop loss
+  const atr = candles.slice(-14).reduce((sum, c, i, arr) => {
+    if (i === 0) return sum;
+    const prev = arr[i - 1];
+    const tr = Math.max(c.high - c.low, Math.abs(c.high - prev.close), Math.abs(c.low - prev.close));
+    return sum + tr;
+  }, 0) / 13;
+  
+  // Detect Swing Points for additional context
+  const { swingHighs, swingLows } = detectSwingPoints(candles, 3);
+  const recentSwingHigh = swingHighs.length > 0 ? Math.max(...swingHighs.slice(-3)) : dailyHigh;
+  const recentSwingLow = swingLows.length > 0 ? Math.min(...swingLows.slice(-3)) : dailyLow;
+  
+  // === SELL/PUT ZONE (Above Current Price) ===
+  
+  // Stop Loss for PUT (above resistance)
+  const stopLossPut = pivots.r2 + atr * 0.3;
+  levels.push({
+    price: stopLossPut,
+    type: 'stop_loss',
+    label: `🛑 SL PUT: ${stopLossPut.toFixed(2)}`,
+    labelAr: `🛑 ستوب PUT: ${stopLossPut.toFixed(2)}`,
+    color: '#FF0000',
+    strength: 100,
+  });
+  
+  // Swing High
+  if (Math.abs(recentSwingHigh - pivots.r1) > atr * 0.3) {
+    levels.push({
+      price: recentSwingHigh,
+      type: 'swing_high',
+      label: `📈 Swing High: ${recentSwingHigh.toFixed(2)}`,
+      labelAr: `📈 قمة: ${recentSwingHigh.toFixed(2)}`,
+      color: '#FF6B6B',
+      strength: 88,
+    });
+  }
+  
+  // R2 - Strong Resistance
+  levels.push({
+    price: pivots.r2,
+    type: 'resistance',
+    label: `R2: ${pivots.r2.toFixed(2)}`,
+    labelAr: `مقاومة 2: ${pivots.r2.toFixed(2)}`,
+    color: '#F97316',
+    strength: 90,
+  });
+  
+  // PUT Entry Zone
+  const putEntry = pivots.r1 + atr * 0.1;
+  levels.push({
+    price: putEntry,
+    type: 'put_entry',
+    label: `🔴 SELL/PUT: ${putEntry.toFixed(2)}`,
+    labelAr: `🔴 دخول بيع: ${putEntry.toFixed(2)}`,
+    color: '#DC2626',
+    strength: 95,
+  });
+  
+  // R1 - Resistance 1
+  levels.push({
+    price: pivots.r1,
+    type: 'resistance',
+    label: `R1: ${pivots.r1.toFixed(2)}`,
+    labelAr: `مقاومة 1: ${pivots.r1.toFixed(2)}`,
+    color: '#FBBF24',
+    strength: 85,
+  });
+  
+  // === NEUTRAL ZONE ===
+  
+  // Pivot Point
+  levels.push({
+    price: pivots.pivot,
+    type: 'pivot',
+    label: `⚪ Pivot: ${pivots.pivot.toFixed(2)}`,
+    labelAr: `⚪ المحور: ${pivots.pivot.toFixed(2)}`,
+    color: '#A855F7',
+    strength: 80,
+  });
+  
+  // === BUY/CALL ZONE (Below Current Price) ===
+  
+  // S1 - Support 1
+  levels.push({
+    price: pivots.s1,
+    type: 'support',
+    label: `S1: ${pivots.s1.toFixed(2)}`,
+    labelAr: `دعم 1: ${pivots.s1.toFixed(2)}`,
+    color: '#22C55E',
+    strength: 85,
+  });
+  
+  // CALL Entry Zone
+  const callEntry = pivots.s1 - atr * 0.1;
+  levels.push({
+    price: callEntry,
+    type: 'call_entry',
+    label: `🟢 BUY/CALL: ${callEntry.toFixed(2)}`,
+    labelAr: `🟢 دخول شراء: ${callEntry.toFixed(2)}`,
+    color: '#16A34A',
+    strength: 95,
+  });
+  
+  // S2 - Strong Support
+  levels.push({
+    price: pivots.s2,
+    type: 'support',
+    label: `S2: ${pivots.s2.toFixed(2)}`,
+    labelAr: `دعم 2: ${pivots.s2.toFixed(2)}`,
+    color: '#10B981',
+    strength: 90,
+  });
+  
+  // Swing Low
+  if (Math.abs(recentSwingLow - pivots.s1) > atr * 0.3) {
+    levels.push({
+      price: recentSwingLow,
+      type: 'swing_low',
+      label: `📉 Swing Low: ${recentSwingLow.toFixed(2)}`,
+      labelAr: `📉 قاع: ${recentSwingLow.toFixed(2)}`,
+      color: '#4ADE80',
+      strength: 88,
+    });
+  }
+  
+  // Stop Loss for CALL (below support)
+  const stopLossCall = pivots.s2 - atr * 0.3;
+  levels.push({
+    price: stopLossCall,
+    type: 'stop_loss',
+    label: `🛑 SL CALL: ${stopLossCall.toFixed(2)}`,
+    labelAr: `🛑 ستوب CALL: ${stopLossCall.toFixed(2)}`,
+    color: '#FF0000',
+    strength: 100,
+  });
+  
+  // === TARGET LEVELS ===
+  
+  // Target 1 UP (for CALL trades)
+  const target1Up = pivots.pivot + atr * 0.8;
+  levels.push({
+    price: target1Up,
+    type: 'target_up',
+    label: `🎯 T1 CALL: ${target1Up.toFixed(2)}`,
+    labelAr: `🎯 هدف1 شراء: ${target1Up.toFixed(2)}`,
+    color: '#34D399',
+    strength: 75,
+  });
+  
+  // Target 2 UP (for CALL trades)
+  const target2Up = pivots.r1 + atr * 0.3;
+  levels.push({
+    price: target2Up,
+    type: 'target_up',
+    label: `🎯 T2 CALL: ${target2Up.toFixed(2)}`,
+    labelAr: `🎯 هدف2 شراء: ${target2Up.toFixed(2)}`,
+    color: '#10B981',
+    strength: 70,
+  });
+  
+  // Target 1 DOWN (for PUT trades)
+  const target1Down = pivots.pivot - atr * 0.8;
+  levels.push({
+    price: target1Down,
+    type: 'target_down',
+    label: `🎯 T1 PUT: ${target1Down.toFixed(2)}`,
+    labelAr: `🎯 هدف1 بيع: ${target1Down.toFixed(2)}`,
+    color: '#F87171',
+    strength: 75,
+  });
+  
+  // Target 2 DOWN (for PUT trades)
+  const target2Down = pivots.s1 - atr * 0.3;
+  levels.push({
+    price: target2Down,
+    type: 'target_down',
+    label: `🎯 T2 PUT: ${target2Down.toFixed(2)}`,
+    labelAr: `🎯 هدف2 بيع: ${target2Down.toFixed(2)}`,
+    color: '#EF4444',
+    strength: 70,
+  });
+  
+  // Sort by price descending
+  levels.sort((a, b) => b.price - a.price);
+  
+  return levels;
+}
  
  serve(async (req) => {
    if (req.method === 'OPTIONS') {
