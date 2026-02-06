@@ -126,7 +126,7 @@ const GoldenPulse = () => {
         {/* Footer */}
         {!isFullscreen && <div className="text-center text-xs text-muted-foreground mt-4">
             <p>Golden Pulse v4.0 • شارت حي مع مستويات دخول CALL/PUT + أهداف تلقائية</p>
-            {data}
+            {data && <p className="mt-1">آخر تحديث: {new Date(data.timestamp).toLocaleTimeString('ar-EG')} • المصدر: {data.dataSource}</p>}
           </div>}
       </div>
     </div>;

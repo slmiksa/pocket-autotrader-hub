@@ -1,11 +1,11 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Target, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { TrendingUp, TrendingDown, Target, Shield, AlertTriangle, ArrowUp, ArrowDown, Zap } from 'lucide-react';
 
 interface TradingLevel {
   price: number;
-   type: 'resistance' | 'support' | 'call_entry' | 'put_entry' | 'target_up' | 'target_down' | 'pivot';
+  type: 'resistance' | 'support' | 'call_entry' | 'put_entry' | 'target_up' | 'target_down' | 'pivot' | 'swing_high' | 'swing_low' | 'stop_loss';
   label: string;
   labelAr: string;
   color: string;
@@ -17,139 +17,145 @@ interface LevelsPanelProps {
   currentPrice: number;
 }
 
+const getIcon = (type: string) => {
+  switch (type) {
+    case 'call_entry': return <Zap className="w-4 h-4" />;
+    case 'put_entry': return <Zap className="w-4 h-4" />;
+    case 'target_up': return <Target className="w-4 h-4" />;
+    case 'target_down': return <Target className="w-4 h-4" />;
+    case 'stop_loss': return <AlertTriangle className="w-4 h-4" />;
+    case 'resistance': return <ArrowUp className="w-4 h-4" />;
+    case 'support': return <ArrowDown className="w-4 h-4" />;
+    case 'swing_high': return <TrendingUp className="w-4 h-4" />;
+    case 'swing_low': return <TrendingDown className="w-4 h-4" />;
+    default: return <Shield className="w-4 h-4" />;
+  }
+};
+
+const getTypeLabel = (type: string) => {
+  switch (type) {
+    case 'call_entry': return 'دخول شراء';
+    case 'put_entry': return 'دخول بيع';
+    case 'target_up': return 'هدف صعود';
+    case 'target_down': return 'هدف هبوط';
+    case 'stop_loss': return 'ستوب لوز';
+    case 'resistance': return 'مقاومة';
+    case 'support': return 'دعم';
+    case 'swing_high': return 'قمة';
+    case 'swing_low': return 'قاع';
+    case 'pivot': return 'المحور';
+    default: return type;
+  }
+};
+
 const LevelsPanel = ({ levels, currentPrice }: LevelsPanelProps) => {
-  const getIcon = (type: TradingLevel['type']) => {
-    switch (type) {
-      case 'call_entry':
-        return <TrendingUp className="h-4 w-4" />;
-      case 'put_entry':
-        return <TrendingDown className="h-4 w-4" />;
-      case 'resistance':
-      case 'support':
-        return <Shield className="h-4 w-4" />;
-      default:
-        return <Target className="h-4 w-4" />;
-    }
+  // Group levels by category
+  const entryLevels = levels.filter(l => l.type === 'call_entry' || l.type === 'put_entry');
+  const stopLossLevels = levels.filter(l => l.type === 'stop_loss');
+  const targetLevels = levels.filter(l => l.type === 'target_up' || l.type === 'target_down');
+  const swingLevels = levels.filter(l => l.type === 'swing_high' || l.type === 'swing_low');
+  const otherLevels = levels.filter(l => !['call_entry', 'put_entry', 'stop_loss', 'target_up', 'target_down', 'swing_high', 'swing_low'].includes(l.type));
+
+  const renderLevel = (level: TradingLevel) => {
+    const distance = ((level.price - currentPrice) / currentPrice) * 100;
+    const isAbove = level.price > currentPrice;
+    
+    return (
+      <div 
+        key={`${level.type}-${level.price}`}
+        className="flex items-center justify-between p-2 rounded-lg border border-border/50 hover:border-border transition-colors"
+        style={{ borderLeftColor: level.color, borderLeftWidth: '4px' }}
+      >
+        <div className="flex items-center gap-2">
+          <div style={{ color: level.color }}>{getIcon(level.type)}</div>
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">{getTypeLabel(level.type)}</p>
+            <p className="font-mono font-bold text-sm" style={{ color: level.color }}>${level.price.toFixed(2)}</p>
+          </div>
+        </div>
+        <Badge 
+          variant="outline" 
+          className={cn(
+            "text-xs font-mono",
+            isAbove ? "text-red-400 border-red-500/30" : "text-green-400 border-green-500/30"
+          )}
+        >
+          {isAbove ? '+' : ''}{distance.toFixed(2)}%
+        </Badge>
+      </div>
+    );
   };
-
-  const getTypeLabel = (type: TradingLevel['type']) => {
-    switch (type) {
-      case 'call_entry':
-        return 'دخول CALL';
-      case 'put_entry':
-        return 'دخول PUT';
-      case 'resistance':
-        return 'مقاومة';
-      case 'support':
-        return 'دعم';
-      case 'target_up':
-        return 'هدف صعود';
-      case 'target_down':
-        return 'هدف هبوط';
-       case 'pivot':
-         return 'المحور';
-       default:
-         return '';
-    }
-  };
-
-  const sortedLevels = [...levels].sort((a, b) => b.price - a.price);
-
-  const entriesAndSR = sortedLevels.filter(l => 
-     ['call_entry', 'put_entry', 'resistance', 'support', 'pivot'].includes(l.type)
-  );
-  
-  const targetsUp = sortedLevels.filter(l => l.type === 'target_up');
-  const targetsDown = sortedLevels.filter(l => l.type === 'target_down');
 
   return (
-    <Card className="border-amber-500/30 bg-card">
-      <CardContent className="py-4">
-        <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-          <Target className="h-4 w-4 text-amber-500" />
-          مستويات التداول الحية
-        </h3>
-
-        {/* Main Entry Levels */}
-        <div className="space-y-2 mb-4">
-          {entriesAndSR.map((level, idx) => {
-            const isAbovePrice = level.price > currentPrice;
-            const distance = ((level.price - currentPrice) / currentPrice * 100).toFixed(2);
-            
-            return (
-              <div 
-                key={`${level.type}-${idx}`}
-                className={cn(
-                  "flex items-center justify-between p-2 rounded-lg border",
-                  level.type === 'call_entry' && "bg-green-500/10 border-green-500/30",
-                  level.type === 'put_entry' && "bg-red-500/10 border-red-500/30",
-                  level.type === 'resistance' && "bg-yellow-500/10 border-yellow-500/30",
-                   level.type === 'support' && "bg-yellow-500/10 border-yellow-500/30",
-                   level.type === 'pivot' && "bg-purple-500/10 border-purple-500/30"
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: level.color }}
-                  />
-                  <span className="text-sm font-medium">{getTypeLabel(level.type)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold" style={{ color: level.color }}>
-                    {level.price.toFixed(2)}
-                  </span>
-                  <Badge 
-                    variant="outline" 
-                    className={cn(
-                      "text-xs",
-                      isAbovePrice ? "text-green-400 border-green-500/50" : "text-red-400 border-red-500/50"
-                    )}
-                  >
-                    {isAbovePrice ? '+' : ''}{distance}%
-                  </Badge>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Targets Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* Targets Up */}
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="h-3 w-3 text-green-500" />
-              أهداف الصعود
-            </p>
-            {targetsUp.map((level, idx) => (
-              <div 
-                key={`up-${idx}`}
-                className="flex items-center justify-between text-xs p-1.5 rounded bg-green-500/10"
-              >
-                <span className="text-green-400">هدف {idx + 1}</span>
-                <span className="font-mono text-green-400">{level.price.toFixed(2)}</span>
-              </div>
-            ))}
+    <Card className="border-border bg-card">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base text-right flex items-center justify-between">
+          <Badge variant="outline" className="text-xs font-mono bg-amber-500/20 text-amber-400 border-amber-500/50">
+            ${currentPrice.toFixed(2)}
+          </Badge>
+          <span>مستويات التداول</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 max-h-[500px] overflow-y-auto">
+        {/* Entry Levels */}
+        {entryLevels.length > 0 && (
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground mb-2 text-right flex items-center justify-end gap-1">
+              <Zap className="w-3 h-3" /> نقاط الدخول
+            </h4>
+            <div className="space-y-2">
+              {entryLevels.map(renderLevel)}
+            </div>
           </div>
+        )}
 
-          {/* Targets Down */}
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <TrendingDown className="h-3 w-3 text-red-500" />
-              أهداف الهبوط
-            </p>
-            {targetsDown.map((level, idx) => (
-              <div 
-                key={`down-${idx}`}
-                className="flex items-center justify-between text-xs p-1.5 rounded bg-red-500/10"
-              >
-                <span className="text-red-400">هدف {idx + 1}</span>
-                <span className="font-mono text-red-400">{level.price.toFixed(2)}</span>
-              </div>
-            ))}
+        {/* Stop Loss Levels */}
+        {stopLossLevels.length > 0 && (
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground mb-2 text-right flex items-center justify-end gap-1">
+              <AlertTriangle className="w-3 h-3" /> ستوب لوز
+            </h4>
+            <div className="space-y-2">
+              {stopLossLevels.map(renderLevel)}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Target Levels */}
+        {targetLevels.length > 0 && (
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground mb-2 text-right flex items-center justify-end gap-1">
+              <Target className="w-3 h-3" /> الأهداف
+            </h4>
+            <div className="space-y-2">
+              {targetLevels.map(renderLevel)}
+            </div>
+          </div>
+        )}
+
+        {/* Swing Points */}
+        {swingLevels.length > 0 && (
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground mb-2 text-right flex items-center justify-end gap-1">
+              <TrendingUp className="w-3 h-3" /> القمم والقيعان
+            </h4>
+            <div className="space-y-2">
+              {swingLevels.map(renderLevel)}
+            </div>
+          </div>
+        )}
+
+        {/* Support/Resistance */}
+        {otherLevels.length > 0 && (
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground mb-2 text-right flex items-center justify-end gap-1">
+              <Shield className="w-3 h-3" /> الدعم والمقاومة
+            </h4>
+            <div className="space-y-2">
+              {otherLevels.map(renderLevel)}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
