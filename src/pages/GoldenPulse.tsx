@@ -44,8 +44,13 @@ const GoldenPulse = () => {
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
-  return <div className={cn("min-h-screen bg-background pt-16 pb-8", isFullscreen && "fixed inset-0 z-50 pt-0 bg-background")}>
-      <div className={cn("container mx-auto px-4", isFullscreen ? "max-w-full h-full flex flex-col p-0" : "max-w-7xl")}>
+  return <div className={cn(
+    "min-h-screen bg-background",
+    isFullscreen ? "fixed inset-0 z-50 flex flex-col" : "pt-16 pb-8"
+  )}>
+      <div className={cn(
+        isFullscreen ? "flex-1 flex flex-col w-full h-full" : "container mx-auto px-4 max-w-7xl"
+      )}>
         {/* Header */}
         {!isFullscreen && <div className="text-center mb-4">
             <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent mb-1">
@@ -99,9 +104,9 @@ const GoldenPulse = () => {
         </Card>
 
         {/* Main Content */}
-        <div className={cn("grid gap-4", isFullscreen ? "grid-cols-1 flex-1" : "grid-cols-1 lg:grid-cols-4")}>
+        <div className={cn("grid gap-4", isFullscreen ? "grid-cols-1 flex-1 h-full" : "grid-cols-1 lg:grid-cols-4")}>
           {/* Chart Container */}
-          <Card className={cn("border-border bg-card overflow-hidden", isFullscreen ? "flex-1 rounded-none border-0" : "lg:col-span-3")}>
+          <Card className={cn("border-border bg-card overflow-hidden", isFullscreen ? "flex-1 rounded-none border-0 h-full" : "lg:col-span-3")}>
             <CardContent className="p-0 h-full">
               {error ? <div className="flex flex-col items-center justify-center h-[550px] text-center px-4">
                    <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />

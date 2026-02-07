@@ -2,14 +2,14 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { createChart, IChartApi, ISeriesApi, CandlestickData, Time, CandlestickSeries } from 'lightweight-charts';
 import { cn } from '@/lib/utils';
 
- interface TradingLevel {
-   price: number;
-   type: 'resistance' | 'support' | 'call_entry' | 'put_entry' | 'target_up' | 'target_down' | 'pivot' | 'swing_high' | 'swing_low' | 'stop_loss';
-   label: string;
-   labelAr: string;
-   color: string;
-   strength: number;
- }
+interface TradingLevel {
+  price: number;
+  type: 'resistance' | 'support' | 'call_entry' | 'put_entry' | 'target_up' | 'target_down' | 'pivot' | 'swing_high' | 'swing_low' | 'stop_loss';
+  label: string;
+  labelAr: string;
+  color: string;
+  strength: number;
+}
 
 interface CandleData {
   time: number;
@@ -37,34 +37,41 @@ const GoldenPulseChart = ({ candles, levels, currentPrice, isFullscreen }: Golde
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    const chart = createChart(chartContainerRef.current, {
+    const container = chartContainerRef.current;
+    
+    const chart = createChart(container, {
+      width: container.clientWidth,
+      height: container.clientHeight,
       layout: {
         background: { color: '#0a0a0f' },
-        textColor: '#d1d5db',
+        textColor: '#9ca3af',
+        fontSize: 12,
       },
       grid: {
-        vertLines: { color: 'rgba(55, 65, 81, 0.3)' },
-        horzLines: { color: 'rgba(55, 65, 81, 0.3)' },
+        vertLines: { color: 'rgba(75, 85, 99, 0.15)' },
+        horzLines: { color: 'rgba(75, 85, 99, 0.15)' },
       },
       crosshair: {
         mode: 1,
-        vertLine: { color: '#f59e0b', width: 1, style: 2 },
-        horzLine: { color: '#f59e0b', width: 1, style: 2 },
+        vertLine: { color: '#f59e0b', width: 1, style: 2, labelBackgroundColor: '#f59e0b' },
+        horzLine: { color: '#f59e0b', width: 1, style: 2, labelBackgroundColor: '#f59e0b' },
       },
       rightPriceScale: {
-        borderColor: 'rgba(55, 65, 81, 0.5)',
-        scaleMargins: { top: 0.1, bottom: 0.1 },
+        borderColor: 'rgba(75, 85, 99, 0.3)',
+        scaleMargins: { top: 0.05, bottom: 0.05 },
+        autoScale: true,
+        borderVisible: true,
       },
       timeScale: {
-        borderColor: 'rgba(55, 65, 81, 0.5)',
+        borderColor: 'rgba(75, 85, 99, 0.3)',
         timeVisible: true,
         secondsVisible: false,
+        borderVisible: true,
       },
       handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
       handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
     });
 
-    // lightweight-charts v5 API
     const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#22c55e',
       downColor: '#ef4444',
@@ -80,15 +87,19 @@ const GoldenPulseChart = ({ candles, levels, currentPrice, isFullscreen }: Golde
 
     const handleResize = () => {
       if (chartContainerRef.current && chart) {
+        const { clientWidth, clientHeight } = chartContainerRef.current;
         chart.applyOptions({
-          width: chartContainerRef.current.clientWidth,
-          height: chartContainerRef.current.clientHeight,
+          width: clientWidth,
+          height: clientHeight,
         });
+        chart.timeScale().fitContent();
       }
     };
 
     window.addEventListener('resize', handleResize);
-    handleResize();
+    
+    // Initial resize after a short delay to ensure container is fully rendered
+    setTimeout(handleResize, 100);
 
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -97,6 +108,25 @@ const GoldenPulseChart = ({ candles, levels, currentPrice, isFullscreen }: Golde
       candleSeriesRef.current = null;
     };
   }, []);
+
+  // Handle fullscreen changes
+  useEffect(() => {
+    if (!chartRef.current || !chartContainerRef.current) return;
+    
+    // Delay to allow container to resize first
+    const timer = setTimeout(() => {
+      if (chartContainerRef.current && chartRef.current) {
+        const { clientWidth, clientHeight } = chartContainerRef.current;
+        chartRef.current.applyOptions({
+          width: clientWidth,
+          height: clientHeight,
+        });
+        chartRef.current.timeScale().fitContent();
+      }
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [isFullscreen]);
 
   // Update candle data
   useEffect(() => {
@@ -124,86 +154,145 @@ const GoldenPulseChart = ({ candles, levels, currentPrice, isFullscreen }: Golde
     const container = overlayRef.current;
     const rect = container.getBoundingClientRect();
     
-    // Clear existing levels
     container.innerHTML = '';
 
     levels.forEach((level) => {
-      // Convert price to Y coordinate
       const coordinate = candleSeriesRef.current?.priceToCoordinate(level.price);
       if (coordinate === null || coordinate === undefined) return;
       
       const y = coordinate;
       if (y < 0 || y > rect.height) return;
 
-      // Determine line style based on level type
+      // Determine styling based on level type
       const isEntry = level.type === 'call_entry' || level.type === 'put_entry';
-      const isTarget = level.type === 'target_up' || level.type === 'target_down';
       const isStopLoss = level.type === 'stop_loss';
+      const isTarget = level.type === 'target_up' || level.type === 'target_down';
       const isSwing = level.type === 'swing_high' || level.type === 'swing_low';
+      const isPivot = level.type === 'pivot';
       
-      const lineHeight = isEntry ? '3px' : isStopLoss ? '3px' : '2px';
+      // Line thickness based on importance
+      const lineHeight = isEntry ? '3px' : isStopLoss ? '2px' : '1px';
+      const lineOpacity = isEntry || isStopLoss ? '1' : '0.7';
 
       // Create level line
       const line = document.createElement('div');
-      line.className = 'absolute left-0 pointer-events-none';
-      line.style.top = `${y}px`;
-      line.style.height = lineHeight;
-      line.style.right = '150px';
-      line.style.backgroundColor = level.color;
-      line.style.opacity = isEntry || isStopLoss ? '1' : '0.8';
+      line.style.cssText = `
+        position: absolute;
+        left: 0;
+        top: ${y}px;
+        right: 170px;
+        height: ${lineHeight};
+        pointer-events: none;
+        opacity: ${lineOpacity};
+      `;
       
-      // Add dashed style for targets and swing points
-      if (isTarget || isSwing) {
-        line.style.background = `repeating-linear-gradient(to right, ${level.color}, ${level.color} 8px, transparent 8px, transparent 16px)`;
+      // Different line styles
+      if (isTarget || isSwing || isPivot) {
+        line.style.background = `repeating-linear-gradient(to right, ${level.color}, ${level.color} 6px, transparent 6px, transparent 12px)`;
+      } else {
+        line.style.backgroundColor = level.color;
+        if (isEntry) {
+          line.style.boxShadow = `0 0 8px ${level.color}80`;
+        }
       }
 
       container.appendChild(line);
 
-      // Create label box with improved styling
+      // Create label with professional styling
       const labelBox = document.createElement('div');
-      labelBox.className = 'absolute px-2 py-1 text-xs font-bold rounded shadow-lg pointer-events-none whitespace-nowrap';
-      labelBox.style.top = `${y}px`;
-      labelBox.style.right = '4px';
-      labelBox.style.backgroundColor = level.color;
-      labelBox.style.color = ['#FBBF24', '#34D399', '#4ADE80'].includes(level.color) ? '#000' : '#fff';
-      labelBox.style.transform = 'translateY(-50%)';
-      labelBox.style.zIndex = isEntry ? '20' : isStopLoss ? '18' : '10';
-      labelBox.style.minWidth = isEntry ? '140px' : '120px';
-      labelBox.style.textAlign = 'center';
-      labelBox.style.fontSize = isEntry ? '12px' : '11px';
-      labelBox.style.fontWeight = '700';
-      labelBox.style.boxShadow = isEntry ? '0 3px 12px rgba(0,0,0,0.5)' : '0 2px 8px rgba(0,0,0,0.4)';
-      labelBox.style.border = isEntry ? '2px solid rgba(255,255,255,0.3)' : 'none';
+      const isLightColor = ['#FBBF24', '#34D399', '#4ADE80', '#F472B6'].includes(level.color);
+      const textColor = isLightColor ? '#000' : '#fff';
+      const fontSize = isEntry ? '11px' : '10px';
+      const padding = isEntry ? '4px 10px' : '3px 8px';
+      const zIndex = isEntry ? '30' : isStopLoss ? '25' : '15';
+      const fontWeight = isEntry || isStopLoss ? '700' : '600';
+      
+      labelBox.style.cssText = `
+        position: absolute;
+        top: ${y}px;
+        right: 4px;
+        transform: translateY(-50%);
+        background-color: ${level.color};
+        color: ${textColor};
+        font-size: ${fontSize};
+        font-weight: ${fontWeight};
+        padding: ${padding};
+        border-radius: 4px;
+        white-space: nowrap;
+        pointer-events: none;
+        z-index: ${zIndex};
+        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        min-width: 130px;
+        text-align: center;
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        letter-spacing: 0.3px;
+        direction: rtl;
+      `;
+      
+      if (isEntry) {
+        labelBox.style.border = '2px solid rgba(255,255,255,0.4)';
+        labelBox.style.boxShadow = `0 3px 10px rgba(0,0,0,0.5), 0 0 15px ${level.color}40`;
+      }
+      
       labelBox.textContent = level.labelAr;
-
       container.appendChild(labelBox);
     });
 
-    // Add current price line
+    // Current price indicator
     const currentY = candleSeriesRef.current?.priceToCoordinate(currentPrice);
     if (currentY !== null && currentY !== undefined && currentY >= 0 && currentY <= rect.height) {
+      // Price line
       const priceLine = document.createElement('div');
-      priceLine.className = 'absolute left-0 pointer-events-none';
-      priceLine.style.top = `${currentY}px`;
-      priceLine.style.height = '2px';
-      priceLine.style.right = '140px';
-      priceLine.style.backgroundColor = '#10b981';
-      priceLine.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.6)';
+      priceLine.style.cssText = `
+        position: absolute;
+        left: 0;
+        top: ${currentY}px;
+        right: 170px;
+        height: 2px;
+        background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+        pointer-events: none;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+        animation: pulse 2s ease-in-out infinite;
+      `;
       container.appendChild(priceLine);
 
+      // Price label
       const priceLabel = document.createElement('div');
-      priceLabel.className = 'absolute px-2 py-1 text-xs font-bold rounded shadow-lg pointer-events-none';
-      priceLabel.style.top = `${currentY}px`;
-      priceLabel.style.right = '4px';
-      priceLabel.style.transform = 'translateY(-50%)';
-      priceLabel.style.backgroundColor = '#10b981';
-      priceLabel.style.color = '#fff';
-      priceLabel.style.minWidth = '90px';
-      priceLabel.style.textAlign = 'center';
-      priceLabel.style.zIndex = '15';
-      priceLabel.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
-      priceLabel.textContent = `السعر: ${currentPrice.toFixed(2)}`;
+      priceLabel.style.cssText = `
+        position: absolute;
+        top: ${currentY}px;
+        right: 4px;
+        transform: translateY(-50%);
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: #000;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 5px 12px;
+        border-radius: 4px;
+        white-space: nowrap;
+        pointer-events: none;
+        z-index: 40;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+        min-width: 130px;
+        text-align: center;
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        direction: rtl;
+      `;
+      priceLabel.textContent = `السعر الحالي ${currentPrice.toFixed(2)}`;
       container.appendChild(priceLabel);
+    }
+
+    // Add CSS animation for pulse effect
+    if (!document.getElementById('golden-pulse-styles')) {
+      const style = document.createElement('style');
+      style.id = 'golden-pulse-styles';
+      style.textContent = `
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+      `;
+      document.head.appendChild(style);
     }
   }, [levels, currentPrice]);
 
@@ -226,11 +315,12 @@ const GoldenPulseChart = ({ candles, levels, currentPrice, isFullscreen }: Golde
   return (
     <div className={cn(
       "relative w-full bg-[#0a0a0f] rounded-lg overflow-hidden",
-      isFullscreen ? "h-full" : "h-[550px]"
+      isFullscreen ? "h-full min-h-[calc(100vh-100px)]" : "h-[550px]"
     )}>
       <div 
         ref={chartContainerRef} 
         className="absolute inset-0"
+        style={{ width: '100%', height: '100%' }}
       />
       <div 
         ref={overlayRef}
